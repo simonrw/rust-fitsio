@@ -1,0 +1,16 @@
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+
+sudo: required
+
+before_install:
+  - bash ./travis/install_cfitsio.sh
+
+cache: cargo
+
+matrix:
+  allow_failures:
+    - rust: nightly
