@@ -1,0 +1,10 @@
+---
+required_packages:
+  - git
+  - openssl
+  - ca-certificates
+  - libcfitsio-dev
+  - build-essential
+  - gdb
+  - valgrind
+rust_toolchain: stable
