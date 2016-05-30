@@ -54,6 +54,14 @@ impl FitsFile {
         assert!(hdu_num >= 1);
         (hdu_num - 1) as u32
     }
+
+    pub fn change_hdu(&mut self, hdu_num: u32) {
+        let mut _hdu_type: c_int = 0;
+        unsafe {
+            ffmahd(self.fptr, (hdu_num + 1) as i32,
+                &mut _hdu_type, &mut self.status);
+        }
+    }
 }
 
 impl Drop for FitsFile {
@@ -71,6 +79,13 @@ mod test {
     fn opening_an_existing_file() {
         let f = FitsFile::open("testdata/full_example.fits");
         assert_eq!(f.status, 0);
+    }
+
+    #[test]
+    fn change_hdu() {
+        let mut f = FitsFile::open("testdata/full_example.fits");
+        f.change_hdu(1);
+        assert_eq!(f.current_hdu_number(), 1u32);
     }
 
     #[test]
