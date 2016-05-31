@@ -19,16 +19,21 @@ impl FitsFile {
         let c_filename = ffi::CString::new(filename).unwrap();
 
         unsafe {
-            ffopen(&mut fptr as *mut *mut fitsfile, c_filename.as_ptr(), 0, &mut status);
+            ffopen(&mut fptr as *mut *mut fitsfile,
+                   c_filename.as_ptr(),
+                   0,
+                   &mut status);
         }
 
         return match status {
-            0 => FitsFile {
-                fptr: fptr,
-                status: status,
-            },
+            0 => {
+                FitsFile {
+                    fptr: fptr,
+                    status: status,
+                }
+            }
             status => panic!("Invalid status code: {}", status),
-        }
+        };
 
     }
 
@@ -58,8 +63,10 @@ impl FitsFile {
     pub fn change_hdu(&mut self, hdu_num: u32) {
         let mut _hdu_type: c_int = 0;
         unsafe {
-            ffmahd(self.fptr, (hdu_num + 1) as i32,
-                &mut _hdu_type, &mut self.status);
+            ffmahd(self.fptr,
+                   (hdu_num + 1) as i32,
+                   &mut _hdu_type,
+                   &mut self.status);
         }
     }
 }
