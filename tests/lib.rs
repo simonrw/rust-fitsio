@@ -2,19 +2,21 @@ extern crate fitsio;
 extern crate libc;
 extern crate tempdir;
 
-use libc::c_int;
 use std::ffi;
 use std::ptr;
 use fitsio::raw::*;
 
 #[test]
 fn raw_opening_an_existing_file() {
-    let mut fptr: *mut fitsfile = ptr::null_mut();
-    let mut status: c_int = -1;
+    let mut fptr = ptr::null_mut();
+    let mut status = -1;
     let c_filename = ffi::CString::new("testdata/full_example.fits").unwrap();
 
     unsafe {
-        ffopen(&mut fptr as *mut *mut fitsfile, c_filename.as_ptr(), 0, &mut status);
+        ffopen(&mut fptr as *mut *mut fitsfile,
+               c_filename.as_ptr(),
+               0,
+               &mut status);
         ffclos(fptr, &mut status);
     }
 
@@ -43,14 +45,16 @@ fn raw_creating_a_new_file() {
 
 #[test]
 fn getting_current_hdu_number() {
-    let mut fptr: *mut fitsfile = ptr::null_mut();
-    let mut status: c_int = -1;
+    let mut fptr = ptr::null_mut();
+    let mut status = -1;
     let c_filename = ffi::CString::new("testdata/full_example.fits").unwrap();
-
-    let mut hdu_num: c_int = -1;
+    let mut hdu_num = -1;
 
     unsafe {
-        ffopen(&mut fptr as *mut *mut fitsfile, c_filename.as_ptr(), 0, &mut status);
+        ffopen(&mut fptr as *mut *mut fitsfile,
+               c_filename.as_ptr(),
+               0,
+               &mut status);
         ffghdn(fptr, &mut hdu_num);
         ffclos(fptr, &mut status);
     }
@@ -60,15 +64,18 @@ fn getting_current_hdu_number() {
 
 #[test]
 fn changing_hdu_by_absolute_number() {
-    let mut fptr: *mut fitsfile = ptr::null_mut();
-    let mut status: c_int = -1;
+    let mut fptr = ptr::null_mut();
+    let mut status = -1;
     let c_filename = ffi::CString::new("testdata/full_example.fits").unwrap();
 
-    let mut hdu_type: c_int = 0;
-    let mut hdu_num: c_int = 0;
+    let mut hdu_type = 0;
+    let mut hdu_num = 0;
 
     unsafe {
-        ffopen(&mut fptr as *mut *mut fitsfile, c_filename.as_ptr(), 0, &mut status);
+        ffopen(&mut fptr as *mut *mut fitsfile,
+               c_filename.as_ptr(),
+               0,
+               &mut status);
         ffmahd(fptr, 2, &mut hdu_type, &mut status);
         ffghdn(fptr, &mut hdu_num);
         ffclos(fptr, &mut status);
