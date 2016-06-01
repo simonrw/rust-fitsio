@@ -83,3 +83,15 @@ fn changing_hdu_by_absolute_number() {
 
     assert_eq!(hdu_num, 2);
 }
+
+/*
+#[test]
+fn api_usage() {
+    use fitsio::FitsFile;
+
+    let mut f = FitsFile::open("testdata/full_example.fits");
+    let mut primary_hdu = f.primary_hdu();
+    let header = primary_hdu.header();
+    let exposure_time: f32 = header["exposure"];
+}
+*/
