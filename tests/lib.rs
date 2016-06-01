@@ -1,5 +1,6 @@
 extern crate fitsio;
 extern crate libc;
+extern crate tempdir;
 
 use libc::c_int;
 use std::ffi;
@@ -18,6 +19,26 @@ fn raw_opening_an_existing_file() {
     }
 
     assert_eq!(status, 0);
+}
+
+#[test]
+fn raw_creating_a_new_file() {
+    // Set up the test filename
+    let tdir = tempdir::TempDir::new("rust-fitsio-").unwrap();
+    let filename = tdir.path().join("test.fits");
+    assert!(!filename.exists());
+
+    let mut fptr = ptr::null_mut();
+    let mut status = 0;
+    let c_filename = ffi::CString::new(filename.to_str().unwrap()).unwrap();
+
+    unsafe {
+        ffinit(&mut fptr as *mut *mut fitsfile,
+               c_filename.as_ptr(),
+               &mut status);
+    }
+
+    assert!(filename.exists());
 }
 
 #[test]
