@@ -36,3 +36,10 @@
   args:
     chdir: "{{ kcov_build_dir }}"
     creates: "{{ kcov_install_prefix }}/bin/kcov"
+
+- name: Install the cargo-cov script
+  become: yes
+  copy:
+    src: cargo-cov
+    dest: /usr/local/bin/cargo-cov
+    mode: 0777
