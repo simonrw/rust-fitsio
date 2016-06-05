@@ -58,6 +58,7 @@ impl FitsFile {
                 FitsFile {
                     fptr: fptr,
                     status: status,
+                    filename: filename.to_string(),
                 }
             }
             status => {
