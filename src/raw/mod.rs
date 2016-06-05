@@ -9,6 +9,9 @@ extern crate libc;
 use self::libc::*;
 
 pub static MAX_VALUE_LENGTH: usize = 71;
+pub static IMAGE_HDU: usize = 0;
+pub static ASCII_TBL: usize = 1;
+pub static BINARY_TBL: usize = 2;
 
 pub type LONGLONG = c_longlong;
 

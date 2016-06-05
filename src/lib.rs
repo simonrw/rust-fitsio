@@ -17,15 +17,13 @@ fn status_to_string(status: c_int) -> Option<String> {
             unsafe {
                 ffgerr(status, buffer.as_mut_ptr());
             }
-            let result_str = String::from_utf8(
-                buffer
-                .iter()
-                .map(|&x| x as u8)
-                .filter(|&x| x != 0)
-                .collect()
-                ).unwrap();
+            let result_str = String::from_utf8(buffer.iter()
+                    .map(|&x| x as u8)
+                    .filter(|&x| x != 0)
+                    .collect())
+                .unwrap();
             Some(result_str)
-        },
+        }
     }
 }
 
@@ -61,17 +59,23 @@ impl FitsFile {
                     status: status,
                 }
             }
-            status => panic!("Invalid status code: {}, msg: {}",
-                             status, status_to_string(status).unwrap()),
+            status => {
+                panic!("Invalid status code: {}, msg: {}",
+                       status,
+                       status_to_string(status).unwrap())
+            }
         };
 
     }
 
     pub fn check(&self) {
         match self.status {
-            0 => {},
-            status => panic!("Status code {} encountered, msg: {}",
-                             status, status_to_string(status).unwrap()),
+            0 => {}
+            status => {
+                panic!("Status code {} encountered, msg: {}",
+                       status,
+                       status_to_string(status).unwrap())
+            }
         }
     }
 
@@ -110,11 +114,27 @@ impl FitsFile {
         self.check();
     }
 
+    pub fn get_hdu_type(&mut self) -> HduType {
+        let mut hdu_type = 3;
+        unsafe {
+            ffghdt(self.fptr, &mut hdu_type, &mut self.status);
+        }
+        self.check();
+
+        match hdu_type {
+            0 => HduType::ImageHDU,
+            1 => HduType::AsciiTableHDU,
+            2 => HduType::BinTableHDU,
+            _ => panic!("Unknown hdu type: {}", hdu_type),
+        }
+    }
+
     pub fn get_hdu(&mut self, index: usize) -> FitsHDU {
-        self.change_hdu((index + 1) as u32);
+        self.change_hdu(index as u32);
+        let hdu_type = self.get_hdu_type();
         FitsHDU {
             fitsfile: self,
-            hdu_type: HduType::ImageHDU,
+            hdu_type: hdu_type,
         }
     }
 }
@@ -133,18 +153,18 @@ pub struct FitsHDU<'a> {
 }
 
 impl<'a> FitsHDU<'a> {
-    fn get_key(&mut self, key: &str) -> String {
-        let mut fptr = &self.fitsfile.fptr;
+    pub fn get_key(&mut self, key: &str) -> String {
+        let fptr = &self.fitsfile.fptr;
         let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
         let keyname = ffi::CString::new(key).unwrap();
         let mut status = 0;
 
         unsafe {
             ffgkys(*fptr,
-                keyname.as_ptr(),
-                value.as_mut_ptr(),
-                ptr::null_mut(),
-                &mut status);
+                   keyname.as_ptr(),
+                   value.as_mut_ptr(),
+                   ptr::null_mut(),
+                   &mut status);
         }
 
         match status {
@@ -154,9 +174,12 @@ impl<'a> FitsHDU<'a> {
                     .filter(|&x| x != 0)
                     .collect();
                 return String::from_utf8(value).unwrap();
-            },
-            _ => panic!("Invalid status code: {}, msg: {}",
-                        status, status_to_string(status).unwrap()),
+            }
+            _ => {
+                panic!("Invalid status code: {}, msg: {}",
+                       status,
+                       status_to_string(status).unwrap())
+            }
         }
     }
 }
@@ -167,7 +190,8 @@ mod test {
     fn returning_error_messages() {
         use super::status_to_string;
 
-        assert_eq!(status_to_string(105).unwrap(), "couldn't create the named file");
+        assert_eq!(status_to_string(105).unwrap(),
+                   "couldn't create the named file");
     }
 
     #[test]
@@ -197,10 +221,18 @@ mod test {
 
     #[test]
     fn getting_hdu_object() {
-        use super::FitsFile;
+        use super::{FitsFile, HduType};
 
         let mut f = FitsFile::open("testdata/full_example.fits");
-        let mut primary_hdu = f.get_hdu(0);
-        assert_eq!(primary_hdu.get_key("NAXIS").parse::<u32>().unwrap(), 2);
+
+        {
+            let primary_hdu = f.get_hdu(0);
+            assert_eq!(primary_hdu.hdu_type, HduType::ImageHDU);
+        }
+
+        {
+            let table_hdu = f.get_hdu(1);
+            assert_eq!(table_hdu.hdu_type, HduType::BinTableHDU);
+        }
     }
 }
