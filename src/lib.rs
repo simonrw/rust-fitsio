@@ -1,4 +1,15 @@
 #![allow(dead_code)]
+#![warn(missing_docs)]
+
+//! A wrapper around [cfitsio].
+//!
+//! This wrapper attempts to add some safety to the [cfitsio] library, and allows `.fits` files to
+//! be read from rust.
+//!
+//! The main entry point to the code is `FitsFile::open` which creates a new file, and
+//! `FitsFile::create` which creates a new file.
+//!
+//! [cfitsio]: https://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html
 
 pub mod raw;
 
@@ -9,6 +20,7 @@ use libc::{c_int, c_char};
 use std::ptr;
 use std::ffi;
 
+/// Internal function to get the fits error description from a status code
 fn status_to_string(status: c_int) -> Option<String> {
     match status {
         0 => None,
@@ -27,6 +39,7 @@ fn status_to_string(status: c_int) -> Option<String> {
     }
 }
 
+/// General type defining what kind of HDU we're talking about
 #[derive(Eq, PartialEq, Debug)]
 pub enum HduType {
     ImageHDU,
@@ -34,6 +47,15 @@ pub enum HduType {
     BinTableHDU,
 }
 
+/// Wrapper around a C `fitsfile` pointer.
+///
+/// This handles [opening][FitsFile::open], [creating][FitsFile::create] and automatically
+/// closing (through the `Drop` trait) the file.
+///
+/// All subsequent file access is controled through this object.
+///
+/// [FitsFile::open]: #method.open
+/// [FitsFile::create]: #method.create
 pub struct FitsFile {
     fptr: *mut fitsfile,
     status: c_int,
@@ -41,6 +63,21 @@ pub struct FitsFile {
 }
 
 impl FitsFile {
+    /// Open a fits file for reading
+    ///
+    /// * `filename` - Filename to pass to `cfitsio`. Can conform to the
+    /// [Extended Filename Syntax][extended-filename-syntax].
+    ///
+    /// [extended-filename-syntax]:
+    ///     https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node82.html
+    ///
+    /// Examples
+    ///
+    /// ```
+    /// # use fitsio::FitsFile;
+    /// # fn main() {
+    ///     let f = FitsFile::open("testdata/full_example.fits");
+    /// # }
     pub fn open(filename: &str) -> FitsFile {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
@@ -70,7 +107,11 @@ impl FitsFile {
 
     }
 
-    pub fn check(&self) {
+    /// Function to check that the status code is ok.
+    ///
+    /// If the value of `self.status` is not 0 then exit the current process as an error has
+    /// occurred.
+    fn check(&self) {
         match self.status {
             0 => {}
             status => {
@@ -90,8 +131,7 @@ impl FitsFile {
     /// # Examples
     ///
     /// ```
-    /// use fitsio::FitsFile;
-    ///
+    /// # use fitsio::FitsFile;
     /// let f = FitsFile::open("testdata/full_example.fits");
     /// assert_eq!(f.current_hdu_number(), 0);
     /// ```
@@ -105,6 +145,19 @@ impl FitsFile {
         (hdu_num - 1) as u32
     }
 
+    /// Change the current HDU
+    ///
+    /// Examples
+    ///
+    /// ```
+    /// # use fitsio::FitsFile;
+    /// # fn main() {
+    /// # let mut f = FitsFile::open("testdata/full_example.fits");
+    /// assert_eq!(f.current_hdu_number(), 0);
+    /// f.change_hdu(1);
+    /// assert_eq!(f.current_hdu_number(), 1);
+    /// # }
+    /// ```
     pub fn change_hdu(&mut self, hdu_num: u32) {
         let mut _hdu_type = 0;
         unsafe {
@@ -116,6 +169,20 @@ impl FitsFile {
         self.check();
     }
 
+    /// Get which type of HDU the current HDU is
+    ///
+    /// Results in one of the `HduType` options.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use fitsio::{FitsFile, HduType};
+    /// # fn main() {
+    /// let mut f = FitsFile::open("testdata/full_example.fits");
+    /// // Primary HDUs are always image hdus
+    /// assert_eq!(f.get_hdu_type(), HduType::ImageHDU);
+    /// # }
+    /// ```
     pub fn get_hdu_type(&mut self) -> HduType {
         let mut hdu_type = 3;
         unsafe {
@@ -131,6 +198,18 @@ impl FitsFile {
         }
     }
 
+    /// Return a `FitsHDU` object for the specified HDU
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use fitsio::{FitsFile, HduType};
+    /// # fn main() {
+    /// # let mut f = FitsFile::open("testdata/full_example.fits");
+    /// let primary_hdu = f.get_hdu(0);
+    /// assert_eq!(primary_hdu.hdu_type, HduType::ImageHDU);
+    /// # }
+    /// ```
     pub fn get_hdu(&mut self, index: usize) -> FitsHDU {
         self.change_hdu(index as u32);
         let hdu_type = self.get_hdu_type();
@@ -149,12 +228,32 @@ impl Drop for FitsFile {
     }
 }
 
+/// Wrapper around a FITS HDU
+///
+/// This struct is the main interface around reading and writing the file contents.
 pub struct FitsHDU<'a> {
     fitsfile: &'a FitsFile,
-    hdu_type: HduType,
+    pub hdu_type: HduType,
 }
 
 impl<'a> FitsHDU<'a> {
+    /// Read a header key as a string
+    ///
+    /// The user is responsible for converting the value type from a string to whatever type the
+    /// header key contains.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use fitsio::FitsFile;
+    /// # fn main() {
+    /// let mut f = FitsFile::open("testdata/full_example.fits");
+    /// let mut primary_hdu = f.get_hdu(0);
+    /// // Image is 2-dimensional
+    /// let naxis = primary_hdu.get_key("NAXIS").parse::<i32>().unwrap();
+    /// assert_eq!(naxis, 2);
+    /// # }
+    /// ```
     pub fn get_key(&mut self, key: &str) -> String {
         let fptr = &self.fitsfile.fptr;
         let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
