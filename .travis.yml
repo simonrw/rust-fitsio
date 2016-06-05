@@ -4,6 +4,13 @@ rust:
   - beta
   - nightly
 
+addons:
+  apt:
+    packages:
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+
 sudo: required
 
 before_install:
@@ -14,3 +21,9 @@ cache: cargo
 matrix:
   allow_failures:
     - rust: nightly
+
+after_success: |
+  wget https://github.com/SimonKagstrom/kcov/archive/v31.zip &&
+  unzip v31.zip && mkdir kcov-31/build && cd kcov-31/build && cmake .. && make &&
+  sudo make install && cd ../.. &&
+  kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo --verify target/kcov target/debug/fitsio-*
