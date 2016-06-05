@@ -3,9 +3,36 @@ pub mod raw;
 extern crate libc;
 
 use raw::*;
-use libc::c_int;
+use libc::{c_int, c_char};
 use std::ptr;
 use std::ffi;
+
+fn status_to_string(status: c_int) -> Option<String> {
+    match status {
+        0 => None,
+        status => {
+            let mut buffer: Vec<c_char> = vec![0; 31];
+            unsafe {
+                ffgerr(status, buffer.as_mut_ptr());
+            }
+            let result_str = String::from_utf8(
+                buffer
+                .iter()
+                .map(|&x| x as u8)
+                .filter(|&x| x != 0)
+                .collect()
+                ).unwrap();
+            Some(result_str)
+        },
+    }
+}
+
+#[derive(Eq, PartialEq, Debug)]
+pub enum HduType {
+    ImageHDU,
+    BinTableHDU,
+    AsciiTableHDU,
+}
 
 pub struct FitsFile {
     fptr: *mut fitsfile,
@@ -69,6 +96,14 @@ impl FitsFile {
                    &mut self.status);
         }
     }
+
+    pub fn get_hdu(&mut self, index: usize) -> FitsHDU {
+        self.change_hdu((index + 1) as u32);
+        FitsHDU {
+            fitsfile: self,
+            hdu_type: HduType::ImageHDU,
+        }
+    }
 }
 
 impl Drop for FitsFile {
@@ -79,7 +114,48 @@ impl Drop for FitsFile {
     }
 }
 
+pub struct FitsHDU<'a> {
+    fitsfile: &'a FitsFile,
+    hdu_type: HduType,
+}
+
+impl<'a> FitsHDU<'a> {
+    fn get_key(&mut self, key: &str) -> String {
+        let mut fptr = &self.fitsfile.fptr;
+        let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
+        let keyname = ffi::CString::new(key).unwrap();
+        let mut status = 0;
+
+        unsafe {
+            ffgkys(*fptr,
+                keyname.as_ptr(),
+                value.as_mut_ptr(),
+                ptr::null_mut(),
+                &mut status);
+        }
+
+        match status {
+            0 => {
+                let value: Vec<u8> = value.iter()
+                    .map(|&x| x as u8)
+                    .filter(|&x| x != 0)
+                    .collect();
+                return String::from_utf8(value).unwrap();
+            },
+            _ => panic!("Bad status value: {}", status),
+        }
+    }
+}
+
+
 mod test {
+    #[test]
+    fn returning_error_messages() {
+        use super::status_to_string;
+
+        assert_eq!(status_to_string(105).unwrap(), "couldn't create the named file");
+    }
+
     #[test]
     fn opening_an_existing_file() {
         use super::FitsFile;
@@ -103,5 +179,14 @@ mod test {
 
         let f = FitsFile::open("testdata/full_example.fits");
         assert_eq!(f.current_hdu_number(), 0u32);
+    }
+
+    #[test]
+    fn getting_hdu_object() {
+        use super::FitsFile;
+
+        let mut f = FitsFile::open("testdata/full_example.fits");
+        let mut primary_hdu = f.get_hdu(0);
+        assert_eq!(primary_hdu.get_key("NAXIS").parse::<u32>().unwrap(), 2);
     }
 }
