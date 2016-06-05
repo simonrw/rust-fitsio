@@ -37,6 +37,7 @@ pub enum HduType {
 pub struct FitsFile {
     fptr: *mut fitsfile,
     status: c_int,
+    pub filename: String,
 }
 
 impl FitsFile {
@@ -200,6 +201,14 @@ mod test {
 
         let f = FitsFile::open("testdata/full_example.fits");
         assert_eq!(f.status, 0);
+    }
+
+    #[test]
+    fn filename_is_stored() {
+        use super::FitsFile;
+
+        let f = FitsFile::open("testdata/full_example.fits");
+        assert_eq!(f.filename, "testdata/full_example.fits");
     }
 
     #[test]
