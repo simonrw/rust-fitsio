@@ -14,3 +14,4 @@ required_packages:
   - zlib1g-dev
   - libbfd-dev
   - binutils-dev
+  - libiberty-dev
