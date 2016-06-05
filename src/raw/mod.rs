@@ -8,7 +8,10 @@ extern crate libc;
 
 use self::libc::*;
 
+pub static MAX_VALUE_LENGTH: usize = 71;
+
 pub type LONGLONG = c_longlong;
+
 #[repr(C)]
 #[derive(Copy)]
 pub struct tcolumn {
