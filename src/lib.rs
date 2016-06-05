@@ -61,9 +61,18 @@ impl FitsFile {
                     status: status,
                 }
             }
-            status => panic!("Invalid status code: {}", status),
+            status => panic!("Invalid status code: {}, msg: {}",
+                             status, status_to_string(status).unwrap()),
         };
 
+    }
+
+    pub fn check(&self) {
+        match self.status {
+            0 => {},
+            status => panic!("Status code {} encountered, msg: {}",
+                             status, status_to_string(status).unwrap()),
+        }
     }
 
     /// Returns the current HDU number, 0-indexed
@@ -85,6 +94,7 @@ impl FitsFile {
         unsafe {
             ffghdn(self.fptr, &mut hdu_num);
         }
+        self.check();
         assert!(hdu_num >= 1);
         (hdu_num - 1) as u32
     }
@@ -97,6 +107,7 @@ impl FitsFile {
                    &mut _hdu_type,
                    &mut self.status);
         }
+        self.check();
     }
 
     pub fn get_hdu(&mut self, index: usize) -> FitsHDU {
@@ -144,7 +155,8 @@ impl<'a> FitsHDU<'a> {
                     .collect();
                 return String::from_utf8(value).unwrap();
             },
-            _ => panic!("Bad status value: {}", status),
+            _ => panic!("Invalid status code: {}, msg: {}",
+                        status, status_to_string(status).unwrap()),
         }
     }
 }
