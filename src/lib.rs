@@ -30,8 +30,8 @@ fn status_to_string(status: c_int) -> Option<String> {
 #[derive(Eq, PartialEq, Debug)]
 pub enum HduType {
     ImageHDU,
-    BinTableHDU,
     AsciiTableHDU,
+    BinTableHDU,
 }
 
 pub struct FitsFile {
