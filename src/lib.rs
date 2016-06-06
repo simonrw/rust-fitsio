@@ -15,7 +15,7 @@ pub mod raw;
 extern crate libc;
 
 use raw::*;
-use libc::{c_int, c_long, c_char};
+use libc::{c_int, c_long, c_char, c_void};
 use std::ptr;
 use std::ffi;
 
@@ -341,6 +341,28 @@ impl<'a> FitsHDU<'a> {
             }
         }
     }
+
+    fn read_all_i32(&mut self, buffer: &mut Vec<i32>) {
+        let npix = self.image_shape.0 * self.image_shape.1;
+        buffer.resize(npix, 0);
+        let mut status = 0;
+
+        unsafe {
+            ffgpv(self.fitsfile.fptr,
+                  31, // TINT
+                  1,
+                  npix as i64,
+                  ptr::null_mut() as *mut c_void,
+                  buffer.as_mut_ptr() as *mut c_void,
+                  ptr::null_mut(),
+                  &mut status);
+        }
+        match status {
+            0 => {}
+            status => panic!("Bad status value: {}", status),
+        }
+        self.fitsfile.check();
+    }
 }
 
 
@@ -415,6 +437,18 @@ mod test {
             let table_hdu = f.get_hdu(1);
             assert_eq!(table_hdu.hdu_type, HduType::BinTableHDU);
         }
+    }
+
+    #[test]
+    fn reading_in_image_data() {
+        use super::{FitsFile, HduType};
+
+        let mut f = FitsFile::open("testdata/full_example.fits");
+        let mut primary_hdu = f.get_hdu(0);
+        let mut data = Vec::new();
+        primary_hdu.read_all_i32(&mut data);
+        assert_eq!(data[0], 108);
+        assert_eq!(data[1], 176);
     }
 
     #[test]
