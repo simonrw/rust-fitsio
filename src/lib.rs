@@ -77,7 +77,7 @@ impl FitsFile {
     /// # fn main() {
     ///     let f = FitsFile::open("testdata/full_example.fits");
     /// # }
-    pub fn open(filename: &str) -> FitsFile {
+    pub fn open(filename: &str) -> Self {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
         let c_filename = ffi::CString::new(filename).unwrap();
