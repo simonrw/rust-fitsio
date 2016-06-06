@@ -106,6 +106,51 @@ impl FitsFile {
 
     }
 
+    /// Create a new fits file
+    ///
+    /// An empty primary header is added so when the `drop` method is called, the file is valid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate fitsio;
+    /// # extern crate tempdir;
+    /// # use fitsio::FitsFile;
+    /// # fn main() {
+    /// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let filename = filename.to_str().unwrap();
+    /// let _ = FitsFile::create(filename);
+    /// # }
+    /// ```
+    pub fn create(path: &str) -> Self {
+        let mut fptr = ptr::null_mut();
+        let mut status = 0;
+        let c_filename = ffi::CString::new(path).unwrap();
+
+        unsafe {
+            ffinit(&mut fptr as *mut *mut fitsfile,
+                   c_filename.as_ptr(),
+                   &mut status);
+        }
+
+        return match status {
+            0 => {
+                FitsFile {
+                    fptr: fptr,
+                    status: status,
+                    filename: path.to_string(),
+                }
+            }
+            status => {
+                panic!("Invalid status code: {}, msg: {}",
+                       status,
+                       status_to_string(status).unwrap())
+            }
+        };
+    }
+
     /// Function to check that the status code is ok.
     ///
     /// If the value of `self.status` is not 0 then exit the current process as an error has
@@ -300,6 +345,20 @@ mod test {
 
         let f = FitsFile::open("testdata/full_example.fits");
         assert_eq!(f.status, 0);
+    }
+
+    #[test]
+    fn creating_a_new_file() {
+        extern crate tempdir;
+
+        use super::FitsFile;
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+        assert!(!filename.exists());
+
+        let _ = FitsFile::create(filename.to_str().unwrap());
+        assert!(filename.exists());
     }
 
     #[test]
