@@ -15,7 +15,7 @@ pub mod raw;
 extern crate libc;
 
 use raw::*;
-use libc::{c_int, c_char};
+use libc::{c_int, c_long, c_char};
 use std::ptr;
 use std::ffi;
 
@@ -257,9 +257,22 @@ impl FitsFile {
     pub fn get_hdu(&mut self, index: usize) -> FitsHDU {
         self.change_hdu(index as u32);
         let hdu_type = self.get_hdu_type();
+
+        let image_shape = if hdu_type == HduType::ImageHDU {
+            let mut naxis = vec![0, 0];
+            unsafe {
+                ffgisz(self.fptr, 2, naxis.as_mut_ptr(), &mut self.status);
+            }
+            println!("{:?}", naxis);
+            (naxis[0] as usize, naxis[1] as usize)
+        } else {
+            (0, 0)
+        };
+
         FitsHDU {
             fitsfile: self,
             hdu_type: hdu_type,
+            image_shape: image_shape,
         }
     }
 }
@@ -278,6 +291,7 @@ impl Drop for FitsFile {
 pub struct FitsHDU<'a> {
     fitsfile: &'a FitsFile,
     pub hdu_type: HduType,
+    image_shape: (usize, usize),
 }
 
 impl<'a> FitsHDU<'a> {
@@ -401,5 +415,14 @@ mod test {
             let table_hdu = f.get_hdu(1);
             assert_eq!(table_hdu.hdu_type, HduType::BinTableHDU);
         }
+    }
+
+    #[test]
+    fn get_image_dimensions() {
+        use super::{FitsFile, HduType};
+
+        let mut f = FitsFile::open("testdata/full_example.fits");
+        let mut primary_hdu = f.get_hdu(0);
+        assert_eq!(primary_hdu.image_shape, (100, 100));
     }
 }
