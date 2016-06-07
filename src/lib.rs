@@ -418,6 +418,11 @@ mod test {
     fn getting_hdu_object() {
         let mut f = FitsFile::open("testdata/full_example.fits");
 
+        // TODO: get rid of these scopes
+        //
+        // They're there because `get_hdu` mutably borrows the `self` object and
+        // the result is still in scope. We need to expire the `FitsHDU` objects
+        // and hence the scopes.
         {
             let primary_hdu = f.get_hdu(0);
             assert_eq!(primary_hdu.hdu_type, HduType::ImageHDU);
