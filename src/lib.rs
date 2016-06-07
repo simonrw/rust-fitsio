@@ -366,28 +366,26 @@ impl<'a> FitsHDU<'a> {
 }
 
 
+#[cfg(test)]
 mod test {
+    extern crate tempdir;
+    use super::*;
+    use super::status_to_string;
+
     #[test]
     fn returning_error_messages() {
-        use super::status_to_string;
-
         assert_eq!(status_to_string(105).unwrap(),
                    "couldn't create the named file");
     }
 
     #[test]
     fn opening_an_existing_file() {
-        use super::FitsFile;
-
         let f = FitsFile::open("testdata/full_example.fits");
         assert_eq!(f.status, 0);
     }
 
     #[test]
     fn creating_a_new_file() {
-        extern crate tempdir;
-
-        use super::FitsFile;
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
         let filename = tdir_path.join("test.fits");
@@ -399,16 +397,12 @@ mod test {
 
     #[test]
     fn filename_is_stored() {
-        use super::FitsFile;
-
         let f = FitsFile::open("testdata/full_example.fits");
         assert_eq!(f.filename, "testdata/full_example.fits");
     }
 
     #[test]
     fn change_hdu() {
-        use super::FitsFile;
-
         let mut f = FitsFile::open("testdata/full_example.fits");
         f.change_hdu(1);
         assert_eq!(f.current_hdu_number(), 1u32);
@@ -416,16 +410,12 @@ mod test {
 
     #[test]
     fn getting_current_hdu_number() {
-        use super::FitsFile;
-
         let f = FitsFile::open("testdata/full_example.fits");
         assert_eq!(f.current_hdu_number(), 0u32);
     }
 
     #[test]
     fn getting_hdu_object() {
-        use super::{FitsFile, HduType};
-
         let mut f = FitsFile::open("testdata/full_example.fits");
 
         {
@@ -441,8 +431,6 @@ mod test {
 
     #[test]
     fn reading_in_image_data() {
-        use super::{FitsFile, HduType};
-
         let mut f = FitsFile::open("testdata/full_example.fits");
         let mut primary_hdu = f.get_hdu(0);
         let mut data = Vec::new();
@@ -453,8 +441,6 @@ mod test {
 
     #[test]
     fn get_image_dimensions() {
-        use super::{FitsFile, HduType};
-
         let mut f = FitsFile::open("testdata/full_example.fits");
         let mut primary_hdu = f.get_hdu(0);
         assert_eq!(primary_hdu.image_shape, (100, 100));
