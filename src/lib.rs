@@ -447,7 +447,7 @@ mod test {
     #[test]
     fn get_image_dimensions() {
         let mut f = FitsFile::open("testdata/full_example.fits");
-        let mut primary_hdu = f.get_hdu(0);
+        let primary_hdu = f.get_hdu(0);
         assert_eq!(primary_hdu.image_shape, (100, 100));
     }
 }
