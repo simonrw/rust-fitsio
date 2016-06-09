@@ -18,6 +18,18 @@ use raw::*;
 use libc::{c_int, c_long, c_char, c_void};
 use std::ptr;
 use std::ffi;
+use std::result;
+
+/// Error type
+#[derive(Debug)]
+pub enum FitsError {
+    FitsError {
+        status: i32,
+        message: String,
+    },
+}
+
+type Result<T> = result::Result<T, FitsError>;
 
 /// Internal function to get the fits error description from a status code
 fn status_to_string(status: c_int) -> Option<String> {
