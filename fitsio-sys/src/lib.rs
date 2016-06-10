@@ -13,6 +13,61 @@ pub static MAX_VALUE_LENGTH: usize = 71;
 pub type LONGLONG = c_longlong;
 
 #[repr(C)]
+#[derive(Debug)]
+pub enum DataType {
+    TBIT = 1,
+    TBYTE = 11,
+    TSBYTE = 12,
+    TLOGICAL = 14,
+    TSTRING = 16,
+    TUSHORT = 20,
+    TSHORT = 21,
+    TUINT = 30,
+    TINT = 31,
+    TULONG = 40,
+    TLONG = 41,
+    TFLOAT = 42,
+    TDOUBLE = 82,
+    TCOMPLEX = 83,
+    TDBLCOMPLEX = 163,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum ImageType {
+    BYTE_IMG = 8,
+    SHORT_IMG = 16,
+    LONG_IMG = 32,
+    LONGLONG_IMG = 64,
+    FLOAT_IMG = -32,
+    DOUBLE_IMG = -64,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum HduType {
+    IMAGE_HDU = 0,
+    ASCII_TBL = 1,
+    BINARY_TBL = 2,
+    ANY_HDU = -1,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum FileOpenMode {
+    READONLY = 0,
+    READWRITE = 1,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum CaseSensitivity {
+    CASEINSEN = 0,
+    CASESEN = 1,
+}
+
+
+#[repr(C)]
 #[derive(Copy)]
 pub struct tcolumn {
     pub ttype: [c_char; 70usize],
@@ -4530,6 +4585,47 @@ mod test {
         let comment: Vec<u8> = comment.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
         let comment = String::from_utf8(comment).unwrap();
         assert_eq!(comment, "Double value");
+    }
+
+    #[test]
+    fn data_types() {
+        assert_eq!(DataType::TBIT as u32, 1);
+        assert_eq!(DataType::TLOGICAL as u32, 14);
+        assert_eq!(DataType::TSTRING as u32, 16);
+        assert_eq!(DataType::TSHORT as u32, 21);
+        assert_eq!(DataType::TLONG as u32, 41);
+        assert_eq!(DataType::TFLOAT as u32, 42);
+        assert_eq!(DataType::TDOUBLE as u32, 82);
+    }
+
+    #[test]
+    fn image_types() {
+        assert_eq!(ImageType::BYTE_IMG as u32, 8);
+        assert_eq!(ImageType::SHORT_IMG as u32, 16);
+        assert_eq!(ImageType::LONG_IMG as u32, 32);
+        assert_eq!(ImageType::LONGLONG_IMG as u32, 64);
+        assert_eq!(ImageType::FLOAT_IMG as i32, -32);
+        assert_eq!(ImageType::DOUBLE_IMG as i32, -64);
+    }
+
+    #[test]
+    fn hdu_types() {
+        assert_eq!(HduType::IMAGE_HDU as i32, 0);
+        assert_eq!(HduType::ASCII_TBL as i32, 1);
+        assert_eq!(HduType::BINARY_TBL as i32, 2);
+        assert_eq!(HduType::ANY_HDU as i32, -1);
+    }
+
+    #[test]
+    fn file_open_modes() {
+        assert_eq!(FileOpenMode::READONLY as u32, 0);
+        assert_eq!(FileOpenMode::READWRITE as u32, 1);
+    }
+
+    #[test]
+    fn case_sensitivity() {
+        assert_eq!(CaseSensitivity::CASESEN as u32, 1);
+        assert_eq!(CaseSensitivity::CASEINSEN as u32, 0);
     }
 
     // #[test]

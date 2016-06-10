@@ -49,7 +49,7 @@ fn status_to_string(status: c_int) -> Option<String> {
 
 /// General type defining what kind of HDU we're talking about
 #[derive(Eq, PartialEq, Debug)]
-pub enum HduType {
+pub enum FitsHduType {
     ImageHDU,
     AsciiTableHDU,
     BinTableHDU,
@@ -97,7 +97,7 @@ impl FitsFile {
         unsafe {
             ffopen(&mut fptr as *mut *mut fitsfile,
                    c_filename.as_ptr(),
-                   0,
+                   FileOpenMode::READONLY as c_int,
                    &mut status);
         }
 
@@ -232,19 +232,19 @@ impl FitsFile {
 
     /// Get which type of HDU the current HDU is
     ///
-    /// Results in one of the `HduType` options.
+    /// Results in one of the `FitsHduType` options.
     ///
     /// # Examples
     ///
     /// ```
-    /// # use fitsio::{FitsFile, HduType};
+    /// # use fitsio::{FitsFile, FitsHduType};
     /// # fn main() {
     /// let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
     /// // Primary HDUs are always image hdus
-    /// assert_eq!(f.get_hdu_type(), HduType::ImageHDU);
+    /// assert_eq!(f.get_hdu_type(), FitsHduType::ImageHDU);
     /// # }
     /// ```
-    pub fn get_hdu_type(&mut self) -> HduType {
+    pub fn get_hdu_type(&mut self) -> FitsHduType {
         let mut hdu_type = 3;
         unsafe {
             ffghdt(self.fptr, &mut hdu_type, &mut self.status);
@@ -252,9 +252,9 @@ impl FitsFile {
         self.check();
 
         match hdu_type {
-            0 => HduType::ImageHDU,
-            1 => HduType::AsciiTableHDU,
-            2 => HduType::BinTableHDU,
+            0 => FitsHduType::ImageHDU,
+            1 => FitsHduType::AsciiTableHDU,
+            2 => FitsHduType::BinTableHDU,
             _ => panic!("Unknown hdu type: {}", hdu_type),
         }
     }
@@ -264,18 +264,19 @@ impl FitsFile {
     /// # Examples
     ///
     /// ```
-    /// # use fitsio::{FitsFile, HduType};
+    /// # use fitsio::{FitsFile, FitsHduType};
     /// # fn main() {
     /// # let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
     /// let primary_hdu = f.get_hdu(0);
-    /// assert_eq!(primary_hdu.hdu_type, HduType::ImageHDU);
+    /// assert_eq!(primary_hdu.hdu_type, FitsHduType::ImageHDU);
     /// # }
     /// ```
     pub fn get_hdu(&mut self, index: usize) -> FitsHDU {
         self.change_hdu(index as u32);
         let hdu_type = self.get_hdu_type();
 
-        let image_shape = if hdu_type == HduType::ImageHDU {
+        let image_shape = if hdu_type == FitsHduType::ImageHDU {
+            // TODO: handle n-d images
             let mut naxis = vec![0, 0];
             unsafe {
                 ffgisz(self.fptr, 2, naxis.as_mut_ptr(), &mut self.status);
@@ -307,7 +308,7 @@ impl Drop for FitsFile {
 /// This struct is the main interface around reading and writing the file contents.
 pub struct FitsHDU<'a> {
     fitsfile: &'a FitsFile,
-    pub hdu_type: HduType,
+    pub hdu_type: FitsHduType,
     image_shape: (usize, usize),
 }
 
@@ -367,7 +368,7 @@ impl<'a> FitsHDU<'a> {
 
         unsafe {
             ffgpv(self.fitsfile.fptr,
-                  31, // TINT
+                  DataType::TINT as c_int,
                   1,
                   npix as i64,
                   ptr::null_mut() as *mut c_void,
@@ -427,13 +428,13 @@ mod test {
     fn change_hdu() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.change_hdu(1);
-        assert_eq!(f.current_hdu_number(), 1u32);
+        assert_eq!(f.current_hdu_number(), 1);
     }
 
     #[test]
     fn getting_current_hdu_number() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        assert_eq!(f.current_hdu_number(), 0u32);
+        assert_eq!(f.current_hdu_number(), 0);
     }
 
     #[test]
@@ -447,12 +448,12 @@ mod test {
         // and hence the scopes.
         {
             let primary_hdu = f.get_hdu(0);
-            assert_eq!(primary_hdu.hdu_type, HduType::ImageHDU);
+            assert_eq!(primary_hdu.hdu_type, FitsHduType::ImageHDU);
         }
 
         {
             let table_hdu = f.get_hdu(1);
-            assert_eq!(table_hdu.hdu_type, HduType::BinTableHDU);
+            assert_eq!(table_hdu.hdu_type, FitsHduType::BinTableHDU);
         }
     }
 
