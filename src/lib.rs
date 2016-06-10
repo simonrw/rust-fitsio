@@ -29,7 +29,7 @@ pub enum FitsError {
     },
 }
 
-type Result<T> = result::Result<T, FitsError>;
+pub type Result<T> = result::Result<T, FitsError>;
 
 /// Internal function to get the fits error description from a status code
 fn status_to_string(status: c_int) -> Option<String> {
@@ -87,9 +87,12 @@ impl FitsFile {
     /// ```
     /// # use fitsio::FitsFile;
     /// # fn main() {
-    ///     let f = FitsFile::open("testdata/full_example.fits");
+    ///     match FitsFile::open("testdata/full_example.fits") {
+    ///         Ok(f) => { },
+    ///         Err(e) => panic!("{:?}", e),
+    ///     }
     /// # }
-    pub fn open(filename: &str) -> Self {
+    pub fn open(filename: &str) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
         let c_filename = ffi::CString::new(filename).unwrap();
@@ -103,17 +106,16 @@ impl FitsFile {
 
         return match status {
             0 => {
-                FitsFile {
+                Ok(FitsFile {
                     fptr: fptr,
                     status: status,
                     filename: filename.to_string(),
-                }
-            }
-            status => {
-                panic!("Invalid status code: {}, msg: {}",
-                       status,
-                       status_to_string(status).unwrap())
-            }
+                })
+            },
+            status => Err(FitsError::FitsError {
+                status: status,
+                message: status_to_string(status).unwrap(),
+            }),
         };
 
     }
@@ -188,7 +190,7 @@ impl FitsFile {
     ///
     /// ```
     /// # use fitsio::FitsFile;
-    /// let f = FitsFile::open("testdata/full_example.fits");
+    /// let f = FitsFile::open("testdata/full_example.fits").unwrap();
     /// assert_eq!(f.current_hdu_number(), 0);
     /// ```
     pub fn current_hdu_number(&self) -> u32 {
@@ -208,7 +210,7 @@ impl FitsFile {
     /// ```
     /// # use fitsio::FitsFile;
     /// # fn main() {
-    /// # let mut f = FitsFile::open("testdata/full_example.fits");
+    /// # let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
     /// assert_eq!(f.current_hdu_number(), 0);
     /// f.change_hdu(1);
     /// assert_eq!(f.current_hdu_number(), 1);
@@ -234,7 +236,7 @@ impl FitsFile {
     /// ```
     /// # use fitsio::{FitsFile, HduType};
     /// # fn main() {
-    /// let mut f = FitsFile::open("testdata/full_example.fits");
+    /// let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
     /// // Primary HDUs are always image hdus
     /// assert_eq!(f.get_hdu_type(), HduType::ImageHDU);
     /// # }
@@ -261,7 +263,7 @@ impl FitsFile {
     /// ```
     /// # use fitsio::{FitsFile, HduType};
     /// # fn main() {
-    /// # let mut f = FitsFile::open("testdata/full_example.fits");
+    /// # let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
     /// let primary_hdu = f.get_hdu(0);
     /// assert_eq!(primary_hdu.hdu_type, HduType::ImageHDU);
     /// # }
@@ -317,7 +319,7 @@ impl<'a> FitsHDU<'a> {
     /// ```
     /// # use fitsio::FitsFile;
     /// # fn main() {
-    /// let mut f = FitsFile::open("testdata/full_example.fits");
+    /// let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
     /// let mut primary_hdu = f.get_hdu(0);
     /// // Image is 2-dimensional
     /// let naxis = primary_hdu.get_key("NAXIS").parse::<i32>().unwrap();
@@ -392,8 +394,10 @@ mod test {
 
     #[test]
     fn opening_an_existing_file() {
-        let f = FitsFile::open("testdata/full_example.fits");
-        assert_eq!(f.status, 0);
+        match FitsFile::open("testdata/full_example.fits") {
+            Ok(f) => assert_eq!(f.status, 0),
+            Err(e) => panic!("{:?}", e),
+        }
     }
 
     #[test]
@@ -409,26 +413,26 @@ mod test {
 
     #[test]
     fn filename_is_stored() {
-        let f = FitsFile::open("testdata/full_example.fits");
+        let f = FitsFile::open("testdata/full_example.fits").unwrap();
         assert_eq!(f.filename, "testdata/full_example.fits");
     }
 
     #[test]
     fn change_hdu() {
-        let mut f = FitsFile::open("testdata/full_example.fits");
+        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
         f.change_hdu(1);
         assert_eq!(f.current_hdu_number(), 1u32);
     }
 
     #[test]
     fn getting_current_hdu_number() {
-        let f = FitsFile::open("testdata/full_example.fits");
+        let f = FitsFile::open("testdata/full_example.fits").unwrap();
         assert_eq!(f.current_hdu_number(), 0u32);
     }
 
     #[test]
     fn getting_hdu_object() {
-        let mut f = FitsFile::open("testdata/full_example.fits");
+        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
 
         // TODO: get rid of these scopes
         //
@@ -448,7 +452,7 @@ mod test {
 
     #[test]
     fn reading_in_image_data() {
-        let mut f = FitsFile::open("testdata/full_example.fits");
+        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
         let mut primary_hdu = f.get_hdu(0);
         let mut data = Vec::new();
         primary_hdu.read_all_i32(&mut data);
@@ -458,7 +462,7 @@ mod test {
 
     #[test]
     fn get_image_dimensions() {
-        let mut f = FitsFile::open("testdata/full_example.fits");
+        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
         let primary_hdu = f.get_hdu(0);
         assert_eq!(primary_hdu.image_shape, (100, 100));
     }
