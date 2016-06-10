@@ -22,11 +22,9 @@ use std::result;
 
 /// Error type
 #[derive(Debug)]
-pub enum FitsError {
-    FitsError {
-        status: i32,
-        message: String,
-    },
+pub struct FitsError {
+    status: i32,
+    message: String,
 }
 
 pub type Result<T> = result::Result<T, FitsError>;
@@ -111,11 +109,13 @@ impl FitsFile {
                     status: status,
                     filename: filename.to_string(),
                 })
-            },
-            status => Err(FitsError::FitsError {
-                status: status,
-                message: status_to_string(status).unwrap(),
-            }),
+            }
+            status => {
+                Err(FitsError {
+                    status: status,
+                    message: status_to_string(status).unwrap(),
+                })
+            }
         };
 
     }
@@ -160,10 +160,12 @@ impl FitsFile {
                     filename: path.to_string(),
                 })
             }
-            status => Err(FitsError::FitsError {
-                status: status,
-                message: status_to_string(status).unwrap(),
-            }),
+            status => {
+                Err(FitsError {
+                    status: status,
+                    message: status_to_string(status).unwrap(),
+                })
+            }
         };
     }
 
