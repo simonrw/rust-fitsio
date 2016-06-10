@@ -135,10 +135,13 @@ impl FitsFile {
     /// # let tdir_path = tdir.path();
     /// # let filename = tdir_path.join("test.fits");
     /// # let filename = filename.to_str().unwrap();
-    /// let _ = FitsFile::create(filename);
+    /// match FitsFile::create(filename) {
+    ///     Ok(f) => println!("Fits file created ok"),
+    ///     Err(e) => panic!("Error: {:?}", e),
+    /// }
     /// # }
     /// ```
-    pub fn create(path: &str) -> Self {
+    pub fn create(path: &str) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
         let c_filename = ffi::CString::new(path).unwrap();
@@ -151,17 +154,16 @@ impl FitsFile {
 
         return match status {
             0 => {
-                FitsFile {
+                Ok(FitsFile {
                     fptr: fptr,
                     status: status,
                     filename: path.to_string(),
-                }
+                })
             }
-            status => {
-                panic!("Invalid status code: {}, msg: {}",
-                       status,
-                       status_to_string(status).unwrap())
-            }
+            status => Err(FitsError::FitsError {
+                status: status,
+                message: status_to_string(status).unwrap(),
+            }),
         };
     }
 
@@ -407,8 +409,10 @@ mod test {
         let filename = tdir_path.join("test.fits");
         assert!(!filename.exists());
 
-        let _ = FitsFile::create(filename.to_str().unwrap());
-        assert!(filename.exists());
+        match FitsFile::create(filename.to_str().unwrap()) {
+            Ok(f) => assert!(filename.exists()),
+            Err(e) => panic!("Error: {:?}", e),
+        }
     }
 
     #[test]
