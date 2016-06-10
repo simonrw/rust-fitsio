@@ -326,11 +326,11 @@ impl<'a> FitsHDU<'a> {
     /// let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
     /// let mut primary_hdu = f.get_hdu(0);
     /// // Image is 2-dimensional
-    /// let naxis = primary_hdu.get_key("NAXIS").parse::<i32>().unwrap();
+    /// let naxis = primary_hdu.get_key("NAXIS").unwrap().parse::<i32>().unwrap();
     /// assert_eq!(naxis, 2);
     /// # }
     /// ```
-    pub fn get_key(&mut self, key: &str) -> String {
+    pub fn get_key(&mut self, key: &str) -> Result<String> {
         let fptr = &self.fitsfile.fptr;
         let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
         let keyname = ffi::CString::new(key).unwrap();
@@ -350,12 +350,13 @@ impl<'a> FitsHDU<'a> {
                     .map(|&x| x as u8)
                     .filter(|&x| x != 0)
                     .collect();
-                return String::from_utf8(value).unwrap();
+                Ok(String::from_utf8(value).unwrap())
             }
-            _ => {
-                panic!("Invalid status code: {}, msg: {}",
-                       status,
-                       status_to_string(status).unwrap())
+            status => {
+                Err(FitsError {
+                    status: status,
+                    message: status_to_string(status).unwrap(),
+                })
             }
         }
     }
@@ -471,5 +472,16 @@ mod test {
         let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
         let primary_hdu = f.get_hdu(0);
         assert_eq!(primary_hdu.image_shape, (100, 100));
+    }
+
+    #[test]
+    fn get_key_returns_error_for_missing_key() {
+        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+        let mut primary_hdu = f.get_hdu(0);
+
+        match primary_hdu.get_key("THISKEYDOESNOTEXIST") {
+            Err(e) => assert_eq!(e.status, 202),
+            Ok(f) => panic!("No error thrown"),
+        }
     }
 }
