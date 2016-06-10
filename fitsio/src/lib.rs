@@ -10,11 +10,10 @@
 //!
 //! [cfitsio]: https://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html
 
-pub mod raw;
-
+extern crate fitsio_sys;
 extern crate libc;
 
-use raw::*;
+use fitsio_sys::*;
 use libc::{c_int, c_long, c_char, c_void};
 use std::ptr;
 use std::ffi;
@@ -85,7 +84,7 @@ impl FitsFile {
     /// ```
     /// # use fitsio::FitsFile;
     /// # fn main() {
-    ///     match FitsFile::open("testdata/full_example.fits") {
+    ///     match FitsFile::open("../testdata/full_example.fits") {
     ///         Ok(f) => { },
     ///         Err(e) => panic!("{:?}", e),
     ///     }
@@ -194,7 +193,7 @@ impl FitsFile {
     ///
     /// ```
     /// # use fitsio::FitsFile;
-    /// let f = FitsFile::open("testdata/full_example.fits").unwrap();
+    /// let f = FitsFile::open("../testdata/full_example.fits").unwrap();
     /// assert_eq!(f.current_hdu_number(), 0);
     /// ```
     pub fn current_hdu_number(&self) -> u32 {
@@ -214,7 +213,7 @@ impl FitsFile {
     /// ```
     /// # use fitsio::FitsFile;
     /// # fn main() {
-    /// # let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+    /// # let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
     /// assert_eq!(f.current_hdu_number(), 0);
     /// f.change_hdu(1);
     /// assert_eq!(f.current_hdu_number(), 1);
@@ -240,7 +239,7 @@ impl FitsFile {
     /// ```
     /// # use fitsio::{FitsFile, HduType};
     /// # fn main() {
-    /// let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+    /// let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
     /// // Primary HDUs are always image hdus
     /// assert_eq!(f.get_hdu_type(), HduType::ImageHDU);
     /// # }
@@ -267,7 +266,7 @@ impl FitsFile {
     /// ```
     /// # use fitsio::{FitsFile, HduType};
     /// # fn main() {
-    /// # let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+    /// # let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
     /// let primary_hdu = f.get_hdu(0);
     /// assert_eq!(primary_hdu.hdu_type, HduType::ImageHDU);
     /// # }
@@ -323,7 +322,7 @@ impl<'a> FitsHDU<'a> {
     /// ```
     /// # use fitsio::FitsFile;
     /// # fn main() {
-    /// let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+    /// let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
     /// let mut primary_hdu = f.get_hdu(0);
     /// // Image is 2-dimensional
     /// let naxis = primary_hdu.get_key("NAXIS").unwrap().parse::<i32>().unwrap();
@@ -399,7 +398,7 @@ mod test {
 
     #[test]
     fn opening_an_existing_file() {
-        match FitsFile::open("testdata/full_example.fits") {
+        match FitsFile::open("../testdata/full_example.fits") {
             Ok(f) => assert_eq!(f.status, 0),
             Err(e) => panic!("{:?}", e),
         }
@@ -420,26 +419,26 @@ mod test {
 
     #[test]
     fn filename_is_stored() {
-        let f = FitsFile::open("testdata/full_example.fits").unwrap();
-        assert_eq!(f.filename, "testdata/full_example.fits");
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        assert_eq!(f.filename, "../testdata/full_example.fits");
     }
 
     #[test]
     fn change_hdu() {
-        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.change_hdu(1);
         assert_eq!(f.current_hdu_number(), 1u32);
     }
 
     #[test]
     fn getting_current_hdu_number() {
-        let f = FitsFile::open("testdata/full_example.fits").unwrap();
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         assert_eq!(f.current_hdu_number(), 0u32);
     }
 
     #[test]
     fn getting_hdu_object() {
-        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
 
         // TODO: get rid of these scopes
         //
@@ -459,7 +458,7 @@ mod test {
 
     #[test]
     fn reading_in_image_data() {
-        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let mut primary_hdu = f.get_hdu(0);
         let mut data = Vec::new();
         primary_hdu.read_all_i32(&mut data);
@@ -469,14 +468,14 @@ mod test {
 
     #[test]
     fn get_image_dimensions() {
-        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let primary_hdu = f.get_hdu(0);
         assert_eq!(primary_hdu.image_shape, (100, 100));
     }
 
     #[test]
     fn get_key_returns_error_for_missing_key() {
-        let mut f = FitsFile::open("testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let mut primary_hdu = f.get_hdu(0);
 
         match primary_hdu.get_key("THISKEYDOESNOTEXIST") {
