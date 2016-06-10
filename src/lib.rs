@@ -102,7 +102,7 @@ impl FitsFile {
                    &mut status);
         }
 
-        return match status {
+        match status {
             0 => {
                 Ok(FitsFile {
                     fptr: fptr,
@@ -116,7 +116,7 @@ impl FitsFile {
                     message: status_to_string(status).unwrap(),
                 })
             }
-        };
+        }
 
     }
 
@@ -152,7 +152,7 @@ impl FitsFile {
                    &mut status);
         }
 
-        return match status {
+        match status {
             0 => {
                 Ok(FitsFile {
                     fptr: fptr,
@@ -166,7 +166,7 @@ impl FitsFile {
                     message: status_to_string(status).unwrap(),
                 })
             }
-        };
+        }
     }
 
     /// Function to check that the status code is ok.
@@ -413,7 +413,7 @@ mod test {
         assert!(!filename.exists());
 
         match FitsFile::create(filename.to_str().unwrap()) {
-            Ok(f) => assert!(filename.exists()),
+            Ok(_) => assert!(filename.exists()),
             Err(e) => panic!("Error: {:?}", e),
         }
     }
@@ -481,7 +481,7 @@ mod test {
 
         match primary_hdu.get_key("THISKEYDOESNOTEXIST") {
             Err(e) => assert_eq!(e.status, 202),
-            Ok(f) => panic!("No error thrown"),
+            Ok(_) => panic!("No error thrown"),
         }
     }
 }
