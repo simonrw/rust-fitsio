@@ -1,4 +1,6 @@
 language: rust
+script: bash ./test_all.sh
+
 rust:
   - stable
   - beta
