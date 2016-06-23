@@ -10,7 +10,7 @@ readme = "README.md"
 
 [dependencies]
 libc = "0.2.11"
-fitsio-sys = { version = "0.1.0", path = "../fitsio-sys" }
+fitsio-sys = { version = "0.1.1", path = "../fitsio-sys" }
 
 [dev-dependencies]
 tempdir = "0.3.4"
