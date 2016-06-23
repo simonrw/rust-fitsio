@@ -14,7 +14,7 @@ extern crate fitsio_sys;
 extern crate libc;
 
 use fitsio_sys::*;
-use libc::{c_int, c_long, c_char, c_void};
+use libc::{c_int, c_char, c_void};
 use std::ptr;
 use std::ffi;
 use std::result;
