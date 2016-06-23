@@ -251,6 +251,10 @@ impl FitsFile {
     /// assert_eq!(f.current_hdu_number(), 0);
     /// f.change_hdu(1);
     /// assert_eq!(f.current_hdu_number(), 1);
+    /// f.change_hdu(0);
+    /// assert_eq!(f.current_hdu_number(), 0);
+    /// f.change_hdu("TESTEXT");
+    /// f.change_hdu(1);
     /// # }
     /// ```
     pub fn change_hdu<T: DescribesHdu>(&mut self, hdu_description: T) {
