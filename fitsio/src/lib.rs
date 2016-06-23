@@ -70,6 +70,40 @@ pub struct FitsFile {
     pub filename: String,
 }
 
+/// Hdu description type
+///
+/// Any way of describing a HDU - number or string which either
+/// changes the hdu by absolute number, or by name.
+pub trait DescribesHdu {
+    fn change_hdu(&self, fptr: &mut FitsFile);
+}
+
+impl DescribesHdu for usize {
+    fn change_hdu(&self, f: &mut FitsFile) {
+        let mut _hdu_type = 0;
+        let mut status = 0;
+        unsafe {
+            ffmahd(f.fptr, (*self + 1) as i32, &mut _hdu_type, &mut status);
+        }
+    }
+}
+
+impl<'a> DescribesHdu for &'a str {
+    fn change_hdu(&self, f: &mut FitsFile) {
+        let mut _hdu_type = 0;
+        let mut status = 0;
+        let c_hdu_name = ffi::CString::new(*self).unwrap();
+
+        unsafe {
+            ffmnhd(f.fptr,
+                   HduType::ANY_HDU as c_int,
+                   c_hdu_name.into_raw(),
+                   0,
+                   &mut status);
+        }
+    }
+}
+
 impl FitsFile {
     /// Open a fits file for reading
     ///
@@ -219,14 +253,8 @@ impl FitsFile {
     /// assert_eq!(f.current_hdu_number(), 1);
     /// # }
     /// ```
-    pub fn change_hdu(&mut self, hdu_num: u32) {
-        let mut _hdu_type = 0;
-        unsafe {
-            ffmahd(self.fptr,
-                   (hdu_num + 1) as i32,
-                   &mut _hdu_type,
-                   &mut self.status);
-        }
+    pub fn change_hdu<T: DescribesHdu>(&mut self, hdu_description: T) {
+        hdu_description.change_hdu(self);
         self.check();
     }
 
@@ -272,7 +300,7 @@ impl FitsFile {
     /// # }
     /// ```
     pub fn get_hdu(&mut self, index: usize) -> FitsHDU {
-        self.change_hdu(index as u32);
+        self.change_hdu(index);
         let hdu_type = self.get_hdu_type();
 
         let image_shape = if hdu_type == FitsHduType::ImageHDU {
@@ -428,6 +456,13 @@ mod test {
     fn change_hdu() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.change_hdu(1);
+        assert_eq!(f.current_hdu_number(), 1);
+    }
+
+    #[test]
+    fn change_hdu_with_str() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        f.change_hdu("TESTEXT");
         assert_eq!(f.current_hdu_number(), 1);
     }
 
