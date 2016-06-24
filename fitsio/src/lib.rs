@@ -31,8 +31,8 @@ fn check_status(status: c_int) {
         0 => {}
         status => {
             panic!("Status code {} encountered, msg: {}",
-                    status,
-                    status_to_string(status).unwrap())
+                   status,
+                   status_to_string(status).unwrap())
         }
     }
 }
@@ -467,7 +467,7 @@ mod test {
     #[test]
     fn opening_an_existing_file() {
         match FitsFile::open("../testdata/full_example.fits") {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => panic!("{:?}", e),
         }
     }
