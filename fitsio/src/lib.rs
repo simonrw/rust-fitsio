@@ -230,14 +230,14 @@ impl FitsFile {
     /// let f = FitsFile::open("../testdata/full_example.fits").unwrap();
     /// assert_eq!(f.current_hdu_number(), 0);
     /// ```
-    pub fn current_hdu_number(&self) -> u32 {
+    pub fn current_hdu_number(&self) -> usize {
         let mut hdu_num = 0;
         unsafe {
             ffghdn(self.fptr, &mut hdu_num);
         }
         self.check();
         assert!(hdu_num >= 1);
-        (hdu_num - 1) as u32
+        (hdu_num - 1) as usize
     }
 
     /// Change the current HDU
