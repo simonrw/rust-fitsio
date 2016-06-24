@@ -295,6 +295,14 @@ impl FitsFile {
         hdu_info.hdutype = Some(self.get_hdu_type());
         hdu_info
     }
+
+    /// Function to read a header key from the current HDU
+    ///
+    /// The function is generic on the trait `ReadsKey` which is implemented for multiple data
+    /// types (see `reads_key_impl`).
+    pub fn read_key<T: ReadsKey>(&self, name: &str) -> Result<T> {
+        T::read_key(self, name)
+    }
 }
 
 impl Drop for FitsFile {
@@ -339,6 +347,48 @@ impl<'a> DescribesHdu for &'a str {
         }
     }
 }
+
+pub trait ReadsKey {
+    fn read_key(f: &FitsFile, name: &str) -> Result<Self> where Self: std::marker::Sized;
+}
+
+
+macro_rules! reads_key_impl {
+    ($t:ty, $func:ident) => (
+        impl ReadsKey for $t {
+            fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
+                let c_name = ffi::CString::new(name).unwrap();
+                let mut status = 0;
+                let mut value: Self = Self::default();
+
+                unsafe {
+                    $func(f.fptr,
+                           c_name.into_raw(),
+                           &mut value,
+                           ptr::null_mut(),
+                           &mut status);
+                }
+
+                match status {
+                    0 => Ok(value),
+                    s => {
+                        Err(FitsError {
+                            status: s,
+                            message: status_to_string(s).unwrap(),
+                        })
+                    }
+                }
+
+            }
+        }
+    )
+}
+
+reads_key_impl!(i32, ffgkyl);
+reads_key_impl!(i64, ffgkyj);
+reads_key_impl!(f32, ffgkye);
+reads_key_impl!(f64, ffgkyd);
+
 
 /// Struct representing information about the current HDU
 pub struct HduInfo {
@@ -566,5 +616,19 @@ mod test {
         assert_eq!(hdu_info.extname, Some("TESTEXT".to_string()));
         assert_eq!(hdu_info.hdunum, 1);
         assert_eq!(hdu_info.hdutype, Some(FitsHduType::BinTableHDU));
+    }
+
+    #[test]
+    fn read_integer_key() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let value: Result<i64> = f.read_key("INTTEST");
+        assert_eq!(value, Ok(42));
+    }
+
+    #[test]
+    fn read_float_key() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let value: Result<f64> = f.read_key("DBLTEST");
+        assert_eq!(value, Ok(0.09375));
     }
 }
