@@ -392,12 +392,10 @@ reads_key_impl!(f64, ffgkyd);
 
 /// Struct representing information about the current HDU
 pub struct HduInfo {
-    extname: Option<String>,
     hdunum: usize,
     hdutype: Option<FitsHduType>,
     hduname: Option<String>,
     extver: Option<u64>,
-    hduver: Option<u64>,
     header_start: Option<u64>,
     data_start: Option<u64>,
     data_end: Option<u64>,
@@ -407,12 +405,10 @@ impl HduInfo {
     /// Default constructor as we're not allowed to derive `Default`.
     fn new() -> Self {
         HduInfo {
-            extname: None,
             hdunum: 0,
             hdutype: None,
             hduname: None,
             extver: None,
-            hduver: None,
             header_start: None,
             data_start: None,
             data_end: None,
@@ -613,7 +609,7 @@ mod test {
     fn get_hdu_info() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu_info = f.get_hdu_info(1);
-        assert_eq!(hdu_info.extname, Some("TESTEXT".to_string()));
+        assert_eq!(hdu_info.hduname, Some("TESTEXT".to_string()));
         assert_eq!(hdu_info.hdunum, 1);
         assert_eq!(hdu_info.hdutype, Some(FitsHduType::BinTableHDU));
     }
