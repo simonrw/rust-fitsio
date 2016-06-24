@@ -61,6 +61,7 @@ fn status_to_string(status: c_int) -> Option<String> {
 /// General type defining what kind of HDU we're talking about
 #[derive(Eq, PartialEq, Debug)]
 pub enum FitsHduType {
+    Unknown,
     ImageHDU,
     AsciiTableHDU,
     BinTableHDU,
