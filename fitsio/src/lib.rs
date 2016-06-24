@@ -288,11 +288,14 @@ impl FitsFile {
     fn get_hdu_info<T: DescribesHdu>(&self, hdu_description: T) -> HduInfo {
         self.change_hdu(hdu_description);
 
-        // XXX STUB
         let mut hdu_info = HduInfo::new();
-        hdu_info.extname = Some("TESTEXT".to_string());
         hdu_info.hdunum = self.current_hdu_number();
         hdu_info.hdutype = Some(self.get_hdu_type());
+
+        hdu_info.hduname = match self.read_key("EXTNAME") {
+            Ok(hduname) => Some(hduname),
+            Err(_) => None,
+        };
         hdu_info
     }
 
@@ -388,6 +391,39 @@ reads_key_impl!(i32, ffgkyl);
 reads_key_impl!(i64, ffgkyj);
 reads_key_impl!(f32, ffgkye);
 reads_key_impl!(f64, ffgkyd);
+
+impl ReadsKey for String {
+    fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
+        let c_name = ffi::CString::new(name).unwrap();
+        let mut status = 0;
+        let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
+
+        unsafe {
+            ffgkys(f.fptr,
+                   c_name.into_raw(),
+                   value.as_mut_ptr(),
+                   ptr::null_mut(),
+                   &mut status);
+        }
+
+        match status {
+            0 => {
+                let value: Vec<u8> = value.iter()
+                    .map(|&x| x as u8)
+                    .filter(|&x| x != 0)
+                    .collect();
+                Ok(String::from_utf8(value).unwrap())
+            }
+            status => {
+                Err(FitsError {
+                    status: status,
+                    message: status_to_string(status).unwrap(),
+                })
+            }
+        }
+
+    }
+}
 
 
 /// Struct representing information about the current HDU
@@ -626,5 +662,12 @@ mod test {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let value: Result<f64> = f.read_key("DBLTEST");
         assert_eq!(value, Ok(0.09375));
+    }
+
+    #[test]
+    fn read_string_key() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let value: Result<String> = f.read_key("TEST");
+        assert_eq!(value, Ok("value".to_string()));
     }
 }
