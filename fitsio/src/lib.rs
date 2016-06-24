@@ -61,7 +61,6 @@ fn status_to_string(status: c_int) -> Option<String> {
 /// General type defining what kind of HDU we're talking about
 #[derive(Eq, PartialEq, Debug)]
 pub enum FitsHduType {
-    Unknown,
     ImageHDU,
     AsciiTableHDU,
     BinTableHDU,
@@ -284,6 +283,18 @@ impl FitsFile {
             image_shape: image_shape,
         }
     }
+
+    /// Function to get the metadata for a single HDU
+    fn get_hdu_info<T: DescribesHdu>(&self, hdu_description: T) -> HduInfo {
+        self.change_hdu(hdu_description);
+
+        // XXX STUB
+        let mut hdu_info = HduInfo::new();
+        hdu_info.extname = Some("TESTEXT".to_string());
+        hdu_info.hdunum = self.current_hdu_number();
+        hdu_info.hdutype = Some(self.get_hdu_type());
+        hdu_info
+    }
 }
 
 impl Drop for FitsFile {
@@ -325,6 +336,36 @@ impl<'a> DescribesHdu for &'a str {
                    c_hdu_name.into_raw(),
                    0,
                    &mut status);
+        }
+    }
+}
+
+/// Struct representing information about the current HDU
+pub struct HduInfo {
+    extname: Option<String>,
+    hdunum: usize,
+    hdutype: Option<FitsHduType>,
+    hduname: Option<String>,
+    extver: Option<u64>,
+    hduver: Option<u64>,
+    header_start: Option<u64>,
+    data_start: Option<u64>,
+    data_end: Option<u64>,
+}
+
+impl HduInfo {
+    /// Default constructor as we're not allowed to derive `Default`.
+    fn new() -> Self {
+        HduInfo {
+            extname: None,
+            hdunum: 0,
+            hdutype: None,
+            hduname: None,
+            extver: None,
+            hduver: None,
+            header_start: None,
+            data_start: None,
+            data_end: None,
         }
     }
 }
@@ -516,5 +557,14 @@ mod test {
             Err(e) => assert_eq!(e.status, 202),
             Ok(_) => panic!("No error thrown"),
         }
+    }
+
+    #[test]
+    fn get_hdu_info() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu_info = f.get_hdu_info(1);
+        assert_eq!(hdu_info.extname, Some("TESTEXT".to_string()));
+        assert_eq!(hdu_info.hdunum, 1);
+        assert_eq!(hdu_info.hdutype, Some(FitsHduType::BinTableHDU));
     }
 }
