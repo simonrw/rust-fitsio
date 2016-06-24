@@ -20,7 +20,7 @@ use std::ffi;
 use std::result;
 
 /// Error type
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FitsError {
     status: i32,
     message: String,
