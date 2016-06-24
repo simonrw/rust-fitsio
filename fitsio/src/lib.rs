@@ -70,40 +70,6 @@ pub struct FitsFile {
     pub filename: String,
 }
 
-/// Hdu description type
-///
-/// Any way of describing a HDU - number or string which either
-/// changes the hdu by absolute number, or by name.
-pub trait DescribesHdu {
-    fn change_hdu(&self, fptr: &mut FitsFile);
-}
-
-impl DescribesHdu for usize {
-    fn change_hdu(&self, f: &mut FitsFile) {
-        let mut _hdu_type = 0;
-        let mut status = 0;
-        unsafe {
-            ffmahd(f.fptr, (*self + 1) as i32, &mut _hdu_type, &mut status);
-        }
-    }
-}
-
-impl<'a> DescribesHdu for &'a str {
-    fn change_hdu(&self, f: &mut FitsFile) {
-        let mut _hdu_type = 0;
-        let mut status = 0;
-        let c_hdu_name = ffi::CString::new(*self).unwrap();
-
-        unsafe {
-            ffmnhd(f.fptr,
-                   HduType::ANY_HDU as c_int,
-                   c_hdu_name.into_raw(),
-                   0,
-                   &mut status);
-        }
-    }
-}
-
 impl FitsFile {
     /// Open a fits file for reading
     ///
@@ -334,6 +300,41 @@ impl Drop for FitsFile {
         }
     }
 }
+
+/// Hdu description type
+///
+/// Any way of describing a HDU - number or string which either
+/// changes the hdu by absolute number, or by name.
+pub trait DescribesHdu {
+    fn change_hdu(&self, fptr: &mut FitsFile);
+}
+
+impl DescribesHdu for usize {
+    fn change_hdu(&self, f: &mut FitsFile) {
+        let mut _hdu_type = 0;
+        let mut status = 0;
+        unsafe {
+            ffmahd(f.fptr, (*self + 1) as i32, &mut _hdu_type, &mut status);
+        }
+    }
+}
+
+impl<'a> DescribesHdu for &'a str {
+    fn change_hdu(&self, f: &mut FitsFile) {
+        let mut _hdu_type = 0;
+        let mut status = 0;
+        let c_hdu_name = ffi::CString::new(*self).unwrap();
+
+        unsafe {
+            ffmnhd(f.fptr,
+                   HduType::ANY_HDU as c_int,
+                   c_hdu_name.into_raw(),
+                   0,
+                   &mut status);
+        }
+    }
+}
+
 
 /// Wrapper around a FITS HDU
 ///
