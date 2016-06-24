@@ -432,9 +432,6 @@ pub struct HduInfo {
     hdutype: Option<FitsHduType>,
     hduname: Option<String>,
     extver: Option<u64>,
-    header_start: Option<u64>,
-    data_start: Option<u64>,
-    data_end: Option<u64>,
 }
 
 impl HduInfo {
@@ -445,9 +442,6 @@ impl HduInfo {
             hdutype: None,
             hduname: None,
             extver: None,
-            header_start: None,
-            data_start: None,
-            data_end: None,
         }
     }
 }
