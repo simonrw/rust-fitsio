@@ -26,6 +26,17 @@ pub struct FitsError {
     message: String,
 }
 
+fn check_status(status: c_int) {
+    match status {
+        0 => {}
+        status => {
+            panic!("Status code {} encountered, msg: {}",
+                    status,
+                    status_to_string(status).unwrap())
+        }
+    }
+}
+
 pub type Result<T> = result::Result<T, FitsError>;
 
 /// Internal function to get the fits error description from a status code
@@ -66,7 +77,6 @@ pub enum FitsHduType {
 /// [FitsFile::create]: #method.create
 pub struct FitsFile {
     fptr: *mut fitsfile,
-    status: c_int,
     pub filename: String,
 }
 
@@ -105,7 +115,6 @@ impl FitsFile {
             0 => {
                 Ok(FitsFile {
                     fptr: fptr,
-                    status: status,
                     filename: filename.to_string(),
                 })
             }
@@ -155,7 +164,6 @@ impl FitsFile {
             0 => {
                 Ok(FitsFile {
                     fptr: fptr,
-                    status: status,
                     filename: path.to_string(),
                 })
             }
@@ -164,21 +172,6 @@ impl FitsFile {
                     status: status,
                     message: status_to_string(status).unwrap(),
                 })
-            }
-        }
-    }
-
-    /// Function to check that the status code is ok.
-    ///
-    /// If the value of `self.status` is not 0 then exit the current process as an error has
-    /// occurred.
-    fn check(&self) {
-        match self.status {
-            0 => {}
-            status => {
-                panic!("Status code {} encountered, msg: {}",
-                       status,
-                       status_to_string(status).unwrap())
             }
         }
     }
@@ -201,7 +194,6 @@ impl FitsFile {
         unsafe {
             ffghdn(self.fptr, &mut hdu_num);
         }
-        self.check();
         assert!(hdu_num >= 1);
         (hdu_num - 1) as usize
     }
@@ -223,9 +215,8 @@ impl FitsFile {
     /// f.change_hdu(1);
     /// # }
     /// ```
-    pub fn change_hdu<T: DescribesHdu>(&mut self, hdu_description: T) {
+    pub fn change_hdu<T: DescribesHdu>(&self, hdu_description: T) {
         hdu_description.change_hdu(self);
-        self.check();
     }
 
     /// Get which type of HDU the current HDU is
@@ -242,12 +233,13 @@ impl FitsFile {
     /// assert_eq!(f.get_hdu_type(), FitsHduType::ImageHDU);
     /// # }
     /// ```
-    pub fn get_hdu_type(&mut self) -> FitsHduType {
+    pub fn get_hdu_type(&self) -> FitsHduType {
         let mut hdu_type = 3;
+        let mut status = 0;
         unsafe {
-            ffghdt(self.fptr, &mut hdu_type, &mut self.status);
+            ffghdt(self.fptr, &mut hdu_type, &mut status);
         }
-        self.check();
+        check_status(status);
 
         match hdu_type {
             0 => FitsHduType::ImageHDU,
@@ -269,17 +261,17 @@ impl FitsFile {
     /// assert_eq!(primary_hdu.hdu_type, FitsHduType::ImageHDU);
     /// # }
     /// ```
-    pub fn get_hdu(&mut self, index: usize) -> FitsHDU {
+    pub fn get_hdu(&self, index: usize) -> FitsHDU {
         self.change_hdu(index);
         let hdu_type = self.get_hdu_type();
+        let mut status = 0;
 
         let image_shape = if hdu_type == FitsHduType::ImageHDU {
             // TODO: handle n-d images
             let mut naxis = vec![0, 0];
             unsafe {
-                ffgisz(self.fptr, 2, naxis.as_mut_ptr(), &mut self.status);
+                ffgisz(self.fptr, 2, naxis.as_mut_ptr(), &mut status);
             }
-            println!("{:?}", naxis);
             (naxis[0] as usize, naxis[1] as usize)
         } else {
             (0, 0)
@@ -295,8 +287,9 @@ impl FitsFile {
 
 impl Drop for FitsFile {
     fn drop(&mut self) {
+        let mut status = 0;
         unsafe {
-            ffclos(self.fptr, &mut self.status);
+            ffclos(self.fptr, &mut status);
         }
     }
 }
@@ -306,11 +299,11 @@ impl Drop for FitsFile {
 /// Any way of describing a HDU - number or string which either
 /// changes the hdu by absolute number, or by name.
 pub trait DescribesHdu {
-    fn change_hdu(&self, fptr: &mut FitsFile);
+    fn change_hdu(&self, fptr: &FitsFile);
 }
 
 impl DescribesHdu for usize {
-    fn change_hdu(&self, f: &mut FitsFile) {
+    fn change_hdu(&self, f: &FitsFile) {
         let mut _hdu_type = 0;
         let mut status = 0;
         unsafe {
@@ -320,7 +313,7 @@ impl DescribesHdu for usize {
 }
 
 impl<'a> DescribesHdu for &'a str {
-    fn change_hdu(&self, f: &mut FitsFile) {
+    fn change_hdu(&self, f: &FitsFile) {
         let mut _hdu_type = 0;
         let mut status = 0;
         let c_hdu_name = ffi::CString::new(*self).unwrap();
@@ -413,7 +406,6 @@ impl<'a> FitsHDU<'a> {
             0 => {}
             status => panic!("Bad status value: {}", status),
         }
-        self.fitsfile.check();
     }
 }
 
@@ -433,7 +425,7 @@ mod test {
     #[test]
     fn opening_an_existing_file() {
         match FitsFile::open("../testdata/full_example.fits") {
-            Ok(f) => assert_eq!(f.status, 0),
+            Ok(_) => {},
             Err(e) => panic!("{:?}", e),
         }
     }
@@ -459,14 +451,14 @@ mod test {
 
     #[test]
     fn change_hdu() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.change_hdu(1);
         assert_eq!(f.current_hdu_number(), 1);
     }
 
     #[test]
     fn change_hdu_with_str() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.change_hdu("TESTEXT");
         assert_eq!(f.current_hdu_number(), 1);
     }
@@ -479,7 +471,7 @@ mod test {
 
     #[test]
     fn getting_hdu_object() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
 
         // TODO: get rid of these scopes
         //
@@ -499,7 +491,7 @@ mod test {
 
     #[test]
     fn reading_in_image_data() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let mut primary_hdu = f.get_hdu(0);
         let mut data = Vec::new();
         primary_hdu.read_all_i32(&mut data);
@@ -509,14 +501,14 @@ mod test {
 
     #[test]
     fn get_image_dimensions() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let primary_hdu = f.get_hdu(0);
         assert_eq!(primary_hdu.image_shape, (100, 100));
     }
 
     #[test]
     fn get_key_returns_error_for_missing_key() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let mut primary_hdu = f.get_hdu(0);
 
         match primary_hdu.get_key("THISKEYDOESNOTEXIST") {
