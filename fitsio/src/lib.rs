@@ -39,6 +39,13 @@ fn check_status(status: c_int) {
 
 pub type Result<T> = result::Result<T, FitsError>;
 
+fn buf_to_string(buffer: &[c_char]) -> result::Result<String, std::string::FromUtf8Error> {
+    String::from_utf8(buffer.iter()
+        .map(|&x| x as u8)
+        .filter(|&x| x != 0)
+        .collect())
+}
+
 /// Internal function to get the fits error description from a status code
 fn status_to_string(status: c_int) -> Option<String> {
     match status {
@@ -48,11 +55,7 @@ fn status_to_string(status: c_int) -> Option<String> {
             unsafe {
                 ffgerr(status, buffer.as_mut_ptr());
             }
-            let result_str = String::from_utf8(buffer.iter()
-                    .map(|&x| x as u8)
-                    .filter(|&x| x != 0)
-                    .collect())
-                .unwrap();
+            let result_str = buf_to_string(&buffer).unwrap();
             Some(result_str)
         }
     }
