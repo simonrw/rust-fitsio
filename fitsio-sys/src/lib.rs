@@ -13,7 +13,7 @@ pub static MAX_VALUE_LENGTH: usize = 71;
 pub type LONGLONG = c_longlong;
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum DataType {
     TBIT = 1,
     TBYTE = 11,
@@ -33,7 +33,7 @@ pub enum DataType {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ImageType {
     BYTE_IMG = 8,
     SHORT_IMG = 16,
