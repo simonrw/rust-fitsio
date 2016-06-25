@@ -287,13 +287,107 @@ impl FitsFile {
         }
     }
 
+    fn get_image_info(&self) -> SpecificHduInfo {
+        let mut status = 0;
+        let mut bitpix = 0;
+
+        unsafe {
+            ffgidt(self.fptr, &mut bitpix, &mut status);
+        }
+        check_status(status);
+
+        let data_type = match bitpix {
+            8 => ImageType::BYTE_IMG,
+            16 => ImageType::SHORT_IMG,
+            32 => ImageType::LONG_IMG,
+            64 => ImageType::LONGLONG_IMG,
+            -32 => ImageType::FLOAT_IMG,
+            -64 => ImageType::DOUBLE_IMG,
+            _ => panic!("Unknown data type found: {}", bitpix),
+        };
+
+        let mut naxis = 0;
+        unsafe {
+            ffgidm(self.fptr, &mut naxis, &mut status);
+        }
+        check_status(status);
+
+        let mut naxes = vec![0; naxis as usize];
+        unsafe {
+            ffgisz(self.fptr, naxis, naxes.as_mut_ptr(), &mut status);
+        }
+        check_status(status);
+
+
+        SpecificHduInfo::ImageInfo {
+            data_type: data_type,
+            naxes: naxis as usize,
+            dimensions: naxes,
+        }
+    }
+
+    fn get_table_info(&self) -> SpecificHduInfo {
+        let mut ncols = 0;
+        let mut nrows = 0;
+        let mut status = 0;
+
+        unsafe {
+            ffgncl(self.fptr, &mut ncols, &mut status);
+        }
+        check_status(status);
+        let mut columns = Vec::with_capacity(ncols as usize);
+
+        unsafe {
+            ffgnrw(self.fptr, &mut nrows, &mut status);
+        }
+        check_status(status);
+
+        let mut ttype: [c_char; 70] = [0; 70];
+        let mut tunit: [c_char; 70] = [0; 70];
+        let mut typechar: [c_char; 70] = [0; 70];
+
+        for i in 0..ncols {
+            unsafe {
+                ffgbcl(self.fptr,
+                       i + 1,
+                       ttype.as_mut_ptr(),
+                       tunit.as_mut_ptr(),
+                       typechar.as_mut_ptr(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       &mut status);
+            }
+
+            columns.push(ColumnDescription {
+                colno: i as usize,
+                name: buf_to_string(&ttype).unwrap(),
+                unit: buf_to_string(&tunit).unwrap(),
+            });
+        }
+
+        SpecificHduInfo::TableInfo {
+            nrows: nrows as usize,
+            columns: columns,
+        }
+    }
+
     /// Function to get the metadata for a single HDU
     fn get_hdu_info<T: DescribesHdu>(&self, hdu_description: T) -> HduInfo {
         self.change_hdu(hdu_description);
+        let hdu_type = self.get_hdu_type();
+
+        let specific_info = match hdu_type {
+            FitsHduType::ImageHDU => self.get_image_info(),
+            FitsHduType::BinTableHDU => self.get_table_info(),
+            _ => panic!("Unknown hdu type: {:?}", hdu_type),
+        };
 
         HduInfo {
             hdunum: self.current_hdu_number(),
-            hdutype: Some(self.get_hdu_type()),
+            hdutype: Some(hdu_type),
             hduname: match self.read_key("EXTNAME") {
                 Ok(hduname) => Some(hduname),
                 Err(_) => None,
@@ -302,6 +396,7 @@ impl FitsFile {
                 Ok(extver) => Some(extver),
                 Err(_) => None,
             },
+            specific_info: specific_info,
         }
     }
 
@@ -431,6 +526,26 @@ impl ReadsKey for String {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct ColumnDescription {
+    colno: usize,
+    name: String,
+    unit: String,
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub enum SpecificHduInfo {
+    ImageInfo {
+        data_type: ImageType,
+        naxes: usize,
+        dimensions: Vec<i64>,
+    },
+    TableInfo {
+        nrows: usize,
+        columns: Vec<ColumnDescription>,
+    },
+}
+
 
 /// Struct representing information about the current HDU
 pub struct HduInfo {
@@ -438,6 +553,7 @@ pub struct HduInfo {
     hdutype: Option<FitsHduType>,
     hduname: Option<String>,
     extver: Option<i64>,
+    specific_info: SpecificHduInfo,
 }
 
 /// Wrapper around a FITS HDU
@@ -629,13 +745,46 @@ mod test {
     }
 
     #[test]
-    fn get_hdu_info() {
+    fn get_hdu_info_for_image() {
+        use fitsio_sys::ImageType;
+
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+
+        let hdu_info = f.get_hdu_info(0);
+        assert_eq!(hdu_info.hduname, None);
+        assert_eq!(hdu_info.hdunum, 0);
+        assert_eq!(hdu_info.hdutype, Some(FitsHduType::ImageHDU));
+        assert_eq!(hdu_info.extver, None);
+        assert_eq!(hdu_info.specific_info,
+                   SpecificHduInfo::ImageInfo {
+                       data_type: ImageType::LONG_IMG,
+                       naxes: 2,
+                       dimensions: vec![100, 100],
+                   });
+
+    }
+
+    #[test]
+    fn get_hdu_info_for_table() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+
         let hdu_info = f.get_hdu_info(1);
         assert_eq!(hdu_info.hduname, Some("TESTEXT".to_string()));
         assert_eq!(hdu_info.hdunum, 1);
         assert_eq!(hdu_info.hdutype, Some(FitsHduType::BinTableHDU));
         assert_eq!(hdu_info.extver, None);
+
+        match hdu_info.specific_info {
+            SpecificHduInfo::TableInfo { nrows, columns } => {
+                assert_eq!(nrows, 50);
+                assert_eq!(columns.len(), 3);
+
+                let firstcol = &columns[0];
+                assert_eq!(firstcol.colno, 0);
+                assert_eq!(firstcol.name, "intcol".to_string());
+            }
+            _ => panic!("Invalid table type"),
+        }
     }
 
     #[test]
