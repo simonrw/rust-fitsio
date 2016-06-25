@@ -288,15 +288,18 @@ impl FitsFile {
     fn get_hdu_info<T: DescribesHdu>(&self, hdu_description: T) -> HduInfo {
         self.change_hdu(hdu_description);
 
-        let mut hdu_info = HduInfo::new();
-        hdu_info.hdunum = self.current_hdu_number();
-        hdu_info.hdutype = Some(self.get_hdu_type());
-
-        hdu_info.hduname = match self.read_key("EXTNAME") {
-            Ok(hduname) => Some(hduname),
-            Err(_) => None,
-        };
-        hdu_info
+        HduInfo {
+            hdunum: self.current_hdu_number(),
+            hdutype: Some(self.get_hdu_type()),
+            hduname: match self.read_key("EXTNAME") {
+                Ok(hduname) => Some(hduname),
+                Err(_) => None,
+            },
+            extver: match self.read_key("EXTVER") {
+                Ok(extver) => Some(extver),
+                Err(_) => None,
+            },
+        }
     }
 
     /// Function to read a header key from the current HDU
@@ -431,21 +434,8 @@ pub struct HduInfo {
     hdunum: usize,
     hdutype: Option<FitsHduType>,
     hduname: Option<String>,
-    extver: Option<u64>,
+    extver: Option<i64>,
 }
-
-impl HduInfo {
-    /// Default constructor as we're not allowed to derive `Default`.
-    fn new() -> Self {
-        HduInfo {
-            hdunum: 0,
-            hdutype: None,
-            hduname: None,
-            extver: None,
-        }
-    }
-}
-
 
 /// Wrapper around a FITS HDU
 ///
@@ -642,6 +632,7 @@ mod test {
         assert_eq!(hdu_info.hduname, Some("TESTEXT".to_string()));
         assert_eq!(hdu_info.hdunum, 1);
         assert_eq!(hdu_info.hdutype, Some(FitsHduType::BinTableHDU));
+        assert_eq!(hdu_info.extver, None);
     }
 
     #[test]
