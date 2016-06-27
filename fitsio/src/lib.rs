@@ -452,6 +452,15 @@ impl<'a> DescribesHdu for &'a str {
     }
 }
 
+/// Trait applied to types which can be read from a FITS header
+///
+/// This is currently:
+///
+/// * i32
+/// * i64
+/// * f32
+/// * f64
+/// * String
 pub trait ReadsKey {
     fn read_key(f: &FitsFile, name: &str) -> Result<Self> where Self: std::marker::Sized;
 }
