@@ -709,20 +709,10 @@ mod test {
     fn getting_hdu_object() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
 
-        // TODO: get rid of these scopes
-        //
-        // They're there because `get_hdu` mutably borrows the `self` object and
-        // the result is still in scope. We need to expire the `FitsHDU` objects
-        // and hence the scopes.
-        {
-            let primary_hdu = f.get_hdu(0);
-            assert_eq!(primary_hdu.hdu_type, FitsHduType::ImageHDU);
-        }
-
-        {
-            let table_hdu = f.get_hdu(1);
-            assert_eq!(table_hdu.hdu_type, FitsHduType::BinTableHDU);
-        }
+        let primary_hdu = f.get_hdu(0);
+        assert_eq!(primary_hdu.hdu_type, FitsHduType::ImageHDU);
+        let table_hdu = f.get_hdu(1);
+        assert_eq!(table_hdu.hdu_type, FitsHduType::BinTableHDU);
     }
 
     #[test]
