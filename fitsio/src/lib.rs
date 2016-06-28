@@ -51,6 +51,15 @@ impl FitsFile {
     }
 }
 
+impl Drop for FitsFile {
+    fn drop(&mut self) {
+        let mut status = 0;
+        unsafe {
+            fitsio_sys::ffclos(self.fptr, &mut status);
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     extern crate tempdir;
