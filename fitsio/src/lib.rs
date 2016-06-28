@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_imports)]
 
-extern crate fitsio_sys;
+extern crate fitsio_sys as sys;
 extern crate libc;
 
 use std::ptr;
@@ -18,7 +18,7 @@ pub struct FitsError {
 pub type Result<T> = std::result::Result<T, FitsError>;
 
 pub struct FitsFile {
-    fptr: *mut fitsio_sys::fitsfile,
+    fptr: *mut sys::fitsfile,
     pub filename: String,
 }
 
@@ -29,9 +29,9 @@ impl FitsFile {
         let c_filename = ffi::CString::new(path).unwrap();
 
         unsafe {
-            fitsio_sys::ffinit(&mut fptr as *mut *mut fitsio_sys::fitsfile,
-                   c_filename.as_ptr(),
-                   &mut status);
+            sys::ffinit(&mut fptr as *mut *mut sys::fitsfile,
+                               c_filename.as_ptr(),
+                               &mut status);
         }
 
         match status {
@@ -55,7 +55,7 @@ impl Drop for FitsFile {
     fn drop(&mut self) {
         let mut status = 0;
         unsafe {
-            fitsio_sys::ffclos(self.fptr, &mut status);
+            sys::ffclos(self.fptr, &mut status);
         }
     }
 }

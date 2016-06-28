@@ -1,4 +1,4 @@
-use fitsio_sys::ffgerr;
+use sys::ffgerr;
 use libc::{c_char, c_int};
 use std::string::FromUtf8Error;
 
@@ -35,4 +35,3 @@ mod test {
                    "couldn't create the named file");
     }
 }
-
