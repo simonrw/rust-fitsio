@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["FitsError","Error type"],["FitsFile",""],["FitsHdu",""]],"trait":[["DescribesHdu",""]],"type":[["Result",""]]});
