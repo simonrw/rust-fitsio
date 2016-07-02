@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `DescribesHdu` trait in crate `fitsio`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, DescribesHdu">
+    <meta name="description" content="API documentation for the Rust `ReadsKey` trait in crate `fitsio`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ReadsKey">
 
-    <title>fitsio::DescribesHdu - Rust</title>
+    <title>fitsio::ReadsKey - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
@@ -28,7 +28,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'><a href='index.html'>fitsio</a></p><script>window.sidebarCurrent = {name: 'DescribesHdu', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        <p class='location'><a href='index.html'>fitsio</a></p><script>window.sidebarCurrent = {name: 'ReadsKey', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
     <nav class="sub">
@@ -43,27 +43,37 @@
     </nav>
 
     <section id='main' class="content trait">
-<h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>fitsio</a>::<wbr><a class='trait' href=''>DescribesHdu</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>fitsio</a>::<wbr><a class='trait' href=''>ReadsKey</a></span><span class='out-of-band'><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-164' class='srclink' href='../src/fitsio/fitsio/src/lib.rs.html#425-427' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait DescribesHdu {
-    fn <a href='#tymethod.change_hdu' class='fnname'>change_hdu</a>(&amp;self, fptr: &amp;<a class='struct' href='../fitsio/struct.FitsFile.html' title='fitsio::FitsFile'>FitsFile</a>);
-}</pre><div class='docblock'><p>Hdu description type</p>
+               </span><a id='src-182' class='srclink' href='../src/fitsio/fitsio/src/lib.rs.html#464-466' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait ReadsKey {
+    fn <a href='#tymethod.read_key' class='fnname'>read_key</a>(f: &amp;<a class='struct' href='../fitsio/struct.FitsFile.html' title='fitsio::FitsFile'>FitsFile</a>, name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../fitsio/type.Result.html' title='fitsio::Result'>Result</a>&lt;Self&gt; <span class='where'>where Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span>;
+}</pre><div class='docblock'><p>Trait applied to types which can be read from a FITS header</p>
 
-<p>Any way of describing a HDU - number or string which either
-changes the hdu by absolute number, or by name.</p>
+<p>This is currently:</p>
+
+<ul>
+<li>i32</li>
+<li>i64</li>
+<li>f32</li>
+<li>f64</li>
+<li>String</li>
+</ul>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.change_hdu' class='method stab '><code>fn <a href='#tymethod.change_hdu' class='fnname'>change_hdu</a>(&amp;self, fptr: &amp;<a class='struct' href='../fitsio/struct.FitsFile.html' title='fitsio::FitsFile'>FitsFile</a>)</code></h3></div>
+        <h3 id='tymethod.read_key' class='method stab '><code>fn <a href='#tymethod.read_key' class='fnname'>read_key</a>(f: &amp;<a class='struct' href='../fitsio/struct.FitsFile.html' title='fitsio::FitsFile'>FitsFile</a>, name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../fitsio/type.Result.html' title='fitsio::Result'>Result</a>&lt;Self&gt; <span class='where'>where Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span></code></h3></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl DescribesHdu for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></li>
-<li><code>impl&lt;'a&gt; DescribesHdu for &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></li>
+    <li><code>impl ReadsKey for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i32.html'>i32</a></code></li>
+<li><code>impl ReadsKey for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i64.html'>i64</a></code></li>
+<li><code>impl ReadsKey for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f32.html'>f32</a></code></li>
+<li><code>impl ReadsKey for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f64.html'>f64</a></code></li>
+<li><code>impl ReadsKey for <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></li>
 </ul><script type="text/javascript" async
-                         src="../implementors/fitsio/trait.DescribesHdu.js">
+                         src="../implementors/fitsio/trait.ReadsKey.js">
                  </script></section>
     <section id='search' class="content hidden"></section>
 

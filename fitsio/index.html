@@ -47,9 +47,23 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/fitsio/fitsio/src/lib.rs.html#1-118' title='goto source code'>[src]</a></span></h1>
-<h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+               </span><a id='src-0' class='srclink' href='../src/fitsio/fitsio/src/lib.rs.html#1-809' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>A wrapper around <a href="https://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html">cfitsio</a>.</p>
+
+<p>This wrapper attempts to add some safety to the <a href="https://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html">cfitsio</a> library, and allows <code>.fits</code> files to
+be read from rust.</p>
+
+<p>The main entry point to the code is <code>FitsFile::open</code> which creates a new file, and
+<code>FitsFile::create</code> which creates a new file.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.ColumnDescription.html'
+                                  title='fitsio::ColumnDescription'>ColumnDescription</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
                        <tr class=' module-item'>
                            <td><a class='struct' href='struct.FitsError.html'
                                   title='fitsio::FitsError'>FitsError</a></td>
@@ -61,7 +75,51 @@
                            <td><a class='struct' href='struct.FitsFile.html'
                                   title='fitsio::FitsFile'>FitsFile</a></td>
                            <td class='docblock short'>
+                                <p>Wrapper around a C <code>fitsfile</code> pointer.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.FitsHDU.html'
+                                  title='fitsio::FitsHDU'>FitsHDU</a></td>
+                           <td class='docblock short'>
+                                <p>Wrapper around a FITS HDU</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.HduInfo.html'
+                                  title='fitsio::HduInfo'>HduInfo</a></td>
+                           <td class='docblock short'>
+                                <p>Struct representing information about the current HDU</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.FitsHduType.html'
+                                  title='fitsio::FitsHduType'>FitsHduType</a></td>
+                           <td class='docblock short'>
+                                <p>General type defining what kind of HDU we&#39;re talking about</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.SpecificHduInfo.html'
+                                  title='fitsio::SpecificHduInfo'>SpecificHduInfo</a></td>
+                           <td class='docblock short'>
                                 
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.DescribesHdu.html'
+                                  title='fitsio::DescribesHdu'>DescribesHdu</a></td>
+                           <td class='docblock short'>
+                                <p>Hdu description type</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.ReadsKey.html'
+                                  title='fitsio::ReadsKey'>ReadsKey</a></td>
+                           <td class='docblock short'>
+                                <p>Trait applied to types which can be read from a FITS header</p>
                            </td>
                        </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
