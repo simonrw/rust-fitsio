@@ -7,6 +7,7 @@ homepage = "https://github.com/mindriot101/rust-cfitsio"
 repository = "https://github.com/mindriot101/rust-cfitsio"
 license = "MIT/Apache-2.0"
 build = "build.rs"
+documentation = "http://mindriot101.github.io/rust-cfitsio/fitsio-sys"
 
 [dependencies]
 libc = "0.2.11"
