@@ -34,10 +34,12 @@ impl DescribesHdu for usize {
         }
         match status {
             0 => Ok(()),
-            _ => Err(FitsError {
-                status: status,
-                message: stringutils::status_to_string(status).unwrap(),
-            }),
+            _ => {
+                Err(FitsError {
+                    status: status,
+                    message: stringutils::status_to_string(status).unwrap(),
+                })
+            }
         }
     }
 }
@@ -50,18 +52,20 @@ impl<'a> DescribesHdu for &'a str {
 
         unsafe {
             sys::ffmnhd(f.fptr,
-                   sys::HduType::ANY_HDU as libc::c_int,
-                   c_hdu_name.into_raw(),
-                   0,
-                   &mut status);
+                        sys::HduType::ANY_HDU as libc::c_int,
+                        c_hdu_name.into_raw(),
+                        0,
+                        &mut status);
         }
 
         match status {
             0 => Ok(()),
-            _ => Err(FitsError {
-                status: status,
-                message: stringutils::status_to_string(status).unwrap(),
-            }),
+            _ => {
+                Err(FitsError {
+                    status: status,
+                    message: stringutils::status_to_string(status).unwrap(),
+                })
+            }
         }
     }
 }
@@ -122,10 +126,10 @@ impl ReadsKey for String {
 
         unsafe {
             sys::ffgkys(f.fptr,
-                   c_name.into_raw(),
-                   value.as_mut_ptr(),
-                   ptr::null_mut(),
-                   &mut status);
+                        c_name.into_raw(),
+                        value.as_mut_ptr(),
+                        ptr::null_mut(),
+                        &mut status);
         }
 
         match status {
@@ -160,9 +164,9 @@ impl FitsFile {
 
         unsafe {
             sys::ffopen(&mut fptr as *mut *mut sys::fitsfile,
-                   c_filename.as_ptr(),
-                   sys::FileOpenMode::READONLY as libc::c_int,
-                   &mut status);
+                        c_filename.as_ptr(),
+                        sys::FileOpenMode::READONLY as libc::c_int,
+                        &mut status);
         }
 
         match status {
@@ -294,6 +298,16 @@ mod test {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.hdu(0).unwrap().read_key::<i64>("INTTEST") {
             Ok(value) => assert_eq!(value, 42),
+            Err(e) => panic!("Error reading key: {:?}", e),
+        }
+
+        match f.hdu(0).unwrap().read_key::<f64>("DBLTEST") {
+            Ok(value) => assert_eq!(value, 0.09375),
+            Err(e) => panic!("Error reading key: {:?}", e),
+        }
+
+        match f.hdu(0).unwrap().read_key::<String>("TEST") {
+            Ok(value) => assert_eq!(value, "value"),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
     }
