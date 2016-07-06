@@ -66,14 +66,90 @@ impl<'a> DescribesHdu for &'a str {
     }
 }
 
+/// Trait applied to types which can be read from a FITS header
+///
+/// This is currently:
+///
+/// * i32
+/// * i64
+/// * f32
+/// * f64
+/// * String
+pub trait ReadsKey {
+    fn read_key(f: &FitsFile, name: &str) -> Result<Self> where Self: std::marker::Sized;
+}
+
+macro_rules! reads_key_impl {
+    ($t:ty, $func:ident) => (
+        impl ReadsKey for $t {
+            fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
+                let c_name = ffi::CString::new(name).unwrap();
+                let mut status = 0;
+                let mut value: Self = Self::default();
+
+                unsafe {
+                    sys::$func(f.fptr,
+                           c_name.into_raw(),
+                           &mut value,
+                           ptr::null_mut(),
+                           &mut status);
+                }
+
+                match status {
+                    0 => Ok(value),
+                    s => {
+                        Err(FitsError {
+                            status: s,
+                            message: stringutils::status_to_string(s).unwrap(),
+                        })
+                    }
+                }
+            }
+        }
+    )
+}
+
+reads_key_impl!(i32, ffgkyl);
+reads_key_impl!(i64, ffgkyj);
+reads_key_impl!(f32, ffgkye);
+reads_key_impl!(f64, ffgkyd);
+
+impl ReadsKey for String {
+    fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
+        let c_name = ffi::CString::new(name).unwrap();
+        let mut status = 0;
+        let mut value: Vec<libc::c_char> = vec![0; sys::MAX_VALUE_LENGTH];
+
+        unsafe {
+            sys::ffgkys(f.fptr,
+                   c_name.into_raw(),
+                   value.as_mut_ptr(),
+                   ptr::null_mut(),
+                   &mut status);
+        }
+
+        match status {
+            0 => {
+                let value: Vec<u8> = value.iter()
+                    .map(|&x| x as u8)
+                    .filter(|&x| x != 0)
+                    .collect();
+                Ok(String::from_utf8(value).unwrap())
+            }
+            status => {
+                Err(FitsError {
+                    status: status,
+                    message: stringutils::status_to_string(status).unwrap(),
+                })
+            }
+        }
+
+    }
+}
+
 pub struct FitsFile {
     fptr: *mut sys::fitsfile,
     pub filename: String,
-}
-
-pub struct FitsHdu<'a> {
-    fits_file: &'a FitsFile,
-    hdunum: usize,
 }
 
 impl FitsFile {
@@ -161,6 +237,17 @@ impl Drop for FitsFile {
     }
 }
 
+pub struct FitsHdu<'a> {
+    fits_file: &'a FitsFile,
+    hdunum: usize,
+}
+
+impl<'a> FitsHdu<'a> {
+    pub fn read_key<T: ReadsKey>(&self, name: &str) -> Result<T> {
+        T::read_key(self.fits_file, name)
+    }
+}
+
 #[cfg(test)]
 mod test {
     extern crate tempdir;
@@ -200,5 +287,14 @@ mod test {
 
         let tbl_hdu = f.hdu("TESTEXT").unwrap();
         assert_eq!(tbl_hdu.hdunum, 1);
+    }
+
+    #[test]
+    fn reading_header_keys() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        match f.hdu(0).unwrap().read_key::<i64>("INTTEST") {
+            Ok(value) => assert_eq!(value, 42),
+            Err(e) => panic!("Error reading key: {:?}", e),
+        }
     }
 }
