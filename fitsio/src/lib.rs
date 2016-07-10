@@ -309,9 +309,8 @@ impl FitsFile {
         }
     }
 
-    pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<&Self> {
-        try!(hdu_description.change_hdu(self));
-        Ok(self)
+    pub fn change_hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<()> {
+        hdu_description.change_hdu(self)
     }
 
     fn hdu_number(&self) -> usize {
@@ -405,33 +404,35 @@ mod test {
 
     #[test]
     fn fetching_a_hdu() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         for i in 0..2 {
-            assert_eq!(f.hdu(i).unwrap().hdu_number(), i);
+            f.change_hdu(i).unwrap();
+            assert_eq!(f.hdu_number(), i);
         }
-        match f.hdu(2) {
+
+        match f.change_hdu(2) {
             Err(e) => assert_eq!(e.status, 107),
             _ => panic!("Error checking for failure"),
         }
 
-        let tbl_hdu = f.hdu("TESTEXT").unwrap();
-        assert_eq!(tbl_hdu.hdu_number(), 1);
+        f.change_hdu("TESTEXT").unwrap();
+        assert_eq!(f.hdu_number(), 1);
     }
 
     #[test]
     fn reading_header_keys() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        match f.hdu(0).unwrap().read_key::<i64>("INTTEST") {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        match f.read_key::<i64>("INTTEST") {
             Ok(value) => assert_eq!(value, 42),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
-        match f.hdu(0).unwrap().read_key::<f64>("DBLTEST") {
+        match f.read_key::<f64>("DBLTEST") {
             Ok(value) => assert_eq!(value, 0.09375),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
-        match f.hdu(0).unwrap().read_key::<String>("TEST") {
+        match f.read_key::<String>("TEST") {
             Ok(value) => assert_eq!(value, "value"),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
