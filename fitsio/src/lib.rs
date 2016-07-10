@@ -159,6 +159,7 @@ pub enum HduInfo {
     },
     TableInfo {
         column_names: Vec<String>,
+        column_types: Vec<sys::DataType>,
         num_rows: usize,
     },
 }
@@ -167,6 +168,22 @@ pub struct FitsFile {
     fptr: *mut sys::fitsfile,
     pub filename: String,
     hdu_info: HduInfo,
+}
+
+fn typechar_to_data_type<T: Into<String>>(typechar: T) -> sys::DataType {
+    match typechar.into().as_str() {
+        "X" => sys::DataType::TBIT,
+        "B" => sys::DataType::TBYTE,
+        "L" => sys::DataType::TLOGICAL,
+        "A" => sys::DataType::TSTRING,
+        "I" => sys::DataType::TSHORT,
+        "J" => sys::DataType::TLONG,
+        "E" => sys::DataType::TFLOAT,
+        "D" => sys::DataType::TDOUBLE,
+        "C" => sys::DataType::TCOMPLEX,
+        "M" => sys::DataType::TDBLCOMPLEX,
+        other => panic!("Unhandled case: {}", other),
+    }
 }
 
 unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
@@ -194,25 +211,32 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
             let mut num_cols = 0;
             sys::ffgncl(fptr, &mut num_cols, &mut status);
             let mut column_names = Vec::with_capacity(num_cols as usize);
+            let mut column_types = Vec::with_capacity(num_cols as usize);
 
             for i in 0..num_cols {
-                let mut buffer: Vec<libc::c_char> = vec![0; 71];
+                let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
+                let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
                 sys::ffgbcl(fptr,
-                       (i + 1) as i32,
-                       buffer.as_mut_ptr(),
-                       ptr::null_mut(),
-                       ptr::null_mut(),
-                       ptr::null_mut(),
-                       ptr::null_mut(),
-                       ptr::null_mut(),
-                       ptr::null_mut(),
-                       ptr::null_mut(),
-                       &mut status);
-                column_names.push(stringutils::buf_to_string(&buffer).unwrap());
+                            (i + 1) as i32,
+                            name_buffer.as_mut_ptr(),
+                            ptr::null_mut(),
+                            type_buffer.as_mut_ptr(),
+                            ptr::null_mut(),
+                            ptr::null_mut(),
+                            ptr::null_mut(),
+                            ptr::null_mut(),
+                            ptr::null_mut(),
+                            &mut status);
+                column_names.push(stringutils::buf_to_string(&name_buffer).unwrap());
+                column_types.push(
+                    typechar_to_data_type(
+                        stringutils::buf_to_string(&type_buffer).unwrap()
+                        ));
             }
 
             HduInfo::TableInfo {
                 column_names: column_names,
+                column_types: column_types,
                 num_rows: num_rows as usize,
             }
         }
@@ -329,6 +353,8 @@ impl Drop for FitsFile {
 mod test {
     extern crate tempdir;
     use super::*;
+    use sys;
+    use super::typechar_to_data_type;
 
     #[test]
     fn opening_an_existing_file() {
@@ -400,6 +426,41 @@ mod test {
                        column_names: vec!["intcol".to_string(),
                                           "floatcol".to_string(),
                                           "doublecol".to_string()],
+                       column_types: vec![sys::DataType::TLONG,
+                                          sys::DataType::TFLOAT,
+                                          sys::DataType::TDOUBLE],
                    });
+    }
+
+    #[test]
+    fn typechar_conversions() {
+        let input = vec![
+            "X",
+            "B",
+            "L",
+            "A",
+            "I",
+            "J",
+            "E",
+            "D",
+            "C",
+            "M",
+        ];
+        let expected = vec![
+            sys::DataType::TBIT,
+            sys::DataType::TBYTE,
+            sys::DataType::TLOGICAL,
+            sys::DataType::TSTRING,
+            sys::DataType::TSHORT,
+            sys::DataType::TLONG,
+            sys::DataType::TFLOAT,
+            sys::DataType::TDOUBLE,
+            sys::DataType::TCOMPLEX,
+            sys::DataType::TDBLCOMPLEX,
+        ];
+
+        input.iter().zip(expected).map(|(&i, e)| {
+            assert_eq!(typechar_to_data_type(i), e);
+        }).collect::<Vec<_>>();
     }
 }
