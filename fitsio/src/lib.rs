@@ -154,6 +154,7 @@ impl ReadsKey for String {
 pub struct FitsFile {
     fptr: *mut sys::fitsfile,
     pub filename: String,
+    hdu_number: usize,
 }
 
 impl FitsFile {
@@ -173,6 +174,7 @@ impl FitsFile {
             0 => {
                 Ok(FitsFile {
                     fptr: fptr,
+                    hdu_number: 0,
                     filename: filename.to_string(),
                 })
             }
@@ -201,6 +203,7 @@ impl FitsFile {
             0 => {
                 Ok(FitsFile {
                     fptr: fptr,
+                    hdu_number: 0,
                     filename: path.to_string(),
                 })
             }
@@ -213,14 +216,10 @@ impl FitsFile {
         }
     }
 
-    pub fn hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<FitsHdu> {
+    pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<&Self> {
         try!(hdu_description.change_hdu(self));
-        let hdu_number = self.hdu_number();
-
-        Ok(FitsHdu {
-            fits_file: self,
-            hdunum: hdu_number,
-        })
+        self.hdu_number = self.hdu_number();
+        Ok(self)
     }
 
     fn hdu_number(&self) -> usize {
@@ -230,6 +229,10 @@ impl FitsFile {
         }
         (hdu_num - 1) as usize
     }
+
+    pub fn read_key<T: ReadsKey>(&self, name: &str) -> Result<T> {
+        T::read_key(self, name)
+    }
 }
 
 impl Drop for FitsFile {
@@ -238,17 +241,6 @@ impl Drop for FitsFile {
         unsafe {
             sys::ffclos(self.fptr, &mut status);
         }
-    }
-}
-
-pub struct FitsHdu<'a> {
-    fits_file: &'a FitsFile,
-    hdunum: usize,
-}
-
-impl<'a> FitsHdu<'a> {
-    pub fn read_key<T: ReadsKey>(&self, name: &str) -> Result<T> {
-        T::read_key(self.fits_file, name)
     }
 }
 
@@ -280,9 +272,9 @@ mod test {
 
     #[test]
     fn fetching_a_hdu() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         for i in 0..2 {
-            assert_eq!(f.hdu(i).unwrap().hdunum, i);
+            assert_eq!(f.hdu(i).unwrap().hdu_number, i);
         }
         match f.hdu(2) {
             Err(e) => assert_eq!(e.status, 107),
@@ -290,12 +282,12 @@ mod test {
         }
 
         let tbl_hdu = f.hdu("TESTEXT").unwrap();
-        assert_eq!(tbl_hdu.hdunum, 1);
+        assert_eq!(tbl_hdu.hdu_number, 1);
     }
 
     #[test]
     fn reading_header_keys() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.hdu(0).unwrap().read_key::<i64>("INTTEST") {
             Ok(value) => assert_eq!(value, 42),
             Err(e) => panic!("Error reading key: {:?}", e),
