@@ -151,10 +151,83 @@ impl ReadsKey for String {
     }
 }
 
+#[derive(PartialEq, Eq, Debug)]
+pub enum HduInfo {
+    ImageInfo {
+        dimensions: usize,
+        shape: Vec<usize>,
+    },
+    TableInfo {
+        column_names: Vec<String>,
+        num_rows: usize,
+    },
+}
+
 pub struct FitsFile {
     fptr: *mut sys::fitsfile,
     pub filename: String,
-    hdu_number: usize,
+    hdu_info: HduInfo,
+}
+
+unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
+    let mut status = 0;
+    let mut hdu_type = 0;
+
+    sys::ffghdt(fptr, &mut hdu_type, &mut status);
+    let hdu_type = match hdu_type {
+        0 => {
+            let mut dimensions = 0;
+            sys::ffgidm(fptr, &mut dimensions, &mut status);
+
+            let mut shape = vec![0; dimensions as usize];
+            sys::ffgisz(fptr, dimensions, shape.as_mut_ptr(), &mut status);
+
+            HduInfo::ImageInfo {
+                dimensions: dimensions as usize,
+                shape: shape.iter().map(|v| *v as usize).collect(),
+            }
+        }
+        1 | 2 => {
+            let mut num_rows = 0;
+            sys::ffgnrw(fptr, &mut num_rows, &mut status);
+
+            let mut num_cols = 0;
+            sys::ffgncl(fptr, &mut num_cols, &mut status);
+            let mut column_names = Vec::with_capacity(num_cols as usize);
+
+            for i in 0..num_cols {
+                let mut buffer: Vec<libc::c_char> = vec![0; 71];
+                sys::ffgbcl(fptr,
+                       (i + 1) as i32,
+                       buffer.as_mut_ptr(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       ptr::null_mut(),
+                       &mut status);
+                column_names.push(stringutils::buf_to_string(&buffer).unwrap());
+            }
+
+            HduInfo::TableInfo {
+                column_names: column_names,
+                num_rows: num_rows as usize,
+            }
+        }
+        _ => panic!("Invalid hdu type found"),
+    };
+
+    match status {
+        0 => Ok(hdu_type),
+        _ => {
+            Err(FitsError {
+                status: status,
+                message: stringutils::status_to_string(status).unwrap(),
+            })
+        }
+    }
 }
 
 impl FitsFile {
@@ -172,9 +245,10 @@ impl FitsFile {
 
         match status {
             0 => {
+                let hdu_info = unsafe { fetch_hdu_info(fptr).unwrap() };
                 Ok(FitsFile {
                     fptr: fptr,
-                    hdu_number: 0,
+                    hdu_info: hdu_info,
                     filename: filename.to_string(),
                 })
             }
@@ -203,7 +277,10 @@ impl FitsFile {
             0 => {
                 Ok(FitsFile {
                     fptr: fptr,
-                    hdu_number: 0,
+                    hdu_info: HduInfo::ImageInfo {
+                        dimensions: 0,
+                        shape: Vec::new(),
+                    },
                     filename: path.to_string(),
                 })
             }
@@ -218,7 +295,7 @@ impl FitsFile {
 
     pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<&Self> {
         try!(hdu_description.change_hdu(self));
-        self.hdu_number = self.hdu_number();
+        self.hdu_info = self.fetch_hdu_info().unwrap();
         Ok(self)
     }
 
@@ -232,6 +309,10 @@ impl FitsFile {
 
     pub fn read_key<T: ReadsKey>(&self, name: &str) -> Result<T> {
         T::read_key(self, name)
+    }
+
+    fn fetch_hdu_info(&self) -> Result<HduInfo> {
+        unsafe { fetch_hdu_info(self.fptr) }
     }
 }
 
@@ -247,7 +328,7 @@ impl Drop for FitsFile {
 #[cfg(test)]
 mod test {
     extern crate tempdir;
-    use super::FitsFile;
+    use super::*;
 
     #[test]
     fn opening_an_existing_file() {
@@ -274,7 +355,7 @@ mod test {
     fn fetching_a_hdu() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         for i in 0..2 {
-            assert_eq!(f.hdu(i).unwrap().hdu_number, i);
+            assert_eq!(f.hdu(i).unwrap().hdu_number(), i);
         }
         match f.hdu(2) {
             Err(e) => assert_eq!(e.status, 107),
@@ -282,7 +363,7 @@ mod test {
         }
 
         let tbl_hdu = f.hdu("TESTEXT").unwrap();
-        assert_eq!(tbl_hdu.hdu_number, 1);
+        assert_eq!(tbl_hdu.hdu_number(), 1);
     }
 
     #[test]
@@ -302,5 +383,23 @@ mod test {
             Ok(value) => assert_eq!(value, "value"),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
+    }
+
+    #[test]
+    fn reading_hdu_info() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+
+        assert_eq!(f.hdu_info,
+                   HduInfo::ImageInfo {
+                       dimensions: 2,
+                       shape: vec![100, 100],
+                   });
+        assert_eq!(f.hdu(1).unwrap().hdu_info,
+                   HduInfo::TableInfo {
+                       num_rows: 50,
+                       column_names: vec!["intcol".to_string(),
+                                          "floatcol".to_string(),
+                                          "doublecol".to_string()],
+                   });
     }
 }
