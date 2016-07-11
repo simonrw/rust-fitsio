@@ -44,7 +44,7 @@ pub enum ImageType {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum HduType {
     IMAGE_HDU = 0,
     ASCII_TBL = 1,
@@ -53,14 +53,14 @@ pub enum HduType {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum FileOpenMode {
     READONLY = 0,
     READWRITE = 1,
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum CaseSensitivity {
     CASEINSEN = 0,
     CASESEN = 1,
