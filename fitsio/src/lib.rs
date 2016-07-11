@@ -313,6 +313,27 @@ impl FitsFile {
         hdu_description.change_hdu(self)
     }
 
+    pub fn hdu_type(&self) -> Result<sys::HduType> {
+        let mut status = 0;
+        let mut hdu_type = 0;
+        unsafe {
+            sys::ffghdt(self.fptr, &mut hdu_type, &mut status);
+        }
+        match status {
+            0 => {
+                match hdu_type {
+                    0 => Ok(sys::HduType::IMAGE_HDU),
+                    2 => Ok(sys::HduType::BINARY_TBL),
+                    _ => unimplemented!(),
+                }
+            },
+            _ => Err(FitsError {
+                status: status,
+                message: stringutils::status_to_string(status).unwrap(),
+            }),
+        }
+    }
+
     fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
         unsafe {
@@ -436,5 +457,14 @@ mod test {
             Ok(value) => assert_eq!(value, "value"),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
+    }
+
+    #[test]
+    fn getting_hdu_type() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        assert_eq!(f.hdu_type().unwrap(), sys::HduType::IMAGE_HDU);
+
+        f.change_hdu("TESTEXT").unwrap();
+        assert_eq!(f.hdu_type().unwrap(), sys::HduType::BINARY_TBL);
     }
 }
