@@ -190,56 +190,55 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
     let mut hdu_type = 0;
 
     sys::ffghdt(fptr, &mut hdu_type, &mut status);
-    let hdu_type =
-        match hdu_type {
-            0 => {
-                let mut dimensions = 0;
-                sys::ffgidm(fptr, &mut dimensions, &mut status);
+    let hdu_type = match hdu_type {
+        0 => {
+            let mut dimensions = 0;
+            sys::ffgidm(fptr, &mut dimensions, &mut status);
 
-                let mut shape = vec![0; dimensions as usize];
-                sys::ffgisz(fptr, dimensions, shape.as_mut_ptr(), &mut status);
+            let mut shape = vec![0; dimensions as usize];
+            sys::ffgisz(fptr, dimensions, shape.as_mut_ptr(), &mut status);
 
-                HduInfo::ImageInfo {
-                    dimensions: dimensions as usize,
-                    shape: shape.iter().map(|v| *v as usize).collect(),
-                }
+            HduInfo::ImageInfo {
+                dimensions: dimensions as usize,
+                shape: shape.iter().map(|v| *v as usize).collect(),
             }
-            1 | 2 => {
-                let mut num_rows = 0;
-                sys::ffgnrw(fptr, &mut num_rows, &mut status);
+        }
+        1 | 2 => {
+            let mut num_rows = 0;
+            sys::ffgnrw(fptr, &mut num_rows, &mut status);
 
-                let mut num_cols = 0;
-                sys::ffgncl(fptr, &mut num_cols, &mut status);
-                let mut column_names = Vec::with_capacity(num_cols as usize);
-                let mut column_types = Vec::with_capacity(num_cols as usize);
+            let mut num_cols = 0;
+            sys::ffgncl(fptr, &mut num_cols, &mut status);
+            let mut column_names = Vec::with_capacity(num_cols as usize);
+            let mut column_types = Vec::with_capacity(num_cols as usize);
 
-                for i in 0..num_cols {
-                    let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
-                    let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
-                    sys::ffgbcl(fptr,
-                                (i + 1) as i32,
-                                name_buffer.as_mut_ptr(),
-                                ptr::null_mut(),
-                                type_buffer.as_mut_ptr(),
-                                ptr::null_mut(),
-                                ptr::null_mut(),
-                                ptr::null_mut(),
-                                ptr::null_mut(),
-                                ptr::null_mut(),
-                                &mut status);
-                    column_names.push(stringutils::buf_to_string(&name_buffer).unwrap());
-                    column_types.push(typechar_to_data_type(stringutils::buf_to_string(&type_buffer)
+            for i in 0..num_cols {
+                let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
+                let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
+                sys::ffgbcl(fptr,
+                            (i + 1) as i32,
+                            name_buffer.as_mut_ptr(),
+                            ptr::null_mut(),
+                            type_buffer.as_mut_ptr(),
+                            ptr::null_mut(),
+                            ptr::null_mut(),
+                            ptr::null_mut(),
+                            ptr::null_mut(),
+                            ptr::null_mut(),
+                            &mut status);
+                column_names.push(stringutils::buf_to_string(&name_buffer).unwrap());
+                column_types.push(typechar_to_data_type(stringutils::buf_to_string(&type_buffer)
                             .unwrap()));
-                }
-
-                HduInfo::TableInfo {
-                    column_names: column_names,
-                    column_types: column_types,
-                    num_rows: num_rows as usize,
-                }
             }
-            _ => panic!("Invalid hdu type found"),
-        };
+
+            HduInfo::TableInfo {
+                column_names: column_names,
+                column_types: column_types,
+                num_rows: num_rows as usize,
+            }
+        }
+        _ => panic!("Invalid hdu type found"),
+    };
 
     match status {
         0 => Ok(hdu_type),
@@ -295,12 +294,30 @@ impl FitsFile {
 
         match status {
             0 => {
-                Ok(FitsFile {
+                let f = FitsFile {
                     fptr: fptr,
                     filename: path.to_string(),
-                })
+                };
+                f.add_empty_primary().unwrap();
+                Ok(f)
             }
             status => {
+                Err(FitsError {
+                    status: status,
+                    message: stringutils::status_to_string(status).unwrap(),
+                })
+            }
+        }
+    }
+
+    fn add_empty_primary(&self) -> Result<()> {
+        let mut status = 0;
+        unsafe {
+            sys::ffphps(self.fptr, 8, 0, ptr::null_mut(), &mut status);
+        }
+        match status {
+            0 => Ok(()),
+            _ => {
                 Err(FitsError {
                     status: status,
                     message: stringutils::status_to_string(status).unwrap(),
@@ -326,11 +343,13 @@ impl FitsFile {
                     2 => Ok(sys::HduType::BINARY_TBL),
                     _ => unimplemented!(),
                 }
-            },
-            _ => Err(FitsError {
-                status: status,
-                message: stringutils::status_to_string(status).unwrap(),
-            }),
+            }
+            _ => {
+                Err(FitsError {
+                    status: status,
+                    message: stringutils::status_to_string(status).unwrap(),
+                })
+            }
         }
     }
 
@@ -417,10 +436,15 @@ mod test {
         let filename = tdir_path.join("test.fits");
         assert!(!filename.exists());
 
-        match FitsFile::create(filename.to_str().unwrap()) {
-            Ok(_) => assert!(filename.exists()),
-            Err(e) => panic!("Error: {:?}", e),
-        }
+        FitsFile::create(filename.to_str().unwrap())
+            .map(|f| {
+                assert!(filename.exists());
+
+                // Ensure the empty primary has been written
+                let naxis: i64 = f.read_key("NAXIS").unwrap();
+                assert_eq!(naxis, 0);
+            })
+            .unwrap();
     }
 
     #[test]
