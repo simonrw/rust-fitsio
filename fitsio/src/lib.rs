@@ -80,7 +80,7 @@ impl<'a> DescribesHdu for &'a str {
 /// * f64
 /// * String
 pub trait ReadsKey {
-    fn read_key(f: &FitsFile, name: &str) -> Result<Self> where Self: std::marker::Sized;
+    fn read_key(f: &FitsFile, name: &str) -> Result<Self> where Self: Sized;
 }
 
 macro_rules! reads_key_impl {
@@ -150,6 +150,76 @@ impl ReadsKey for String {
 
     }
 }
+
+pub trait WritesKey {
+    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()>;
+}
+
+macro_rules! writes_key_impl_flt {
+    ($t:ty, $func:ident) => (
+        impl WritesKey for $t {
+            fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+                let c_name = ffi::CString::new(name).unwrap();
+                let mut status = 0;
+
+                unsafe {
+                    sys::$func(f.fptr,
+                                c_name.into_raw(),
+                                value,
+                                9,
+                                ptr::null_mut(),
+                                &mut status);
+                }
+                match status {
+                    0 => Ok(()),
+                    _ => Err(FitsError {
+                        status: status,
+                        message: stringutils::status_to_string(status).unwrap(),
+                    }),
+                }
+            }
+        }
+    )
+}
+
+impl WritesKey for i64 {
+    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+        let c_name = ffi::CString::new(name).unwrap();
+        let mut status = 0;
+
+        unsafe {
+            sys::ffpkyj(f.fptr,
+                        c_name.into_raw(),
+                        value,
+                        ptr::null_mut(),
+                        &mut status);
+        }
+        match status {
+            0 => Ok(()),
+            _ => Err(FitsError {
+                status: status,
+                message: stringutils::status_to_string(status).unwrap(),
+            }),
+        }
+    }
+}
+
+writes_key_impl_flt!(f32, ffpkye);
+writes_key_impl_flt!(f64, ffpkyd);
+
+// TODO: finish this
+// impl WritesKey for String {
+//     fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+//         let c_name = ffi::CString::new(name).unwrap();
+//         let mut status = 0;
+//         let mut buf: [u8; 72] = [0; 72];
+        
+
+
+
+//         Ok(())
+//     }
+// }
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum HduInfo {
@@ -365,6 +435,10 @@ impl FitsFile {
         T::read_key(self, name)
     }
 
+    pub fn write_key<T: WritesKey>(&self, name: &str, value: T) -> Result<()> {
+        T::write_key(self, name, value)
+    }
+
     fn fetch_hdu_info(&self) -> Result<HduInfo> {
         unsafe { fetch_hdu_info(self.fptr) }
     }
@@ -490,5 +564,23 @@ mod test {
 
         f.change_hdu("TESTEXT").unwrap();
         assert_eq!(f.hdu_type().unwrap(), sys::HduType::BINARY_TBL);
+    }
+
+    #[test]
+    fn writing_header_keywords() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        // Closure ensures file is closed properly
+        {
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            f.write_key("FOO", 1i64).unwrap();
+        }
+
+        FitsFile::open(filename.to_str().unwrap()).map(|f| {
+            let value = f.read_key::<i64>("FOO").unwrap();
+            assert_eq!(value, 1);
+        }).unwrap();
     }
 }
