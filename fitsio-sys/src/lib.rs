@@ -7,6 +7,43 @@
 //! This code will not be directly documented, and so users should refer to the [`fitsio` C
 //! documentation][3] for usage.
 //!
+//! ## Note about function names
+//!
+//! Unfortunately we must use fits short names throughout. The C-api exposes long names for
+//! functions which are more descriptive, for example `fits_open_file` instead of `ffopen`, but the
+//! symbols available in the library have only short names, and the long names are merely
+//! preprocessor definitions.
+//!
+//! ## Examples
+//!
+//! ```rust
+//! # extern crate fitsio_sys;
+//! use std::ptr;
+//! use std::ffi;
+//! # use fitsio_sys::{ffinit, ffphps, ffclos};
+//!
+//! # fn main() {
+//! let filename = ffi::CString::new("!/tmp/test.fits").unwrap();
+//! let mut fptr = ptr::null_mut();
+//! let mut status = 0;
+//!
+//! unsafe {
+//!     // Create a new file, clobbering any pre-existing file
+//!     ffinit(&mut fptr as *mut *mut _,
+//!         filename.as_ptr(),
+//!         &mut status);
+//!
+//!     // Add an empty primary HDU
+//!     ffphps(fptr, 8, 0, ptr::null_mut(), &mut status);
+//!
+//!     // Finally close the file
+//!     ffclos(fptr, &mut status);
+//! }
+//!
+//! assert_eq!(status, 0);
+//! # }
+//! ```
+//!
 //! [1]: https://github.com/crabtw/rust-bindgen
 //! [2]: https://crates.io/crates/fitsio
 //! [3]: http://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/cfitsio.html
@@ -4646,9 +4683,9 @@ mod test {
     // use fitsio::FitsFile;
     //
     // let mut f = FitsFile::open("../testdata/full_example.fits");
-// let mut primary_hdu = f.primary_hdu();
-// let header = primary_hdu.header();
-// let exposure_time: f32 = header["exposure"];
-// }
-//
+    // let mut primary_hdu = f.primary_hdu();
+    // let header = primary_hdu.header();
+    // let exposure_time: f32 = header["exposure"];
+    // }
+    //
 }
