@@ -196,10 +196,12 @@ impl WritesKey for i64 {
         }
         match status {
             0 => Ok(()),
-            _ => Err(FitsError {
-                status: status,
-                message: stringutils::status_to_string(status).unwrap(),
-            }),
+            _ => {
+                Err(FitsError {
+                    status: status,
+                    message: stringutils::status_to_string(status).unwrap(),
+                })
+            }
         }
     }
 }
@@ -207,19 +209,30 @@ impl WritesKey for i64 {
 writes_key_impl_flt!(f32, ffpkye);
 writes_key_impl_flt!(f64, ffpkyd);
 
-// TODO: finish this
-// impl WritesKey for String {
-//     fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-//         let c_name = ffi::CString::new(name).unwrap();
-//         let mut status = 0;
-//         let mut buf: [u8; 72] = [0; 72];
-        
+impl WritesKey for String {
+    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+        let c_name = ffi::CString::new(name).unwrap();
+        let mut status = 0;
 
+        unsafe {
+            sys::ffpkys(f.fptr,
+                        c_name.into_raw(),
+                        ffi::CString::new(value).unwrap().into_raw(),
+                        ptr::null_mut(),
+                        &mut status);
+        }
 
-
-//         Ok(())
-//     }
-// }
+        match status {
+            0 => Ok(()),
+            _ => {
+                Err(FitsError {
+                    status: status,
+                    message: stringutils::status_to_string(status).unwrap(),
+                })
+            }
+        }
+    }
+}
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum HduInfo {
@@ -576,11 +589,14 @@ mod test {
         {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             f.write_key("FOO", 1i64).unwrap();
+            f.write_key("BAR", "baz".to_string()).unwrap();
         }
 
-        FitsFile::open(filename.to_str().unwrap()).map(|f| {
-            let value = f.read_key::<i64>("FOO").unwrap();
-            assert_eq!(value, 1);
-        }).unwrap();
+        FitsFile::open(filename.to_str().unwrap())
+            .map(|f| {
+                assert_eq!(f.read_key::<i64>("FOO").unwrap(), 1);
+                assert_eq!(f.read_key::<String>("BAR").unwrap(), "baz".to_string());
+            })
+            .unwrap();
     }
 }
