@@ -47,8 +47,46 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#2-4641' title='goto source code'>[src]</a></span></h1>
-<h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+               </span><a id='src-0' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#1-4691' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>This package was automatically generated with <a href="https://github.com/crabtw/rust-bindgen"><code>rust-bindgen</code></a> and as such was not
+user-generated.</p>
+
+<p>The functions contained are expected to be used with <a href="https://crates.io/crates/fitsio"><code>fitsio</code></a>, a high level API wrapper
+around the low level direct C-bindings, though the bindings are complete enough to be usable.</p>
+
+<p>This code will not be directly documented, and so users should refer to the <a href="http://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/cfitsio.html"><code>fitsio</code> C
+documentation</a> for usage.</p>
+
+<h2 id='note-about-function-names' class='section-header'><a href='#note-about-function-names'>Note about function names</a></h2>
+<p>Unfortunately we must use fits short names throughout. The C-api exposes long names for
+functions which are more descriptive, for example <code>fits_open_file</code> instead of <code>ffopen</code>, but the
+symbols available in the library have only short names, and the long names are merely
+preprocessor definitions.</p>
+
+<h2 id='examples' class='section-header'><a href='#examples'>Examples</a></h2>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ptr</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>;
+
+<span class='kw'>let</span> <span class='ident'>filename</span> <span class='op'>=</span> <span class='ident'>ffi</span>::<span class='ident'>CString</span>::<span class='ident'>new</span>(<span class='string'>&quot;!/tmp/test.fits&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>fptr</span> <span class='op'>=</span> <span class='ident'>ptr</span>::<span class='ident'>null_mut</span>();
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>status</span> <span class='op'>=</span> <span class='number'>0</span>;
+
+<span class='kw'>unsafe</span> {
+    <span class='comment'>// Create a new file, clobbering any pre-existing file</span>
+    <span class='ident'>ffinit</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fptr</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='kw-2'>mut</span> _,
+        <span class='ident'>filename</span>.<span class='ident'>as_ptr</span>(),
+        <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>status</span>);
+
+    <span class='comment'>// Add an empty primary HDU</span>
+    <span class='ident'>ffphps</span>(<span class='ident'>fptr</span>, <span class='number'>8</span>, <span class='number'>0</span>, <span class='ident'>ptr</span>::<span class='ident'>null_mut</span>(), <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>status</span>);
+
+    <span class='comment'>// Finally close the file</span>
+    <span class='ident'>ffclos</span>(<span class='ident'>fptr</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>status</span>);
+}
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>status</span>, <span class='number'>0</span>);</pre>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                        <tr class=' module-item'>
                            <td><a class='struct' href='struct.FITSfile.html'
