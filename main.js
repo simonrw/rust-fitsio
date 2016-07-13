@@ -125,7 +125,6 @@
             break;
 
         case "+":
-            ev.preventDefault();
             toggleAllDocs();
             break;
 

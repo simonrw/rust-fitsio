@@ -4730,7 +4730,7 @@
 }
 
 <span class='attribute'>#[<span class='ident'>repr</span>(<span class='ident'>C</span>)]</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>HduType</span> {
     <span class='ident'>IMAGE_HDU</span> <span class='op'>=</span> <span class='number'>0</span>,
     <span class='ident'>ASCII_TBL</span> <span class='op'>=</span> <span class='number'>1</span>,
@@ -4739,14 +4739,14 @@
 }
 
 <span class='attribute'>#[<span class='ident'>repr</span>(<span class='ident'>C</span>)]</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>FileOpenMode</span> {
     <span class='ident'>READONLY</span> <span class='op'>=</span> <span class='number'>0</span>,
     <span class='ident'>READWRITE</span> <span class='op'>=</span> <span class='number'>1</span>,
 }
 
 <span class='attribute'>#[<span class='ident'>repr</span>(<span class='ident'>C</span>)]</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>CaseSensitivity</span> {
     <span class='ident'>CASEINSEN</span> <span class='op'>=</span> <span class='number'>0</span>,
     <span class='ident'>CASESEN</span> <span class='op'>=</span> <span class='number'>1</span>,

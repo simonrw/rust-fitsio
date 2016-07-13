@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `HduInfo` struct in crate `fitsio`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, HduInfo">
+    <meta name="description" content="API documentation for the Rust `WritesKey` trait in crate `fitsio`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, WritesKey">
 
-    <title>fitsio::HduInfo - Rust</title>
+    <title>fitsio::WritesKey - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
@@ -28,7 +28,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'><a href='index.html'>fitsio</a></p><script>window.sidebarCurrent = {name: 'HduInfo', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        <p class='location'><a href='index.html'>fitsio</a></p><script>window.sidebarCurrent = {name: 'WritesKey', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
     <nav class="sub">
@@ -42,16 +42,26 @@
         </form>
     </nav>
 
-    <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>fitsio</a>::<wbr><a class='struct' href=''>HduInfo</a></span><span class='out-of-band'><span id='render-detail'>
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>fitsio</a>::<wbr><a class='trait' href=''>WritesKey</a></span><span class='out-of-band'><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-326' class='srclink' href='../src/fitsio/fitsio/src/lib.rs.html#560-566' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct HduInfo {
-    // some fields omitted
-}</pre><div class='docblock'><p>Struct representing information about the current HDU</p>
-</div></section>
+               </span><a id='src-123' class='srclink' href='../src/fitsio/fitsio/src/lib.rs.html#154-156' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait WritesKey {
+    fn <a href='#tymethod.write_key' class='fnname'>write_key</a>(f: &amp;<a class='struct' href='../fitsio/struct.FitsFile.html' title='fitsio::FitsFile'>FitsFile</a>, name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, value: Self) -&gt; <a class='type' href='../fitsio/type.Result.html' title='fitsio::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+}</pre>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.write_key' class='method stab '><code>fn <a href='#tymethod.write_key' class='fnname'>write_key</a>(f: &amp;<a class='struct' href='../fitsio/struct.FitsFile.html' title='fitsio::FitsFile'>FitsFile</a>, name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, value: Self) -&gt; <a class='type' href='../fitsio/type.Result.html' title='fitsio::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl WritesKey for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i64.html'>i64</a></code></li>
+<li><code>impl WritesKey for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f32.html'>f32</a></code></li>
+<li><code>impl WritesKey for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f64.html'>f64</a></code></li>
+</ul><script type="text/javascript" async
+                         src="../implementors/fitsio/trait.WritesKey.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

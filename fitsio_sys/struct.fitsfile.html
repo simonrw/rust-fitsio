@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-158' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#96-176' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-185' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#96-176' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct FITSfile {
     pub filehandle: c_int,
     pub driver: c_int,
@@ -128,94 +128,95 @@
     pub bufrecnum: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_long<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 40usize]</a>,
     pub dirty: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_int<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 40usize]</a>,
     pub ageindex: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_int<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 40usize]</a>,
-}</pre><h2 class='fields'>Fields</h2><span id='structfield.filehandle' class='structfield'><code>filehandle: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.driver' class='structfield'><code>driver: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.open_count' class='structfield'><code>open_count: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.filename' class='structfield'><code>filename: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a>c_char</code>
-                           </span><span class='stab '></span><span id='structfield.validcode' class='structfield'><code>validcode: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.only_one' class='structfield'><code>only_one: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.filesize' class='structfield'><code>filesize: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.logfilesize' class='structfield'><code>logfilesize: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.lasthdu' class='structfield'><code>lasthdu: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.bytepos' class='structfield'><code>bytepos: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.io_pos' class='structfield'><code>io_pos: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.curbuf' class='structfield'><code>curbuf: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.curhdu' class='structfield'><code>curhdu: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.hdutype' class='structfield'><code>hdutype: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.writemode' class='structfield'><code>writemode: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.maxhdu' class='structfield'><code>maxhdu: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.MAXHDU' class='structfield'><code>MAXHDU: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.headstart' class='structfield'><code>headstart: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.headend' class='structfield'><code>headend: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.ENDpos' class='structfield'><code>ENDpos: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.nextkey' class='structfield'><code>nextkey: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.datastart' class='structfield'><code>datastart: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.imgdim' class='structfield'><code>imgdim: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.imgnaxis' class='structfield'><code>imgnaxis: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a><a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 99usize]</a></code>
-                           </span><span class='stab '></span><span id='structfield.tfield' class='structfield'><code>tfield: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.startcol' class='structfield'><code>startcol: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.origrows' class='structfield'><code>origrows: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.numrows' class='structfield'><code>numrows: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.rowlength' class='structfield'><code>rowlength: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.tableptr' class='structfield'><code>tableptr: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='struct' href='../fitsio_sys/struct.tcolumn.html' title='fitsio_sys::tcolumn'>tcolumn</a></code>
-                           </span><span class='stab '></span><span id='structfield.heapstart' class='structfield'><code>heapstart: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.heapsize' class='structfield'><code>heapsize: <a class='type' href='../fitsio_sys/type.LONGLONG.html' title='fitsio_sys::LONGLONG'>LONGLONG</a></code>
-                           </span><span class='stab '></span><span id='structfield.request_compress_type' class='structfield'><code>request_compress_type: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.request_tilesize' class='structfield'><code>request_tilesize: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_long<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 6usize]</a></code>
-                           </span><span class='stab '></span><span id='structfield.request_quantize_level' class='structfield'><code>request_quantize_level: c_float</code>
-                           </span><span class='stab '></span><span id='structfield.request_quantize_method' class='structfield'><code>request_quantize_method: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.request_dither_seed' class='structfield'><code>request_dither_seed: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.request_lossy_int_compress' class='structfield'><code>request_lossy_int_compress: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.request_huge_hdu' class='structfield'><code>request_huge_hdu: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.request_hcomp_scale' class='structfield'><code>request_hcomp_scale: c_float</code>
-                           </span><span class='stab '></span><span id='structfield.request_hcomp_smooth' class='structfield'><code>request_hcomp_smooth: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.compress_type' class='structfield'><code>compress_type: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.tilesize' class='structfield'><code>tilesize: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_long<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 6usize]</a></code>
-                           </span><span class='stab '></span><span id='structfield.quantize_level' class='structfield'><code>quantize_level: c_float</code>
-                           </span><span class='stab '></span><span id='structfield.quantize_method' class='structfield'><code>quantize_method: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.dither_seed' class='structfield'><code>dither_seed: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.compressimg' class='structfield'><code>compressimg: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.zcmptype' class='structfield'><code>zcmptype: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_char<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 12usize]</a></code>
-                           </span><span class='stab '></span><span id='structfield.zbitpix' class='structfield'><code>zbitpix: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.zndim' class='structfield'><code>zndim: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.znaxis' class='structfield'><code>znaxis: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_long<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 6usize]</a></code>
-                           </span><span class='stab '></span><span id='structfield.maxtilelen' class='structfield'><code>maxtilelen: c_long</code>
-                           </span><span class='stab '></span><span id='structfield.maxelem' class='structfield'><code>maxelem: c_long</code>
-                           </span><span class='stab '></span><span id='structfield.cn_compressed' class='structfield'><code>cn_compressed: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.cn_uncompressed' class='structfield'><code>cn_uncompressed: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.cn_gzip_data' class='structfield'><code>cn_gzip_data: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.cn_zscale' class='structfield'><code>cn_zscale: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.cn_zzero' class='structfield'><code>cn_zzero: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.cn_zblank' class='structfield'><code>cn_zblank: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.zscale' class='structfield'><code>zscale: c_double</code>
-                           </span><span class='stab '></span><span id='structfield.zzero' class='structfield'><code>zzero: c_double</code>
-                           </span><span class='stab '></span><span id='structfield.cn_bscale' class='structfield'><code>cn_bscale: c_double</code>
-                           </span><span class='stab '></span><span id='structfield.cn_bzero' class='structfield'><code>cn_bzero: c_double</code>
-                           </span><span class='stab '></span><span id='structfield.cn_actual_bzero' class='structfield'><code>cn_actual_bzero: c_double</code>
-                           </span><span class='stab '></span><span id='structfield.zblank' class='structfield'><code>zblank: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.rice_blocksize' class='structfield'><code>rice_blocksize: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.rice_bytepix' class='structfield'><code>rice_bytepix: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.hcomp_scale' class='structfield'><code>hcomp_scale: c_float</code>
-                           </span><span class='stab '></span><span id='structfield.hcomp_smooth' class='structfield'><code>hcomp_smooth: c_int</code>
-                           </span><span class='stab '></span><span id='structfield.tilerow' class='structfield'><code>tilerow: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a>c_int</code>
-                           </span><span class='stab '></span><span id='structfield.tiledatasize' class='structfield'><code>tiledatasize: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a>c_long</code>
-                           </span><span class='stab '></span><span id='structfield.tiletype' class='structfield'><code>tiletype: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a>c_int</code>
-                           </span><span class='stab '></span><span id='structfield.tiledata' class='structfield'><code>tiledata: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a>c_void</code>
-                           </span><span class='stab '></span><span id='structfield.tilenullarray' class='structfield'><code>tilenullarray: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a>c_void</code>
-                           </span><span class='stab '></span><span id='structfield.tileanynull' class='structfield'><code>tileanynull: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a>c_int</code>
-                           </span><span class='stab '></span><span id='structfield.iobuffer' class='structfield'><code>iobuffer: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a>c_char</code>
-                           </span><span class='stab '></span><span id='structfield.bufrecnum' class='structfield'><code>bufrecnum: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_long<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 40usize]</a></code>
-                           </span><span class='stab '></span><span id='structfield.dirty' class='structfield'><code>dirty: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_int<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 40usize]</a></code>
-                           </span><span class='stab '></span><span id='structfield.ageindex' class='structfield'><code>ageindex: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a>c_int<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 40usize]</a></code>
-                           </span><span class='stab '></span><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../fitsio_sys/struct.FITSfile.html' title='fitsio_sys::FITSfile'>FITSfile</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-247' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#177-181' title='goto source code'>[src]</a></span></h3>
+}</pre><h2 class='fields'>Fields</h2>
+<table><tr class='stab '>
+                             <td id='structfield.filehandle'><code>filehandle</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.driver'><code>driver</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.open_count'><code>open_count</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.filename'><code>filename</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.validcode'><code>validcode</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.only_one'><code>only_one</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.filesize'><code>filesize</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.logfilesize'><code>logfilesize</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.lasthdu'><code>lasthdu</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.bytepos'><code>bytepos</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.io_pos'><code>io_pos</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.curbuf'><code>curbuf</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.curhdu'><code>curhdu</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.hdutype'><code>hdutype</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.writemode'><code>writemode</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.maxhdu'><code>maxhdu</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.MAXHDU'><code>MAXHDU</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.headstart'><code>headstart</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.headend'><code>headend</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.ENDpos'><code>ENDpos</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.nextkey'><code>nextkey</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.datastart'><code>datastart</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.imgdim'><code>imgdim</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.imgnaxis'><code>imgnaxis</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.tfield'><code>tfield</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.startcol'><code>startcol</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.origrows'><code>origrows</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.numrows'><code>numrows</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.rowlength'><code>rowlength</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.tableptr'><code>tableptr</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.heapstart'><code>heapstart</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.heapsize'><code>heapsize</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.request_compress_type'><code>request_compress_type</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.request_tilesize'><code>request_tilesize</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.request_quantize_level'><code>request_quantize_level</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.request_quantize_method'><code>request_quantize_method</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.request_dither_seed'><code>request_dither_seed</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.request_lossy_int_compress'><code>request_lossy_int_compress</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.request_huge_hdu'><code>request_huge_hdu</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.request_hcomp_scale'><code>request_hcomp_scale</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.request_hcomp_smooth'><code>request_hcomp_smooth</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.compress_type'><code>compress_type</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.tilesize'><code>tilesize</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.quantize_level'><code>quantize_level</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.quantize_method'><code>quantize_method</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.dither_seed'><code>dither_seed</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.compressimg'><code>compressimg</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.zcmptype'><code>zcmptype</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.zbitpix'><code>zbitpix</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.zndim'><code>zndim</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.znaxis'><code>znaxis</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.maxtilelen'><code>maxtilelen</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.maxelem'><code>maxelem</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.cn_compressed'><code>cn_compressed</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.cn_uncompressed'><code>cn_uncompressed</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.cn_gzip_data'><code>cn_gzip_data</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.cn_zscale'><code>cn_zscale</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.cn_zzero'><code>cn_zzero</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.cn_zblank'><code>cn_zblank</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.zscale'><code>zscale</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.zzero'><code>zzero</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.cn_bscale'><code>cn_bscale</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.cn_bzero'><code>cn_bzero</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.cn_actual_bzero'><code>cn_actual_bzero</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.zblank'><code>zblank</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.rice_blocksize'><code>rice_blocksize</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.rice_bytepix'><code>rice_bytepix</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.hcomp_scale'><code>hcomp_scale</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.hcomp_smooth'><code>hcomp_smooth</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.tilerow'><code>tilerow</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.tiledatasize'><code>tiledatasize</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.tiletype'><code>tiletype</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.tiledata'><code>tiledata</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.tilenullarray'><code>tilenullarray</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.tileanynull'><code>tileanynull</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.iobuffer'><code>iobuffer</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.bufrecnum'><code>bufrecnum</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.dirty'><code>dirty</code></td><td></td></tr><tr class='stab '>
+                             <td id='structfield.ageindex'><code>ageindex</code></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../fitsio_sys/struct.FITSfile.html' title='fitsio_sys::FITSfile'>FITSfile</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-274' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#177-181' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; Self</code></h4>
 <div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
 </div><h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
 <div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
-</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a> for <a class='struct' href='../fitsio_sys/struct.FITSfile.html' title='fitsio_sys::FITSfile'>FITSfile</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-250' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#182-186' title='goto source code'>[src]</a></span></h3>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a> for <a class='struct' href='../fitsio_sys/struct.FITSfile.html' title='fitsio_sys::FITSfile'>FITSfile</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-277' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#182-186' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html#tymethod.default' class='fnname'>default</a>() -&gt; Self</code></h4>
 <div class='docblock'><p>Returns the &quot;default value&quot; for a type. <a href="https://doc.rust-lang.org/nightly/core/default/trait.Default.html#tymethod.default">Read more</a></p>
-</div></div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='struct' href='../fitsio_sys/struct.FITSfile.html' title='fitsio_sys::FITSfile'>FITSfile</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-246' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#95' title='goto source code'>[src]</a></span></h3>
+</div></div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='struct' href='../fitsio_sys/struct.FITSfile.html' title='fitsio_sys::FITSfile'>FITSfile</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-273' class='srclink' href='../src/fitsio_sys/fitsio-sys/src/lib.rs.html#95' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'></div></section>
     <section id='search' class="content hidden"></section>
 
