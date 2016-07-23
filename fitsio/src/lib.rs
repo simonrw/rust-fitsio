@@ -234,6 +234,57 @@ impl WritesKey for String {
     }
 }
 
+pub trait ReadsCol {
+    fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> where Self: Sized;
+}
+
+macro_rules! reads_col_impl {
+    ($t: ty, $func: ident, $nullval: expr) => (
+        impl ReadsCol for $t {
+            fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::TableInfo { column_names, column_types: _column_types, num_rows }) => {
+                        let mut out = vec![$nullval; num_rows];
+                        assert_eq!(out.len(), num_rows);
+                        let column_number = column_names.iter().position(|ref colname| colname.as_str() == name).unwrap();
+                        let mut status = 0;
+                        unsafe {
+                            sys::$func(fits_file.fptr,
+                                        (column_number + 1) as i32,
+                                        1,
+                                        1,
+                                        num_rows as i64,
+                                        $nullval,
+                                        out.as_mut_ptr(),
+                                        ptr::null_mut(),
+                                        &mut status);
+
+                        }
+                        match status {
+                            0 => Ok(out),
+                            _ => Err(FitsError {
+                                status: status,
+                                message: stringutils::status_to_string(status).unwrap(),
+                            })
+                        }
+                    },
+                    Err(e) => Err(e),
+                    _ => panic!("Unknown error occurred"),
+                }
+            }
+        }
+    )
+}
+
+reads_col_impl!(i32, ffgcvk, 0);
+reads_col_impl!(u32, ffgcvuk, 0);
+reads_col_impl!(i64, ffgcvj, 0);
+reads_col_impl!(u64, ffgcvuj, 0);
+reads_col_impl!(f32, ffgcve, 0.0);
+reads_col_impl!(f64, ffgcvd, 0.0);
+
+// TODO: impl for string
+
 #[derive(PartialEq, Eq, Debug)]
 pub enum HduInfo {
     ImageInfo {
@@ -452,6 +503,10 @@ impl FitsFile {
         T::write_key(self, name, value)
     }
 
+    pub fn read_col<T: ReadsCol>(&self, name: &str) -> Result<Vec<T>> {
+        T::read_col(self, name)
+    }
+
     fn fetch_hdu_info(&self) -> Result<HduInfo> {
         unsafe { fetch_hdu_info(self.fptr) }
     }
@@ -630,6 +685,26 @@ mod test {
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
         }
+    }
+
+    #[test]
+    fn read_columns() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        f.change_hdu(1).unwrap();
+        let intcol_data: Vec<i32> = f.read_col("intcol").unwrap();
+        assert_eq!(intcol_data[0], 18);
+        assert_eq!(intcol_data[15], 10);
+        assert_eq!(intcol_data[49], 12);
+
+        let floatcol_data: Vec<f32> = f.read_col("floatcol").unwrap();
+        assert_eq!(floatcol_data[0], 17.496801);
+        assert_eq!(floatcol_data[15], 19.570272);
+        assert_eq!(floatcol_data[49], 10.217053);
+
+        let doublecol_data: Vec<f64> = f.read_col("doublecol").unwrap();
+        assert_eq!(doublecol_data[0], 16.959972808730814);
+        assert_eq!(doublecol_data[15], 19.013522579233065);
+        assert_eq!(doublecol_data[49], 16.61153656123406);
     }
 
 }
