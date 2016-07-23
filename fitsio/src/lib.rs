@@ -599,4 +599,37 @@ mod test {
             })
             .unwrap();
     }
+
+    #[test]
+    fn fetching_hdu_info() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        match f.fetch_hdu_info() {
+            Ok(HduInfo::ImageInfo { dimensions, shape}) => {
+                assert_eq!(dimensions, 2);
+                assert_eq!(shape, vec![100, 100]);
+            },
+            Err(e) => panic!("Error fetching hdu info {:?}", e),
+            _ => panic!("Unknown error"),
+        }
+
+        f.change_hdu(1).unwrap();
+        match f.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo { column_names, column_types, num_rows }) => {
+                assert_eq!(num_rows, 50);
+                assert_eq!(column_names, vec![
+                           "intcol".to_string(),
+                           "floatcol".to_string(),
+                           "doublecol".to_string(),
+                ]);
+                assert_eq!(column_types, vec![
+                        sys::DataType::TLONG,
+                        sys::DataType::TFLOAT,
+                        sys::DataType::TDOUBLE,
+                ]);
+            },
+            Err(e) => panic!("Error fetching hdu info {:?}", e),
+            _ => panic!("Unknown error"),
+        }
+    }
+
 }
