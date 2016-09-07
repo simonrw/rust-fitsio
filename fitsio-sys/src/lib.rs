@@ -65,55 +65,119 @@ pub type LONGLONG = c_longlong;
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum DataType {
-    TBIT = 1,
-    TBYTE = 11,
-    TSBYTE = 12,
-    TLOGICAL = 14,
-    TSTRING = 16,
-    TUSHORT = 20,
-    TSHORT = 21,
-    TUINT = 30,
-    TINT = 31,
-    TULONG = 40,
-    TLONG = 41,
-    TFLOAT = 42,
-    TDOUBLE = 82,
-    TCOMPLEX = 83,
-    TDBLCOMPLEX = 163,
+    TBIT,
+    TBYTE,
+    TSBYTE,
+    TLOGICAL,
+    TSTRING,
+    TUSHORT,
+    TSHORT,
+    TUINT,
+    TINT,
+    TULONG,
+    TLONG,
+    TFLOAT,
+    TDOUBLE,
+    TCOMPLEX,
+    TDBLCOMPLEX,
+}
+
+impl From<DataType> for u8 {
+    fn from(original: DataType) -> u8 {
+        match original {
+            DataType::TBIT => 1,
+            DataType::TBYTE => 11,
+            DataType::TSBYTE => 12,
+            DataType::TLOGICAL => 14,
+            DataType::TSTRING => 16,
+            DataType::TUSHORT => 20,
+            DataType::TSHORT => 21,
+            DataType::TUINT => 30,
+            DataType::TINT => 31,
+            DataType::TULONG => 40,
+            DataType::TLONG => 41,
+            DataType::TFLOAT => 42,
+            DataType::TDOUBLE => 82,
+            DataType::TCOMPLEX => 83,
+            DataType::TDBLCOMPLEX => 163,
+        }
+    }
 }
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum ImageType {
-    BYTE_IMG = 8,
-    SHORT_IMG = 16,
-    LONG_IMG = 32,
-    LONGLONG_IMG = 64,
-    FLOAT_IMG = -32,
-    DOUBLE_IMG = -64,
+    BYTE_IMG,
+    SHORT_IMG,
+    LONG_IMG,
+    LONGLONG_IMG,
+    FLOAT_IMG,
+    DOUBLE_IMG,
+}
+
+impl From<ImageType> for i8 {
+    fn from(original: ImageType) -> i8 {
+        match original {
+            ImageType::BYTE_IMG => 8,
+            ImageType::SHORT_IMG => 16,
+            ImageType::LONG_IMG => 32,
+            ImageType::LONGLONG_IMG => 64,
+            ImageType::FLOAT_IMG => -32,
+            ImageType::DOUBLE_IMG => -64,
+        }
+    }
 }
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum HduType {
-    IMAGE_HDU = 0,
-    ASCII_TBL = 1,
-    BINARY_TBL = 2,
-    ANY_HDU = -1,
+    IMAGE_HDU,
+    ASCII_TBL,
+    BINARY_TBL,
+    ANY_HDU,
+}
+
+impl From<HduType> for i8 {
+    fn from(original: HduType) -> i8 {
+        match original {
+            HduType::IMAGE_HDU => 0,
+            HduType::ASCII_TBL => 1,
+            HduType::BINARY_TBL => 2,
+            HduType::ANY_HDU => -1,
+        }
+    }
 }
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum FileOpenMode {
-    READONLY = 0,
-    READWRITE = 1,
+    READONLY,
+    READWRITE,
+}
+
+impl From<FileOpenMode> for u8 {
+    fn from(original: FileOpenMode) -> u8 {
+        match original {
+            FileOpenMode::READONLY => 0,
+            FileOpenMode::READWRITE => 1,
+        }
+    }
 }
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum CaseSensitivity {
-    CASEINSEN = 0,
-    CASESEN = 1,
+    CASEINSEN,
+    CASESEN,
+}
+
+impl From<CaseSensitivity> for u8 {
+    fn from(original: CaseSensitivity) -> u8 {
+        match original {
+            CaseSensitivity::CASEINSEN => 0,
+            CaseSensitivity::CASESEN => 1,
+        }
+    }
 }
 
 
@@ -4638,44 +4702,45 @@ mod test {
     }
 
     #[test]
-    fn data_types() {
-        assert_eq!(DataType::TBIT as u32, 1);
-        assert_eq!(DataType::TLOGICAL as u32, 14);
-        assert_eq!(DataType::TSTRING as u32, 16);
-        assert_eq!(DataType::TSHORT as u32, 21);
-        assert_eq!(DataType::TLONG as u32, 41);
-        assert_eq!(DataType::TFLOAT as u32, 42);
-        assert_eq!(DataType::TDOUBLE as u32, 82);
-    }
-
-    #[test]
     fn image_types() {
-        assert_eq!(ImageType::BYTE_IMG as u32, 8);
-        assert_eq!(ImageType::SHORT_IMG as u32, 16);
-        assert_eq!(ImageType::LONG_IMG as u32, 32);
-        assert_eq!(ImageType::LONGLONG_IMG as u32, 64);
-        assert_eq!(ImageType::FLOAT_IMG as i32, -32);
-        assert_eq!(ImageType::DOUBLE_IMG as i32, -64);
+        assert_eq!(i8::from(ImageType::BYTE_IMG), 8);
+        assert_eq!(i8::from(ImageType::SHORT_IMG), 16);
+        assert_eq!(i8::from(ImageType::LONG_IMG), 32);
+        assert_eq!(i8::from(ImageType::LONGLONG_IMG), 64);
+        assert_eq!(i8::from(ImageType::FLOAT_IMG), -32);
+        assert_eq!(i8::from(ImageType::DOUBLE_IMG), -64);
     }
 
     #[test]
     fn hdu_types() {
-        assert_eq!(HduType::IMAGE_HDU as i32, 0);
-        assert_eq!(HduType::ASCII_TBL as i32, 1);
-        assert_eq!(HduType::BINARY_TBL as i32, 2);
-        assert_eq!(HduType::ANY_HDU as i32, -1);
+        assert_eq!(i8::from(HduType::IMAGE_HDU), 0);
+        assert_eq!(i8::from(HduType::ASCII_TBL), 1);
+        assert_eq!(i8::from(HduType::BINARY_TBL), 2);
+        assert_eq!(i8::from(HduType::ANY_HDU), -1);
     }
 
     #[test]
     fn file_open_modes() {
-        assert_eq!(FileOpenMode::READONLY as u32, 0);
-        assert_eq!(FileOpenMode::READWRITE as u32, 1);
+        assert_eq!(u8::from(FileOpenMode::READONLY), 0);
+        assert_eq!(u8::from(FileOpenMode::READWRITE), 1);
     }
 
     #[test]
     fn case_sensitivity() {
-        assert_eq!(CaseSensitivity::CASESEN as u32, 1);
-        assert_eq!(CaseSensitivity::CASEINSEN as u32, 0);
+        assert_eq!(u8::from(CaseSensitivity::CASESEN), 1);
+        assert_eq!(u8::from(CaseSensitivity::CASEINSEN), 0);
+    }
+
+    #[test]
+    fn converting_from_data_type() {
+        assert_eq!(u8::from(DataType::TBIT), 1);
+        assert_eq!(u8::from(DataType::TBYTE), 11);
+        assert_eq!(u8::from(DataType::TLOGICAL), 14);
+        assert_eq!(u8::from(DataType::TSTRING), 16);
+        assert_eq!(u8::from(DataType::TSHORT), 21);
+        assert_eq!(u8::from(DataType::TLONG), 41);
+        assert_eq!(u8::from(DataType::TFLOAT), 42);
+        assert_eq!(u8::from(DataType::TDOUBLE), 82);
     }
 
     // #[test]
