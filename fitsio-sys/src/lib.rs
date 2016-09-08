@@ -137,8 +137,8 @@ pub enum HduType {
     ANY_HDU,
 }
 
-impl From<HduType> for i8 {
-    fn from(original: HduType) -> i8 {
+impl From<HduType> for i32 {
+    fn from(original: HduType) -> i32 {
         match original {
             HduType::IMAGE_HDU => 0,
             HduType::ASCII_TBL => 1,
@@ -4713,10 +4713,10 @@ mod test {
 
     #[test]
     fn hdu_types() {
-        assert_eq!(i8::from(HduType::IMAGE_HDU), 0);
-        assert_eq!(i8::from(HduType::ASCII_TBL), 1);
-        assert_eq!(i8::from(HduType::BINARY_TBL), 2);
-        assert_eq!(i8::from(HduType::ANY_HDU), -1);
+        assert_eq!(i32::from(HduType::IMAGE_HDU), 0);
+        assert_eq!(i32::from(HduType::ASCII_TBL), 1);
+        assert_eq!(i32::from(HduType::BINARY_TBL), 2);
+        assert_eq!(i32::from(HduType::ANY_HDU), -1);
     }
 
     #[test]
