@@ -52,7 +52,7 @@ impl<'a> DescribesHdu for &'a str {
 
         unsafe {
             sys::ffmnhd(f.fptr,
-                        sys::HduType::ANY_HDU as libc::c_int,
+                        sys::HduType::ANY_HDU.into(),
                         c_hdu_name.into_raw(),
                         0,
                         &mut status);
