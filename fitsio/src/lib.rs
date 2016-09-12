@@ -570,7 +570,7 @@ impl FitsFile {
         T::read_section(self, start, end)
     }
 
-    fn fetch_hdu_info(&self) -> Result<HduInfo> {
+    pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
         unsafe { fetch_hdu_info(self.fptr) }
     }
 }
