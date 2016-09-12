@@ -82,27 +82,37 @@ pub enum DataType {
     TDBLCOMPLEX,
 }
 
-impl From<DataType> for u8 {
-    fn from(original: DataType) -> u8 {
-        match original {
-            DataType::TBIT => 1,
-            DataType::TBYTE => 11,
-            DataType::TSBYTE => 12,
-            DataType::TLOGICAL => 14,
-            DataType::TSTRING => 16,
-            DataType::TUSHORT => 20,
-            DataType::TSHORT => 21,
-            DataType::TUINT => 30,
-            DataType::TINT => 31,
-            DataType::TULONG => 40,
-            DataType::TLONG => 41,
-            DataType::TFLOAT => 42,
-            DataType::TDOUBLE => 82,
-            DataType::TCOMPLEX => 83,
-            DataType::TDBLCOMPLEX => 163,
+macro_rules! datatype_into_impl {
+    ($t: ty) => (
+        impl From<DataType> for $t {
+            fn from(original: DataType) -> $t {
+                match original {
+                    DataType::TBIT => 1,
+                    DataType::TBYTE => 11,
+                    DataType::TSBYTE => 12,
+                    DataType::TLOGICAL => 14,
+                    DataType::TSTRING => 16,
+                    DataType::TUSHORT => 20,
+                    DataType::TSHORT => 21,
+                    DataType::TUINT => 30,
+                    DataType::TINT => 31,
+                    DataType::TULONG => 40,
+                    DataType::TLONG => 41,
+                    DataType::TFLOAT => 42,
+                    DataType::TDOUBLE => 82,
+                    DataType::TCOMPLEX => 83,
+                    DataType::TDBLCOMPLEX => 163,
+                }
+            }
         }
-    }
+    )
 }
+
+datatype_into_impl!(u8);
+datatype_into_impl!(i32);
+datatype_into_impl!(u32);
+datatype_into_impl!(i64);
+datatype_into_impl!(u64);
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
@@ -115,18 +125,27 @@ pub enum ImageType {
     DOUBLE_IMG,
 }
 
-impl From<ImageType> for i8 {
-    fn from(original: ImageType) -> i8 {
-        match original {
-            ImageType::BYTE_IMG => 8,
-            ImageType::SHORT_IMG => 16,
-            ImageType::LONG_IMG => 32,
-            ImageType::LONGLONG_IMG => 64,
-            ImageType::FLOAT_IMG => -32,
-            ImageType::DOUBLE_IMG => -64,
+macro_rules! imagetype_into_impl {
+    ($t: ty) => (
+        impl From<ImageType> for $t {
+            fn from(original: ImageType) -> $t {
+                match original {
+                    ImageType::BYTE_IMG => 8,
+                    ImageType::SHORT_IMG => 16,
+                    ImageType::LONG_IMG => 32,
+                    ImageType::LONGLONG_IMG => 64,
+                    ImageType::FLOAT_IMG => -32,
+                    ImageType::DOUBLE_IMG => -64,
+                }
+            }
         }
-    }
+        )
 }
+
+imagetype_into_impl!(i8);
+imagetype_into_impl!(i32);
+imagetype_into_impl!(i64);
+
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
@@ -137,16 +156,24 @@ pub enum HduType {
     ANY_HDU,
 }
 
-impl From<HduType> for i32 {
-    fn from(original: HduType) -> i32 {
-        match original {
-            HduType::IMAGE_HDU => 0,
-            HduType::ASCII_TBL => 1,
-            HduType::BINARY_TBL => 2,
-            HduType::ANY_HDU => -1,
+macro_rules! hdutype_into_impl {
+    ($t: ty) => (
+        impl From<HduType> for $t {
+            fn from(original: HduType) -> $t {
+                match original {
+                    HduType::IMAGE_HDU => 0,
+                    HduType::ASCII_TBL => 1,
+                    HduType::BINARY_TBL => 2,
+                    HduType::ANY_HDU => -1,
+                }
+            }
         }
-    }
+    )
 }
+
+hdutype_into_impl!(i8);
+hdutype_into_impl!(i32);
+hdutype_into_impl!(i64);
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
@@ -155,14 +182,25 @@ pub enum FileOpenMode {
     READWRITE,
 }
 
-impl From<FileOpenMode> for u8 {
-    fn from(original: FileOpenMode) -> u8 {
-        match original {
-            FileOpenMode::READONLY => 0,
-            FileOpenMode::READWRITE => 1,
+macro_rules! fileopenmode_into_impl {
+    ($t: ty) => (
+        impl From<FileOpenMode> for $t {
+            fn from(original: FileOpenMode) -> $t {
+                match original {
+                    FileOpenMode::READONLY => 0,
+                    FileOpenMode::READWRITE => 1,
+                }
+            }
         }
-    }
+        )
 }
+
+fileopenmode_into_impl!(u8);
+fileopenmode_into_impl!(u32);
+fileopenmode_into_impl!(u64);
+fileopenmode_into_impl!(i8);
+fileopenmode_into_impl!(i32);
+fileopenmode_into_impl!(i64);
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
@@ -171,15 +209,25 @@ pub enum CaseSensitivity {
     CASESEN,
 }
 
-impl From<CaseSensitivity> for u8 {
-    fn from(original: CaseSensitivity) -> u8 {
-        match original {
-            CaseSensitivity::CASEINSEN => 0,
-            CaseSensitivity::CASESEN => 1,
+macro_rules! casesensitivity_into_impl {
+    ($t: ty) => (
+        impl From<CaseSensitivity> for $t {
+            fn from(original: CaseSensitivity) -> $t {
+                match original {
+                    CaseSensitivity::CASEINSEN => 0,
+                    CaseSensitivity::CASESEN => 1,
+                }
+            }
         }
-    }
+        )
 }
 
+casesensitivity_into_impl!(u8);
+casesensitivity_into_impl!(u32);
+casesensitivity_into_impl!(u64);
+casesensitivity_into_impl!(i8);
+casesensitivity_into_impl!(i32);
+casesensitivity_into_impl!(i64);
 
 #[repr(C)]
 #[derive(Copy)]
