@@ -243,21 +243,25 @@ macro_rules! reads_col_impl {
         impl ReadsCol for $t {
             fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::TableInfo { column_names, column_types: _column_types, num_rows }) => {
+                    Ok(HduInfo::TableInfo {
+                        column_names, column_types: _column_types, num_rows
+                    }) => {
                         let mut out = vec![$nullval; num_rows];
                         assert_eq!(out.len(), num_rows);
-                        let column_number = column_names.iter().position(|ref colname| colname.as_str() == name).unwrap();
+                        let column_number = column_names.iter().position(|ref colname| {
+                            colname.as_str() == name
+                        }).unwrap();
                         let mut status = 0;
                         unsafe {
                             sys::$func(fits_file.fptr,
-                                        (column_number + 1) as i32,
-                                        1,
-                                        1,
-                                        num_rows as i64,
-                                        $nullval,
-                                        out.as_mut_ptr(),
-                                        ptr::null_mut(),
-                                        &mut status);
+                                       (column_number + 1) as i32,
+                                       1,
+                                       1,
+                                       num_rows as i64,
+                                       $nullval,
+                                       out.as_mut_ptr(),
+                                       ptr::null_mut(),
+                                       &mut status);
 
                         }
                         match status {
@@ -284,6 +288,61 @@ reads_col_impl!(f32, ffgcve, 0.0);
 reads_col_impl!(f64, ffgcvd, 0.0);
 
 // TODO: impl for string
+
+pub trait ReadsImage {
+    fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>
+        where Self: Sized;
+}
+
+macro_rules! reads_image_impl {
+    ($t: ty, $data_type: expr) => (
+        impl ReadsImage for $t {
+            fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>> {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
+                        let nelements = end - start;
+                        let mut out = vec![0 as $t; nelements];
+                        let mut status = 0;
+
+                        unsafe {
+                            sys::ffgpv(fits_file.fptr,
+                                        $data_type.into(),
+                                        (start + 1) as i64,
+                                        nelements as i64,
+                                        ptr::null_mut(),
+                                        out.as_mut_ptr() as *mut libc::c_void,
+                                        ptr::null_mut(),
+                                        &mut status);
+                        }
+
+                        match status {
+                            0 => Ok(out),
+                            _ => {
+                                Err(FitsError {
+                                    status: status,
+                                    message: stringutils::status_to_string(status).unwrap(),
+                                })
+                            }
+                        }
+
+                    }
+                    Err(e) => Err(e),
+                    _ => panic!("Unknown error occurred"),
+                }
+            }
+        }
+    )
+}
+
+
+reads_image_impl!(i8, sys::DataType::TSHORT);
+reads_image_impl!(i32, sys::DataType::TINT);
+reads_image_impl!(i64, sys::DataType::TLONG);
+reads_image_impl!(u8, sys::DataType::TUSHORT);
+reads_image_impl!(u32, sys::DataType::TUINT);
+reads_image_impl!(u64, sys::DataType::TULONG);
+reads_image_impl!(f32, sys::DataType::TFLOAT);
+reads_image_impl!(f64, sys::DataType::TDOUBLE);
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum HduInfo {
@@ -507,6 +566,10 @@ impl FitsFile {
         T::read_col(self, name)
     }
 
+    pub fn read_section<T: ReadsImage>(&self, start: usize, end: usize) -> Result<Vec<T>> {
+        T::read_section(self, start, end)
+    }
+
     fn fetch_hdu_info(&self) -> Result<HduInfo> {
         unsafe { fetch_hdu_info(self.fptr) }
     }
@@ -659,10 +722,10 @@ mod test {
     fn fetching_hdu_info() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
-            Ok(HduInfo::ImageInfo { dimensions, shape}) => {
+            Ok(HduInfo::ImageInfo { dimensions, shape }) => {
                 assert_eq!(dimensions, 2);
                 assert_eq!(shape, vec![100, 100]);
-            },
+            }
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
         }
@@ -671,17 +734,19 @@ mod test {
         match f.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { column_names, column_types, num_rows }) => {
                 assert_eq!(num_rows, 50);
-                assert_eq!(column_names, vec![
+                assert_eq!(column_names,
+                           vec![
                            "intcol".to_string(),
                            "floatcol".to_string(),
                            "doublecol".to_string(),
                 ]);
-                assert_eq!(column_types, vec![
+                assert_eq!(column_types,
+                           vec![
                         sys::DataType::TLONG,
                         sys::DataType::TFLOAT,
                         sys::DataType::TDOUBLE,
                 ]);
-            },
+            }
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
         }
@@ -707,4 +772,17 @@ mod test {
         assert_eq!(doublecol_data[49], 16.61153656123406);
     }
 
+    #[test]
+    fn read_image_data() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let first_row: Vec<i32> = f.read_section(0, 100).unwrap();
+        assert_eq!(first_row.len(), 100);
+        assert_eq!(first_row[0], 108);
+        assert_eq!(first_row[49], 176);
+
+        let second_row: Vec<i32> = f.read_section(100, 200).unwrap();
+        assert_eq!(second_row.len(), 100);
+        assert_eq!(second_row[0], 177);
+        assert_eq!(second_row[49], 168);
+    }
 }
