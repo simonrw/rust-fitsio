@@ -1,10 +1,15 @@
 # rust-cfitsio
 
+FFI wrapper around cfitsio in Rust
+
+
 [![Join the chat at https://gitter.im/mindriot101/rust-cfitsio](https://badges.gitter.im/mindriot101/rust-cfitsio.svg)](https://gitter.im/mindriot101/rust-cfitsio?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/mindriot101/rust-cfitsio.svg?branch=master)](https://travis-ci.org/mindriot101/rust-cfitsio)
 
-FFI wrapper around cfitsio in Rust
+## Documentation
 
+`fitsio-sys` [![`fitsio-sys` documentation](https://docs.rs/fitsio-sys/badge.svg)](https://docs.rs/crate/fitsio-sys)<br />
+`fitsio` [![`fitsio` documentation](https://docs.rs/fitsio/badge.svg)](https://docs.rs/crate/fitsio/)
 
 
 ## Api roadmap
