@@ -362,6 +362,12 @@ pub struct FitsFile {
     pub filename: String,
 }
 
+impl Clone for FitsFile {
+    fn clone(&self) -> Self {
+        FitsFile::open(&self.filename).unwrap()
+    }
+}
+
 fn typechar_to_data_type<T: Into<String>>(typechar: T) -> sys::DataType {
     match typechar.into().as_str() {
         "X" => sys::DataType::TBIT,
@@ -784,5 +790,19 @@ mod test {
         assert_eq!(second_row.len(), 100);
         assert_eq!(second_row[0], 177);
         assert_eq!(second_row[49], 168);
+    }
+
+    #[test]
+    fn cloning() {
+        use std::thread;
+        use std::sync::mpsc::channel;
+
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let f2 = f.clone();
+
+        assert!(f.fptr != f2.fptr);
+
+        f.change_hdu(1).unwrap();
+        assert!(f.hdu_number() != f2.hdu_number());
     }
 }
