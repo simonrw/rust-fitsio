@@ -1,5 +1,6 @@
 language: rust
 script: bash ./test_all.sh
+sudo: false
 
 rust:
   - stable
@@ -9,8 +10,8 @@ rust:
 addons:
   apt:
     packages:
-      - libcfitsio-dev
-      - libcfitsio-bin
+      - libcfitsio3-dev
+      - pkg-config
 
 matrix:
   allow_failures:
