@@ -1,15 +1,17 @@
 language: rust
 script: bash ./test_all.sh
+sudo: false
 
 rust:
   - stable
   - beta
   - nightly
 
-sudo: required
-
-before_install:
-  - bash ./travis/install_cfitsio.sh
+addons:
+  apt:
+    packages:
+      - libcfitsio3-dev
+      - pkg-config
 
 matrix:
   allow_failures:
