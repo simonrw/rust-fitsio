@@ -6,10 +6,11 @@ rust:
   - beta
   - nightly
 
-sudo: required
-
-before_install:
-  - bash ./travis/install_cfitsio.sh
+addons:
+  apt:
+    packages:
+      - libcfitsio-dev
+      - libcfitsio-bin
 
 matrix:
   allow_failures:
