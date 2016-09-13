@@ -497,7 +497,7 @@ impl FitsFile {
                     fptr: fptr,
                     filename: path.to_string(),
                 };
-                f.add_empty_primary().unwrap();
+                try!(f.add_empty_primary());
                 Ok(f)
             }
             status => {
