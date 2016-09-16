@@ -353,10 +353,11 @@ macro_rules! reads_image_impl {
 
                         // These have to be mutable because of the C-api
                         let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
-                        let mut lpixel = [ (upper_right.x) as _, (upper_right.y) as _ ];
+                        let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
                         let mut inc = [ 1, 1 ];
                         let nelements =
-                            (upper_right.y - lower_left.y) * (upper_right.x - lower_left.x);
+                            ((upper_right.y - lower_left.y) + 1) *
+                            ((upper_right.x - lower_left.x) + 1);
                         let mut out = vec![0 as $t; nelements as usize];
                         let mut status = 0;
 
@@ -865,9 +866,10 @@ mod test {
         let lower_left = Coordinate { x: 0, y: 0 };
         let upper_right = Coordinate { x: 10, y: 10 };
         let chunk: Vec<i32> = f.read_region(&lower_left, &upper_right).unwrap();
-        assert_eq!(chunk.len(), 100);
+        assert_eq!(chunk.len(), 11 * 11);
         assert_eq!(chunk[0], 108);
-        assert_eq!(chunk[10], 177);
+        assert_eq!(chunk[11], 177);
+        assert_eq!(chunk[chunk.len() - 1], 160);
     }
 
     #[test]
