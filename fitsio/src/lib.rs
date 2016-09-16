@@ -1,12 +1,15 @@
 #![allow(dead_code, unused_imports)]
 
+mod stringutils;
+pub mod positional;
+
 extern crate fitsio_sys as sys;
 extern crate libc;
 
 use std::ptr;
 use std::ffi;
 
-mod stringutils;
+use positional::Coordinate;
 
 /// Error type
 #[derive(Debug, PartialEq, Eq)]
@@ -292,6 +295,17 @@ reads_col_impl!(f64, ffgcvd, 0.0);
 pub trait ReadsImage {
     fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>
         where Self: Sized;
+
+    /// Read a square region from the chip.
+    ///
+    /// Lower left indicates the starting point of the square, and the upper
+    /// right defines the pixel _beyond_ the end. The range of pixels included
+    /// is inclusive of the lower end, and *exclusive* of the upper end.
+    fn read_region(fits_file: &FitsFile,
+                   lower_left: &Coordinate,
+                   upper_right: &Coordinate)
+                   -> Result<Vec<Self>>
+        where Self: Sized;
 }
 
 macro_rules! reads_image_impl {
@@ -325,6 +339,50 @@ macro_rules! reads_image_impl {
                             }
                         }
 
+                    }
+                    Err(e) => Err(e),
+                    _ => panic!("Unknown error occurred"),
+                }
+            }
+
+            fn read_region( fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate)
+                -> Result<Vec<Self>> {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
+                        // TODO: check dimensions
+
+                        // These have to be mutable because of the C-api
+                        let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
+                        let mut lpixel = [ (upper_right.x) as _, (upper_right.y) as _ ];
+                        let mut inc = [ 1, 1 ];
+                        let nelements =
+                            (upper_right.y - lower_left.y) * (upper_right.x - lower_left.x);
+                        let mut out = vec![0 as $t; nelements as usize];
+                        let mut status = 0;
+
+                        unsafe {
+                            sys::ffgsv(
+                                fits_file.fptr,
+                                $data_type.into(),
+                                fpixel.as_mut_ptr(),
+                                lpixel.as_mut_ptr(),
+                                inc.as_mut_ptr(),
+                                ptr::null_mut(),
+                                out.as_mut_ptr() as *mut libc::c_void,
+                                ptr::null_mut(),
+                                &mut status);
+
+                        }
+
+                        match status {
+                            0 => Ok(out),
+                            _ => {
+                                Err(FitsError {
+                                    status: status,
+                                    message: stringutils::status_to_string(status).unwrap(),
+                                })
+                            }
+                        }
                     }
                     Err(e) => Err(e),
                     _ => panic!("Unknown error occurred"),
@@ -576,6 +634,13 @@ impl FitsFile {
         T::read_section(self, start, end)
     }
 
+    pub fn read_region<T: ReadsImage>(&self,
+                                      lower_left: &Coordinate,
+                                      upper_right: &Coordinate)
+                                      -> Result<Vec<T>> {
+        T::read_region(self, lower_left, upper_right)
+    }
+
     pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
         unsafe { fetch_hdu_info(self.fptr) }
     }
@@ -790,6 +855,19 @@ mod test {
         assert_eq!(second_row.len(), 100);
         assert_eq!(second_row[0], 177);
         assert_eq!(second_row[49], 168);
+    }
+
+    #[test]
+    fn read_image_slice() {
+        use super::positional::Coordinate;
+
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let lower_left = Coordinate { x: 0, y: 0 };
+        let upper_right = Coordinate { x: 10, y: 10 };
+        let chunk: Vec<i32> = f.read_region(&lower_left, &upper_right).unwrap();
+        assert_eq!(chunk.len(), 100);
+        assert_eq!(chunk[0], 108);
+        assert_eq!(chunk[10], 177);
     }
 
     #[test]
