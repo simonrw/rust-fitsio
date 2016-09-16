@@ -16,15 +16,12 @@ FFI wrapper around cfitsio in Rust
 
 ```
 FitsFile
-- fn hdu -> returns FitsHdu
-- fn next -> impl Iterator around FitsHdu objects
-
-FitsHdu
 - fn read_key -> returns header value
 - if image:
     - fn image_dimensions -> Vec<usize>
     - fn image_type -> DataType
     - fn read_section -> reads image section into either Vec<_> or ndarray
+    - fn read_region -> reads a square region into either Vec<_> or ndarray
 - if table:
     - fn num_rows -> usize
     - fn rows -> impl Iterator over rows

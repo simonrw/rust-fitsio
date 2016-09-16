@@ -1,5 +1,14 @@
 #![allow(dead_code, unused_imports)]
 
+
+//! `fitsio` - a thin wrapper around the [`cfitsio`][1] C library.
+//!
+//! # Examples
+//!
+//! TBD
+//!
+//! [1]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
+
 mod stringutils;
 pub mod positional;
 
@@ -12,12 +21,18 @@ use std::ffi;
 use positional::Coordinate;
 
 /// Error type
+///
+/// `cfitsio` passes errors through integer status codes. This struct wraps this and its associated
+/// error message.
 #[derive(Debug, PartialEq, Eq)]
 pub struct FitsError {
     status: i32,
     message: String,
 }
 
+/// FITS specific result type
+///
+/// This is a shortcut for a result with `FitsError` as the error type
 pub type Result<T> = std::result::Result<T, FitsError>;
 
 /// Hdu description type
@@ -154,6 +169,7 @@ impl ReadsKey for String {
     }
 }
 
+/// Writing a fits keyword
 pub trait WritesKey {
     fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()>;
 }
@@ -237,6 +253,7 @@ impl WritesKey for String {
     }
 }
 
+/// Trait for reading a fits column
 pub trait ReadsCol {
     fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> where Self: Sized;
 }
@@ -292,6 +309,7 @@ reads_col_impl!(f64, ffgcvd, 0.0);
 
 // TODO: impl for string
 
+/// Reading fits images
 pub trait ReadsImage {
     fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>
         where Self: Sized;
@@ -403,6 +421,11 @@ reads_image_impl!(u64, sys::DataType::TULONG);
 reads_image_impl!(f32, sys::DataType::TFLOAT);
 reads_image_impl!(f64, sys::DataType::TDOUBLE);
 
+/// Description of the current HDU
+///
+/// If the current HDU is an image, then
+/// [`fetch_hdu_info`](struct.FitsFile.html#method.fetch_hdu_info) returns `HduInfo::ImageInfo`.
+/// Otherwise the variant is `HduInfo::TableInfo`.
 #[derive(PartialEq, Eq, Debug)]
 pub enum HduInfo {
     ImageInfo {
@@ -416,6 +439,9 @@ pub enum HduInfo {
     },
 }
 
+/// Main entry point to the FITS file format
+///
+///
 pub struct FitsFile {
     fptr: *mut sys::fitsfile,
     pub filename: String,
@@ -510,6 +536,17 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
 }
 
 impl FitsFile {
+    /// Open a fits file from disk
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use fitsio::FitsFile;
+    ///
+    /// let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+    ///
+    /// // Continue to use `f` afterwards
+    /// ```
     pub fn open(filename: &str) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
@@ -539,6 +576,7 @@ impl FitsFile {
 
     }
 
+    /// Create a new fits file on disk
     pub fn create(path: &str) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
@@ -584,10 +622,12 @@ impl FitsFile {
         }
     }
 
+    /// Change the current HDU
     pub fn change_hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<()> {
         hdu_description.change_hdu(self)
     }
 
+    /// Get the current HDU type
     pub fn hdu_type(&self) -> Result<sys::HduType> {
         let mut status = 0;
         let mut hdu_type = 0;
@@ -619,22 +659,27 @@ impl FitsFile {
         (hdu_num - 1) as usize
     }
 
+    /// Read header key
     pub fn read_key<T: ReadsKey>(&self, name: &str) -> Result<T> {
         T::read_key(self, name)
     }
 
+    /// Write header key
     pub fn write_key<T: WritesKey>(&self, name: &str, value: T) -> Result<()> {
         T::write_key(self, name, value)
     }
 
+    /// Read a binary table column
     pub fn read_col<T: ReadsCol>(&self, name: &str) -> Result<Vec<T>> {
         T::read_col(self, name)
     }
 
+    /// Read an image between pixel a and pixel b into a `Vec`
     pub fn read_section<T: ReadsImage>(&self, start: usize, end: usize) -> Result<Vec<T>> {
         T::read_section(self, start, end)
     }
 
+    /// Read a square region into a `Vec`
     pub fn read_region<T: ReadsImage>(&self,
                                       lower_left: &Coordinate,
                                       upper_right: &Coordinate)
@@ -642,6 +687,7 @@ impl FitsFile {
         T::read_region(self, lower_left, upper_right)
     }
 
+    /// Get the current hdu info
     pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
         unsafe { fetch_hdu_info(self.fptr) }
     }
