@@ -27,6 +27,21 @@ pub struct FitsError {
     message: String,
 }
 
+/// Macro for returning a FITS error type
+macro_rules! fits_try {
+    ($status: ident, $e: expr) => {
+        match $status {
+            0 => Ok($e),
+            _ => {
+                Err(FitsError {
+                    status: $status,
+                    message: stringutils::status_to_string($status).unwrap(),
+                })
+            }
+        }
+    }
+}
+
 /// FITS specific result type
 ///
 /// This is a shortcut for a result with `FitsError` as the error type
@@ -47,15 +62,8 @@ impl DescribesHdu for usize {
         unsafe {
             sys::ffmahd(f.fptr, (*self + 1) as i32, &mut _hdu_type, &mut status);
         }
-        match status {
-            0 => Ok(()),
-            _ => {
-                Err(FitsError {
-                    status: status,
-                    message: stringutils::status_to_string(status).unwrap(),
-                })
-            }
-        }
+
+        fits_try!(status, ())
     }
 }
 
@@ -73,15 +81,7 @@ impl<'a> DescribesHdu for &'a str {
                         &mut status);
         }
 
-        match status {
-            0 => Ok(()),
-            _ => {
-                Err(FitsError {
-                    status: status,
-                    message: stringutils::status_to_string(status).unwrap(),
-                })
-            }
-        }
+        fits_try!(status, ())
     }
 }
 
@@ -114,15 +114,7 @@ macro_rules! reads_key_impl {
                            &mut status);
                 }
 
-                match status {
-                    0 => Ok(value),
-                    s => {
-                        Err(FitsError {
-                            status: s,
-                            message: stringutils::status_to_string(s).unwrap(),
-                        })
-                    }
-                }
+                fits_try!(status, value)
             }
         }
     )
@@ -147,22 +139,13 @@ impl ReadsKey for String {
                         &mut status);
         }
 
-        match status {
-            0 => {
-                let value: Vec<u8> = value.iter()
-                    .map(|&x| x as u8)
-                    .filter(|&x| x != 0)
-                    .collect();
-                Ok(String::from_utf8(value).unwrap())
-            }
-            status => {
-                Err(FitsError {
-                    status: status,
-                    message: stringutils::status_to_string(status).unwrap(),
-                })
-            }
-        }
-
+        fits_try!(status, {
+            let value: Vec<u8> = value.iter()
+                .map(|&x| x as u8)
+                .filter(|&x| x != 0)
+                .collect();
+            String::from_utf8(value).unwrap()
+        })
     }
 }
 
@@ -186,13 +169,7 @@ macro_rules! writes_key_impl_flt {
                                 ptr::null_mut(),
                                 &mut status);
                 }
-                match status {
-                    0 => Ok(()),
-                    _ => Err(FitsError {
-                        status: status,
-                        message: stringutils::status_to_string(status).unwrap(),
-                    }),
-                }
+                fits_try!(status, ())
             }
         }
     )
@@ -210,15 +187,7 @@ impl WritesKey for i64 {
                         ptr::null_mut(),
                         &mut status);
         }
-        match status {
-            0 => Ok(()),
-            _ => {
-                Err(FitsError {
-                    status: status,
-                    message: stringutils::status_to_string(status).unwrap(),
-                })
-            }
-        }
+        fits_try!(status, ())
     }
 }
 
@@ -238,15 +207,7 @@ impl WritesKey for String {
                         &mut status);
         }
 
-        match status {
-            0 => Ok(()),
-            _ => {
-                Err(FitsError {
-                    status: status,
-                    message: stringutils::status_to_string(status).unwrap(),
-                })
-            }
-        }
+        fits_try!(status, ())
     }
 }
 
@@ -281,13 +242,7 @@ macro_rules! reads_col_impl {
                                        &mut status);
 
                         }
-                        match status {
-                            0 => Ok(out),
-                            _ => Err(FitsError {
-                                status: status,
-                                message: stringutils::status_to_string(status).unwrap(),
-                            })
-                        }
+                        fits_try!(status, out)
                     },
                     Err(e) => Err(e),
                     _ => panic!("Unknown error occurred"),
@@ -344,15 +299,7 @@ macro_rules! reads_image_impl {
                                         &mut status);
                         }
 
-                        match status {
-                            0 => Ok(out),
-                            _ => {
-                                Err(FitsError {
-                                    status: status,
-                                    message: stringutils::status_to_string(status).unwrap(),
-                                })
-                            }
-                        }
+                        fits_try!(status, out)
 
                     }
                     Err(e) => Err(e),
@@ -390,15 +337,7 @@ macro_rules! reads_image_impl {
 
                         }
 
-                        match status {
-                            0 => Ok(out),
-                            _ => {
-                                Err(FitsError {
-                                    status: status,
-                                    message: stringutils::status_to_string(status).unwrap(),
-                                })
-                            }
-                        }
+                        fits_try!(status, out)
                     }
                     Err(e) => Err(e),
                     _ => panic!("Unknown error occurred"),
@@ -521,15 +460,7 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
         _ => panic!("Invalid hdu type found"),
     };
 
-    match status {
-        0 => Ok(hdu_type),
-        _ => {
-            Err(FitsError {
-                status: status,
-                message: stringutils::status_to_string(status).unwrap(),
-            })
-        }
-    }
+    fits_try!(status, hdu_type)
 }
 
 impl FitsFile {
@@ -556,21 +487,11 @@ impl FitsFile {
                         &mut status);
         }
 
-        match status {
-            0 => {
-                Ok(FitsFile {
-                    fptr: fptr,
-                    filename: filename.to_string(),
-                })
-            }
-            status => {
-                Err(FitsError {
-                    status: status,
-                    message: stringutils::status_to_string(status).unwrap(),
-                })
-            }
-        }
-
+        fits_try!(status,
+                  FitsFile {
+                      fptr: fptr,
+                      filename: filename.to_string(),
+                  })
     }
 
     /// Create a new fits file on disk
@@ -585,22 +506,14 @@ impl FitsFile {
                         &mut status);
         }
 
-        match status {
-            0 => {
-                let f = FitsFile {
-                    fptr: fptr,
-                    filename: path.to_string(),
-                };
-                try!(f.add_empty_primary());
-                Ok(f)
-            }
-            status => {
-                Err(FitsError {
-                    status: status,
-                    message: stringutils::status_to_string(status).unwrap(),
-                })
-            }
-        }
+        fits_try!(status, {
+            let f = FitsFile {
+                fptr: fptr,
+                filename: path.to_string(),
+            };
+            try!(f.add_empty_primary());
+            f
+        })
     }
 
     fn add_empty_primary(&self) -> Result<()> {
@@ -608,15 +521,8 @@ impl FitsFile {
         unsafe {
             sys::ffphps(self.fptr, 8, 0, ptr::null_mut(), &mut status);
         }
-        match status {
-            0 => Ok(()),
-            _ => {
-                Err(FitsError {
-                    status: status,
-                    message: stringutils::status_to_string(status).unwrap(),
-                })
-            }
-        }
+
+        fits_try!(status, ())
     }
 
     /// Change the current HDU
@@ -631,21 +537,14 @@ impl FitsFile {
         unsafe {
             sys::ffghdt(self.fptr, &mut hdu_type, &mut status);
         }
-        match status {
-            0 => {
-                match hdu_type {
-                    0 => Ok(sys::HduType::IMAGE_HDU),
-                    2 => Ok(sys::HduType::BINARY_TBL),
-                    _ => unimplemented!(),
-                }
+
+        fits_try!(status, {
+            match hdu_type {
+                0 => sys::HduType::IMAGE_HDU,
+                2 => sys::HduType::BINARY_TBL,
+                _ => unimplemented!(),
             }
-            _ => {
-                Err(FitsError {
-                    status: status,
-                    message: stringutils::status_to_string(status).unwrap(),
-                })
-            }
-        }
+        })
     }
 
     pub fn hdu_number(&self) -> usize {
@@ -924,5 +823,20 @@ mod test {
 
         f.change_hdu(1).unwrap();
         assert!(f.hdu_number() != f2.hdu_number());
+    }
+
+    #[test]
+    fn test_fits_try() {
+        use super::stringutils;
+
+        let status = 0;
+        assert_eq!(fits_try!(status, 10), Ok(10));
+
+        let status = 105;
+        assert_eq!(fits_try!(status, 10),
+                   Err(FitsError {
+                       status: status,
+                       message: stringutils::status_to_string(status).unwrap(),
+                   }));
     }
 }
