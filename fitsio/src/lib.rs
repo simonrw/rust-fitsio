@@ -1,6 +1,3 @@
-#![allow(dead_code, unused_imports)]
-
-
 //! `fitsio` - a thin wrapper around the [`cfitsio`][1] C library.
 //!
 //! # Examples
@@ -651,7 +648,7 @@ impl FitsFile {
         }
     }
 
-    fn hdu_number(&self) -> usize {
+    pub fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
         unsafe {
             sys::ffghdn(self.fptr, &mut hdu_num);
@@ -920,9 +917,6 @@ mod test {
 
     #[test]
     fn cloning() {
-        use std::thread;
-        use std::sync::mpsc::channel;
-
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let f2 = f.clone();
 
