@@ -85,6 +85,7 @@ impl<'a> DescribesHdu for &'a str {
     }
 }
 
+
 /// Trait applied to types which can be read from a FITS header
 ///
 /// This is currently:
@@ -463,6 +464,113 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
     fits_try!(status, hdu_type)
 }
 
+pub enum Column {
+    Int32Column {
+        name: String,
+        data: Vec<i32>,
+    },
+    Int64Column {
+        name: String,
+        data: Vec<i64>,
+    },
+    FloatColumn {
+        name: String,
+        data: Vec<f32>,
+    },
+    DoubleColumn {
+        name: String,
+        data: Vec<f64>,
+    },
+}
+
+pub struct ColumnIterator<'a> {
+    current: usize,
+    column_names: Vec<String>,
+    column_types: Vec<sys::DataType>,
+    fits_file: &'a FitsFile,
+}
+
+impl<'a> ColumnIterator<'a> {
+    fn new(fits_file: &'a FitsFile) -> Self {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo { column_names, column_types, num_rows: _num_rows }) => {
+                ColumnIterator {
+                    current: 0,
+                    column_names: column_names,
+                    column_types: column_types,
+                    fits_file: fits_file,
+                }
+            }
+            Err(e) => panic!("{:?}", e),
+            _ => panic!("Unknown error occurred"),
+        }
+    }
+}
+
+impl<'a> Iterator for ColumnIterator<'a> {
+    type Item = Column;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ncols = self.column_names.len();
+
+        if self.current < ncols {
+            let current_name = &self.column_names[self.current];
+            let current_type = &self.column_types[self.current];
+
+            let retval = match *current_type {
+                sys::DataType::TSHORT => {
+                    i32::read_col(self.fits_file, &current_name)
+                        .map(|data| {
+                            Some(Column::Int32Column {
+                                name: current_name.to_string(),
+                                data: data,
+                            })
+                        })
+                        .unwrap()
+                }
+                sys::DataType::TLONG => {
+                    i64::read_col(self.fits_file, &current_name)
+                        .map(|data| {
+                            Some(Column::Int64Column {
+                                name: current_name.to_string(),
+                                data: data,
+                            })
+                        })
+                        .unwrap()
+                }
+                sys::DataType::TFLOAT => {
+                    f32::read_col(self.fits_file, &current_name)
+                        .map(|data| {
+                            Some(Column::FloatColumn {
+                                name: current_name.to_string(),
+                                data: data,
+                            })
+                        })
+                        .unwrap()
+                }
+                sys::DataType::TDOUBLE => {
+                    f64::read_col(self.fits_file, &current_name)
+                        .map(|data| {
+                            Some(Column::DoubleColumn {
+                                name: current_name.to_string(),
+                                data: data,
+                            })
+                        })
+                        .unwrap()
+                }
+                _ => unimplemented!(),
+            };
+
+            self.current += 1;
+
+            retval
+
+        } else {
+            None
+        }
+    }
+}
+
 impl FitsFile {
     /// Open a fits file from disk
     ///
@@ -581,6 +689,10 @@ impl FitsFile {
                                       upper_right: &Coordinate)
                                       -> Result<Vec<T>> {
         T::read_region(self, lower_left, upper_right)
+    }
+
+    pub fn columns(&self) -> ColumnIterator {
+        ColumnIterator::new(self)
     }
 
     /// Get the current hdu info
@@ -838,5 +950,23 @@ mod test {
                        status: status,
                        message: stringutils::status_to_string(status).unwrap(),
                    }));
+    }
+
+    #[test]
+    fn column_iterator() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        f.change_hdu(1).unwrap();
+        let column_names: Vec<String> = f.columns()
+            .map(|col| {
+                match col {
+                    Column::Int32Column { name, data: _data } => name,
+                    Column::Int64Column { name, data: _data } => name,
+                    Column::FloatColumn { name, data: _data } => name,
+                    Column::DoubleColumn { name, data: _data } => name,
+                }
+            })
+            .collect();
+        assert_eq!(column_names,
+                   vec!["intcol".to_string(), "floatcol".to_string(), "doublecol".to_string()]);
     }
 }
