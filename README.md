@@ -1,10 +1,10 @@
-# rust-cfitsio
+# rust-fitsio
 
 FFI wrapper around cfitsio in Rust
 
 
-[![Join the chat at https://gitter.im/mindriot101/rust-cfitsio](https://badges.gitter.im/mindriot101/rust-cfitsio.svg)](https://gitter.im/mindriot101/rust-cfitsio?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/mindriot101/rust-cfitsio.svg?branch=master)](https://travis-ci.org/mindriot101/rust-cfitsio)
+[![Join the chat at https://gitter.im/mindriot101/rust-fitsio](https://badges.gitter.im/mindriot101/rust-fitsio.svg)](https://gitter.im/mindriot101/rust-fitsio?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.org/mindriot101/rust-fitsio.svg?branch=master)](https://travis-ci.org/mindriot101/rust-fitsio)
 
 ## Installation
 
@@ -14,7 +14,7 @@ your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-fitsio = { git = "https://github.com/mindriot101/rust-cfitsio" }
+fitsio = { git = "https://github.com/mindriot101/rust-fitsio" }
 ```
 
 If you want the latest release from `crates.io` then add the following:
