@@ -1,10 +1,195 @@
 //! `fitsio` - a thin wrapper around the [`cfitsio`][1] C library.
 //!
-//! # Examples
+//! * [HDU access](#hdu-access)
+//! * [Header keys](#header-keys)
+//! * [Reading file data](#reading-file-data)
+//!     * [Images](#images)
+//!     * [Tables](#tables)
 //!
-//! TBD
+//! This library wraps the low level `cfitsio` bindings: [`fitsio-sys`][2] and provides a more
+//! native experience for rust users.
+//!
+//! The main interface to a fits file is [FitsFile](struct.FitsFile.html). All file manipulation
+//! and reading starts with this class.
+//!
+//! Opening a file:
+//!
+//! ```rust
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! use fitsio::FitsFile;
+//!
+//! // let filename = ...;
+//! let fptr = FitsFile::open(filename).unwrap();
+//! # }
+//! ```
+//!
+//! Alternatively a new file can be created on disk with the companion method
+//! [`create`](struct.FitsFile.html#method.create):
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # use fitsio::FitsFile;
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let _filename = tdir_path.join("test.fits");
+//! # let filename = _filename.to_str().unwrap();
+//! use fitsio::FitsFile;
+//!
+//! // let filename = ...;
+//! let fptr = FitsFile::create(filename).unwrap();
+//! # }
+//! ```
+//!
+//! From this point, the current HDU can be queried and changed, or fits header cards can be read
+//! or file contents can be read.
+//!
+//! ## HDU access
+//!
+//! Information about the current HDU can be fetched with various functions, for example getting
+//! the current HDU type:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # extern crate fitsio_sys;
+//! # use fitsio::FitsFile;
+//! #
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! # let fptr = FitsFile::open(filename).unwrap();
+//! use fitsio_sys::HduType;
+//!
+//! match fptr.hdu_type() {
+//!     Ok(HduType::IMAGE_HDU) => println!("Found image"),
+//!     Ok(HduType::BINARY_TBL) => println!("Found table"),
+//!     _ => {},
+//! }
+//! # }
+//! ```
+//!
+//! or fetching metadata about the current HDU:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # extern crate fitsio_sys;
+//! # use fitsio::{FitsFile, HduInfo};
+//! #
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! # let fptr = FitsFile::open(filename).unwrap();
+//! // image HDU
+//! match fptr.fetch_hdu_info() {
+//!     Ok(HduInfo::ImageInfo { dimensions, shape }) => {
+//!         println!("Image is {}-dimensional", dimensions);
+//!         println!("Found image with shape {:?}", shape);
+//!     },
+//!     # _ => {},
+//! }
+//!
+//! // tables
+//! match fptr.fetch_hdu_info() {
+//!     Ok(HduInfo::TableInfo { column_names, column_types, num_rows }) => {
+//!         println!("Table contains {} rows", num_rows);
+//!         println!("Table has {} columns", column_names.len());
+//!     },
+//!     # _ => {},
+//! }
+//! # }
+//! ```
+//!
+//! The current HDU can be selected either by absolute number (0-indexed) or string-like:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! #
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! fptr.change_hdu(1).unwrap();
+//! assert_eq!(fptr.hdu_number(), 1);
+//!
+//! # fptr.change_hdu(0).unwrap();
+//! fptr.change_hdu("TESTEXT").unwrap();
+//! assert_eq!(fptr.hdu_number(), 1);
+//! # }
+//! ```
+//!
+//! ## Header keys
+//!
+//! Header keys are read through the [`read_key`](struct.FitsFile.html#method.read_key) function,
+//! and is generic over types that implement the [`ReadsKey`](trait.ReadsKey.html) trait:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! #
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! # {
+//! let int_value: i64 = fptr.read_key("INTTEST").unwrap();
+//! # }
+//!
+//! // Alternatively
+//! # {
+//! let int_value = fptr.read_key::<i64>("INTTEST").unwrap();
+//! # }
+//!
+//! // Or let the compiler infer the types (if possible)
+//! # }
+//! ```
+//!
+//! ## Reading file data
+//!
+//! ### Images
+//!
+//! Image data can be read through either
+//! [`read_section`](struct.FitsFile.html#method.read_section) which reads contiguous pixels
+//! between a start index and end index, or
+//! [`read_region`](struct.FitsFile.html#method.read_region) which reads rectangular chunks from
+//! the image.
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! #
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! // Read the first 100 pixels
+//! let first_row: Vec<i32> = fptr.read_section(0, 100).unwrap();
+//!
+//! // Read a square section of the image
+//! use fitsio::positional::Coordinate;
+//!
+//! let lower_left = Coordinate { x: 0, y: 0 };
+//! let upper_right = Coordinate { x: 10, y: 10 };
+//! let chunk: Vec<i32> = fptr.read_region(&lower_left, &upper_right).unwrap();
+//! # }
+//! ```
+//!
+//! ### Tables
+//!
+//! Columns can be read using the [`read_col`](struct.FitsFile.html#method.read_col) function,
+//! which can convert data types on the fly. See the [`ReadsCol`](trait.ReadsCol.html) trait for
+//! supported data types.
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! #
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! # fptr.change_hdu(1).unwrap();
+//! let integer_data: Vec<i32> = fptr.read_col("intcol").unwrap();
+//! # }
+//! ```
+//!
+//! The [`columns`](struct.FitsFile.html#method.columns) method returns an iterator over all of the
+//! columns in a table.
 //!
 //! [1]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
+//! [2]: https://crates.io/crates/fitsio-sys
 
 mod stringutils;
 pub mod positional;
