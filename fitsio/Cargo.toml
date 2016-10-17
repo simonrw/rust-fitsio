@@ -1,6 +1,6 @@
 [package]
 name = "fitsio"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "Rust implmentation of astronomy fits file handling"
 homepage = "https://github.com/mindriot101/rust-fitsio"
