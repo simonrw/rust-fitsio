@@ -7,7 +7,7 @@ homepage = "https://github.com/mindriot101/rust-fitsio"
 repository = "https://github.com/mindriot101/rust-fitsio"
 license = "MIT/Apache-2.0"
 build = "build.rs"
-documentation = "https://docs.rs/crate/fitsio-sys"
+documentation = "https://docs.rs/fitsio-sys"
 
 [dependencies]
 libc = "0.2.11"
