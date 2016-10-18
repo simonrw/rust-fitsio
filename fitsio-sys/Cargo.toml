@@ -1,6 +1,6 @@
 [package]
 name = "fitsio-sys"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "FFI wrapper around cfitsio"
 homepage = "https://github.com/mindriot101/rust-fitsio"
