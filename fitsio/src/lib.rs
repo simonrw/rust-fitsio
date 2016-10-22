@@ -403,7 +403,7 @@ macro_rules! reads_col_impl {
             fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo {
-                        column_names, column_types: _column_types, num_rows
+                        column_names, num_rows, ..
                     }) => {
                         let mut out = vec![$nullval; num_rows];
                         assert_eq!(out.len(), num_rows);
