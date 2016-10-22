@@ -80,21 +80,16 @@
 //! # let filename = "../testdata/full_example.fits";
 //! # let fptr = FitsFile::open(filename).unwrap();
 //! // image HDU
-//! match fptr.fetch_hdu_info() {
-//!     Ok(HduInfo::ImageInfo { dimensions, shape }) => {
-//!         println!("Image is {}-dimensional", dimensions);
-//!         println!("Found image with shape {:?}", shape);
-//!     },
-//!     # _ => {},
+//! if let Ok(HduInfo::ImageInfo { dimensions, shape }) = fptr.fetch_hdu_info() {
+//!    println!("Image is {}-dimensional", dimensions);
+//!    println!("Found image with shape {:?}", shape);
 //! }
+//! # fptr.change_hdu("TESTEXT").unwrap();
 //!
 //! // tables
-//! match fptr.fetch_hdu_info() {
-//!     Ok(HduInfo::TableInfo { column_names, column_types, num_rows }) => {
-//!         println!("Table contains {} rows", num_rows);
-//!         println!("Table has {} columns", column_names.len());
-//!     },
-//!     # _ => {},
+//! if let Ok(HduInfo::TableInfo { column_names, num_rows, .. }) = fptr.fetch_hdu_info() {
+//!     println!("Table contains {} rows", num_rows);
+//!     println!("Table has {} columns", column_names.len());
 //! }
 //! # }
 //! ```
