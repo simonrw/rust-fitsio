@@ -1,13 +1,14 @@
 [package]
 name = "fitsio-sys"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "FFI wrapper around cfitsio"
 homepage = "https://github.com/mindriot101/rust-fitsio"
 repository = "https://github.com/mindriot101/rust-fitsio"
+readme = "README.md"
 license = "MIT/Apache-2.0"
 build = "build.rs"
-documentation = "https://docs.rs/crate/fitsio-sys"
+documentation = "https://docs.rs/fitsio-sys"
 
 [dependencies]
 libc = "0.2.11"

@@ -1,16 +1,17 @@
 [package]
 name = "fitsio"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "Rust implmentation of astronomy fits file handling"
 homepage = "https://github.com/mindriot101/rust-fitsio"
 repository = "https://github.com/mindriot101/rust-fitsio"
+readme = "README.md"
 license = "MIT/Apache-2.0"
-documentation = "https://docs.rs/crate/fitsio"
+documentation = "https://docs.rs/fitsio"
 
 [dependencies]
 libc = "0.2.11"
-fitsio-sys = { version = "0.2.1", path = "../fitsio-sys" }
+fitsio-sys = { version = "0.2.3", path = "../fitsio-sys" }
 
 [dev-dependencies]
 tempdir = "0.3.4"
