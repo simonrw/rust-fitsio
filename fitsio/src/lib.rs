@@ -1004,27 +1004,6 @@ mod test {
     }
 
     #[test]
-    fn writing_header_keywords() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
-
-        // Closure ensures file is closed properly
-        {
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            f.write_key("FOO", 1i64).unwrap();
-            f.write_key("BAR", "baz".to_string()).unwrap();
-        }
-
-        FitsFile::open(filename.to_str().unwrap())
-            .map(|f| {
-                assert_eq!(f.read_key::<i64>("FOO").unwrap(), 1);
-                assert_eq!(f.read_key::<String>("BAR").unwrap(), "baz".to_string());
-            })
-            .unwrap();
-    }
-
-    #[test]
     fn fetching_hdu_info() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
@@ -1149,4 +1128,27 @@ mod test {
         assert_eq!(column_names,
                    vec!["intcol".to_string(), "floatcol".to_string(), "doublecol".to_string()]);
     }
+
+    // Writing data
+    #[test]
+    fn writing_header_keywords() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        // Closure ensures file is closed properly
+        {
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            f.write_key("FOO", 1i64).unwrap();
+            f.write_key("BAR", "baz".to_string()).unwrap();
+        }
+
+        FitsFile::open(filename.to_str().unwrap())
+            .map(|f| {
+                assert_eq!(f.read_key::<i64>("FOO").unwrap(), 1);
+                assert_eq!(f.read_key::<String>("BAR").unwrap(), "baz".to_string());
+            })
+            .unwrap();
+    }
+
 }
