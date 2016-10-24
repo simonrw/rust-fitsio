@@ -135,6 +135,23 @@
 //! # }
 //! ```
 //!
+//! Header cards can be written through the method
+//! [`write_key`](struct.FitsFile.html#method.write_key). It takes a key name and value. See [the
+//! `WritesKey`](trait.WritesKey.html) trait for supported data types.
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # {
+//! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! fptr.write_key("foo", 1i64).unwrap();
+//! assert_eq!(fptr.read_key::<i64>("foo").unwrap(), 1i64);
+//! # }
+//! ```
+//!
 //! ## Reading file data
 //!
 //! ### Images
