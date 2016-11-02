@@ -599,6 +599,7 @@ fn typechar_to_data_type<T: Into<String>>(typechar: T) -> sys::DataType {
         "D" => sys::DataType::TDOUBLE,
         "C" => sys::DataType::TCOMPLEX,
         "M" => sys::DataType::TDBLCOMPLEX,
+        "K" => sys::DataType::TLONGLONG,
         other => panic!("Unhandled case: {}", other),
     }
 }
