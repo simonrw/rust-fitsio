@@ -9,7 +9,7 @@
 //! This library wraps the low level `cfitsio` bindings: [`fitsio-sys`][2] and provides a more
 //! native experience for rust users.
 //!
-//! The main interface to a fits file is [FitsFile](struct.FitsFile.html). All file manipulation
+//! The main interface to a fits file is [`FitsFile`](struct.FitsFile.html). All file manipulation
 //! and reading starts with this class.
 //!
 //! Opening a file:
@@ -663,19 +663,19 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
 }
 
 pub enum Column {
-    Int32Column {
+    Int32 {
         name: String,
         data: Vec<i32>,
     },
-    Int64Column {
+    Int64 {
         name: String,
         data: Vec<i64>,
     },
-    FloatColumn {
+    Float {
         name: String,
         data: Vec<f32>,
     },
-    DoubleColumn {
+    Double {
         name: String,
         data: Vec<f64>,
     },
@@ -717,9 +717,9 @@ impl<'a> Iterator for ColumnIterator<'a> {
 
             let retval = match *current_type {
                 sys::DataType::TSHORT => {
-                    i32::read_col(self.fits_file, &current_name)
+                    i32::read_col(self.fits_file, current_name)
                         .map(|data| {
-                            Some(Column::Int32Column {
+                            Some(Column::Int32 {
                                 name: current_name.to_string(),
                                 data: data,
                             })
@@ -727,9 +727,9 @@ impl<'a> Iterator for ColumnIterator<'a> {
                         .unwrap()
                 }
                 sys::DataType::TLONG => {
-                    i64::read_col(self.fits_file, &current_name)
+                    i64::read_col(self.fits_file, current_name)
                         .map(|data| {
-                            Some(Column::Int64Column {
+                            Some(Column::Int64 {
                                 name: current_name.to_string(),
                                 data: data,
                             })
@@ -737,9 +737,9 @@ impl<'a> Iterator for ColumnIterator<'a> {
                         .unwrap()
                 }
                 sys::DataType::TFLOAT => {
-                    f32::read_col(self.fits_file, &current_name)
+                    f32::read_col(self.fits_file, current_name)
                         .map(|data| {
-                            Some(Column::FloatColumn {
+                            Some(Column::Float {
                                 name: current_name.to_string(),
                                 data: data,
                             })
@@ -747,9 +747,9 @@ impl<'a> Iterator for ColumnIterator<'a> {
                         .unwrap()
                 }
                 sys::DataType::TDOUBLE => {
-                    f64::read_col(self.fits_file, &current_name)
+                    f64::read_col(self.fits_file, current_name)
                         .map(|data| {
-                            Some(Column::DoubleColumn {
+                            Some(Column::Double {
                                 name: current_name.to_string(),
                                 data: data,
                             })
@@ -1136,10 +1136,10 @@ mod test {
         let column_names: Vec<String> = f.columns()
             .map(|col| {
                 match col {
-                    Column::Int32Column { name, data: _data } => name,
-                    Column::Int64Column { name, data: _data } => name,
-                    Column::FloatColumn { name, data: _data } => name,
-                    Column::DoubleColumn { name, data: _data } => name,
+                    Column::Int32 { name, data: _data } => name,
+                    Column::Int64 { name, data: _data } => name,
+                    Column::Float { name, data: _data } => name,
+                    Column::Double { name, data: _data } => name,
                 }
             })
             .collect();
