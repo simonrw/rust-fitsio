@@ -663,22 +663,10 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
 }
 
 pub enum Column {
-    Int32 {
-        name: String,
-        data: Vec<i32>,
-    },
-    Int64 {
-        name: String,
-        data: Vec<i64>,
-    },
-    Float {
-        name: String,
-        data: Vec<f32>,
-    },
-    Double {
-        name: String,
-        data: Vec<f64>,
-    },
+    Int32 { name: String, data: Vec<i32> },
+    Int64 { name: String, data: Vec<i64> },
+    Float { name: String, data: Vec<f32> },
+    Double { name: String, data: Vec<f64> },
 }
 
 pub struct ColumnIterator<'a> {
@@ -767,6 +755,12 @@ impl<'a> Iterator for ColumnIterator<'a> {
             None
         }
     }
+}
+
+/// Description for new columns
+pub struct ColumnDescription {
+    name: String,
+    data_type: String,
 }
 
 impl FitsFile {
@@ -897,6 +891,43 @@ impl FitsFile {
     pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
         unsafe { fetch_hdu_info(self.fptr) }
     }
+
+    pub fn create_table(&self, extname: String, table_description: &Vec<ColumnDescription>) -> Result<()> {
+        let tfields = {
+            let stringlist = table_description
+                .iter()
+                .map(|desc| desc.name.clone())
+                .collect();
+            stringutils::StringList::from_vec(stringlist)
+        };
+
+        let ttype = {
+            let stringlist = table_description
+                .iter()
+                .map(|desc| desc.data_type.clone())
+            .collect();
+            stringutils::StringList::from_vec(stringlist)
+        };
+
+        let c_extname = ffi::CString::new(extname).unwrap();
+
+
+        let mut status: libc::c_int = 0;
+        unsafe {
+            sys::ffcrtb(
+                self.fptr,
+                sys::HduType::BINARY_TBL.into(),
+                0,
+                tfields.len as libc::c_int,
+                tfields.list,
+                ttype.list,
+                ptr::null_mut(),
+                c_extname.into_raw(),
+                &mut status);
+        }
+
+        fits_try!(status, ())
+    }
 }
 
 impl Drop for FitsFile {
@@ -917,30 +948,17 @@ mod test {
 
     #[test]
     fn typechar_conversions() {
-        let input = vec![
-            "X",
-            "B",
-            "L",
-            "A",
-            "I",
-            "J",
-            "E",
-            "D",
-            "C",
-            "M",
-        ];
-        let expected = vec![
-            sys::DataType::TBIT,
-            sys::DataType::TBYTE,
-            sys::DataType::TLOGICAL,
-            sys::DataType::TSTRING,
-            sys::DataType::TSHORT,
-            sys::DataType::TLONG,
-            sys::DataType::TFLOAT,
-            sys::DataType::TDOUBLE,
-            sys::DataType::TCOMPLEX,
-            sys::DataType::TDBLCOMPLEX,
-        ];
+        let input = vec!["X", "B", "L", "A", "I", "J", "E", "D", "C", "M"];
+        let expected = vec![sys::DataType::TBIT,
+                            sys::DataType::TBYTE,
+                            sys::DataType::TLOGICAL,
+                            sys::DataType::TSTRING,
+                            sys::DataType::TSHORT,
+                            sys::DataType::TLONG,
+                            sys::DataType::TFLOAT,
+                            sys::DataType::TDOUBLE,
+                            sys::DataType::TCOMPLEX,
+                            sys::DataType::TDBLCOMPLEX];
 
         input.iter()
             .zip(expected)
@@ -1038,17 +1056,13 @@ mod test {
             Ok(HduInfo::TableInfo { column_names, column_types, num_rows }) => {
                 assert_eq!(num_rows, 50);
                 assert_eq!(column_names,
-                           vec![
-                           "intcol".to_string(),
-                           "floatcol".to_string(),
-                           "doublecol".to_string(),
-                ]);
+                           vec!["intcol".to_string(),
+                                "floatcol".to_string(),
+                                "doublecol".to_string()]);
                 assert_eq!(column_types,
-                           vec![
-                        sys::DataType::TLONG,
-                        sys::DataType::TFLOAT,
-                        sys::DataType::TDOUBLE,
-                ]);
+                           vec![sys::DataType::TLONG,
+                                sys::DataType::TFLOAT,
+                                sys::DataType::TDOUBLE]);
             }
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
@@ -1163,10 +1177,38 @@ mod test {
 
         FitsFile::open(filename.to_str().unwrap())
             .map(|f| {
-                assert_eq!(f.read_key::<i64>("FOO").unwrap(), 1);
-                assert_eq!(f.read_key::<String>("BAR").unwrap(), "baz".to_string());
+                assert_eq!(f.read_key::<i64>("foo").unwrap(), 1);
+                assert_eq!(f.read_key::<String>("bar").unwrap(), "baz".to_string());
             })
             .unwrap();
     }
 
+    #[test]
+    fn adding_new_table() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        {
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let table_description = vec![ColumnDescription {
+                                             name: "bar".to_string(),
+                                             data_type: "1J".to_string(),
+                                         }];
+            f.create_table("foo".to_string(), &table_description).unwrap();
+        }
+
+        FitsFile::open(filename.to_str().unwrap())
+            .map(|f| {
+                f.change_hdu("foo").unwrap();
+                match f.fetch_hdu_info() {
+                    Ok(HduInfo::TableInfo { column_names, column_types, .. }) => {
+                        assert_eq!(column_names, vec!["bar".to_string()]);
+                        assert_eq!(column_types, vec![sys::DataType::TLONG]);
+                    },
+                    thing => panic!("{:?}", thing),
+                }
+            })
+            .unwrap();
+    }
 }
