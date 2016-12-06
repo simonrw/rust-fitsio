@@ -87,9 +87,9 @@
 //! # fptr.change_hdu("TESTEXT").unwrap();
 //!
 //! // tables
-//! if let Ok(HduInfo::TableInfo { column_names, num_rows, .. }) = fptr.fetch_hdu_info() {
+//! if let Ok(HduInfo::TableInfo { column_descriptions, num_rows, .. }) = fptr.fetch_hdu_info() {
 //!     println!("Table contains {} rows", num_rows);
-//!     println!("Table has {} columns", column_names.len());
+//!     println!("Table has {} columns", column_descriptions.len());
 //! }
 //! # }
 //! ```
@@ -420,12 +420,12 @@ macro_rules! reads_col_impl {
             fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo {
-                        column_names, num_rows, ..
+                        column_descriptions, num_rows, ..
                     }) => {
                         let mut out = vec![$nullval; num_rows];
                         assert_eq!(out.len(), num_rows);
-                        let column_number = column_names.iter().position(|ref colname| {
-                            colname.as_str() == name
+                        let column_number = column_descriptions.iter().position(|ref desc| {
+                            desc.name.as_str() == name
                         }).unwrap();
                         let mut status = 0;
                         unsafe {
@@ -560,15 +560,14 @@ reads_image_impl!(f64, sys::DataType::TDOUBLE);
 /// If the current HDU is an image, then
 /// [`fetch_hdu_info`](struct.FitsFile.html#method.fetch_hdu_info) returns `HduInfo::ImageInfo`.
 /// Otherwise the variant is `HduInfo::TableInfo`.
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub enum HduInfo {
     ImageInfo {
         dimensions: usize,
         shape: Vec<usize>,
     },
     TableInfo {
-        column_names: Vec<String>,
-        column_types: Vec<sys::DataType>,
+        column_descriptions: Vec<ColumnDescription>,
         num_rows: usize,
     },
 }
@@ -628,8 +627,7 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
 
             let mut num_cols = 0;
             sys::ffgncl(fptr, &mut num_cols, &mut status);
-            let mut column_names = Vec::with_capacity(num_cols as usize);
-            let mut column_types = Vec::with_capacity(num_cols as usize);
+            let mut column_descriptions = Vec::with_capacity(num_cols as usize);
 
             for i in 0..num_cols {
                 let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
@@ -645,14 +643,16 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
                             ptr::null_mut(),
                             ptr::null_mut(),
                             &mut status);
-                column_names.push(stringutils::buf_to_string(&name_buffer).unwrap());
-                column_types.push(typechar_to_data_type(stringutils::buf_to_string(&type_buffer)
-                            .unwrap()));
+
+                column_descriptions.push(ColumnDescription {
+                    name: stringutils::buf_to_string(&name_buffer).unwrap(),
+                    data_type: stringutils::buf_to_string(&type_buffer)
+                                                    .unwrap(),
+                });
             }
 
             HduInfo::TableInfo {
-                column_names: column_names,
-                column_types: column_types,
+                column_descriptions: column_descriptions,
                 num_rows: num_rows as usize,
             }
         }
@@ -671,19 +671,17 @@ pub enum Column {
 
 pub struct ColumnIterator<'a> {
     current: usize,
-    column_names: Vec<String>,
-    column_types: Vec<sys::DataType>,
+    column_descriptions: Vec<ColumnDescription>,
     fits_file: &'a FitsFile,
 }
 
 impl<'a> ColumnIterator<'a> {
     fn new(fits_file: &'a FitsFile) -> Self {
         match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo { column_names, column_types, num_rows: _num_rows }) => {
+            Ok(HduInfo::TableInfo { column_descriptions, num_rows: _num_rows }) => {
                 ColumnIterator {
                     current: 0,
-                    column_names: column_names,
-                    column_types: column_types,
+                    column_descriptions: column_descriptions,
                     fits_file: fits_file,
                 }
             }
@@ -697,13 +695,14 @@ impl<'a> Iterator for ColumnIterator<'a> {
     type Item = Column;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let ncols = self.column_names.len();
+        let ncols = self.column_descriptions.len();
 
         if self.current < ncols {
-            let current_name = &self.column_names[self.current];
-            let current_type = &self.column_types[self.current];
+            let description = &self.column_descriptions[self.current];
+            let current_name = &description.name;
+            let current_type = typechar_to_data_type(description.data_type.as_str());
 
-            let retval = match *current_type {
+            let retval = match current_type {
                 sys::DataType::TSHORT => {
                     i32::read_col(self.fits_file, current_name)
                         .map(|data| {
@@ -758,6 +757,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
 }
 
 /// Description for new columns
+#[derive(Debug)]
 pub struct ColumnDescription {
     name: String,
     data_type: String,
@@ -1053,13 +1053,15 @@ mod test {
 
         f.change_hdu(1).unwrap();
         match f.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo { column_names, column_types, num_rows }) => {
+            Ok(HduInfo::TableInfo { column_descriptions, num_rows }) => {
                 assert_eq!(num_rows, 50);
-                assert_eq!(column_names,
+                assert_eq!(column_descriptions.iter().map(|desc| desc.name.clone()).collect::<Vec<String>>(),
                            vec!["intcol".to_string(),
                                 "floatcol".to_string(),
                                 "doublecol".to_string()]);
-                assert_eq!(column_types,
+                assert_eq!(column_descriptions.iter().map(|ref desc| {
+                    typechar_to_data_type(desc.data_type.clone())
+                }).collect::<Vec<sys::DataType>>(),
                            vec![sys::DataType::TLONG,
                                 sys::DataType::TFLOAT,
                                 sys::DataType::TDOUBLE]);
@@ -1202,7 +1204,15 @@ mod test {
             .map(|f| {
                 f.change_hdu("foo").unwrap();
                 match f.fetch_hdu_info() {
-                    Ok(HduInfo::TableInfo { column_names, column_types, .. }) => {
+                    Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
+                        let column_names = column_descriptions.iter()
+                            .map(|ref desc| desc.name.clone())
+                            .collect::<Vec<String>>();
+                        let column_types = column_descriptions.iter()
+                            .map(|ref desc| {
+                                typechar_to_data_type(desc.data_type.clone())
+                            })
+                        .collect::<Vec<sys::DataType>>();
                         assert_eq!(column_names, vec!["bar".to_string()]);
                         assert_eq!(column_types, vec![sys::DataType::TLONG]);
                     },
