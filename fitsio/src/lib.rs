@@ -586,8 +586,8 @@ impl Clone for FitsFile {
     }
 }
 
-fn typechar_to_data_type<T: Into<String>>(typechar: T) -> sys::DataType {
-    match typechar.into().as_str() {
+fn typechar_to_data_type<T: AsRef<str>>(typechar: T) -> sys::DataType {
+    match typechar.as_ref() {
         "X" => sys::DataType::TBIT,
         "B" => sys::DataType::TBYTE,
         "L" => sys::DataType::TLOGICAL,
