@@ -5,6 +5,7 @@ use super::{stringutils, positional, sys, libc};
 
 use positional::Coordinate;
 use super::fitserror::{FitsError, Result};
+use super::fitshdu::FitsHdu;
 
 
 /// Hdu description type
@@ -593,6 +594,11 @@ impl FitsFile {
         hdu_description.change_hdu(self)
     }
 
+    /// Return a new HDU object
+    pub fn hdu<'open, T: DescribesHdu>(&'open self, hdu_description: T) -> Result<FitsHdu> {
+        FitsHdu::new(self, hdu_description)
+    }
+
     /// Get the current HDU type
     pub fn hdu_type(&self) -> Result<sys::HduType> {
         let mut status = 0;
@@ -984,5 +990,17 @@ mod test {
                 }
             })
             .unwrap();
+    }
+
+    #[test]
+    fn fetching_hdu_object_hdu_info() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let testext = f.hdu("TESTEXT").unwrap();
+        match testext.hdu_info {
+            HduInfo::TableInfo { num_rows, .. } => {
+                assert_eq!(num_rows, 50);
+            },
+            _ => panic!("Incorrect HDU type found"),
+        }
     }
 }

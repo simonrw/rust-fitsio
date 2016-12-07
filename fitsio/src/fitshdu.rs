@@ -3,7 +3,7 @@ use super::fitserror::Result;
 
 pub struct FitsHdu<'open> {
     fits_file: &'open FitsFile,
-    hdu_info: HduInfo,
+    pub hdu_info: HduInfo,
 }
 
 impl<'open> FitsHdu<'open> {
