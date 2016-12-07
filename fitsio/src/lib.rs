@@ -60,8 +60,9 @@
 //! # let filename = "../testdata/full_example.fits";
 //! # let fptr = FitsFile::open(filename).unwrap();
 //! use fitsio_sys::HduType;
+//! let hdu = fptr.hdu(0).unwrap();
 //!
-//! match fptr.hdu_type() {
+//! match hdu.hdu_type() {
 //!     Ok(HduType::IMAGE_HDU) => println!("Found image"),
 //!     Ok(HduType::BINARY_TBL) => println!("Found table"),
 //!     _ => {},

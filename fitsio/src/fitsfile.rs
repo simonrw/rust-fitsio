@@ -340,7 +340,7 @@ pub enum HduInfo {
 ///
 ///
 pub struct FitsFile {
-    fptr: *mut sys::fitsfile,
+    pub fptr: *mut sys::fitsfile,
     pub filename: String,
 }
 
@@ -598,23 +598,6 @@ impl FitsFile {
         FitsHdu::new(self, hdu_description)
     }
 
-    /// Get the current HDU type
-    pub fn hdu_type(&self) -> Result<sys::HduType> {
-        let mut status = 0;
-        let mut hdu_type = 0;
-        unsafe {
-            sys::ffghdt(self.fptr, &mut hdu_type, &mut status);
-        }
-
-        fits_try!(status, {
-            match hdu_type {
-                0 => sys::HduType::IMAGE_HDU,
-                2 => sys::HduType::BINARY_TBL,
-                _ => unimplemented!(),
-            }
-        })
-    }
-
     pub fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
         unsafe {
@@ -797,15 +780,6 @@ mod test {
             Ok(value) => assert_eq!(value, "value"),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
-    }
-
-    #[test]
-    fn getting_hdu_type() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        assert_eq!(f.hdu_type().unwrap(), sys::HduType::IMAGE_HDU);
-
-        f.change_hdu("TESTEXT").unwrap();
-        assert_eq!(f.hdu_type().unwrap(), sys::HduType::BINARY_TBL);
     }
 
     #[test]
