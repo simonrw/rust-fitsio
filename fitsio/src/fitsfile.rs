@@ -410,8 +410,7 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
 
                 column_descriptions.push(ColumnDescription {
                     name: stringutils::buf_to_string(&name_buffer).unwrap(),
-                    data_type: stringutils::buf_to_string(&type_buffer)
-                                                    .unwrap(),
+                    data_type: stringutils::buf_to_string(&type_buffer).unwrap(),
                 });
             }
 
@@ -661,20 +660,21 @@ impl FitsFile {
         unsafe { fetch_hdu_info(self.fptr) }
     }
 
-    pub fn create_table(&self, extname: String, table_description: &Vec<ColumnDescription>) -> Result<()> {
+    pub fn create_table(&self,
+                        extname: String,
+                        table_description: &Vec<ColumnDescription>)
+                        -> Result<()> {
         let tfields = {
-            let stringlist = table_description
-                .iter()
+            let stringlist = table_description.iter()
                 .map(|desc| desc.name.clone())
                 .collect();
             stringutils::StringList::from_vec(stringlist)
         };
 
         let ttype = {
-            let stringlist = table_description
-                .iter()
+            let stringlist = table_description.iter()
                 .map(|desc| desc.data_type.clone())
-            .collect();
+                .collect();
             stringutils::StringList::from_vec(stringlist)
         };
 
@@ -683,16 +683,15 @@ impl FitsFile {
 
         let mut status: libc::c_int = 0;
         unsafe {
-            sys::ffcrtb(
-                self.fptr,
-                sys::HduType::BINARY_TBL.into(),
-                0,
-                tfields.len as libc::c_int,
-                tfields.list,
-                ttype.list,
-                ptr::null_mut(),
-                c_extname.into_raw(),
-                &mut status);
+            sys::ffcrtb(self.fptr,
+                        sys::HduType::BINARY_TBL.into(),
+                        0,
+                        tfields.len as libc::c_int,
+                        tfields.list,
+                        ttype.list,
+                        ptr::null_mut(),
+                        c_extname.into_raw(),
+                        &mut status);
         }
 
         fits_try!(status, ())
@@ -825,13 +824,15 @@ mod test {
         match f.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { column_descriptions, num_rows }) => {
                 assert_eq!(num_rows, 50);
-                assert_eq!(column_descriptions.iter().map(|desc| desc.name.clone()).collect::<Vec<String>>(),
+                assert_eq!(column_descriptions.iter()
+                               .map(|desc| desc.name.clone())
+                               .collect::<Vec<String>>(),
                            vec!["intcol".to_string(),
                                 "floatcol".to_string(),
                                 "doublecol".to_string()]);
-                assert_eq!(column_descriptions.iter().map(|ref desc| {
-                    typechar_to_data_type(desc.data_type.clone())
-                }).collect::<Vec<sys::DataType>>(),
+                assert_eq!(column_descriptions.iter()
+                               .map(|ref desc| typechar_to_data_type(desc.data_type.clone()))
+                               .collect::<Vec<sys::DataType>>(),
                            vec![sys::DataType::TLONG,
                                 sys::DataType::TFLOAT,
                                 sys::DataType::TDOUBLE]);
@@ -979,13 +980,11 @@ mod test {
                             .map(|ref desc| desc.name.clone())
                             .collect::<Vec<String>>();
                         let column_types = column_descriptions.iter()
-                            .map(|ref desc| {
-                                typechar_to_data_type(desc.data_type.clone())
-                            })
-                        .collect::<Vec<sys::DataType>>();
+                            .map(|ref desc| typechar_to_data_type(desc.data_type.clone()))
+                            .collect::<Vec<sys::DataType>>();
                         assert_eq!(column_names, vec!["bar".to_string()]);
                         assert_eq!(column_types, vec![sys::DataType::TLONG]);
-                    },
+                    }
                     thing => panic!("{:?}", thing),
                 }
             })
@@ -999,7 +998,7 @@ mod test {
         match testext.hdu_info {
             HduInfo::TableInfo { num_rows, .. } => {
                 assert_eq!(num_rows, 50);
-            },
+            }
             _ => panic!("Incorrect HDU type found"),
         }
     }

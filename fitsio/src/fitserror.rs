@@ -29,4 +29,3 @@ macro_rules! fits_try {
 ///
 /// This is a shortcut for a result with `FitsError` as the error type
 pub type Result<T> = result::Result<T, FitsError>;
-
