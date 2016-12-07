@@ -124,12 +124,12 @@
 //! # let filename = "../testdata/full_example.fits";
 //! # let fptr = fitsio::FitsFile::open(filename).unwrap();
 //! # {
-//! let int_value: i64 = fptr.read_key("INTTEST").unwrap();
+//! let int_value: i64 = fptr.hdu(0).unwrap().read_key("INTTEST").unwrap();
 //! # }
 //!
 //! // Alternatively
 //! # {
-//! let int_value = fptr.read_key::<i64>("INTTEST").unwrap();
+//! let int_value = fptr.hdu(0).unwrap().read_key::<i64>("INTTEST").unwrap();
 //! # }
 //!
 //! // Or let the compiler infer the types (if possible)
@@ -148,8 +148,8 @@
 //! # let filename = tdir_path.join("test.fits");
 //! # {
 //! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
-//! fptr.write_key("foo", 1i64).unwrap();
-//! assert_eq!(fptr.read_key::<i64>("foo").unwrap(), 1i64);
+//! fptr.hdu(0).unwrap().write_key("foo", 1i64).unwrap();
+//! assert_eq!(fptr.hdu(0).unwrap().read_key::<i64>("foo").unwrap(), 1i64);
 //! # }
 //! ```
 //!

@@ -46,133 +46,6 @@ impl<'a> DescribesHdu for &'a str {
     }
 }
 
-
-/// Trait applied to types which can be read from a FITS header
-///
-/// This is currently:
-///
-/// * i32
-/// * i64
-/// * f32
-/// * f64
-/// * String
-pub trait ReadsKey {
-    fn read_key(f: &FitsFile, name: &str) -> Result<Self> where Self: Sized;
-}
-
-macro_rules! reads_key_impl {
-    ($t:ty, $func:ident) => (
-        impl ReadsKey for $t {
-            fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
-                let c_name = ffi::CString::new(name).unwrap();
-                let mut status = 0;
-                let mut value: Self = Self::default();
-
-                unsafe {
-                    sys::$func(f.fptr,
-                           c_name.into_raw(),
-                           &mut value,
-                           ptr::null_mut(),
-                           &mut status);
-                }
-
-                fits_try!(status, value)
-            }
-        }
-    )
-}
-
-reads_key_impl!(i32, ffgkyl);
-reads_key_impl!(i64, ffgkyj);
-reads_key_impl!(f32, ffgkye);
-reads_key_impl!(f64, ffgkyd);
-
-impl ReadsKey for String {
-    fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
-        let c_name = ffi::CString::new(name).unwrap();
-        let mut status = 0;
-        let mut value: Vec<libc::c_char> = vec![0; sys::MAX_VALUE_LENGTH];
-
-        unsafe {
-            sys::ffgkys(f.fptr,
-                        c_name.into_raw(),
-                        value.as_mut_ptr(),
-                        ptr::null_mut(),
-                        &mut status);
-        }
-
-        fits_try!(status, {
-            let value: Vec<u8> = value.iter()
-                .map(|&x| x as u8)
-                .filter(|&x| x != 0)
-                .collect();
-            String::from_utf8(value).unwrap()
-        })
-    }
-}
-
-/// Writing a fits keyword
-pub trait WritesKey {
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()>;
-}
-
-macro_rules! writes_key_impl_flt {
-    ($t:ty, $func:ident) => (
-        impl WritesKey for $t {
-            fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-                let c_name = ffi::CString::new(name).unwrap();
-                let mut status = 0;
-
-                unsafe {
-                    sys::$func(f.fptr,
-                                c_name.into_raw(),
-                                value,
-                                9,
-                                ptr::null_mut(),
-                                &mut status);
-                }
-                fits_try!(status, ())
-            }
-        }
-    )
-}
-
-impl WritesKey for i64 {
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-        let c_name = ffi::CString::new(name).unwrap();
-        let mut status = 0;
-
-        unsafe {
-            sys::ffpkyj(f.fptr,
-                        c_name.into_raw(),
-                        value,
-                        ptr::null_mut(),
-                        &mut status);
-        }
-        fits_try!(status, ())
-    }
-}
-
-writes_key_impl_flt!(f32, ffpkye);
-writes_key_impl_flt!(f64, ffpkyd);
-
-impl WritesKey for String {
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-        let c_name = ffi::CString::new(name).unwrap();
-        let mut status = 0;
-
-        unsafe {
-            sys::ffpkys(f.fptr,
-                        c_name.into_raw(),
-                        ffi::CString::new(value).unwrap().into_raw(),
-                        ptr::null_mut(),
-                        &mut status);
-        }
-
-        fits_try!(status, ())
-    }
-}
-
 /// Trait for reading a fits column
 pub trait ReadsCol {
     fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> where Self: Sized;
@@ -606,16 +479,6 @@ impl FitsFile {
         (hdu_num - 1) as usize
     }
 
-    /// Read header key
-    pub fn read_key<T: ReadsKey>(&self, name: &str) -> Result<T> {
-        T::read_key(self, name)
-    }
-
-    /// Write header key
-    pub fn write_key<T: WritesKey>(&self, name: &str, value: T) -> Result<()> {
-        T::write_key(self, name, value)
-    }
-
     /// Read a binary table column
     pub fn read_col<T: ReadsCol>(&self, name: &str) -> Result<Vec<T>> {
         T::read_col(self, name)
@@ -740,7 +603,8 @@ mod test {
                 assert!(filename.exists());
 
                 // Ensure the empty primary has been written
-                let naxis: i64 = f.read_key("NAXIS").unwrap();
+                let naxis: i64 = f.hdu(0).unwrap()
+                    .read_key("NAXIS").unwrap();
                 assert_eq!(naxis, 0);
             })
             .unwrap();
@@ -761,25 +625,6 @@ mod test {
 
         f.change_hdu("TESTEXT").unwrap();
         assert_eq!(f.hdu_number(), 1);
-    }
-
-    #[test]
-    fn reading_header_keys() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        match f.read_key::<i64>("INTTEST") {
-            Ok(value) => assert_eq!(value, 42),
-            Err(e) => panic!("Error reading key: {:?}", e),
-        }
-
-        match f.read_key::<f64>("DBLTEST") {
-            Ok(value) => assert_eq!(value, 0.09375),
-            Err(e) => panic!("Error reading key: {:?}", e),
-        }
-
-        match f.read_key::<String>("TEST") {
-            Ok(value) => assert_eq!(value, "value"),
-            Err(e) => panic!("Error reading key: {:?}", e),
-        }
     }
 
     #[test]
@@ -918,14 +763,14 @@ mod test {
         // Closure ensures file is closed properly
         {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            f.write_key("FOO", 1i64).unwrap();
-            f.write_key("BAR", "baz".to_string()).unwrap();
+            f.hdu(0).unwrap().write_key("FOO", 1i64).unwrap();
+            f.hdu(0).unwrap().write_key("BAR", "baz".to_string()).unwrap();
         }
 
         FitsFile::open(filename.to_str().unwrap())
             .map(|f| {
-                assert_eq!(f.read_key::<i64>("foo").unwrap(), 1);
-                assert_eq!(f.read_key::<String>("bar").unwrap(), "baz".to_string());
+                assert_eq!(f.hdu(0).unwrap().read_key::<i64>("foo").unwrap(), 1);
+                assert_eq!(f.hdu(0).unwrap().read_key::<String>("bar").unwrap(), "baz".to_string());
             })
             .unwrap();
     }
