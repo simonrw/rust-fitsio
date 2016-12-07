@@ -206,6 +206,8 @@
 extern crate fitsio_sys as sys;
 extern crate libc;
 
+#[macro_use]
+pub mod fitserror;
 mod stringutils;
 pub mod positional;
 mod fitsfile;

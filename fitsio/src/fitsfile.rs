@@ -4,36 +4,8 @@ use std::ffi;
 use super::{stringutils, positional, sys, libc};
 
 use positional::Coordinate;
+use super::fitserror::{FitsError, Result};
 
-/// Error type
-///
-/// `cfitsio` passes errors through integer status codes. This struct wraps this and its associated
-/// error message.
-#[derive(Debug, PartialEq, Eq)]
-pub struct FitsError {
-    status: i32,
-    message: String,
-}
-
-/// Macro for returning a FITS error type
-macro_rules! fits_try {
-    ($status: ident, $e: expr) => {
-        match $status {
-            0 => Ok($e),
-            _ => {
-                Err(FitsError {
-                    status: $status,
-                    message: stringutils::status_to_string($status).unwrap(),
-                })
-            }
-        }
-    }
-}
-
-/// FITS specific result type
-///
-/// This is a shortcut for a result with `FitsError` as the error type
-pub type Result<T> = std::result::Result<T, FitsError>;
 
 /// Hdu description type
 ///
@@ -736,6 +708,7 @@ mod test {
     use super::*;
     use sys;
     use super::typechar_to_data_type;
+    use ::fitserror::FitsError;
 
     #[test]
     fn typechar_conversions() {

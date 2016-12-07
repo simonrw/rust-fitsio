@@ -1,4 +1,5 @@
-use super::fitsfile::{FitsFile, HduInfo, DescribesHdu, Result};
+use super::fitsfile::{FitsFile, HduInfo, DescribesHdu};
+use super::fitserror::Result;
 
 pub struct FitsHdu<'open> {
     fits_file: &'open FitsFile,
