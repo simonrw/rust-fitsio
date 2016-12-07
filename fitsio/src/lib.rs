@@ -208,6 +208,8 @@ extern crate libc;
 
 mod stringutils;
 pub mod positional;
-pub mod fitsfile;
+mod fitsfile;
+mod fitshdu;
 
-pub use self::fitsfile::{FitsFile, FitsHdu, HduInfo};
+pub use self::fitsfile::{FitsFile, HduInfo};
+pub use self::fitshdu::FitsHdu;
