@@ -814,7 +814,7 @@ mod test {
     fn fetching_hdu_object_hdu_info() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let testext = f.hdu("TESTEXT").unwrap();
-        match testext.hdu_info {
+        match testext.info {
             HduInfo::TableInfo { num_rows, .. } => {
                 assert_eq!(num_rows, 50);
             }

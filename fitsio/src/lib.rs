@@ -83,14 +83,14 @@
 //! # let fptr = FitsFile::open(filename).unwrap();
 //! let hdu = fptr.hdu(0).unwrap();
 //! // image HDU
-//! if let HduInfo::ImageInfo { dimensions, shape } = hdu.hdu_info {
+//! if let HduInfo::ImageInfo { dimensions, shape } = hdu.info {
 //!    println!("Image is {}-dimensional", dimensions);
 //!    println!("Found image with shape {:?}", shape);
 //! }
 //! # let hdu = fptr.hdu("TESTEXT").unwrap();
 //!
 //! // tables
-//! if let HduInfo::TableInfo { column_descriptions, num_rows, .. } = hdu.hdu_info {
+//! if let HduInfo::TableInfo { column_descriptions, num_rows, .. } = hdu.info {
 //!     println!("Table contains {} rows", num_rows);
 //!     println!("Table has {} columns", column_descriptions.len());
 //! }

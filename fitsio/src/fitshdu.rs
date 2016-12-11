@@ -137,7 +137,7 @@ impl WritesKey for String {
 
 pub struct FitsHdu<'open> {
     fits_file: &'open FitsFile,
-    pub hdu_info: HduInfo,
+    pub info: HduInfo,
 }
 
 impl<'open> FitsHdu<'open> {
@@ -147,7 +147,7 @@ impl<'open> FitsHdu<'open> {
             Ok(hdu_info) => {
                 Ok(FitsHdu {
                     fits_file: fits_file,
-                    hdu_info: hdu_info,
+                    info: hdu_info,
                 })
             }
             Err(e) => Err(e),
@@ -192,7 +192,7 @@ mod test {
     fn test_manually_creating_a_fits_hdu() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = FitsHdu::new(&f, "TESTEXT").unwrap();
-        match hdu.hdu_info {
+        match hdu.info {
             HduInfo::TableInfo { num_rows, .. } => {
                 assert_eq!(num_rows, 50);
             }
