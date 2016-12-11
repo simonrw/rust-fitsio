@@ -48,8 +48,9 @@
 //!
 //! ## HDU access
 //!
-//! Information about the current HDU can be fetched with various functions, for example getting
-//! the current HDU type:
+//! HDU information belongs to the [`FitsHdu`](struct.FitsHdu.html) object. HDUs can be fetched by
+//! `String`/`str` or integer (0-indexed). The HDU object contains information about the current
+//! HDU:
 //!
 //! ```rust
 //! # extern crate fitsio;
@@ -80,15 +81,16 @@
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
 //! # let fptr = FitsFile::open(filename).unwrap();
+//! let hdu = fptr.hdu(0).unwrap();
 //! // image HDU
-//! if let Ok(HduInfo::ImageInfo { dimensions, shape }) = fptr.fetch_hdu_info() {
+//! if let HduInfo::ImageInfo { dimensions, shape } = hdu.hdu_info {
 //!    println!("Image is {}-dimensional", dimensions);
 //!    println!("Found image with shape {:?}", shape);
 //! }
-//! # fptr.change_hdu("TESTEXT").unwrap();
+//! # let hdu = fptr.hdu("TESTEXT").unwrap();
 //!
 //! // tables
-//! if let Ok(HduInfo::TableInfo { column_descriptions, num_rows, .. }) = fptr.fetch_hdu_info() {
+//! if let HduInfo::TableInfo { column_descriptions, num_rows, .. } = hdu.hdu_info {
 //!     println!("Table contains {} rows", num_rows);
 //!     println!("Table has {} columns", column_descriptions.len());
 //! }
@@ -210,6 +212,7 @@ extern crate libc;
 #[macro_use]
 pub mod fitserror;
 mod stringutils;
+mod columndescription;
 pub mod positional;
 mod fitsfile;
 mod fitshdu;

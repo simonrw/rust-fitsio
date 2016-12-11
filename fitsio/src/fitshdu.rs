@@ -2,6 +2,7 @@ use super::fitsfile::{FitsFile, HduInfo, DescribesHdu};
 use super::sys;
 use super::stringutils;
 use super::fitserror::{FitsError, Result};
+use super::columndescription::ColumnDescription;
 use super::libc;
 use std::ffi;
 use std::ptr;
@@ -156,6 +157,7 @@ impl<'open> FitsHdu<'open> {
     fn change_hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<()> {
         hdu_description.change_hdu(self.fits_file)
     }
+
 
     /// Get the current HDU type
     pub fn hdu_type(&self) -> Result<sys::HduType> {
