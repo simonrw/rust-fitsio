@@ -196,7 +196,7 @@
 //! # let filename = "../testdata/full_example.fits";
 //! # let fptr = fitsio::FitsFile::open(filename).unwrap();
 //! # fptr.change_hdu(1).unwrap();
-//! let integer_data: Vec<i32> = fptr.read_col("intcol").unwrap();
+//! let integer_data: Vec<i32> = fptr.hdu(1).and_then(|hdu| hdu.read_col("intcol")).unwrap();
 //! # }
 //! ```
 //!
@@ -216,6 +216,7 @@ mod columndescription;
 pub mod positional;
 mod fitsfile;
 mod fitshdu;
+mod conversions;
 
 pub use self::fitsfile::{FitsFile, HduInfo};
 pub use self::fitshdu::FitsHdu;

@@ -4,5 +4,3 @@ pub struct ColumnDescription {
     pub name: String,
     pub data_type: String,
 }
-
-

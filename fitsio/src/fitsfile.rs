@@ -6,6 +6,8 @@ use super::{stringutils, positional, sys, libc};
 use positional::Coordinate;
 use super::fitserror::{FitsError, Result};
 use super::fitshdu::FitsHdu;
+use super::columndescription::ColumnDescription;
+use super::conversions::typechar_to_data_type;
 
 
 /// Hdu description type
@@ -45,56 +47,6 @@ impl<'a> DescribesHdu for &'a str {
         fits_try!(status, ())
     }
 }
-
-/// Trait for reading a fits column
-pub trait ReadsCol {
-    fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> where Self: Sized;
-}
-
-macro_rules! reads_col_impl {
-    ($t: ty, $func: ident, $nullval: expr) => (
-        impl ReadsCol for $t {
-            fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> {
-                match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::TableInfo {
-                        column_descriptions, num_rows, ..
-                    }) => {
-                        let mut out = vec![$nullval; num_rows];
-                        assert_eq!(out.len(), num_rows);
-                        let column_number = column_descriptions.iter().position(|ref desc| {
-                            desc.name.as_str() == name
-                        }).unwrap();
-                        let mut status = 0;
-                        unsafe {
-                            sys::$func(fits_file.fptr,
-                                       (column_number + 1) as i32,
-                                       1,
-                                       1,
-                                       num_rows as i64,
-                                       $nullval,
-                                       out.as_mut_ptr(),
-                                       ptr::null_mut(),
-                                       &mut status);
-
-                        }
-                        fits_try!(status, out)
-                    },
-                    Err(e) => Err(e),
-                    _ => panic!("Unknown error occurred"),
-                }
-            }
-        }
-    )
-}
-
-reads_col_impl!(i32, ffgcvk, 0);
-reads_col_impl!(u32, ffgcvuk, 0);
-reads_col_impl!(i64, ffgcvj, 0);
-reads_col_impl!(u64, ffgcvuj, 0);
-reads_col_impl!(f32, ffgcve, 0.0);
-reads_col_impl!(f64, ffgcvd, 0.0);
-
-// TODO: impl for string
 
 /// Reading fits images
 pub trait ReadsImage {
@@ -223,23 +175,6 @@ impl Clone for FitsFile {
     }
 }
 
-fn typechar_to_data_type<T: AsRef<str>>(typechar: T) -> sys::DataType {
-    match typechar.as_ref() {
-        "X" => sys::DataType::TBIT,
-        "B" => sys::DataType::TBYTE,
-        "L" => sys::DataType::TLOGICAL,
-        "A" => sys::DataType::TSTRING,
-        "I" => sys::DataType::TSHORT,
-        "J" => sys::DataType::TLONG,
-        "E" => sys::DataType::TFLOAT,
-        "D" => sys::DataType::TDOUBLE,
-        "C" => sys::DataType::TCOMPLEX,
-        "M" => sys::DataType::TDBLCOMPLEX,
-        "K" => sys::DataType::TLONGLONG,
-        other => panic!("Unhandled case: {}", other),
-    }
-}
-
 unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
     let mut status = 0;
     let mut hdu_type = 0;
@@ -296,107 +231,6 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
     };
 
     fits_try!(status, hdu_type)
-}
-
-pub enum Column {
-    Int32 { name: String, data: Vec<i32> },
-    Int64 { name: String, data: Vec<i64> },
-    Float { name: String, data: Vec<f32> },
-    Double { name: String, data: Vec<f64> },
-}
-
-pub struct ColumnIterator<'a> {
-    current: usize,
-    column_descriptions: Vec<ColumnDescription>,
-    fits_file: &'a FitsFile,
-}
-
-impl<'a> ColumnIterator<'a> {
-    fn new(fits_file: &'a FitsFile) -> Self {
-        match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo { column_descriptions, num_rows: _num_rows }) => {
-                ColumnIterator {
-                    current: 0,
-                    column_descriptions: column_descriptions,
-                    fits_file: fits_file,
-                }
-            }
-            Err(e) => panic!("{:?}", e),
-            _ => panic!("Unknown error occurred"),
-        }
-    }
-}
-
-impl<'a> Iterator for ColumnIterator<'a> {
-    type Item = Column;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let ncols = self.column_descriptions.len();
-
-        if self.current < ncols {
-            let description = &self.column_descriptions[self.current];
-            let current_name = &description.name;
-            let current_type = typechar_to_data_type(description.data_type.as_str());
-
-            let retval = match current_type {
-                sys::DataType::TSHORT => {
-                    i32::read_col(self.fits_file, current_name)
-                        .map(|data| {
-                            Some(Column::Int32 {
-                                name: current_name.to_string(),
-                                data: data,
-                            })
-                        })
-                        .unwrap()
-                }
-                sys::DataType::TLONG => {
-                    i64::read_col(self.fits_file, current_name)
-                        .map(|data| {
-                            Some(Column::Int64 {
-                                name: current_name.to_string(),
-                                data: data,
-                            })
-                        })
-                        .unwrap()
-                }
-                sys::DataType::TFLOAT => {
-                    f32::read_col(self.fits_file, current_name)
-                        .map(|data| {
-                            Some(Column::Float {
-                                name: current_name.to_string(),
-                                data: data,
-                            })
-                        })
-                        .unwrap()
-                }
-                sys::DataType::TDOUBLE => {
-                    f64::read_col(self.fits_file, current_name)
-                        .map(|data| {
-                            Some(Column::Double {
-                                name: current_name.to_string(),
-                                data: data,
-                            })
-                        })
-                        .unwrap()
-                }
-                _ => unimplemented!(),
-            };
-
-            self.current += 1;
-
-            retval
-
-        } else {
-            None
-        }
-    }
-}
-
-/// Description for new columns
-#[derive(Debug)]
-pub struct ColumnDescription {
-    name: String,
-    data_type: String,
 }
 
 impl FitsFile {
@@ -479,11 +313,6 @@ impl FitsFile {
         (hdu_num - 1) as usize
     }
 
-    /// Read a binary table column
-    pub fn read_col<T: ReadsCol>(&self, name: &str) -> Result<Vec<T>> {
-        T::read_col(self, name)
-    }
-
     /// Read an image between pixel a and pixel b into a `Vec`
     pub fn read_section<T: ReadsImage>(&self, start: usize, end: usize) -> Result<Vec<T>> {
         T::read_section(self, start, end)
@@ -495,10 +324,6 @@ impl FitsFile {
                                       upper_right: &Coordinate)
                                       -> Result<Vec<T>> {
         T::read_region(self, lower_left, upper_right)
-    }
-
-    pub fn columns(&self) -> ColumnIterator {
-        ColumnIterator::new(self)
     }
 
     /// Get the current hdu info
@@ -558,7 +383,7 @@ mod test {
     extern crate tempdir;
     use super::*;
     use sys;
-    use super::typechar_to_data_type;
+    use ::conversions::typechar_to_data_type;
     use ::fitserror::FitsError;
 
     #[test]
@@ -603,8 +428,10 @@ mod test {
                 assert!(filename.exists());
 
                 // Ensure the empty primary has been written
-                let naxis: i64 = f.hdu(0).unwrap()
-                    .read_key("NAXIS").unwrap();
+                let naxis: i64 = f.hdu(0)
+                    .unwrap()
+                    .read_key("NAXIS")
+                    .unwrap();
                 assert_eq!(naxis, 0);
             })
             .unwrap();
@@ -662,26 +489,6 @@ mod test {
     }
 
     #[test]
-    fn read_columns() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        f.change_hdu(1).unwrap();
-        let intcol_data: Vec<i32> = f.read_col("intcol").unwrap();
-        assert_eq!(intcol_data[0], 18);
-        assert_eq!(intcol_data[15], 10);
-        assert_eq!(intcol_data[49], 12);
-
-        let floatcol_data: Vec<f32> = f.read_col("floatcol").unwrap();
-        assert_eq!(floatcol_data[0], 17.496801);
-        assert_eq!(floatcol_data[15], 19.570272);
-        assert_eq!(floatcol_data[49], 10.217053);
-
-        let doublecol_data: Vec<f64> = f.read_col("doublecol").unwrap();
-        assert_eq!(doublecol_data[0], 16.959972808730814);
-        assert_eq!(doublecol_data[15], 19.013522579233065);
-        assert_eq!(doublecol_data[49], 16.61153656123406);
-    }
-
-    #[test]
     fn read_image_data() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let first_row: Vec<i32> = f.read_section(0, 100).unwrap();
@@ -735,23 +542,6 @@ mod test {
                    }));
     }
 
-    #[test]
-    fn column_iterator() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        f.change_hdu(1).unwrap();
-        let column_names: Vec<String> = f.columns()
-            .map(|col| {
-                match col {
-                    Column::Int32 { name, data: _data } => name,
-                    Column::Int64 { name, data: _data } => name,
-                    Column::Float { name, data: _data } => name,
-                    Column::Double { name, data: _data } => name,
-                }
-            })
-            .collect();
-        assert_eq!(column_names,
-                   vec!["intcol".to_string(), "floatcol".to_string(), "doublecol".to_string()]);
-    }
 
     // Writing data
     #[test]
@@ -770,13 +560,16 @@ mod test {
         FitsFile::open(filename.to_str().unwrap())
             .map(|f| {
                 assert_eq!(f.hdu(0).unwrap().read_key::<i64>("foo").unwrap(), 1);
-                assert_eq!(f.hdu(0).unwrap().read_key::<String>("bar").unwrap(), "baz".to_string());
+                assert_eq!(f.hdu(0).unwrap().read_key::<String>("bar").unwrap(),
+                           "baz".to_string());
             })
             .unwrap();
     }
 
     #[test]
     fn adding_new_table() {
+        use super::super::columndescription::ColumnDescription;
+
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
         let filename = tdir_path.join("test.fits");
