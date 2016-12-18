@@ -5,6 +5,7 @@ use super::fitserror::{FitsError, Result};
 use super::columndescription::ColumnDescription;
 use super::conversions::typechar_to_data_type;
 use super::libc;
+use super::positional::Coordinate;
 use std::ffi;
 use std::ptr;
 
@@ -185,6 +186,102 @@ impl WritesKey for String {
     }
 }
 
+/// Reading fits images
+pub trait ReadsImage {
+    fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>
+        where Self: Sized;
+
+    /// Read a square region from the chip.
+    ///
+    /// Lower left indicates the starting point of the square, and the upper
+    /// right defines the pixel _beyond_ the end. The range of pixels included
+    /// is inclusive of the lower end, and *exclusive* of the upper end.
+    fn read_region(fits_file: &FitsFile,
+                   lower_left: &Coordinate,
+                   upper_right: &Coordinate)
+                   -> Result<Vec<Self>>
+        where Self: Sized;
+}
+
+macro_rules! reads_image_impl {
+    ($t: ty, $data_type: expr) => (
+        impl ReadsImage for $t {
+            fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>> {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
+                        let nelements = end - start;
+                        let mut out = vec![0 as $t; nelements];
+                        let mut status = 0;
+
+                        unsafe {
+                            sys::ffgpv(fits_file.fptr,
+                                        $data_type.into(),
+                                        (start + 1) as i64,
+                                        nelements as i64,
+                                        ptr::null_mut(),
+                                        out.as_mut_ptr() as *mut libc::c_void,
+                                        ptr::null_mut(),
+                                        &mut status);
+                        }
+
+                        fits_try!(status, out)
+
+                    }
+                    Err(e) => Err(e),
+                    _ => panic!("Unknown error occurred"),
+                }
+            }
+
+            fn read_region( fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate)
+                -> Result<Vec<Self>> {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
+                        // TODO: check dimensions
+
+                        // These have to be mutable because of the C-api
+                        let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
+                        let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
+                        let mut inc = [ 1, 1 ];
+                        let nelements =
+                            ((upper_right.y - lower_left.y) + 1) *
+                            ((upper_right.x - lower_left.x) + 1);
+                        let mut out = vec![0 as $t; nelements as usize];
+                        let mut status = 0;
+
+                        unsafe {
+                            sys::ffgsv(
+                                fits_file.fptr,
+                                $data_type.into(),
+                                fpixel.as_mut_ptr(),
+                                lpixel.as_mut_ptr(),
+                                inc.as_mut_ptr(),
+                                ptr::null_mut(),
+                                out.as_mut_ptr() as *mut libc::c_void,
+                                ptr::null_mut(),
+                                &mut status);
+
+                        }
+
+                        fits_try!(status, out)
+                    }
+                    Err(e) => Err(e),
+                    _ => panic!("Unknown error occurred"),
+                }
+            }
+        }
+    )
+}
+
+
+reads_image_impl!(i8, sys::DataType::TSHORT);
+reads_image_impl!(i32, sys::DataType::TINT);
+reads_image_impl!(i64, sys::DataType::TLONG);
+reads_image_impl!(u8, sys::DataType::TUSHORT);
+reads_image_impl!(u32, sys::DataType::TUINT);
+reads_image_impl!(u64, sys::DataType::TULONG);
+reads_image_impl!(f32, sys::DataType::TFLOAT);
+reads_image_impl!(f64, sys::DataType::TDOUBLE);
+
 pub enum Column {
     Int32 { name: String, data: Vec<i32> },
     Int64 { name: String, data: Vec<i64> },
@@ -324,6 +421,20 @@ impl<'open> FitsHdu<'open> {
     pub fn write_key<T: WritesKey>(&self, name: &str, value: T) -> Result<()> {
         T::write_key(self.fits_file, name, value)
     }
+
+    /// Read an image between pixel a and pixel b into a `Vec`
+    pub fn read_section<T: ReadsImage>(&self, start: usize, end: usize) -> Result<Vec<T>> {
+        T::read_section(self.fits_file, start, end)
+    }
+
+    /// Read a square region into a `Vec`
+    pub fn read_region<T: ReadsImage>(&self,
+                                      lower_left: &Coordinate,
+                                      upper_right: &Coordinate)
+                                      -> Result<Vec<T>> {
+        T::read_region(self.fits_file, lower_left, upper_right)
+    }
+
 
     /// Read a binary table column
     pub fn read_col<T: ReadsCol>(&self, name: &str) -> Result<Vec<T>> {

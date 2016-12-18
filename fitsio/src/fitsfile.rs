@@ -2,7 +2,6 @@ use std::ptr;
 use std::ffi;
 use super::{stringutils, sys, libc};
 
-use positional::Coordinate;
 use super::fitserror::{FitsError, Result};
 use super::fitshdu::FitsHdu;
 use super::columndescription::ColumnDescription;
@@ -45,102 +44,6 @@ impl<'a> DescribesHdu for &'a str {
         fits_try!(status, ())
     }
 }
-
-/// Reading fits images
-pub trait ReadsImage {
-    fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>
-        where Self: Sized;
-
-    /// Read a square region from the chip.
-    ///
-    /// Lower left indicates the starting point of the square, and the upper
-    /// right defines the pixel _beyond_ the end. The range of pixels included
-    /// is inclusive of the lower end, and *exclusive* of the upper end.
-    fn read_region(fits_file: &FitsFile,
-                   lower_left: &Coordinate,
-                   upper_right: &Coordinate)
-                   -> Result<Vec<Self>>
-        where Self: Sized;
-}
-
-macro_rules! reads_image_impl {
-    ($t: ty, $data_type: expr) => (
-        impl ReadsImage for $t {
-            fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>> {
-                match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
-                        let nelements = end - start;
-                        let mut out = vec![0 as $t; nelements];
-                        let mut status = 0;
-
-                        unsafe {
-                            sys::ffgpv(fits_file.fptr,
-                                        $data_type.into(),
-                                        (start + 1) as i64,
-                                        nelements as i64,
-                                        ptr::null_mut(),
-                                        out.as_mut_ptr() as *mut libc::c_void,
-                                        ptr::null_mut(),
-                                        &mut status);
-                        }
-
-                        fits_try!(status, out)
-
-                    }
-                    Err(e) => Err(e),
-                    _ => panic!("Unknown error occurred"),
-                }
-            }
-
-            fn read_region( fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate)
-                -> Result<Vec<Self>> {
-                match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
-                        // TODO: check dimensions
-
-                        // These have to be mutable because of the C-api
-                        let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
-                        let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
-                        let mut inc = [ 1, 1 ];
-                        let nelements =
-                            ((upper_right.y - lower_left.y) + 1) *
-                            ((upper_right.x - lower_left.x) + 1);
-                        let mut out = vec![0 as $t; nelements as usize];
-                        let mut status = 0;
-
-                        unsafe {
-                            sys::ffgsv(
-                                fits_file.fptr,
-                                $data_type.into(),
-                                fpixel.as_mut_ptr(),
-                                lpixel.as_mut_ptr(),
-                                inc.as_mut_ptr(),
-                                ptr::null_mut(),
-                                out.as_mut_ptr() as *mut libc::c_void,
-                                ptr::null_mut(),
-                                &mut status);
-
-                        }
-
-                        fits_try!(status, out)
-                    }
-                    Err(e) => Err(e),
-                    _ => panic!("Unknown error occurred"),
-                }
-            }
-        }
-    )
-}
-
-
-reads_image_impl!(i8, sys::DataType::TSHORT);
-reads_image_impl!(i32, sys::DataType::TINT);
-reads_image_impl!(i64, sys::DataType::TLONG);
-reads_image_impl!(u8, sys::DataType::TUSHORT);
-reads_image_impl!(u32, sys::DataType::TUINT);
-reads_image_impl!(u64, sys::DataType::TULONG);
-reads_image_impl!(f32, sys::DataType::TFLOAT);
-reads_image_impl!(f64, sys::DataType::TDOUBLE);
 
 /// Description of the current HDU
 ///
@@ -311,19 +214,6 @@ impl FitsFile {
         (hdu_num - 1) as usize
     }
 
-    /// Read an image between pixel a and pixel b into a `Vec`
-    pub fn read_section<T: ReadsImage>(&self, start: usize, end: usize) -> Result<Vec<T>> {
-        T::read_section(self, start, end)
-    }
-
-    /// Read a square region into a `Vec`
-    pub fn read_region<T: ReadsImage>(&self,
-                                      lower_left: &Coordinate,
-                                      upper_right: &Coordinate)
-                                      -> Result<Vec<T>> {
-        T::read_region(self, lower_left, upper_right)
-    }
-
     /// Get the current hdu info
     pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
         unsafe { fetch_hdu_info(self.fptr) }
@@ -489,12 +379,13 @@ mod test {
     #[test]
     fn read_image_data() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let first_row: Vec<i32> = f.read_section(0, 100).unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let first_row: Vec<i32> = hdu.read_section(0, 100).unwrap();
         assert_eq!(first_row.len(), 100);
         assert_eq!(first_row[0], 108);
         assert_eq!(first_row[49], 176);
 
-        let second_row: Vec<i32> = f.read_section(100, 200).unwrap();
+        let second_row: Vec<i32> = hdu.read_section(100, 200).unwrap();
         assert_eq!(second_row.len(), 100);
         assert_eq!(second_row[0], 177);
         assert_eq!(second_row[49], 168);
@@ -505,9 +396,10 @@ mod test {
         use positional::Coordinate;
 
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
         let lower_left = Coordinate { x: 0, y: 0 };
         let upper_right = Coordinate { x: 10, y: 10 };
-        let chunk: Vec<i32> = f.read_region(&lower_left, &upper_right).unwrap();
+        let chunk: Vec<i32> = hdu.read_region(&lower_left, &upper_right).unwrap();
         assert_eq!(chunk.len(), 11 * 11);
         assert_eq!(chunk[0], 108);
         assert_eq!(chunk[11], 177);

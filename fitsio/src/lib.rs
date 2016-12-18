@@ -160,9 +160,9 @@
 //! ### Images
 //!
 //! Image data can be read through either
-//! [`read_section`](struct.FitsFile.html#method.read_section) which reads contiguous pixels
+//! [`read_section`](struct.FitsHdu.html#method.read_section) which reads contiguous pixels
 //! between a start index and end index, or
-//! [`read_region`](struct.FitsFile.html#method.read_region) which reads rectangular chunks from
+//! [`read_region`](struct.FitsHdu.html#method.read_region) which reads rectangular chunks from
 //! the image.
 //!
 //! ```rust
@@ -171,15 +171,16 @@
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
 //! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! # let hdu = fptr.hdu(0).unwrap();
 //! // Read the first 100 pixels
-//! let first_row: Vec<i32> = fptr.read_section(0, 100).unwrap();
+//! let first_row: Vec<i32> = hdu.read_section(0, 100).unwrap();
 //!
 //! // Read a square section of the image
 //! use fitsio::positional::Coordinate;
 //!
 //! let lower_left = Coordinate { x: 0, y: 0 };
 //! let upper_right = Coordinate { x: 10, y: 10 };
-//! let chunk: Vec<i32> = fptr.read_region(&lower_left, &upper_right).unwrap();
+//! let chunk: Vec<i32> = hdu.read_region(&lower_left, &upper_right).unwrap();
 //! # }
 //! ```
 //!
