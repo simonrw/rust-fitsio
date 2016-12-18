@@ -1,13 +1,11 @@
-use std;
 use std::ptr;
 use std::ffi;
-use super::{stringutils, positional, sys, libc};
+use super::{stringutils, sys, libc};
 
 use positional::Coordinate;
 use super::fitserror::{FitsError, Result};
 use super::fitshdu::FitsHdu;
 use super::columndescription::ColumnDescription;
-use super::conversions::typechar_to_data_type;
 
 
 /// Hdu description type
