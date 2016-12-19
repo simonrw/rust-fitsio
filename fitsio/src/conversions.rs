@@ -1,18 +1,18 @@
-use super::sys;
+use super::types::DataType;
 
-pub fn typechar_to_data_type<T: AsRef<str>>(typechar: T) -> sys::DataType {
+pub fn typechar_to_data_type<T: AsRef<str>>(typechar: T) -> DataType {
     match typechar.as_ref() {
-        "X" => sys::DataType::TBIT,
-        "B" => sys::DataType::TBYTE,
-        "L" => sys::DataType::TLOGICAL,
-        "A" => sys::DataType::TSTRING,
-        "I" => sys::DataType::TSHORT,
-        "J" => sys::DataType::TLONG,
-        "E" => sys::DataType::TFLOAT,
-        "D" => sys::DataType::TDOUBLE,
-        "C" => sys::DataType::TCOMPLEX,
-        "M" => sys::DataType::TDBLCOMPLEX,
-        "K" => sys::DataType::TLONGLONG,
+        "X" => DataType::TBIT,
+        "B" => DataType::TBYTE,
+        "L" => DataType::TLOGICAL,
+        "A" => DataType::TSTRING,
+        "I" => DataType::TSHORT,
+        "J" => DataType::TLONG,
+        "E" => DataType::TFLOAT,
+        "D" => DataType::TDOUBLE,
+        "C" => DataType::TCOMPLEX,
+        "M" => DataType::TDBLCOMPLEX,
+        "K" => DataType::TLONGLONG,
         other => panic!("Unhandled case: {}", other),
     }
 }

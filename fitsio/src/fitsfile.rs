@@ -5,6 +5,7 @@ use super::{stringutils, sys, libc};
 use super::fitserror::{FitsError, Result};
 use super::fitshdu::FitsHdu;
 use super::columndescription::ColumnDescription;
+use super::types::{FileOpenMode, HduType};
 
 
 /// Hdu description type
@@ -35,7 +36,7 @@ impl<'a> DescribesHdu for &'a str {
 
         unsafe {
             sys::ffmnhd(f.fptr,
-                        sys::HduType::ANY_HDU.into(),
+                        HduType::ANY_HDU.into(),
                         c_hdu_name.into_raw(),
                         0,
                         &mut status);
@@ -154,7 +155,7 @@ impl FitsFile {
         unsafe {
             sys::ffopen(&mut fptr as *mut *mut sys::fitsfile,
                         c_filename.as_ptr(),
-                        sys::FileOpenMode::READONLY as libc::c_int,
+                        FileOpenMode::READONLY as libc::c_int,
                         &mut status);
         }
 
@@ -243,7 +244,7 @@ impl FitsFile {
         let mut status: libc::c_int = 0;
         unsafe {
             sys::ffcrtb(self.fptr,
-                        sys::HduType::BINARY_TBL.into(),
+                        HduType::BINARY_TBL.into(),
                         0,
                         tfields.len as libc::c_int,
                         tfields.list,
@@ -270,23 +271,23 @@ impl Drop for FitsFile {
 mod test {
     extern crate tempdir;
     use super::*;
-    use sys;
     use ::conversions::typechar_to_data_type;
     use ::fitserror::FitsError;
+    use ::types::*;
 
     #[test]
     fn typechar_conversions() {
         let input = vec!["X", "B", "L", "A", "I", "J", "E", "D", "C", "M"];
-        let expected = vec![sys::DataType::TBIT,
-                            sys::DataType::TBYTE,
-                            sys::DataType::TLOGICAL,
-                            sys::DataType::TSTRING,
-                            sys::DataType::TSHORT,
-                            sys::DataType::TLONG,
-                            sys::DataType::TFLOAT,
-                            sys::DataType::TDOUBLE,
-                            sys::DataType::TCOMPLEX,
-                            sys::DataType::TDBLCOMPLEX];
+        let expected = vec![DataType::TBIT,
+                            DataType::TBYTE,
+                            DataType::TLOGICAL,
+                            DataType::TSTRING,
+                            DataType::TSHORT,
+                            DataType::TLONG,
+                            DataType::TFLOAT,
+                            DataType::TDOUBLE,
+                            DataType::TCOMPLEX,
+                            DataType::TDBLCOMPLEX];
 
         input.iter()
             .zip(expected)
@@ -366,10 +367,8 @@ mod test {
                                 "doublecol".to_string()]);
                 assert_eq!(column_descriptions.iter()
                                .map(|ref desc| typechar_to_data_type(desc.data_type.clone()))
-                               .collect::<Vec<sys::DataType>>(),
-                           vec![sys::DataType::TLONG,
-                                sys::DataType::TFLOAT,
-                                sys::DataType::TDOUBLE]);
+                               .collect::<Vec<DataType>>(),
+                           vec![DataType::TLONG, DataType::TFLOAT, DataType::TDOUBLE]);
             }
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
@@ -483,9 +482,9 @@ mod test {
                             .collect::<Vec<String>>();
                         let column_types = column_descriptions.iter()
                             .map(|ref desc| typechar_to_data_type(desc.data_type.clone()))
-                            .collect::<Vec<sys::DataType>>();
+                            .collect::<Vec<DataType>>();
                         assert_eq!(column_names, vec!["bar".to_string()]);
-                        assert_eq!(column_types, vec![sys::DataType::TLONG]);
+                        assert_eq!(column_types, vec![DataType::TLONG]);
                     }
                     thing => panic!("{:?}", thing),
                 }

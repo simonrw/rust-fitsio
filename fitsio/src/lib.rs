@@ -60,7 +60,7 @@
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
 //! # let fptr = FitsFile::open(filename).unwrap();
-//! use fitsio_sys::HduType;
+//! use fitsio::types::HduType;
 //! let hdu = fptr.hdu(0).unwrap();
 //!
 //! match hdu.hdu_type() {
@@ -213,6 +213,7 @@ extern crate libc;
 #[macro_use]
 pub mod fitserror;
 mod stringutils;
+pub mod types;
 mod columndescription;
 pub mod positional;
 mod fitsfile;

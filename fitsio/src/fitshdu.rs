@@ -6,6 +6,7 @@ use super::columndescription::ColumnDescription;
 use super::conversions::typechar_to_data_type;
 use super::libc;
 use super::positional::Coordinate;
+use super::types::{HduType, DataType};
 use std::ffi;
 use std::ptr;
 
@@ -273,14 +274,14 @@ macro_rules! reads_image_impl {
 }
 
 
-reads_image_impl!(i8, sys::DataType::TSHORT);
-reads_image_impl!(i32, sys::DataType::TINT);
-reads_image_impl!(i64, sys::DataType::TLONG);
-reads_image_impl!(u8, sys::DataType::TUSHORT);
-reads_image_impl!(u32, sys::DataType::TUINT);
-reads_image_impl!(u64, sys::DataType::TULONG);
-reads_image_impl!(f32, sys::DataType::TFLOAT);
-reads_image_impl!(f64, sys::DataType::TDOUBLE);
+reads_image_impl!(i8, DataType::TSHORT);
+reads_image_impl!(i32, DataType::TINT);
+reads_image_impl!(i64, DataType::TLONG);
+reads_image_impl!(u8, DataType::TUSHORT);
+reads_image_impl!(u32, DataType::TUINT);
+reads_image_impl!(u64, DataType::TULONG);
+reads_image_impl!(f32, DataType::TFLOAT);
+reads_image_impl!(f64, DataType::TDOUBLE);
 
 pub enum Column {
     Int32 { name: String, data: Vec<i32> },
@@ -323,7 +324,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
             let current_type = typechar_to_data_type(description.data_type.as_str());
 
             let retval = match current_type {
-                sys::DataType::TSHORT => {
+                DataType::TSHORT => {
                     i32::read_col(self.fits_file, current_name)
                         .map(|data| {
                             Some(Column::Int32 {
@@ -333,7 +334,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
                         })
                         .unwrap()
                 }
-                sys::DataType::TLONG => {
+                DataType::TLONG => {
                     i64::read_col(self.fits_file, current_name)
                         .map(|data| {
                             Some(Column::Int64 {
@@ -343,7 +344,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
                         })
                         .unwrap()
                 }
-                sys::DataType::TFLOAT => {
+                DataType::TFLOAT => {
                     f32::read_col(self.fits_file, current_name)
                         .map(|data| {
                             Some(Column::Float {
@@ -353,7 +354,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
                         })
                         .unwrap()
                 }
-                sys::DataType::TDOUBLE => {
+                DataType::TDOUBLE => {
                     f64::read_col(self.fits_file, current_name)
                         .map(|data| {
                             Some(Column::Double {
@@ -396,7 +397,7 @@ impl<'open> FitsHdu<'open> {
     }
 
     /// Get the current HDU type
-    pub fn hdu_type(&self) -> Result<sys::HduType> {
+    pub fn hdu_type(&self) -> Result<HduType> {
         let mut status = 0;
         let mut hdu_type = 0;
         unsafe {
@@ -405,8 +406,8 @@ impl<'open> FitsHdu<'open> {
 
         fits_try!(status, {
             match hdu_type {
-                0 => sys::HduType::IMAGE_HDU,
-                2 => sys::HduType::BINARY_TBL,
+                0 => HduType::IMAGE_HDU,
+                2 => HduType::BINARY_TBL,
                 _ => unimplemented!(),
             }
         })
@@ -451,6 +452,7 @@ impl<'open> FitsHdu<'open> {
 mod test {
     use super::FitsHdu;
     use super::super::fitsfile::{FitsFile, HduInfo};
+    use super::super::types::*;
 
     #[test]
     fn test_manually_creating_a_fits_hdu() {
@@ -466,8 +468,6 @@ mod test {
 
     #[test]
     fn getting_hdu_type() {
-        use ::sys::HduType;
-
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let primary_hdu = f.hdu(0).unwrap();
         assert_eq!(primary_hdu.hdu_type().unwrap(), HduType::IMAGE_HDU);
