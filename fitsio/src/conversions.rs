@@ -16,5 +16,3 @@ pub fn typechar_to_data_type<T: AsRef<str>>(typechar: T) -> sys::DataType {
         other => panic!("Unhandled case: {}", other),
     }
 }
-
-
