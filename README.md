@@ -34,8 +34,9 @@ fitsio = "0.2.0"
 
 ## Documentation
 
+`fitsio` [![`fitsio` documentation](https://docs.rs/fitsio/badge.svg)](https://docs.rs/fitsio/)<br />
 `fitsio-sys` [![`fitsio-sys` documentation](https://docs.rs/fitsio-sys/badge.svg)](https://docs.rs/fitsio-sys)<br />
-`fitsio` [![`fitsio` documentation](https://docs.rs/fitsio/badge.svg)](https://docs.rs/fitsio/)
+`fitsio-sys-bindgen` [![`fitsio-sys-bindgen` documentation](https://docs.rs/fitsio-sys-bindgen/badge.svg)](https://docs.rs/fitsio-sys-bindgen)<br />
 
 
 ## Api roadmap
