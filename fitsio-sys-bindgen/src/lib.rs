@@ -17,7 +17,7 @@
 //! ## Examples
 //!
 //! ```rust
-//! # extern crate fitsio_sys;
+//! # extern crate fitsio_sys_bindgen as fitsio_sys;
 //! use std::ptr;
 //! use std::ffi;
 //! # use fitsio_sys::{ffinit, ffphps, ffclos};
