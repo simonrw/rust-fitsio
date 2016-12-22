@@ -3,48 +3,11 @@ use std::ffi;
 use super::{stringutils, sys, libc};
 
 use super::fitserror::{FitsError, Result};
-use super::fitshdu::FitsHdu;
+use super::fitshdu::{FitsHdu, DescribesHdu};
 use super::columndescription::ColumnDescription;
 use super::types::{FileOpenMode, HduType};
 
 
-/// Hdu description type
-///
-/// Any way of describing a HDU - number or string which either
-/// changes the hdu by absolute number, or by name.
-pub trait DescribesHdu {
-    fn change_hdu(&self, fptr: &FitsFile) -> Result<()>;
-}
-
-impl DescribesHdu for usize {
-    fn change_hdu(&self, f: &FitsFile) -> Result<()> {
-        let mut _hdu_type = 0;
-        let mut status = 0;
-        unsafe {
-            sys::ffmahd(f.fptr, (*self + 1) as i32, &mut _hdu_type, &mut status);
-        }
-
-        fits_try!(status, ())
-    }
-}
-
-impl<'a> DescribesHdu for &'a str {
-    fn change_hdu(&self, f: &FitsFile) -> Result<()> {
-        let mut _hdu_type = 0;
-        let mut status = 0;
-        let c_hdu_name = ffi::CString::new(*self).unwrap();
-
-        unsafe {
-            sys::ffmnhd(f.fptr,
-                        HduType::ANY_HDU.into(),
-                        c_hdu_name.into_raw(),
-                        0,
-                        &mut status);
-        }
-
-        fits_try!(status, ())
-    }
-}
 
 /// Description of the current HDU
 ///
