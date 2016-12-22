@@ -1,4 +1,5 @@
 use std::result;
+use super::stringutils::status_to_string;
 
 /// Error type
 ///
@@ -29,3 +30,10 @@ macro_rules! fits_try {
 ///
 /// This is a shortcut for a result with `FitsError` as the error type
 pub type Result<T> = result::Result<T, FitsError>;
+
+pub fn status_to_error(status: i32) -> Result<()> {
+    Err(FitsError {
+        status: status,
+        message: status_to_string(status).unwrap(),
+    })
+}
