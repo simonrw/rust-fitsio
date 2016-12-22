@@ -1,5 +1,5 @@
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DataType {
     TBIT,
     TBYTE,
@@ -53,7 +53,7 @@ datatype_into_impl!(i64);
 datatype_into_impl!(u64);
 
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ImageType {
     BYTE_IMG,
     SHORT_IMG,

@@ -2,10 +2,10 @@ use std::ptr;
 use std::ffi;
 use super::{stringutils, sys, libc};
 
-use super::fitserror::{FitsError, Result};
+use super::fitserror::{FitsError, Result, status_to_error};
 use super::fitshdu::{FitsHdu, DescribesHdu};
 use super::columndescription::ColumnDescription;
-use super::types::{FileOpenMode, HduType};
+use super::types::{FileOpenMode, HduType, ImageType};
 
 
 
@@ -24,6 +24,11 @@ pub enum HduInfo {
         column_descriptions: Vec<ColumnDescription>,
         num_rows: usize,
     },
+}
+
+pub struct ImageDescription {
+    data_type: ImageType,
+    dimensions: Vec<usize>,
 }
 
 /// Main entry point to the FITS file format
@@ -224,6 +229,32 @@ impl FitsFile {
         }
 
         fits_try!(status, ())
+    }
+
+    pub fn create_image(&self,
+                        extname: String,
+                        image_description: &ImageDescription)
+                        -> Result<()> {
+        let naxis = image_description.dimensions.len();
+        let mut status = 0;
+        unsafe {
+            sys::ffcrim(self.fptr,
+                   image_description.data_type.into(),
+                   naxis as i32,
+                   image_description.dimensions.as_ptr() as *mut i64,
+                   &mut status);
+        }
+
+        match status {
+            0 => {},
+            _ => return status_to_error(status),
+        }
+
+        /* Current HDU should be at the new HDU */
+        let current_hdu = try!(self.current_hdu());
+        try!(current_hdu.write_key("EXTNAME".into(), extname));
+
+        Ok(())
     }
 }
 
@@ -459,6 +490,35 @@ mod test {
                 }
             })
             .unwrap();
+    }
+
+    #[test]
+    fn adding_new_image() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        {
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let image_description = ImageDescription {
+                data_type: ImageType::LONG_IMG,
+                dimensions: vec![100, 20],
+            };
+            f.create_image("foo".to_string(), &image_description).unwrap();
+        }
+
+        FitsFile::open(filename.to_str().unwrap())
+            .map(|f| {
+                f.change_hdu("foo").unwrap();
+                match f.fetch_hdu_info() {
+                    Ok(HduInfo::ImageInfo { shape, .. }) => {
+                        assert_eq!(shape, vec![100, 20]);
+                    }
+                    thing => panic!("{:?}", thing),
+                }
+            })
+            .unwrap();
+
     }
 
     #[test]
