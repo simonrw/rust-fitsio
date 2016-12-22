@@ -239,18 +239,18 @@ impl FitsFile {
         let mut status = 0;
         unsafe {
             sys::ffcrim(self.fptr,
-                   image_description.data_type.into(),
-                   naxis as i32,
-                   image_description.dimensions.as_ptr() as *mut i64,
-                   &mut status);
+                        image_description.data_type.into(),
+                        naxis as i32,
+                        image_description.dimensions.as_ptr() as *mut i64,
+                        &mut status);
         }
 
         match status {
-            0 => {},
+            0 => {}
             _ => return status_to_error(status),
         }
 
-        /* Current HDU should be at the new HDU */
+        // Current HDU should be at the new HDU
         let current_hdu = try!(self.current_hdu());
         try!(current_hdu.write_key("EXTNAME".into(), extname));
 
@@ -539,6 +539,7 @@ mod test {
         f.change_hdu("TESTEXT").unwrap();
         let hdu = f.current_hdu().unwrap();
 
-        assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(), "TESTEXT".to_string());
+        assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
+                   "TESTEXT".to_string());
     }
 }
