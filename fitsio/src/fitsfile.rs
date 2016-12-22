@@ -178,6 +178,12 @@ impl FitsFile {
         (hdu_num - 1) as usize
     }
 
+    /// Get the current hdu as an HDU object
+    pub fn current_hdu(&self) -> Result<FitsHdu> {
+        let current_hdu_number = self.hdu_number();
+        self.hdu(current_hdu_number)
+    }
+
     /// Get the current hdu info
     pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
         unsafe { fetch_hdu_info(self.fptr) }
@@ -465,5 +471,14 @@ mod test {
             }
             _ => panic!("Incorrect HDU type found"),
         }
+    }
+
+    #[test]
+    fn fetch_current_hdu() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        f.change_hdu("TESTEXT").unwrap();
+        let hdu = f.current_hdu().unwrap();
+
+        assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(), "TESTEXT".to_string());
     }
 }
