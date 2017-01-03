@@ -97,23 +97,6 @@
 //! # }
 //! ```
 //!
-//! The current HDU can be selected either by absolute number (0-indexed) or string-like:
-//!
-//! ```rust
-//! # extern crate fitsio;
-//! #
-//! # fn main() {
-//! # let filename = "../testdata/full_example.fits";
-//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
-//! fptr.change_hdu(1).unwrap();
-//! assert_eq!(fptr.hdu_number(), 1);
-//!
-//! # fptr.change_hdu(0).unwrap();
-//! fptr.change_hdu("TESTEXT").unwrap();
-//! assert_eq!(fptr.hdu_number(), 1);
-//! # }
-//! ```
-//!
 //! ## Header keys
 //!
 //! Header keys are read through the [`read_key`](struct.FitsFile.html#method.read_key) function,
