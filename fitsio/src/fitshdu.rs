@@ -491,6 +491,16 @@ mod test {
     use super::FitsHdu;
     use super::super::fitsfile::{FitsFile, HduInfo};
     use super::super::types::*;
+    use std::{f32, f64};
+
+    /// Helper function for float comparisons
+    fn floats_close_f32(a: f32, b: f32) -> bool {
+        (a - b).abs() < f32::EPSILON
+    }
+
+    fn floats_close_f64(a: f64, b: f64) -> bool {
+        (a - b).abs() < f64::EPSILON
+    }
 
     #[test]
     fn test_manually_creating_a_fits_hdu() {
@@ -524,7 +534,7 @@ mod test {
         }
 
         match hdu.read_key::<f64>("DBLTEST") {
-            Ok(value) => assert_eq!(value, 0.09375),
+            Ok(value) => assert!(floats_close_f64(value, 0.09375)),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
@@ -544,14 +554,14 @@ mod test {
         assert_eq!(intcol_data[49], 12);
 
         let floatcol_data: Vec<f32> = hdu.read_col("floatcol").unwrap();
-        assert_eq!(floatcol_data[0], 17.496801);
-        assert_eq!(floatcol_data[15], 19.570272);
-        assert_eq!(floatcol_data[49], 10.217053);
+        assert!(floats_close_f32(floatcol_data[0], 17.496801));
+        assert!(floats_close_f32(floatcol_data[15], 19.570272));
+        assert!(floats_close_f32(floatcol_data[49], 10.217053));
 
         let doublecol_data: Vec<f64> = hdu.read_col("doublecol").unwrap();
-        assert_eq!(doublecol_data[0], 16.959972808730814);
-        assert_eq!(doublecol_data[15], 19.013522579233065);
-        assert_eq!(doublecol_data[49], 16.61153656123406);
+        assert!(floats_close_f64(doublecol_data[0], 16.959972808730814));
+        assert!(floats_close_f64(doublecol_data[15], 19.013522579233065));
+        assert!(floats_close_f64(doublecol_data[49], 16.61153656123406));
     }
 
     #[test]

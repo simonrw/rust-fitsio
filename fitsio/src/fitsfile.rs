@@ -171,7 +171,7 @@ impl FitsFile {
     }
 
     /// Return a new HDU object
-    pub fn hdu<'open, T: DescribesHdu>(&'open self, hdu_description: T) -> Result<FitsHdu> {
+    pub fn hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<FitsHdu> {
         FitsHdu::new(self, hdu_description)
     }
 
@@ -196,7 +196,7 @@ impl FitsFile {
 
     pub fn create_table(&self,
                         extname: String,
-                        table_description: &Vec<ColumnDescription>)
+                        table_description: &[ColumnDescription])
                         -> Result<()> {
         let tfields = {
             let stringlist = table_description.iter()
@@ -289,12 +289,9 @@ mod test {
                             DataType::TCOMPLEX,
                             DataType::TDBLCOMPLEX];
 
-        input.iter()
-            .zip(expected)
-            .map(|(&i, e)| {
-                assert_eq!(typechar_to_data_type(i), e);
-            })
-            .collect::<Vec<_>>();
+        for (i, e) in input.iter().zip(expected) {
+            assert_eq!(typechar_to_data_type(i), e);
+        }
     }
 
     #[test]
@@ -478,10 +475,10 @@ mod test {
                 match f.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
                         let column_names = column_descriptions.iter()
-                            .map(|ref desc| desc.name.clone())
+                            .map(|desc| desc.name.clone())
                             .collect::<Vec<String>>();
                         let column_types = column_descriptions.iter()
-                            .map(|ref desc| typechar_to_data_type(desc.data_type.clone()))
+                            .map(|desc| typechar_to_data_type(desc.data_type.clone()))
                             .collect::<Vec<DataType>>();
                         assert_eq!(column_names, vec!["bar".to_string()]);
                         assert_eq!(column_types, vec![DataType::TLONG]);

@@ -12,6 +12,10 @@ documentation = "https://docs.rs/fitsio"
 [dependencies]
 libc = "0.2.11"
 fitsio-sys = { version = "0.2.3", path = "../fitsio-sys" }
+clippy = { version = "*", optional = true }
 
 [dev-dependencies]
 tempdir = "0.3.4"
+
+[features]
+default = []

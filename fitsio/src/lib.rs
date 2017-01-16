@@ -190,6 +190,9 @@
 //! [1]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
 //! [2]: https://crates.io/crates/fitsio-sys
 
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+
 extern crate fitsio_sys as sys;
 extern crate libc;
 
