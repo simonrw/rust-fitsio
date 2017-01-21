@@ -609,7 +609,7 @@ mod test {
         let tdir_path = tdir.path();
         let filename = tdir_path.join("test.fits");
 
-        // Closure ensures file is closed properly
+        // Scope ensures file is closed properly
         {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             f.hdu(0).unwrap().write_key("FOO", 1i64).unwrap();
@@ -701,7 +701,7 @@ mod test {
         let filename = tdir_path.join("test.fits");
         let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
-        // Closure ensures file is closed properly
+        // Scope ensures file is closed properly
         {
             use super::super::fitsfile::ImageDescription;
 
@@ -731,7 +731,7 @@ mod test {
         let tdir_path = tdir.path();
         let filename = tdir_path.join("test.fits");
 
-        // Closure ensures file is closed properly
+        // Scope ensures file is closed properly
         {
             use super::super::fitsfile::ImageDescription;
 
