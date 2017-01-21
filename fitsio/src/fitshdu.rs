@@ -583,4 +583,35 @@ mod test {
         assert_eq!(column_names,
                    vec!["intcol".to_string(), "floatcol".to_string(), "doublecol".to_string()]);
     }
+
+    #[test]
+    fn read_image_data() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let first_row: Vec<i32> = hdu.read_section(0, 100).unwrap();
+        assert_eq!(first_row.len(), 100);
+        assert_eq!(first_row[0], 108);
+        assert_eq!(first_row[49], 176);
+
+        let second_row: Vec<i32> = hdu.read_section(100, 200).unwrap();
+        assert_eq!(second_row.len(), 100);
+        assert_eq!(second_row[0], 177);
+        assert_eq!(second_row[49], 168);
+    }
+
+    #[test]
+    fn read_image_slice() {
+        use positional::Coordinate;
+
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let lower_left = Coordinate { x: 0, y: 0 };
+        let upper_right = Coordinate { x: 10, y: 10 };
+        let chunk: Vec<i32> = hdu.read_region(&lower_left, &upper_right).unwrap();
+        assert_eq!(chunk.len(), 11 * 11);
+        assert_eq!(chunk[0], 108);
+        assert_eq!(chunk[11], 177);
+        assert_eq!(chunk[chunk.len() - 1], 160);
+    }
+
 }
