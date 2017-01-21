@@ -325,23 +325,35 @@ pub trait WritesImage: Sized {
     fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
 }
 
-impl WritesImage for i64 {
-    fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()> {
-        let nelements = end - start;
-        assert!(data.len() >= nelements);
-        let mut status = 0;
-        unsafe {
-            sys::ffppr(fits_file.fptr,
-                       DataType::TLONG.into(),
-                       (start + 1) as i64,
-                       nelements as i64,
-                       data.as_ptr() as *mut _,
-                       &mut status);
-        }
+macro_rules! writes_image_impl {
+    ($t: ty, $data_type: expr) => (
+        impl WritesImage for $t {
+            fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()> {
+                let nelements = end - start;
+                assert!(data.len() >= nelements);
+                let mut status = 0;
+                unsafe {
+                    sys::ffppr(fits_file.fptr,
+                               $data_type.into(),
+                               (start + 1) as i64,
+                               nelements as i64,
+                               data.as_ptr() as *mut _,
+                               &mut status);
+                }
 
-        fits_try!(status, ())
-    }
+                fits_try!(status, ())
+            }
+        })
 }
+
+writes_image_impl!(i8, DataType::TSHORT);
+writes_image_impl!(i32, DataType::TINT);
+writes_image_impl!(i64, DataType::TLONG);
+writes_image_impl!(u8, DataType::TUSHORT);
+writes_image_impl!(u32, DataType::TUINT);
+writes_image_impl!(u64, DataType::TULONG);
+writes_image_impl!(f32, DataType::TFLOAT);
+writes_image_impl!(f64, DataType::TDOUBLE);
 
 pub enum Column {
     Int32 { name: String, data: Vec<i32> },
