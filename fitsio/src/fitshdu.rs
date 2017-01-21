@@ -226,7 +226,7 @@ impl WritesKey for String {
 }
 
 /// Reading fits images
-pub trait ReadsImage: Sized {
+pub trait ReadWriteImage: Sized {
     fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>;
 
     /// Read a square region from the chip.
@@ -238,11 +238,19 @@ pub trait ReadsImage: Sized {
                    lower_left: &Coordinate,
                    upper_right: &Coordinate)
                    -> Result<Vec<Self>>;
+
+    fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
+
+    fn write_region(fits_file: &FitsFile,
+                    lower_left: &Coordinate,
+                    upper_right: &Coordinate,
+                    data: &[Self])
+                    -> Result<()>;
 }
 
-macro_rules! reads_image_impl {
+macro_rules! read_write_image_impl {
     ($t: ty, $data_type: expr) => (
-        impl ReadsImage for $t {
+        impl ReadWriteImage for $t {
             fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
@@ -252,13 +260,13 @@ macro_rules! reads_image_impl {
 
                         unsafe {
                             sys::ffgpv(fits_file.fptr,
-                                        $data_type.into(),
-                                        (start + 1) as i64,
-                                        nelements as i64,
-                                        ptr::null_mut(),
-                                        out.as_mut_ptr() as *mut libc::c_void,
-                                        ptr::null_mut(),
-                                        &mut status);
+                                       $data_type.into(),
+                                       (start + 1) as i64,
+                                       nelements as i64,
+                                       ptr::null_mut(),
+                                       out.as_mut_ptr() as *mut libc::c_void,
+                                       ptr::null_mut(),
+                                       &mut status);
                         }
 
                         fits_try!(status, out)
@@ -271,67 +279,41 @@ macro_rules! reads_image_impl {
 
             fn read_region( fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate)
                 -> Result<Vec<Self>> {
-                match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
-                        // TODO: check dimensions
+                    match fits_file.fetch_hdu_info() {
+                        Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
+                            // TODO: check dimensions
 
-                        // These have to be mutable because of the C-api
-                        let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
-                        let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
-                        let mut inc = [ 1, 1 ];
-                        let nelements =
-                            ((upper_right.y - lower_left.y) + 1) *
-                            ((upper_right.x - lower_left.x) + 1);
-                        let mut out = vec![0 as $t; nelements as usize];
-                        let mut status = 0;
+                            // These have to be mutable because of the C-api
+                            let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
+                            let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
+                            let mut inc = [ 1, 1 ];
+                            let nelements =
+                                ((upper_right.y - lower_left.y) + 1) *
+                                ((upper_right.x - lower_left.x) + 1);
+                            let mut out = vec![0 as $t; nelements as usize];
+                            let mut status = 0;
 
-                        unsafe {
-                            sys::ffgsv(
-                                fits_file.fptr,
-                                $data_type.into(),
-                                fpixel.as_mut_ptr(),
-                                lpixel.as_mut_ptr(),
-                                inc.as_mut_ptr(),
-                                ptr::null_mut(),
-                                out.as_mut_ptr() as *mut libc::c_void,
-                                ptr::null_mut(),
-                                &mut status);
+                            unsafe {
+                                sys::ffgsv(
+                                    fits_file.fptr,
+                                    $data_type.into(),
+                                    fpixel.as_mut_ptr(),
+                                    lpixel.as_mut_ptr(),
+                                    inc.as_mut_ptr(),
+                                    ptr::null_mut(),
+                                    out.as_mut_ptr() as *mut libc::c_void,
+                                    ptr::null_mut(),
+                                    &mut status);
 
+                            }
+
+                            fits_try!(status, out)
                         }
-
-                        fits_try!(status, out)
+                        Err(e) => Err(e),
+                        _ => panic!("Unknown error occurred"),
                     }
-                    Err(e) => Err(e),
-                    _ => panic!("Unknown error occurred"),
                 }
-            }
-        }
-    )
-}
 
-
-reads_image_impl!(i8, DataType::TSHORT);
-reads_image_impl!(i32, DataType::TINT);
-reads_image_impl!(i64, DataType::TLONG);
-reads_image_impl!(u8, DataType::TUSHORT);
-reads_image_impl!(u32, DataType::TUINT);
-reads_image_impl!(u64, DataType::TULONG);
-reads_image_impl!(f32, DataType::TFLOAT);
-reads_image_impl!(f64, DataType::TDOUBLE);
-
-pub trait WritesImage: Sized {
-    fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
-
-    fn write_region(fits_file: &FitsFile,
-                    lower_left: &Coordinate,
-                    upper_right: &Coordinate,
-                    data: &[Self])
-                    -> Result<()>;
-}
-
-macro_rules! writes_image_impl {
-    ($t: ty, $data_type: expr) => (
-        impl WritesImage for $t {
             fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()> {
                 let nelements = end - start;
                 assert!(data.len() >= nelements);
@@ -365,17 +347,19 @@ macro_rules! writes_image_impl {
 
                 fits_try!(status, ())
             }
-        })
+        }
+    )
 }
 
-writes_image_impl!(i8, DataType::TSHORT);
-writes_image_impl!(i32, DataType::TINT);
-writes_image_impl!(i64, DataType::TLONG);
-writes_image_impl!(u8, DataType::TUSHORT);
-writes_image_impl!(u32, DataType::TUINT);
-writes_image_impl!(u64, DataType::TULONG);
-writes_image_impl!(f32, DataType::TFLOAT);
-writes_image_impl!(f64, DataType::TDOUBLE);
+
+read_write_image_impl!(i8, DataType::TSHORT);
+read_write_image_impl!(i32, DataType::TINT);
+read_write_image_impl!(i64, DataType::TLONG);
+read_write_image_impl!(u8, DataType::TUSHORT);
+read_write_image_impl!(u32, DataType::TUINT);
+read_write_image_impl!(u64, DataType::TULONG);
+read_write_image_impl!(f32, DataType::TFLOAT);
+read_write_image_impl!(f64, DataType::TDOUBLE);
 
 pub enum Column {
     Int32 { name: String, data: Vec<i32> },
@@ -518,11 +502,11 @@ impl<'open> FitsHdu<'open> {
     }
 
     /// Read an image between pixel a and pixel b into a `Vec`
-    pub fn read_section<T: ReadsImage>(&self, start: usize, end: usize) -> Result<Vec<T>> {
+    pub fn read_section<T: ReadWriteImage>(&self, start: usize, end: usize) -> Result<Vec<T>> {
         T::read_section(self.fits_file, start, end)
     }
 
-    pub fn write_section<T: WritesImage>(&self,
+    pub fn write_section<T: ReadWriteImage>(&self,
                                          start: usize,
                                          end: usize,
                                          data: &[T])
@@ -530,7 +514,7 @@ impl<'open> FitsHdu<'open> {
         T::write_section(self.fits_file, start, end, data)
     }
 
-    pub fn write_region<T: WritesImage>(&self,
+    pub fn write_region<T: ReadWriteImage>(&self,
                                         lower_left: &Coordinate,
                                         upper_right: &Coordinate,
                                         data: &[T])
@@ -539,7 +523,7 @@ impl<'open> FitsHdu<'open> {
     }
 
     /// Read a square region into a `Vec`
-    pub fn read_region<T: ReadsImage>(&self,
+    pub fn read_region<T: ReadWriteImage>(&self,
                                       lower_left: &Coordinate,
                                       upper_right: &Coordinate)
                                       -> Result<Vec<T>> {
