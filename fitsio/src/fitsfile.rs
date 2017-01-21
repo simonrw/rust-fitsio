@@ -272,8 +272,8 @@ mod test {
     extern crate tempdir;
 
     use super::*;
-    use ::conversions::typechar_to_data_type;
-    use ::fitserror::FitsError;
+    use conversions::typechar_to_data_type;
+    use fitserror::FitsError;
     use ::types::*;
 
     #[test]

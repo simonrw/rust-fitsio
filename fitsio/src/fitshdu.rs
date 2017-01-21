@@ -314,7 +314,12 @@ macro_rules! read_write_image_impl {
                     }
                 }
 
-            fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()> {
+            fn write_section(
+                fits_file: &FitsFile,
+                start: usize,
+                end: usize,
+                data: &[Self])
+                -> Result<()> {
                 let nelements = end - start;
                 assert!(data.len() >= nelements);
                 let mut status = 0;
@@ -330,7 +335,12 @@ macro_rules! read_write_image_impl {
                 fits_try!(status, ())
             }
 
-            fn write_region(fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate, data: &[Self]) -> Result<()> {
+            fn write_region(
+                fits_file: &FitsFile,
+                lower_left: &Coordinate,
+                upper_right: &Coordinate,
+                data: &[Self])
+                -> Result<()> {
                 let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
                 let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
                 let mut status = 0;
@@ -507,26 +517,26 @@ impl<'open> FitsHdu<'open> {
     }
 
     pub fn write_section<T: ReadWriteImage>(&self,
-                                         start: usize,
-                                         end: usize,
-                                         data: &[T])
-                                         -> Result<()> {
+                                            start: usize,
+                                            end: usize,
+                                            data: &[T])
+                                            -> Result<()> {
         T::write_section(self.fits_file, start, end, data)
     }
 
     pub fn write_region<T: ReadWriteImage>(&self,
-                                        lower_left: &Coordinate,
-                                        upper_right: &Coordinate,
-                                        data: &[T])
-                                        -> Result<()> {
+                                           lower_left: &Coordinate,
+                                           upper_right: &Coordinate,
+                                           data: &[T])
+                                           -> Result<()> {
         T::write_region(self.fits_file, lower_left, upper_right, data)
     }
 
     /// Read a square region into a `Vec`
     pub fn read_region<T: ReadWriteImage>(&self,
-                                      lower_left: &Coordinate,
-                                      upper_right: &Coordinate)
-                                      -> Result<Vec<T>> {
+                                          lower_left: &Coordinate,
+                                          upper_right: &Coordinate)
+                                          -> Result<Vec<T>> {
         T::read_region(self.fits_file, lower_left, upper_right)
     }
 
