@@ -226,9 +226,8 @@ impl WritesKey for String {
 }
 
 /// Reading fits images
-pub trait ReadsImage {
-    fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>
-        where Self: Sized;
+pub trait ReadsImage: Sized {
+    fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>;
 
     /// Read a square region from the chip.
     ///
@@ -238,8 +237,7 @@ pub trait ReadsImage {
     fn read_region(fits_file: &FitsFile,
                    lower_left: &Coordinate,
                    upper_right: &Coordinate)
-                   -> Result<Vec<Self>>
-        where Self: Sized;
+                   -> Result<Vec<Self>>;
 }
 
 macro_rules! reads_image_impl {
@@ -323,6 +321,12 @@ reads_image_impl!(f64, DataType::TDOUBLE);
 
 pub trait WritesImage: Sized {
     fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
+
+    fn write_region(fits_file: &FitsFile,
+                    lower_left: &Coordinate,
+                    upper_right: &Coordinate,
+                    data: &[Self])
+                    -> Result<()>;
 }
 
 macro_rules! writes_image_impl {
@@ -339,6 +343,24 @@ macro_rules! writes_image_impl {
                                nelements as i64,
                                data.as_ptr() as *mut _,
                                &mut status);
+                }
+
+                fits_try!(status, ())
+            }
+
+            fn write_region(fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate, data: &[Self]) -> Result<()> {
+                let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
+                let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
+                let mut status = 0;
+
+                unsafe {
+                    sys::ffpss(
+                        fits_file.fptr,
+                        $data_type.into(),
+                        fpixel.as_mut_ptr(),
+                        lpixel.as_mut_ptr(),
+                        data.as_ptr() as *mut libc::c_void,
+                        &mut status);
                 }
 
                 fits_try!(status, ())
@@ -506,6 +528,14 @@ impl<'open> FitsHdu<'open> {
                                          data: &[T])
                                          -> Result<()> {
         T::write_section(self.fits_file, start, end, data)
+    }
+
+    pub fn write_region<T: WritesImage>(&self,
+                                        lower_left: &Coordinate,
+                                        upper_right: &Coordinate,
+                                        data: &[T])
+                                        -> Result<()> {
+        T::write_region(self.fits_file, lower_left, upper_right, data)
     }
 
     /// Read a square region into a `Vec`
@@ -707,5 +737,42 @@ mod test {
         let first_row: Vec<i64> = hdu.read_section(0, 100).unwrap();
         assert_eq!(first_row, data_to_write);
 
+    }
+
+    #[test]
+    fn test_write_image_region() {
+        use positional::Coordinate;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        // Closure ensures file is closed properly
+        {
+            use super::super::fitsfile::ImageDescription;
+
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let image_description = ImageDescription {
+                data_type: ImageType::LONG_IMG,
+                dimensions: vec![100, 20],
+            };
+            f.create_image("foo".to_string(), &image_description).unwrap();
+
+            let hdu = f.hdu("foo").unwrap();
+
+            let lower_left = Coordinate { x: 0, y: 0 };
+            let upper_right = Coordinate { x: 10, y: 10 };
+            let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
+            hdu.write_region(&lower_left, &upper_right, &data).unwrap();
+        }
+
+        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+        let hdu = f.hdu("foo").unwrap();
+        let lower_left = Coordinate { x: 0, y: 0 };
+        let upper_right = Coordinate { x: 10, y: 10 };
+        let chunk: Vec<i64> = hdu.read_region(&lower_left, &upper_right).unwrap();
+        assert_eq!(chunk.len(), 11 * 11);
+        assert_eq!(chunk[0], 50);
+        assert_eq!(chunk[25], 75);
     }
 }
