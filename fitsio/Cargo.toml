@@ -12,7 +12,7 @@ documentation = "https://docs.rs/fitsio"
 [dependencies]
 libc = "0.2.11"
 fitsio-sys = { version = "0.2.3", path = "../fitsio-sys" }
-clippy = { version = "*", optional = true }
+clippy = { version = "0.0.108", optional = true }
 
 [dev-dependencies]
 tempdir = "0.3.4"
