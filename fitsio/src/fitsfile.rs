@@ -27,8 +27,8 @@ pub enum HduInfo {
 }
 
 pub struct ImageDescription {
-    data_type: ImageType,
-    dimensions: Vec<usize>,
+    pub data_type: ImageType,
+    pub dimensions: Vec<usize>,
 }
 
 /// Main entry point to the FITS file format

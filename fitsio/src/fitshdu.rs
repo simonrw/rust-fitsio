@@ -321,6 +321,28 @@ reads_image_impl!(u64, DataType::TULONG);
 reads_image_impl!(f32, DataType::TFLOAT);
 reads_image_impl!(f64, DataType::TDOUBLE);
 
+pub trait WritesImage: Sized {
+    fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
+}
+
+impl WritesImage for i64 {
+    fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()> {
+        let nelements = end - start;
+        assert!(data.len() >= nelements);
+        let mut status = 0;
+        unsafe {
+            sys::ffppr(fits_file.fptr,
+                       DataType::TLONG.into(),
+                       (start + 1) as i64,
+                       nelements as i64,
+                       data.as_ptr() as *mut _,
+                       &mut status);
+        }
+
+        fits_try!(status, ())
+    }
+}
+
 pub enum Column {
     Int32 { name: String, data: Vec<i32> },
     Int64 { name: String, data: Vec<i64> },
@@ -466,6 +488,14 @@ impl<'open> FitsHdu<'open> {
         T::read_section(self.fits_file, start, end)
     }
 
+    pub fn write_section<T: WritesImage>(&self,
+                                         start: usize,
+                                         end: usize,
+                                         data: &[T])
+                                         -> Result<()> {
+        T::write_section(self.fits_file, start, end, data)
+    }
+
     /// Read a square region into a `Vec`
     pub fn read_region<T: ReadsImage>(&self,
                                       lower_left: &Coordinate,
@@ -597,13 +627,11 @@ mod test {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let column_names: Vec<String> = hdu.columns()
-            .map(|col| {
-                match col {
-                    Column::Int32 { name, data: _data } => name,
-                    Column::Int64 { name, data: _data } => name,
-                    Column::Float { name, data: _data } => name,
-                    Column::Double { name, data: _data } => name,
-                }
+            .map(|col| match col {
+                Column::Int32 { name, data: _data } => name,
+                Column::Int64 { name, data: _data } => name,
+                Column::Float { name, data: _data } => name,
+                Column::Double { name, data: _data } => name,
             })
             .collect();
         assert_eq!(column_names,
@@ -640,4 +668,32 @@ mod test {
         assert_eq!(chunk[chunk.len() - 1], 160);
     }
 
+    #[test]
+    fn test_write_image_section() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+        let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
+
+        // Closure ensures file is closed properly
+        {
+            use super::super::fitsfile::ImageDescription;
+
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let image_description = ImageDescription {
+                data_type: ImageType::LONG_IMG,
+                dimensions: vec![100, 20],
+            };
+            f.create_image("foo".to_string(), &image_description).unwrap();
+
+            let hdu = f.hdu("foo").unwrap();
+            hdu.write_section(0, 100, &data_to_write).unwrap();
+        }
+
+        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+        let hdu = f.hdu("foo").unwrap();
+        let first_row: Vec<i64> = hdu.read_section(0, 100).unwrap();
+        assert_eq!(first_row, data_to_write);
+
+    }
 }
