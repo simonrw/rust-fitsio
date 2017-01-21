@@ -488,6 +488,8 @@ impl<'open> FitsHdu<'open> {
 
 #[cfg(test)]
 mod test {
+    extern crate tempdir;
+
     use super::FitsHdu;
     use super::super::fitsfile::{FitsFile, HduInfo};
     use super::super::types::*;
@@ -543,6 +545,30 @@ mod test {
             Err(e) => panic!("Error reading key: {:?}", e),
         }
     }
+
+    // Writing data
+    #[test]
+    fn writing_header_keywords() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        // Closure ensures file is closed properly
+        {
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            f.hdu(0).unwrap().write_key("FOO", 1i64).unwrap();
+            f.hdu(0).unwrap().write_key("BAR", "baz".to_string()).unwrap();
+        }
+
+        FitsFile::open(filename.to_str().unwrap())
+            .map(|f| {
+                assert_eq!(f.hdu(0).unwrap().read_key::<i64>("foo").unwrap(), 1);
+                assert_eq!(f.hdu(0).unwrap().read_key::<String>("bar").unwrap(),
+                           "baz".to_string());
+            })
+            .unwrap();
+    }
+
 
     #[test]
     fn read_columns() {
