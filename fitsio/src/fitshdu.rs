@@ -320,19 +320,28 @@ macro_rules! read_write_image_impl {
                 end: usize,
                 data: &[Self])
                 -> Result<()> {
-                let nelements = end - start;
-                assert!(data.len() >= nelements);
-                let mut status = 0;
-                unsafe {
-                    sys::ffppr(fits_file.fptr,
-                               $data_type.into(),
-                               (start + 1) as i64,
-                               nelements as i64,
-                               data.as_ptr() as *mut _,
-                               &mut status);
-                }
+                    match fits_file.fetch_hdu_info() {
+                        Ok(HduInfo::ImageInfo { .. }) => {
+                            let nelements = end - start;
+                            assert!(data.len() >= nelements);
+                            let mut status = 0;
+                            unsafe {
+                                sys::ffppr(fits_file.fptr,
+                                        $data_type.into(),
+                                        (start + 1) as i64,
+                                        nelements as i64,
+                                        data.as_ptr() as *mut _,
+                                        &mut status);
+                            }
 
-                fits_try!(status, ())
+                            fits_try!(status, ())
+                        },
+                        Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
+                            status: 601,
+                            message: "cannot write image data to a table hdu".to_string(),
+                        }),
+                        Err(e) => Err(e),
+                    }
             }
 
             fn write_region(
@@ -788,8 +797,8 @@ mod test {
 
         let hdu = f.hdu("foo").unwrap();
         if let Err(e) = hdu.write_section(0, 100, &data_to_write) {
-            println!("{:?}", e);
-            assert!(false);
+            assert_eq!(e.status, 601);
+            assert_eq!(e.message, "cannot write image data to a table hdu");
         } else {
             panic!("Should have thrown an error");
         }
