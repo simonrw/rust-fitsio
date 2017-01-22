@@ -769,4 +769,29 @@ mod test {
         assert_eq!(chunk[0], 50);
         assert_eq!(chunk[25], 75);
     }
+
+    #[test]
+    fn write_image_data_to_table() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+        let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
+
+        use columndescription::ColumnDescription;
+
+        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+        let table_description = vec![ColumnDescription {
+            name: "bar".to_string(),
+            data_type: "1J".to_string(),
+        }];
+        f.create_table("foo".to_string(), &table_description).unwrap();
+
+        let hdu = f.hdu("foo").unwrap();
+        if let Err(e) = hdu.write_section(0, 100, &data_to_write) {
+            println!("{:?}", e);
+            assert!(false);
+        } else {
+            panic!("Should have thrown an error");
+        }
+    }
 }
