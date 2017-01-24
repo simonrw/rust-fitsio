@@ -227,6 +227,10 @@ impl WritesKey for String {
 
 /// Reading fits images
 pub trait ReadWriteImage: Sized {
+    /// Read pixels from an image between a start index and end index
+    ///
+    /// Start and end are read inclusively, so start = 0, end = 10 will read 11 pixels
+    /// in a row.
     fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>;
 
     /// Read a square region from the chip.
@@ -238,6 +242,23 @@ pub trait ReadWriteImage: Sized {
                    lower_left: &Coordinate,
                    upper_right: &Coordinate)
                    -> Result<Vec<Self>>;
+
+    fn read_image(fits_file: &FitsFile) -> Result<Vec<Self>> {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::ImageInfo { dimensions, shape }) => {
+                let mut npixels = 1;
+                for dim in 0..dimensions {
+                    npixels *= shape[dim];
+                }
+                Self::read_section(fits_file, 0, npixels)
+            },
+            Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
+                status: 601,
+                message: "cannot read image data from a table hdu".to_string(),
+            }),
+            Err(e) => Err(e),
+        }
+    }
 
     fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
 
@@ -540,6 +561,10 @@ impl<'open> FitsHdu<'open> {
         T::read_section(self.fits_file, start, end)
     }
 
+    pub fn read_image<T: ReadWriteImage>(&self) -> Result<Vec<T>> {
+        T::read_image(self.fits_file)
+    }
+
     pub fn write_section<T: ReadWriteImage>(&self,
                                             start: usize,
                                             end: usize,
@@ -711,6 +736,14 @@ mod test {
         assert_eq!(second_row.len(), 100);
         assert_eq!(second_row[0], 177);
         assert_eq!(second_row[49], 168);
+    }
+
+    #[test]
+    fn read_whole_image() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let image: Vec<i32> = hdu.read_image().unwrap();
+        assert_eq!(image.len(), 10000);
     }
 
     #[test]
