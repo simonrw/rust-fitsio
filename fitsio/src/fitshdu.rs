@@ -271,9 +271,12 @@ macro_rules! read_write_image_impl {
 
                         fits_try!(status, out)
 
-                    }
+                    },
+                    Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
+                        status: 601,
+                        message: "cannot read image data from a table hdu".to_string(),
+                    }),
                     Err(e) => Err(e),
-                    _ => panic!("Unknown error occurred"),
                 }
             }
 
@@ -309,8 +312,11 @@ macro_rules! read_write_image_impl {
 
                             fits_try!(status, out)
                         }
+                        Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
+                            status: 601,
+                            message: "cannot read image data from a table hdu".to_string(),
+                        }),
                         Err(e) => Err(e),
-                        _ => panic!("Unknown error occurred"),
                     }
                 }
 
@@ -327,11 +333,11 @@ macro_rules! read_write_image_impl {
                             let mut status = 0;
                             unsafe {
                                 sys::ffppr(fits_file.fptr,
-                                        $data_type.into(),
-                                        (start + 1) as i64,
-                                        nelements as i64,
-                                        data.as_ptr() as *mut _,
-                                        &mut status);
+                                           $data_type.into(),
+                                           (start + 1) as i64,
+                                           nelements as i64,
+                                           data.as_ptr() as *mut _,
+                                           &mut status);
                             }
 
                             fits_try!(status, ())
@@ -342,7 +348,7 @@ macro_rules! read_write_image_impl {
                         }),
                         Err(e) => Err(e),
                     }
-            }
+                }
 
             fn write_region(
                 fits_file: &FitsFile,
@@ -350,22 +356,31 @@ macro_rules! read_write_image_impl {
                 upper_right: &Coordinate,
                 data: &[Self])
                 -> Result<()> {
-                let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
-                let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
-                let mut status = 0;
+                    match fits_file.fetch_hdu_info() {
+                        Ok(HduInfo::ImageInfo { .. }) => {
+                            let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
+                            let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
+                            let mut status = 0;
 
-                unsafe {
-                    sys::ffpss(
-                        fits_file.fptr,
-                        $data_type.into(),
-                        fpixel.as_mut_ptr(),
-                        lpixel.as_mut_ptr(),
-                        data.as_ptr() as *mut libc::c_void,
-                        &mut status);
+                            unsafe {
+                                sys::ffpss(
+                                    fits_file.fptr,
+                                    $data_type.into(),
+                                    fpixel.as_mut_ptr(),
+                                    lpixel.as_mut_ptr(),
+                                    data.as_ptr() as *mut libc::c_void,
+                                    &mut status);
+                            }
+
+                            fits_try!(status, ())
+                        },
+                        Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
+                            status: 601,
+                            message: "cannot write image data to a table hdu".to_string(),
+                        }),
+                        Err(e) => Err(e),
+                    }
                 }
-
-                fits_try!(status, ())
-            }
         }
     )
 }
@@ -714,6 +729,34 @@ mod test {
     }
 
     #[test]
+    fn read_image_region_from_table() {
+        use positional::Coordinate;
+
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu("TESTEXT").unwrap();
+        let lower_left = Coordinate { x: 0, y: 0 };
+        let upper_right = Coordinate { x: 10, y: 10 };
+        if let Err(e) = hdu.read_region::<i32>(&lower_left, &upper_right) {
+            assert_eq!(e.status, 601);
+            assert_eq!(e.message, "cannot read image data from a table hdu");
+        } else {
+            panic!("Should have been an error");
+        }
+    }
+
+    #[test]
+    fn read_image_section_from_table() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu("TESTEXT").unwrap();
+        if let Err(e) = hdu.read_section::<i32>(0, 100) {
+            assert_eq!(e.status, 601);
+            assert_eq!(e.message, "cannot read image data from a table hdu");
+        } else {
+            panic!("Should have been an error");
+        }
+    }
+
+    #[test]
     fn test_write_image_section() {
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -780,7 +823,7 @@ mod test {
     }
 
     #[test]
-    fn write_image_data_to_table() {
+    fn write_image_section_to_table() {
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
         let filename = tdir_path.join("test.fits");
@@ -790,13 +833,43 @@ mod test {
 
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
         let table_description = vec![ColumnDescription {
-            name: "bar".to_string(),
-            data_type: "1J".to_string(),
-        }];
+                                         name: "bar".to_string(),
+                                         data_type: "1J".to_string(),
+                                     }];
         f.create_table("foo".to_string(), &table_description).unwrap();
 
         let hdu = f.hdu("foo").unwrap();
         if let Err(e) = hdu.write_section(0, 100, &data_to_write) {
+            assert_eq!(e.status, 601);
+            assert_eq!(e.message, "cannot write image data to a table hdu");
+        } else {
+            panic!("Should have thrown an error");
+        }
+    }
+
+    #[test]
+    fn write_image_region_to_table() {
+        use columndescription::ColumnDescription;
+        use positional::Coordinate;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+        let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
+
+        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+        let table_description = vec![ColumnDescription {
+                                         name: "bar".to_string(),
+                                         data_type: "1J".to_string(),
+                                     }];
+        f.create_table("foo".to_string(), &table_description).unwrap();
+
+        let hdu = f.hdu("foo").unwrap();
+
+        let lower_left = Coordinate { x: 0, y: 0 };
+        let upper_right = Coordinate { x: 10, y: 10 };
+
+        if let Err(e) = hdu.write_region(&lower_left, &upper_right, &data_to_write) {
             assert_eq!(e.status, 601);
             assert_eq!(e.message, "cannot write image data to a table hdu");
         } else {
