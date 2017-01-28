@@ -203,8 +203,7 @@ pub mod types;
 mod columndescription;
 pub mod positional;
 mod fitsfile;
-mod fitshdu;
+pub mod fitshdu;
 mod conversions;
 
 pub use self::fitsfile::{FitsFile, HduInfo};
-pub use self::fitshdu::FitsHdu;

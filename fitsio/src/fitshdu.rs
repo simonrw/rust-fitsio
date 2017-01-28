@@ -243,6 +243,9 @@ pub trait ReadWriteImage: Sized {
                    upper_right: &Coordinate)
                    -> Result<Vec<Self>>;
 
+    /// Read a whole image into a new `Vec`
+    ///
+    /// This reads an entire image into a one-dimensional vector
     fn read_image(fits_file: &FitsFile) -> Result<Vec<Self>> {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::ImageInfo { dimensions, shape }) => {
