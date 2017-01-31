@@ -233,6 +233,7 @@ pub trait ReadWriteImage: Sized {
     /// in a row.
     fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>;
 
+    /// Read a row of pixels from a fits image
     fn read_rows(fits_file: &FitsFile, start_row: usize, num_rows: usize) -> Result<Vec<Self>>;
 
     /// Read a single row from the image HDU
@@ -599,6 +600,7 @@ impl<'open> FitsHdu<'open> {
         T::read_section(self.fits_file, start, end)
     }
 
+    /// Read multiple rows from a fits image
     pub fn read_rows<T: ReadWriteImage>(&self,
                                         start_row: usize,
                                         num_rows: usize)
@@ -606,14 +608,17 @@ impl<'open> FitsHdu<'open> {
         T::read_rows(self.fits_file, start_row, num_rows)
     }
 
+    /// Read a single row from a fits image
     pub fn read_row<T: ReadWriteImage>(&self, row: usize) -> Result<Vec<T>> {
         T::read_row(self.fits_file, row)
     }
 
+    /// Read a whole fits image into a vector
     pub fn read_image<T: ReadWriteImage>(&self) -> Result<Vec<T>> {
         T::read_image(self.fits_file)
     }
 
+    /// Write contiguous data to a fits image
     pub fn write_section<T: ReadWriteImage>(&self,
                                             start: usize,
                                             end: usize,
@@ -622,6 +627,7 @@ impl<'open> FitsHdu<'open> {
         T::write_section(self.fits_file, start, end, data)
     }
 
+    /// Write a rectangular region to a fits image
     pub fn write_region<T: ReadWriteImage>(&self,
                                            lower_left: &Coordinate,
                                            upper_right: &Coordinate,
