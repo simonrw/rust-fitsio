@@ -254,11 +254,13 @@ pub trait ReadWriteImage: Sized {
                     npixels *= shape[dim];
                 }
                 Self::read_section(fits_file, 0, npixels)
-            },
-            Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
-                status: 601,
-                message: "cannot read image data from a table hdu".to_string(),
-            }),
+            }
+            Ok(HduInfo::TableInfo { .. }) => {
+                Err(FitsError {
+                    status: 601,
+                    message: "cannot read image data from a table hdu".to_string(),
+                })
+            }
             Err(e) => Err(e),
         }
     }
