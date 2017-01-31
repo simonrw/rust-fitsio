@@ -233,6 +233,11 @@ pub trait ReadWriteImage: Sized {
     /// in a row.
     fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>>;
 
+    fn read_rows(fits_file: &FitsFile, start_row: usize, num_rows: usize) -> Result<Vec<Self>>;
+
+    /// Read a single row from the image HDU
+    fn read_row(fits_file: &FitsFile, row: usize) -> Result<Vec<Self>>;
+
     /// Read a square region from the chip.
     ///
     /// Lower left indicates the starting point of the square, and the upper
@@ -306,11 +311,48 @@ macro_rules! read_write_image_impl {
                 }
             }
 
+            fn read_rows(fits_file: &FitsFile, start_row: usize, num_rows: usize)
+                -> Result<Vec<Self>> {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::ImageInfo { dimensions, shape }) => {
+                        if dimensions != 2 {
+                            unimplemented!();
+                        }
+
+                        let num_cols = shape[1];
+                        let start = start_row * num_cols;
+                        let end = (start_row + num_rows) * num_cols;
+
+                        Self::read_section(fits_file, start, end)
+                    },
+                    Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
+                        status: 601,
+                        message: "cannot read image data from a table hdu".to_string(),
+                    }),
+                    Err(e) => Err(e),
+                }
+            }
+
+            fn read_row(fits_file: &FitsFile, row: usize) -> Result<Vec<Self>> {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::ImageInfo { .. }) => {
+                        Self::read_rows(fits_file, row, 1)
+                    },
+                    Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
+                        status: 601,
+                        message: "cannot read image data from a table hdu".to_string(),
+                    }),
+                    Err(e) => Err(e),
+                }
+            }
+
             fn read_region( fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate)
                 -> Result<Vec<Self>> {
                     match fits_file.fetch_hdu_info() {
-                        Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
-                            // TODO: check dimensions
+                        Ok(HduInfo::ImageInfo { dimensions, .. }) => {
+                            if dimensions != 2 {
+                                unimplemented!();
+                            }
 
                             // These have to be mutable because of the C-api
                             let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
@@ -566,6 +608,17 @@ impl<'open> FitsHdu<'open> {
         T::read_section(self.fits_file, start, end)
     }
 
+    pub fn read_rows<T: ReadWriteImage>(&self,
+                                        start_row: usize,
+                                        num_rows: usize)
+                                        -> Result<Vec<T>> {
+        T::read_rows(self.fits_file, start_row, num_rows)
+    }
+
+    pub fn read_row<T: ReadWriteImage>(&self, row: usize) -> Result<Vec<T>> {
+        T::read_row(self.fits_file, row)
+    }
+
     pub fn read_image<T: ReadWriteImage>(&self) -> Result<Vec<T>> {
         T::read_image(self.fits_file)
     }
@@ -749,6 +802,24 @@ mod test {
         let hdu = f.hdu(0).unwrap();
         let image: Vec<i32> = hdu.read_image().unwrap();
         assert_eq!(image.len(), 10000);
+    }
+
+    #[test]
+    fn read_image_rows() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let row: Vec<i32> = hdu.read_rows(0, 2).unwrap();
+        let ref_row: Vec<i32> = hdu.read_section(0, 200).unwrap();
+        assert_eq!(row, ref_row);
+    }
+
+    #[test]
+    fn read_image_row() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let row: Vec<i32> = hdu.read_row(0).unwrap();
+        let ref_row: Vec<i32> = hdu.read_section(0, 100).unwrap();
+        assert_eq!(row, ref_row);
     }
 
     #[test]
