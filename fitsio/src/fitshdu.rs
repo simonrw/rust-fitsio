@@ -334,16 +334,7 @@ macro_rules! read_write_image_impl {
             }
 
             fn read_row(fits_file: &FitsFile, row: usize) -> Result<Vec<Self>> {
-                match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { .. }) => {
-                        Self::read_rows(fits_file, row, 1)
-                    },
-                    Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
-                        status: 601,
-                        message: "cannot read image data from a table hdu".to_string(),
-                    }),
-                    Err(e) => Err(e),
-                }
+                Self::read_rows(fits_file, row, 1)
             }
 
             fn read_region( fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate)
