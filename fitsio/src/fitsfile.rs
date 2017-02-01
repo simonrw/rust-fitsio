@@ -41,7 +41,7 @@ pub struct FitsFile {
 
 impl Clone for FitsFile {
     fn clone(&self) -> Self {
-        FitsFile::open(&self.filename).unwrap()
+        FitsFile::open(self.filename.clone()).unwrap()
     }
 }
 
@@ -115,10 +115,11 @@ impl FitsFile {
     ///
     /// // Continue to use `f` afterwards
     /// ```
-    pub fn open(filename: &str) -> Result<Self> {
+    pub fn open<T: Into<String>>(filename: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
-        let c_filename = ffi::CString::new(filename).unwrap();
+        let filename = filename.into();
+        let c_filename = ffi::CString::new(filename.as_str()).unwrap();
 
         unsafe {
             sys::ffopen(&mut fptr as *mut *mut sys::fitsfile,
@@ -130,15 +131,16 @@ impl FitsFile {
         fits_try!(status,
                   FitsFile {
                       fptr: fptr,
-                      filename: filename.to_string(),
+                      filename: filename.clone(),
                   })
     }
 
     /// Create a new fits file on disk
-    pub fn create(path: &str) -> Result<Self> {
+    pub fn create<T: Into<String>>(path: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
-        let c_filename = ffi::CString::new(path).unwrap();
+        let path = path.into();
+        let c_filename = ffi::CString::new(path.as_str()).unwrap();
 
         unsafe {
             sys::ffinit(&mut fptr as *mut *mut sys::fitsfile,
@@ -149,7 +151,7 @@ impl FitsFile {
         fits_try!(status, {
             let f = FitsFile {
                 fptr: fptr,
-                filename: path.to_string(),
+                filename: path.clone(),
             };
             try!(f.add_empty_primary());
             f
