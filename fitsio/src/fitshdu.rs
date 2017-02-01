@@ -98,6 +98,42 @@ reads_col_impl!(f64, ffgcvd, 0.0);
 
 // TODO: impl for string
 
+pub trait WritesCol {
+    fn write_col<T: Into<String>>(fits_file: &FitsFile, hdu: &FitsHdu, col_name: T, col_data: &[Self])
+                                  -> Result<()>
+        where Self: Sized;
+}
+
+macro_rules! writes_col_impl {
+    ($t: ty, $data_type: expr) => (
+        impl WritesCol for $t {
+            fn write_col<T: Into<String>>(fits_file: &FitsFile, hdu: &FitsHdu, col_name: T, col_data: &[Self])
+                                        -> Result<()> {
+                let colno = hdu.get_column_no(col_name.into())?;
+                let mut status = 0;
+                unsafe {
+                    sys::ffpcl(
+                        fits_file.fptr,
+                        $data_type.into(),
+                        (colno + 1) as _,
+                        1,
+                        1,
+                        col_data.len() as _,
+                        col_data.as_ptr() as *mut _,
+                        &mut status);
+                }
+                fits_try!(status, ())
+            }
+        }
+    )
+}
+
+writes_col_impl!(u32, DataType::TUINT);
+writes_col_impl!(u64, DataType::TULONG);
+writes_col_impl!(i32, DataType::TINT);
+writes_col_impl!(i64, DataType::TLONG);
+writes_col_impl!(f32, DataType::TFLOAT);
+writes_col_impl!(f64, DataType::TDOUBLE);
 
 /// Trait applied to types which can be read from a FITS header
 ///
@@ -669,6 +705,11 @@ impl<'open> FitsHdu<'open> {
         T::read_col(self.fits_file, name)
     }
 
+    pub fn write_col<T: WritesCol, N: Into<String>>(&self, name: N, col_data: &[T])
+                                                    -> Result<()> {
+        T::write_col(self.fits_file, self, name, col_data)
+    }
+
     pub fn columns(&self) -> ColumnIterator {
         ColumnIterator::new(self.fits_file)
     }
@@ -804,6 +845,33 @@ mod test {
         assert_eq!(hdu.get_column_no("intcol").unwrap(), 0);
         assert_eq!(hdu.get_column_no("floatcol").unwrap(), 1);
         assert_eq!(hdu.get_column_no("doublecol").unwrap(), 2);
+    }
+
+    #[test]
+    fn write_column_data() {
+        use super::super::columndescription::ColumnDescription;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        let data_to_write: Vec<i32> = vec![10101; 10];
+        {
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let table_description = vec![ColumnDescription {
+                name: "bar".to_string(),
+                data_type: "1J".to_string(),
+            }];
+            f.create_table("foo".to_string(), &table_description).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+
+            hdu.write_col("bar", &data_to_write).unwrap();
+        }
+
+        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+        let hdu = f.hdu("foo").unwrap();
+        let data: Vec<i32> = hdu.read_col("bar").unwrap();
+        assert_eq!(data, data_to_write);
     }
 
     #[test]
