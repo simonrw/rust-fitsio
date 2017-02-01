@@ -135,6 +135,27 @@ impl FitsFile {
                   })
     }
 
+    /// Open a fits file in read/write mode
+    pub fn edit<T: Into<String>>(filename: T) -> Result<Self> {
+        let mut fptr = ptr::null_mut();
+        let mut status = 0;
+        let filename = filename.into();
+        let c_filename = ffi::CString::new(filename.as_str()).unwrap();
+
+        unsafe {
+            sys::ffopen(&mut fptr as *mut *mut _,
+                        c_filename.as_ptr(),
+                        FileOpenMode::READWRITE as libc::c_int,
+                        &mut status);
+        }
+
+        fits_try!(status,
+                  FitsFile {
+                      fptr: fptr,
+                      filename: filename.clone(),
+                  })
+    }
+
     /// Create a new fits file on disk
     pub fn create<T: Into<String>>(path: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
@@ -324,6 +345,33 @@ mod test {
                 assert_eq!(naxis, 0);
             })
             .unwrap();
+    }
+
+    #[test]
+    fn editing_a_current_file() {
+        use std::fs;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        fs::copy("../testdata/full_example.fits", &filename)
+            .expect("Could not copy test file");
+
+        {
+            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
+            let image_hdu = f.hdu(0).unwrap();
+
+            let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
+            image_hdu.write_section(0, 100, &data_to_write).unwrap();
+        }
+
+        {
+            let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+            let hdu = f.hdu(0).unwrap();
+            let read_data: Vec<i64> = hdu.read_section(0, 10).unwrap();
+            assert_eq!(read_data, vec![10101; 10]);
+        }
     }
 
     #[test]
