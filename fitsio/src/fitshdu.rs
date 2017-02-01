@@ -6,7 +6,7 @@ use super::columndescription::ColumnDescription;
 use super::conversions::typechar_to_data_type;
 use super::libc;
 use super::positional::Coordinate;
-use super::types::{HduType, DataType};
+use super::types::{HduType, DataType, CaseSensitivity};
 use std::ffi;
 use std::ptr;
 
@@ -644,6 +644,25 @@ impl<'open> FitsHdu<'open> {
         T::read_region(self.fits_file, lower_left, upper_right)
     }
 
+    pub fn get_column_no<T: Into<String>>(&self, col_name: T) -> Result<usize> {
+        let mut status = 0;
+        let mut colno = 0;
+
+        let c_col_name = {
+            let col_name = col_name.into();
+            ffi::CString::new(col_name.as_str()).unwrap()
+        };
+
+        unsafe {
+            sys::ffgcno(
+                self.fits_file.fptr,
+                CaseSensitivity::CASEINSEN as _,
+                c_col_name.as_ptr() as *mut _,
+                &mut colno,
+                &mut status);
+        }
+        fits_try!(status, (colno - 1) as usize)
+    }
 
     /// Read a binary table column
     pub fn read_col<T: ReadsCol>(&self, name: &str) -> Result<Vec<T>> {
@@ -776,6 +795,15 @@ mod test {
             .collect();
         assert_eq!(column_names,
                    vec!["intcol".to_string(), "floatcol".to_string(), "doublecol".to_string()]);
+    }
+
+    #[test]
+    fn column_number() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu("testext").unwrap();
+        assert_eq!(hdu.get_column_no("intcol").unwrap(), 0);
+        assert_eq!(hdu.get_column_no("floatcol").unwrap(), 1);
+        assert_eq!(hdu.get_column_no("doublecol").unwrap(), 2);
     }
 
     #[test]
