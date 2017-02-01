@@ -355,8 +355,7 @@ mod test {
         let tdir_path = tdir.path();
         let filename = tdir_path.join("test.fits");
 
-        fs::copy("../testdata/full_example.fits", &filename)
-            .expect("Could not copy test file");
+        fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
 
         {
             let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();

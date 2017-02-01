@@ -99,7 +99,10 @@ reads_col_impl!(f64, ffgcvd, 0.0);
 // TODO: impl for string
 
 pub trait WritesCol {
-    fn write_col<T: Into<String>>(fits_file: &FitsFile, hdu: &FitsHdu, col_name: T, col_data: &[Self])
+    fn write_col<T: Into<String>>(fits_file: &FitsFile,
+                                  hdu: &FitsHdu,
+                                  col_name: T,
+                                  col_data: &[Self])
                                   -> Result<()>
         where Self: Sized;
 }
@@ -107,8 +110,11 @@ pub trait WritesCol {
 macro_rules! writes_col_impl {
     ($t: ty, $data_type: expr) => (
         impl WritesCol for $t {
-            fn write_col<T: Into<String>>(fits_file: &FitsFile, hdu: &FitsHdu, col_name: T, col_data: &[Self])
-                                        -> Result<()> {
+            fn write_col<T: Into<String>>(
+                fits_file: &FitsFile,
+                hdu: &FitsHdu,
+                col_name: T,
+                col_data: &[Self]) -> Result<()> {
                 let colno = hdu.get_column_no(col_name.into())?;
                 let mut status = 0;
                 unsafe {
@@ -690,12 +696,11 @@ impl<'open> FitsHdu<'open> {
         };
 
         unsafe {
-            sys::ffgcno(
-                self.fits_file.fptr,
-                CaseSensitivity::CASEINSEN as _,
-                c_col_name.as_ptr() as *mut _,
-                &mut colno,
-                &mut status);
+            sys::ffgcno(self.fits_file.fptr,
+                        CaseSensitivity::CASEINSEN as _,
+                        c_col_name.as_ptr() as *mut _,
+                        &mut colno,
+                        &mut status);
         }
         fits_try!(status, (colno - 1) as usize)
     }
@@ -705,8 +710,7 @@ impl<'open> FitsHdu<'open> {
         T::read_col(self.fits_file, name)
     }
 
-    pub fn write_col<T: WritesCol, N: Into<String>>(&self, name: N, col_data: &[T])
-                                                    -> Result<()> {
+    pub fn write_col<T: WritesCol, N: Into<String>>(&self, name: N, col_data: &[T]) -> Result<()> {
         T::write_col(self.fits_file, self, name, col_data)
     }
 
@@ -859,9 +863,9 @@ mod test {
         {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             let table_description = vec![ColumnDescription {
-                name: "bar".to_string(),
-                data_type: "1J".to_string(),
-            }];
+                                             name: "bar".to_string(),
+                                             data_type: "1J".to_string(),
+                                         }];
             f.create_table("foo".to_string(), &table_description).unwrap();
             let hdu = f.hdu("foo").unwrap();
 
