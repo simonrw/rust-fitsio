@@ -180,12 +180,12 @@ impl ::std::default::Default for FITSfile {
     }
 }
 #[repr(C)]
-#[derive(Copy, Clone)]
 #[derive(Debug)]
 pub struct fitsfile {
     pub HDUposition: c_int,
     pub Fptr: *mut FITSfile,
 }
+
 impl ::std::default::Default for fitsfile {
     fn default() -> Self {
         unsafe { ::std::mem::zeroed() }
