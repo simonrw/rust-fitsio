@@ -2,10 +2,11 @@ use std::ptr;
 use std::ffi;
 use super::{stringutils, sys, libc};
 
-use super::fitserror::{FitsError, Result, status_to_error};
+use super::fitserror::{FitsError, Result};
 use super::fitshdu::{FitsHdu, DescribesHdu};
 use super::columndescription::ColumnDescription;
 use super::types::{FileOpenMode, HduType, ImageType};
+use super::stringutils::status_to_string;
 
 
 
@@ -220,7 +221,7 @@ impl FitsFile {
     pub fn create_table(&self,
                         extname: String,
                         table_description: &[ColumnDescription])
-                        -> Result<()> {
+                        -> Result<FitsHdu> {
         let tfields = {
             let stringlist = table_description.iter()
                 .map(|desc| desc.name.clone())
@@ -251,13 +252,21 @@ impl FitsFile {
                         &mut status);
         }
 
-        fits_try!(status, ())
+        if status != 0 {
+            Err(FitsError {
+                status: status,
+                message: status_to_string(status).unwrap(),
+            })
+        } else {
+            self.current_hdu()
+        }
+
     }
 
     pub fn create_image(&self,
                         extname: String,
                         image_description: &ImageDescription)
-                        -> Result<()> {
+                        -> Result<FitsHdu> {
         let naxis = image_description.dimensions.len();
         let mut status = 0;
         unsafe {
@@ -268,16 +277,25 @@ impl FitsFile {
                         &mut status);
         }
 
-        match status {
-            0 => {}
-            _ => return status_to_error(status),
+        if status != 0 {
+            return Err(FitsError {
+                status: status,
+                message: status_to_string(status).unwrap(),
+            });
         }
 
         // Current HDU should be at the new HDU
         let current_hdu = try!(self.current_hdu());
         try!(current_hdu.write_key("EXTNAME".into(), extname));
 
-        Ok(())
+        if status != 0 {
+            Err(FitsError {
+                status: status,
+                message: status_to_string(status).unwrap(),
+            })
+        } else {
+            self.current_hdu()
+        }
     }
 }
 
@@ -534,5 +552,40 @@ mod test {
 
         assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
                    "TESTEXT".to_string());
+    }
+
+    #[test]
+    fn creating_new_image_returns_hdu_object() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+        let image_description = ImageDescription {
+            data_type: ImageType::LONG_IMG,
+            dimensions: vec![100, 20],
+        };
+        let hdu: FitsHdu = f.create_image("foo".to_string(), &image_description).unwrap();
+        assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
+                   "foo".to_string());
+    }
+
+    #[test]
+    fn creating_new_table_returns_hdu_object() {
+        use super::super::columndescription::ColumnDescription;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+        let table_description = vec![ColumnDescription {
+                                         name: "bar".to_string(),
+                                         data_type: "1J".to_string(),
+                                     }];
+        let hdu: FitsHdu = f.create_table("foo".to_string(), &table_description)
+            .unwrap();
+        assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
+                   "foo".to_string());
     }
 }
