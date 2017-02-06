@@ -23,7 +23,10 @@ impl DescribesHdu for usize {
         let mut _hdu_type = 0;
         let mut status = 0;
         unsafe {
-            sys::ffmahd(f.fptr, (*self + 1) as i32, &mut _hdu_type, &mut status);
+            sys::ffmahd(f.fptr as *mut _,
+                        (*self + 1) as i32,
+                        &mut _hdu_type,
+                        &mut status);
         }
 
         fits_try!(status, ())
@@ -37,7 +40,7 @@ impl<'a> DescribesHdu for &'a str {
         let c_hdu_name = ffi::CString::new(*self).unwrap();
 
         unsafe {
-            sys::ffmnhd(f.fptr,
+            sys::ffmnhd(f.fptr as *mut _,
                         HduType::ANY_HDU.into(),
                         c_hdu_name.into_raw(),
                         0,
@@ -68,7 +71,7 @@ macro_rules! reads_col_impl {
                         }).unwrap();
                         let mut status = 0;
                         unsafe {
-                            sys::$func(fits_file.fptr,
+                            sys::$func(fits_file.fptr as *mut _,
                                        (column_number + 1) as i32,
                                        1,
                                        1,
@@ -119,7 +122,7 @@ macro_rules! writes_col_impl {
                 let mut status = 0;
                 unsafe {
                     sys::ffpcl(
-                        fits_file.fptr,
+                        fits_file.fptr as *mut _,
                         $data_type.into(),
                         (colno + 1) as _,
                         1,
@@ -163,7 +166,7 @@ macro_rules! reads_key_impl {
                 let mut value: Self = Self::default();
 
                 unsafe {
-                    sys::$func(f.fptr,
+                    sys::$func(f.fptr as *mut _,
                            c_name.into_raw(),
                            &mut value,
                            ptr::null_mut(),
@@ -188,7 +191,7 @@ impl ReadsKey for String {
         let mut value: Vec<libc::c_char> = vec![0; sys::MAX_VALUE_LENGTH];
 
         unsafe {
-            sys::ffgkys(f.fptr,
+            sys::ffgkys(f.fptr as *mut _,
                         c_name.into_raw(),
                         value.as_mut_ptr(),
                         ptr::null_mut(),
@@ -218,7 +221,7 @@ macro_rules! writes_key_impl_flt {
                 let mut status = 0;
 
                 unsafe {
-                    sys::$func(f.fptr,
+                    sys::$func(f.fptr as *mut _,
                                 c_name.into_raw(),
                                 value,
                                 9,
@@ -237,7 +240,7 @@ impl WritesKey for i64 {
         let mut status = 0;
 
         unsafe {
-            sys::ffpkyj(f.fptr,
+            sys::ffpkyj(f.fptr as *mut _,
                         c_name.into_raw(),
                         value,
                         ptr::null_mut(),
@@ -256,7 +259,7 @@ impl WritesKey for String {
         let mut status = 0;
 
         unsafe {
-            sys::ffpkys(f.fptr,
+            sys::ffpkys(f.fptr as *mut _,
                         c_name.into_raw(),
                         ffi::CString::new(value).unwrap().into_raw(),
                         ptr::null_mut(),
@@ -333,7 +336,7 @@ macro_rules! read_write_image_impl {
                         let mut status = 0;
 
                         unsafe {
-                            sys::ffgpv(fits_file.fptr,
+                            sys::ffgpv(fits_file.fptr as *mut _,
                                        $data_type.into(),
                                        (start + 1) as i64,
                                        nelements as i64,
@@ -400,7 +403,7 @@ macro_rules! read_write_image_impl {
 
                             unsafe {
                                 sys::ffgsv(
-                                    fits_file.fptr,
+                                    fits_file.fptr as *mut _,
                                     $data_type.into(),
                                     fpixel.as_mut_ptr(),
                                     lpixel.as_mut_ptr(),
@@ -434,7 +437,7 @@ macro_rules! read_write_image_impl {
                             assert!(data.len() >= nelements);
                             let mut status = 0;
                             unsafe {
-                                sys::ffppr(fits_file.fptr,
+                                sys::ffppr(fits_file.fptr as *mut _,
                                            $data_type.into(),
                                            (start + 1) as i64,
                                            nelements as i64,
@@ -466,7 +469,7 @@ macro_rules! read_write_image_impl {
 
                             unsafe {
                                 sys::ffpss(
-                                    fits_file.fptr,
+                                    fits_file.fptr as *mut _,
                                     $data_type.into(),
                                     fpixel.as_mut_ptr(),
                                     lpixel.as_mut_ptr(),
@@ -615,7 +618,7 @@ impl<'open> FitsHdu<'open> {
         let mut status = 0;
         let mut hdu_type = 0;
         unsafe {
-            sys::ffghdt(self.fits_file.fptr, &mut hdu_type, &mut status);
+            sys::ffghdt(self.fits_file.fptr as *mut _, &mut hdu_type, &mut status);
         }
 
         fits_try!(status, {
@@ -696,7 +699,7 @@ impl<'open> FitsHdu<'open> {
         };
 
         unsafe {
-            sys::ffgcno(self.fits_file.fptr,
+            sys::ffgcno(self.fits_file.fptr as *mut _,
                         CaseSensitivity::CASEINSEN as _,
                         c_col_name.as_ptr() as *mut _,
                         &mut colno,

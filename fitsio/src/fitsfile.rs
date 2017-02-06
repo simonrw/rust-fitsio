@@ -35,7 +35,7 @@ pub struct ImageDescription {
 ///
 ///
 pub struct FitsFile {
-    pub fptr: *mut sys::fitsfile,
+    pub fptr: *const sys::fitsfile,
     pub filename: String,
 }
 
@@ -182,7 +182,7 @@ impl FitsFile {
     fn add_empty_primary(&self) -> Result<()> {
         let mut status = 0;
         unsafe {
-            sys::ffphps(self.fptr, 8, 0, ptr::null_mut(), &mut status);
+            sys::ffphps(self.fptr as *mut _, 8, 0, ptr::null_mut(), &mut status);
         }
 
         fits_try!(status, ())
@@ -201,7 +201,7 @@ impl FitsFile {
     pub fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
         unsafe {
-            sys::ffghdn(self.fptr, &mut hdu_num);
+            sys::ffghdn(self.fptr as *mut _, &mut hdu_num);
         }
         (hdu_num - 1) as usize
     }
@@ -214,7 +214,7 @@ impl FitsFile {
 
     /// Get the current hdu info
     pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
-        unsafe { fetch_hdu_info(self.fptr) }
+        unsafe { fetch_hdu_info(self.fptr as *mut _) }
     }
 
     pub fn create_table(&self,
@@ -240,7 +240,7 @@ impl FitsFile {
 
         let mut status: libc::c_int = 0;
         unsafe {
-            sys::ffcrtb(self.fptr,
+            sys::ffcrtb(self.fptr as *mut _,
                         HduType::BINARY_TBL.into(),
                         0,
                         tfields.len as libc::c_int,
@@ -261,7 +261,7 @@ impl FitsFile {
         let naxis = image_description.dimensions.len();
         let mut status = 0;
         unsafe {
-            sys::ffcrim(self.fptr,
+            sys::ffcrim(self.fptr as *mut _,
                         image_description.data_type.into(),
                         naxis as i32,
                         image_description.dimensions.as_ptr() as *mut i64,
@@ -285,7 +285,7 @@ impl Drop for FitsFile {
     fn drop(&mut self) {
         let mut status = 0;
         unsafe {
-            sys::ffclos(self.fptr, &mut status);
+            sys::ffclos(self.fptr as *mut _, &mut status);
         }
     }
 }
