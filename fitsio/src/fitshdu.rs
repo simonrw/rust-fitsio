@@ -142,6 +142,13 @@ pub trait WritesCol {
                                   col_data: &[Self])
                                   -> Result<()>
         where Self: Sized;
+    fn write_col_range<T: Into<String>>(fits_file: &FitsFile,
+                                        hdu: &FitsHdu,
+                                        col_name: T,
+                                        col_data: &[Self],
+                                        rows: &Range<usize>)
+                                        -> Result<()>
+        where Self: Sized;
 }
 
 macro_rules! writes_col_impl {
@@ -164,6 +171,29 @@ macro_rules! writes_col_impl {
                         col_data.len() as _,
                         col_data.as_ptr() as *mut _,
                         &mut status);
+                }
+                fits_try!(status, ())
+            }
+
+            fn write_col_range<T: Into<String>>(fits_file: &FitsFile,
+                hdu: &FitsHdu,
+                col_name: T,
+                col_data: &[Self],
+                rows: &Range<usize>)
+            -> Result<()> {
+                let colno = hdu.get_column_no(col_name.into())?;
+                let mut status = 0;
+                unsafe {
+                    sys::ffpcl(
+                        fits_file.fptr as *mut _,
+                        $data_type.into(),
+                        (colno + 1) as _,
+                        (rows.start + 1) as _,
+                        1,
+                        (rows.end + 1) as _,
+                        col_data.as_ptr() as *mut _,
+                        &mut status
+                    );
                 }
                 fits_try!(status, ())
             }
@@ -755,6 +785,14 @@ impl<'open> FitsHdu<'open> {
         T::write_col(self.fits_file, self, name, col_data)
     }
 
+    pub fn write_col_range<T: WritesCol, N: Into<String>>(&self,
+                                                          name: N,
+                                                          col_data: &[T],
+                                                          rows: &Range<usize>)
+                                                          -> Result<()> {
+        T::write_col_range(self.fits_file, self, name, col_data, rows)
+    }
+
     pub fn columns(&self) -> ColumnIterator {
         ColumnIterator::new(self.fits_file)
     }
@@ -936,6 +974,34 @@ mod test {
         let hdu = f.hdu("foo").unwrap();
         let data: Vec<i32> = hdu.read_col("bar").unwrap();
         assert_eq!(data, data_to_write);
+    }
+
+    #[test]
+    fn write_column_subset() {
+        use super::super::columndescription::ColumnDescription;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        let data_to_write: Vec<i32> = vec![10101; 10];
+        {
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let table_description = vec![ColumnDescription {
+                                             name: "bar".to_string(),
+                                             data_type: "1J".to_string(),
+                                         }];
+            f.create_table("foo".to_string(), &table_description).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+
+            hdu.write_col_range("bar", &data_to_write, &(0..5)).unwrap();
+        }
+
+        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+        let hdu = f.hdu("foo").unwrap();
+        let data: Vec<i32> = hdu.read_col("bar").unwrap();
+        assert_eq!(data.len(), 6);
+        assert_eq!(data[..], data_to_write[0..6]);
     }
 
     #[test]
