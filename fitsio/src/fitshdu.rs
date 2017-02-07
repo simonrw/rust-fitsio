@@ -9,6 +9,7 @@ use super::positional::Coordinate;
 use super::types::{HduType, DataType, CaseSensitivity};
 use std::ffi;
 use std::ptr;
+use std::ops::Range;
 
 /// Hdu description type
 ///
@@ -54,6 +55,8 @@ impl<'a> DescribesHdu for &'a str {
 /// Trait for reading a fits column
 pub trait ReadsCol {
     fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> where Self: Sized;
+    fn read_col_range(fits_file: &FitsFile, name: &str, range: &Range<usize>) -> Result<Vec<Self>>
+        where Self: Sized;
 }
 
 macro_rules! reads_col_impl {
@@ -76,6 +79,37 @@ macro_rules! reads_col_impl {
                                        1,
                                        1,
                                        num_rows as i64,
+                                       $nullval,
+                                       out.as_mut_ptr(),
+                                       ptr::null_mut(),
+                                       &mut status);
+
+                        }
+                        fits_try!(status, out)
+                    },
+                    Err(e) => Err(e),
+                    _ => panic!("Unknown error occurred"),
+                }
+            }
+
+            // TODO: should we check the bounds? cfitsio will raise an error, but we
+            // could be more friendly and raise our own?
+            fn read_col_range(fits_file: &FitsFile, name: &str, range: &Range<usize>)
+                -> Result<Vec<Self>> {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
+                        let num_output_rows = range.end - range.start + 1;
+                        let mut out = vec![$nullval; num_output_rows];
+                        let column_number = column_descriptions.iter().position(|ref desc| {
+                            desc.name.as_str() == name
+                        }).unwrap();
+                        let mut status = 0;
+                        unsafe {
+                            sys::$func(fits_file.fptr as *mut _,
+                                       (column_number + 1) as i32,
+                                       (range.start + 1) as i64,
+                                       1,
+                                       num_output_rows as _,
                                        $nullval,
                                        out.as_mut_ptr(),
                                        ptr::null_mut(),
@@ -713,6 +747,10 @@ impl<'open> FitsHdu<'open> {
         T::read_col(self.fits_file, name)
     }
 
+    pub fn read_col_range<T: ReadsCol>(&self, name: &str, range: &Range<usize>) -> Result<Vec<T>> {
+        T::read_col_range(self.fits_file, name, range)
+    }
+
     pub fn write_col<T: WritesCol, N: Into<String>>(&self, name: N, col_data: &[T]) -> Result<()> {
         T::write_col(self.fits_file, self, name, col_data)
     }
@@ -825,6 +863,25 @@ mod test {
         assert!(floats_close_f64(doublecol_data[0], 16.959972808730814));
         assert!(floats_close_f64(doublecol_data[15], 19.013522579233065));
         assert!(floats_close_f64(doublecol_data[49], 16.61153656123406));
+    }
+
+    #[test]
+    fn read_column_regions() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let intcol_data: Vec<i32> = hdu.read_col_range("intcol", &(0..2)).unwrap();
+        assert_eq!(intcol_data.len(), 3);
+        assert_eq!(intcol_data[0], 18);
+        assert_eq!(intcol_data[1], 13);
+    }
+
+    #[test]
+    fn read_column_region_check_ranges() {
+        use super::Result;
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let result_data: Result<Vec<i32>> = hdu.read_col_range("intcol", &(0..2_000_000));
+        assert!(result_data.is_err());
     }
 
     #[test]
