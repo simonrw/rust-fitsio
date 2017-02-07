@@ -54,23 +54,28 @@ impl<'a> DescribesHdu for &'a str {
 
 /// Trait for reading a fits column
 pub trait ReadsCol {
-    fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> where Self: Sized;
-    fn read_col_range(fits_file: &FitsFile, name: &str, range: &Range<usize>) -> Result<Vec<Self>>
+    fn read_col<T: Into<String>>(fits_file: &FitsFile, name: T) -> Result<Vec<Self>>
+        where Self: Sized;
+    fn read_col_range<T: Into<String>>(fits_file: &FitsFile,
+                                       name: T,
+                                       range: &Range<usize>)
+                                       -> Result<Vec<Self>>
         where Self: Sized;
 }
 
 macro_rules! reads_col_impl {
     ($t: ty, $func: ident, $nullval: expr) => (
         impl ReadsCol for $t {
-            fn read_col(fits_file: &FitsFile, name: &str) -> Result<Vec<Self>> {
+            fn read_col<T: Into<String>>(fits_file: &FitsFile, name: T) -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo {
                         column_descriptions, num_rows, ..
                     }) => {
                         let mut out = vec![$nullval; num_rows];
+                        let test_name = name.into();
                         assert_eq!(out.len(), num_rows);
                         let column_number = column_descriptions.iter().position(|ref desc| {
-                            desc.name.as_str() == name
+                            desc.name == test_name
                         }).unwrap();
                         let mut status = 0;
                         unsafe {
@@ -94,14 +99,15 @@ macro_rules! reads_col_impl {
 
             // TODO: should we check the bounds? cfitsio will raise an error, but we
             // could be more friendly and raise our own?
-            fn read_col_range(fits_file: &FitsFile, name: &str, range: &Range<usize>)
+            fn read_col_range<T: Into<String>>(fits_file: &FitsFile, name: T, range: &Range<usize>)
                 -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
                         let num_output_rows = range.end - range.start + 1;
                         let mut out = vec![$nullval; num_output_rows];
+                        let test_name = name.into();
                         let column_number = column_descriptions.iter().position(|ref desc| {
-                            desc.name.as_str() == name
+                            desc.name == test_name
                         }).unwrap();
                         let mut status = 0;
                         unsafe {
@@ -601,7 +607,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
 
         if self.current < ncols {
             let description = &self.column_descriptions[self.current];
-            let current_name = &description.name;
+            let current_name = description.name.as_str();
             let current_type = typechar_to_data_type(description.data_type.as_str());
 
             let retval = match current_type {
