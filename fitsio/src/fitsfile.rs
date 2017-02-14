@@ -17,10 +17,7 @@ use super::stringutils::status_to_string;
 /// Otherwise the variant is `HduInfo::TableInfo`.
 #[derive(Debug)]
 pub enum HduInfo {
-    ImageInfo {
-        dimensions: usize,
-        shape: Vec<usize>,
-    },
+    ImageInfo { shape: Vec<usize> },
     TableInfo {
         column_descriptions: Vec<ColumnDescription>,
         num_rows: usize,
@@ -59,10 +56,7 @@ unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
             let mut shape = vec![0; dimensions as usize];
             sys::ffgisz(fptr, dimensions, shape.as_mut_ptr(), &mut status);
 
-            HduInfo::ImageInfo {
-                dimensions: dimensions as usize,
-                shape: shape.iter().map(|v| *v as usize).collect(),
-            }
+            HduInfo::ImageInfo { shape: shape.iter().map(|v| *v as usize).collect() }
         }
         1 | 2 => {
             let mut num_rows = 0;
@@ -412,8 +406,8 @@ mod test {
     fn fetching_hdu_info() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
-            Ok(HduInfo::ImageInfo { dimensions, shape }) => {
-                assert_eq!(dimensions, 2);
+            Ok(HduInfo::ImageInfo { shape }) => {
+                assert_eq!(shape.len(), 2);
                 assert_eq!(shape, vec![100, 100]);
             }
             Err(e) => panic!("Error fetching hdu info {:?}", e),

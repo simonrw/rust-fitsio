@@ -369,9 +369,9 @@ pub trait ReadWriteImage: Sized {
     /// This reads an entire image into a one-dimensional vector
     fn read_image(fits_file: &FitsFile) -> Result<Vec<Self>> {
         match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::ImageInfo { dimensions, shape }) => {
+            Ok(HduInfo::ImageInfo { shape }) => {
                 let mut npixels = 1;
-                for dim in 0..dimensions {
+                for dim in 0..shape.len() {
                     npixels *= shape[dim];
                 }
                 Self::read_section(fits_file, 0, npixels)
@@ -400,7 +400,7 @@ macro_rules! read_write_image_impl {
         impl ReadWriteImage for $t {
             fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { dimensions: _dimensions, shape: _shape }) => {
+                    Ok(HduInfo::ImageInfo { shape: _shape }) => {
                         let nelements = end - start;
                         let mut out = vec![0 as $t; nelements];
                         let mut status = 0;
@@ -430,8 +430,8 @@ macro_rules! read_write_image_impl {
             fn read_rows(fits_file: &FitsFile, start_row: usize, num_rows: usize)
                 -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { dimensions, shape }) => {
-                        if dimensions != 2 {
+                    Ok(HduInfo::ImageInfo { shape }) => {
+                        if shape.len() != 2 {
                             unimplemented!();
                         }
 
@@ -456,8 +456,8 @@ macro_rules! read_write_image_impl {
             fn read_region( fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate)
                 -> Result<Vec<Self>> {
                     match fits_file.fetch_hdu_info() {
-                        Ok(HduInfo::ImageInfo { dimensions, .. }) => {
-                            if dimensions != 2 {
+                        Ok(HduInfo::ImageInfo { shape }) => {
+                            if shape.len() != 2 {
                                 unimplemented!();
                             }
 
