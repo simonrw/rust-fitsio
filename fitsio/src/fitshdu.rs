@@ -5,7 +5,6 @@ use super::fitserror::{FitsError, Result};
 use super::columndescription::ColumnDescription;
 use super::conversions::typechar_to_data_type;
 use super::libc;
-use super::positional::Coordinate;
 use super::types::{HduType, DataType, CaseSensitivity};
 use std::ffi;
 use std::ptr;
@@ -359,10 +358,7 @@ pub trait ReadWriteImage: Sized {
     /// Lower left indicates the starting point of the square, and the upper
     /// right defines the pixel _beyond_ the end. The range of pixels included
     /// is inclusive of the lower end, and *exclusive* of the upper end.
-    fn read_region(fits_file: &FitsFile,
-                   lower_left: &Coordinate,
-                   upper_right: &Coordinate)
-                   -> Result<Vec<Self>>;
+    fn read_region(fits_file: &FitsFile, ranges: &[&Range<usize>]) -> Result<Vec<Self>>;
 
     /// Read a whole image into a new `Vec`
     ///
@@ -388,11 +384,7 @@ pub trait ReadWriteImage: Sized {
 
     fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
 
-    fn write_region(fits_file: &FitsFile,
-                    lower_left: &Coordinate,
-                    upper_right: &Coordinate,
-                    data: &[Self])
-                    -> Result<()>;
+    fn write_region(fits_file: &FitsFile, ranges: &[&Range<usize>], data: &[Self]) -> Result<()>;
 }
 
 macro_rules! read_write_image_impl {
@@ -453,7 +445,7 @@ macro_rules! read_write_image_impl {
                 Self::read_rows(fits_file, row, 1)
             }
 
-            fn read_region( fits_file: &FitsFile, lower_left: &Coordinate, upper_right: &Coordinate)
+            fn read_region( fits_file: &FitsFile, ranges: &[&Range<usize>])
                 -> Result<Vec<Self>> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { shape }) => {
@@ -461,13 +453,23 @@ macro_rules! read_write_image_impl {
                                 unimplemented!();
                             }
 
+                            if ranges.len() != 2 {
+                                unimplemented!();
+                            }
+
                             // These have to be mutable because of the C-api
-                            let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
-                            let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
+                            let mut fpixel = [
+                                (ranges[0].start + 1) as _,
+                                (ranges[1].start + 1) as _
+                            ];
+                            let mut lpixel = [
+                                (ranges[1].end + 1) as _,
+                                (ranges[1].end + 1) as _
+                            ];
+
                             let mut inc = [ 1, 1 ];
                             let nelements =
-                                ((upper_right.y - lower_left.y) + 1) *
-                                ((upper_right.x - lower_left.x) + 1);
+                                ((lpixel[1] - fpixel[1]) + 1) * ((lpixel[0] - fpixel[0]) + 1);
                             let mut out = vec![0 as $t; nelements as usize];
                             let mut status = 0;
 
@@ -527,14 +529,19 @@ macro_rules! read_write_image_impl {
 
             fn write_region(
                 fits_file: &FitsFile,
-                lower_left: &Coordinate,
-                upper_right: &Coordinate,
+                ranges: &[&Range<usize>],
                 data: &[Self])
                 -> Result<()> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { .. }) => {
-                            let mut fpixel = [ (lower_left.x + 1) as _, (lower_left.y + 1) as _ ];
-                            let mut lpixel = [ (upper_right.x + 1) as _, (upper_right.y + 1) as _ ];
+                            let mut fpixel = [
+                                (ranges[0].start + 1) as _,
+                                (ranges[1].start + 1) as _
+                            ];
+                            let mut lpixel = [
+                                (ranges[1].end + 1) as _,
+                                (ranges[1].end + 1) as _
+                            ];
                             let mut status = 0;
 
                             unsafe {
@@ -744,19 +751,15 @@ impl<'open> FitsHdu<'open> {
 
     /// Write a rectangular region to a fits image
     pub fn write_region<T: ReadWriteImage>(&self,
-                                           lower_left: &Coordinate,
-                                           upper_right: &Coordinate,
+                                           ranges: &[&Range<usize>],
                                            data: &[T])
                                            -> Result<()> {
-        T::write_region(self.fits_file, lower_left, upper_right, data)
+        T::write_region(self.fits_file, ranges, data)
     }
 
     /// Read a square region into a `Vec`
-    pub fn read_region<T: ReadWriteImage>(&self,
-                                          lower_left: &Coordinate,
-                                          upper_right: &Coordinate)
-                                          -> Result<Vec<T>> {
-        T::read_region(self.fits_file, lower_left, upper_right)
+    pub fn read_region<T: ReadWriteImage>(&self, ranges: &[&Range<usize>]) -> Result<Vec<T>> {
+        T::read_region(self.fits_file, ranges)
     }
 
     pub fn get_column_no<T: Into<String>>(&self, col_name: T) -> Result<usize> {
@@ -1053,13 +1056,13 @@ mod test {
 
     #[test]
     fn read_image_slice() {
-        use positional::Coordinate;
-
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
-        let lower_left = Coordinate { x: 0, y: 0 };
-        let upper_right = Coordinate { x: 10, y: 10 };
-        let chunk: Vec<i32> = hdu.read_region(&lower_left, &upper_right).unwrap();
+
+        let xcoord = 0..10;
+        let ycoord = 0..10;
+
+        let chunk: Vec<i32> = hdu.read_region(&vec![&xcoord, &ycoord]).unwrap();
         assert_eq!(chunk.len(), 11 * 11);
         assert_eq!(chunk[0], 108);
         assert_eq!(chunk[11], 177);
@@ -1068,13 +1071,9 @@ mod test {
 
     #[test]
     fn read_image_region_from_table() {
-        use positional::Coordinate;
-
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("TESTEXT").unwrap();
-        let lower_left = Coordinate { x: 0, y: 0 };
-        let upper_right = Coordinate { x: 10, y: 10 };
-        if let Err(e) = hdu.read_region::<i32>(&lower_left, &upper_right) {
+        if let Err(e) = hdu.read_region::<i32>(&vec![&(0..10), &(0..10)]) {
             assert_eq!(e.status, 601);
             assert_eq!(e.message, "cannot read image data from a table hdu");
         } else {
@@ -1125,8 +1124,6 @@ mod test {
 
     #[test]
     fn test_write_image_region() {
-        use positional::Coordinate;
-
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
         let filename = tdir_path.join("test.fits");
@@ -1144,17 +1141,13 @@ mod test {
 
             let hdu = f.hdu("foo").unwrap();
 
-            let lower_left = Coordinate { x: 0, y: 0 };
-            let upper_right = Coordinate { x: 10, y: 10 };
             let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
-            hdu.write_region(&lower_left, &upper_right, &data).unwrap();
+            hdu.write_region(&vec![&(0..10), &(0..10)], &data).unwrap();
         }
 
         let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
         let hdu = f.hdu("foo").unwrap();
-        let lower_left = Coordinate { x: 0, y: 0 };
-        let upper_right = Coordinate { x: 10, y: 10 };
-        let chunk: Vec<i64> = hdu.read_region(&lower_left, &upper_right).unwrap();
+        let chunk: Vec<i64> = hdu.read_region(&vec![&(0..10), &(0..10)]).unwrap();
         assert_eq!(chunk.len(), 11 * 11);
         assert_eq!(chunk[0], 50);
         assert_eq!(chunk[25], 75);
@@ -1188,7 +1181,6 @@ mod test {
     #[test]
     fn write_image_region_to_table() {
         use columndescription::ColumnDescription;
-        use positional::Coordinate;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1204,10 +1196,7 @@ mod test {
 
         let hdu = f.hdu("foo").unwrap();
 
-        let lower_left = Coordinate { x: 0, y: 0 };
-        let upper_right = Coordinate { x: 10, y: 10 };
-
-        if let Err(e) = hdu.write_region(&lower_left, &upper_right, &data_to_write) {
+        if let Err(e) = hdu.write_region(&vec![&(0..10), &(0..10)], &data_to_write) {
             assert_eq!(e.status, 601);
             assert_eq!(e.message, "cannot write image data to a table hdu");
         } else {

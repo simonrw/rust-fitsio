@@ -159,11 +159,10 @@
 //! let first_row: Vec<i32> = hdu.read_section(0, 100).unwrap();
 //!
 //! // Read a square section of the image
-//! use fitsio::positional::Coordinate;
 //!
-//! let lower_left = Coordinate { x: 0, y: 0 };
-//! let upper_right = Coordinate { x: 10, y: 10 };
-//! let chunk: Vec<i32> = hdu.read_region(&lower_left, &upper_right).unwrap();
+//! let xcoord = 0..10;
+//! let ycoord = 0..10;
+//! let chunk: Vec<i32> = hdu.read_region(&vec![&xcoord, &ycoord]).unwrap();
 //! # }
 //! ```
 //!
@@ -201,7 +200,6 @@ pub mod fitserror;
 mod stringutils;
 pub mod types;
 mod columndescription;
-pub mod positional;
 mod fitsfile;
 pub mod fitshdu;
 mod conversions;
