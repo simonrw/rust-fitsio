@@ -52,6 +52,7 @@ datatype_into_impl!(u32);
 datatype_into_impl!(i64);
 datatype_into_impl!(u64);
 
+#[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ImageType {
@@ -85,6 +86,7 @@ imagetype_into_impl!(i32);
 imagetype_into_impl!(i64);
 
 
+#[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum HduType {
