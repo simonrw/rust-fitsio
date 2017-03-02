@@ -5,24 +5,10 @@ use super::{stringutils, sys, libc};
 use super::fitserror::{FitsError, Result};
 use super::fitshdu::{FitsHdu, DescribesHdu};
 use super::columndescription::ColumnDescription;
-use super::types::{FileOpenMode, HduType, ImageType};
+use super::types::{FileOpenMode, ImageType, HduInfo};
 use super::stringutils::status_to_string;
 
 
-
-/// Description of the current HDU
-///
-/// If the current HDU is an image, then
-/// [`fetch_hdu_info`](struct.FitsFile.html#method.fetch_hdu_info) returns `HduInfo::ImageInfo`.
-/// Otherwise the variant is `HduInfo::TableInfo`.
-#[derive(Debug)]
-pub enum HduInfo {
-    ImageInfo { shape: Vec<usize> },
-    TableInfo {
-        column_descriptions: Vec<ColumnDescription>,
-        num_rows: usize,
-    },
-}
 
 pub struct ImageDescription {
     pub data_type: ImageType,
@@ -233,10 +219,15 @@ impl FitsFile {
         let c_extname = ffi::CString::new(extname).unwrap();
 
 
+        let hdu_info = HduInfo::TableInfo {
+            column_descriptions: table_description.to_vec(),
+            num_rows: 0,
+        };
+
         let mut status: libc::c_int = 0;
         unsafe {
             sys::ffcrtb(self.fptr as *mut _,
-                        HduType::BINARY_TBL.into(),
+                        hdu_info.into(),
                         0,
                         tfields.len as libc::c_int,
                         tfields.list,

@@ -1,11 +1,11 @@
-use super::fitsfile::{FitsFile, HduInfo};
+use super::fitsfile::FitsFile;
 use super::sys;
 use super::stringutils;
 use super::fitserror::{FitsError, Result};
 use super::columndescription::ColumnDescription;
 use super::conversions::typechar_to_data_type;
 use super::libc;
-use super::types::{HduType, DataType, CaseSensitivity};
+use super::types::{DataType, CaseSensitivity, HduInfo};
 use std::ffi;
 use std::ptr;
 use std::ops::Range;
@@ -41,7 +41,7 @@ impl<'a> DescribesHdu for &'a str {
 
         unsafe {
             sys::ffmnhd(f.fptr as *mut _,
-                        HduType::ANY_HDU.into(),
+                        HduInfo::AnyInfo.into(),
                         c_hdu_name.into_raw(),
                         0,
                         &mut status);
@@ -378,6 +378,7 @@ pub trait ReadWriteImage: Sized {
                     message: "cannot read image data from a table hdu".to_string(),
                 })
             }
+            Ok(HduInfo::AnyInfo) => unreachable!(),
             Err(e) => Err(e),
         }
     }
@@ -415,6 +416,7 @@ macro_rules! read_write_image_impl {
                         status: 601,
                         message: "cannot read image data from a table hdu".to_string(),
                     }),
+                    Ok(HduInfo::AnyInfo) => unreachable!(),
                     Err(e) => Err(e),
                 }
             }
@@ -437,6 +439,7 @@ macro_rules! read_write_image_impl {
                         status: 601,
                         message: "cannot read image data from a table hdu".to_string(),
                     }),
+                    Ok(HduInfo::AnyInfo) => unreachable!(),
                     Err(e) => Err(e),
                 }
             }
@@ -493,6 +496,7 @@ macro_rules! read_write_image_impl {
                             status: 601,
                             message: "cannot read image data from a table hdu".to_string(),
                         }),
+                        Ok(HduInfo::AnyInfo) => unreachable!(),
                         Err(e) => Err(e),
                     }
                 }
@@ -523,6 +527,7 @@ macro_rules! read_write_image_impl {
                             status: 601,
                             message: "cannot write image data to a table hdu".to_string(),
                         }),
+                        Ok(HduInfo::AnyInfo) => unreachable!(),
                         Err(e) => Err(e),
                     }
                 }
@@ -560,6 +565,7 @@ macro_rules! read_write_image_impl {
                             status: 601,
                             message: "cannot write image data to a table hdu".to_string(),
                         }),
+                        Ok(HduInfo::AnyInfo) => unreachable!(),
                         Err(e) => Err(e),
                     }
                 }
@@ -690,23 +696,6 @@ impl<'open> FitsHdu<'open> {
         }
     }
 
-    /// Get the current HDU type
-    pub fn hdu_type(&self) -> Result<HduType> {
-        let mut status = 0;
-        let mut hdu_type = 0;
-        unsafe {
-            sys::ffghdt(self.fits_file.fptr as *mut _, &mut hdu_type, &mut status);
-        }
-
-        fits_try!(status, {
-            match hdu_type {
-                0 => HduType::IMAGE_HDU,
-                2 => HduType::BINARY_TBL,
-                _ => unimplemented!(),
-            }
-        })
-    }
-
     /// Read header key
     pub fn read_key<T: ReadsKey>(&self, name: &str) -> Result<T> {
         T::read_key(self.fits_file, name)
@@ -813,7 +802,8 @@ mod test {
     extern crate tempdir;
 
     use super::FitsHdu;
-    use super::super::fitsfile::{FitsFile, HduInfo};
+    use super::super::fitsfile::FitsFile;
+    use super::super::types::HduInfo;
     use super::super::types::*;
     use std::{f32, f64};
 
@@ -836,16 +826,6 @@ mod test {
             }
             _ => panic!("Incorrect HDU type found"),
         }
-    }
-
-    #[test]
-    fn getting_hdu_type() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let primary_hdu = f.hdu(0).unwrap();
-        assert_eq!(primary_hdu.hdu_type().unwrap(), HduType::IMAGE_HDU);
-
-        let ext_hdu = f.hdu("TESTEXT").unwrap();
-        assert_eq!(ext_hdu.hdu_type().unwrap(), HduType::BINARY_TBL);
     }
 
     #[test]
