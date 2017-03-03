@@ -49,8 +49,8 @@
 //! ## HDU access
 //!
 //! HDU information belongs to the [`FitsHdu`](struct.FitsHdu.html) object. HDUs can be fetched by
-//! `String`/`str` or integer (0-indexed). The `HduInfo` object contains information about the current
-//! HDU:
+//! `String`/`str` or integer (0-indexed).
+//! The `HduInfo` object contains information about the current HDU:
 //!
 //! ```rust
 //! # extern crate fitsio;
