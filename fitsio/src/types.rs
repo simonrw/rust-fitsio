@@ -190,6 +190,20 @@ mod test {
     }
 
     #[test]
+    fn hdu_types() {
+        let image_info = HduInfo::ImageInfo { shape: Vec::new() };
+
+        let table_info = HduInfo::TableInfo {
+            column_descriptions: Vec::new(),
+            num_rows: 0,
+        };
+
+        assert_eq!(i32::from(image_info), 0);
+        assert_eq!(i32::from(table_info), 2);
+        assert_eq!(i32::from(HduInfo::AnyInfo), -1);
+    }
+
+    #[test]
     fn file_open_modes() {
         assert_eq!(u8::from(FileOpenMode::READONLY), 0);
         assert_eq!(u8::from(FileOpenMode::READWRITE), 1);
