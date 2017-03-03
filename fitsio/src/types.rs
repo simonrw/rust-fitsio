@@ -1,3 +1,5 @@
+use super::columndescription::ColumnDescription;
+
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DataType {
@@ -85,35 +87,38 @@ imagetype_into_impl!(i8);
 imagetype_into_impl!(i32);
 imagetype_into_impl!(i64);
 
-
-#[allow(non_camel_case_types)]
-#[repr(C)]
-#[derive(Debug, PartialEq, Eq)]
-pub enum HduType {
-    IMAGE_HDU,
-    ASCII_TBL,
-    BINARY_TBL,
-    ANY_HDU,
+/// Description of the current HDU
+///
+/// If the current HDU is an image, then
+/// [`fetch_hdu_info`](struct.FitsFile.html#method.fetch_hdu_info) returns `HduInfo::ImageInfo`.
+/// Otherwise the variant is `HduInfo::TableInfo`.
+#[derive(Debug)]
+pub enum HduInfo {
+    ImageInfo { shape: Vec<usize> },
+    TableInfo {
+        column_descriptions: Vec<ColumnDescription>,
+        num_rows: usize,
+    },
+    AnyInfo,
 }
 
-macro_rules! hdutype_into_impl {
+macro_rules! hduinfo_into_impl {
     ($t: ty) => (
-        impl From<HduType> for $t {
-            fn from(original: HduType) -> $t {
+        impl From<HduInfo> for $t {
+            fn from(original: HduInfo) -> $t {
                 match original {
-                    HduType::IMAGE_HDU => 0,
-                    HduType::ASCII_TBL => 1,
-                    HduType::BINARY_TBL => 2,
-                    HduType::ANY_HDU => -1,
+                    HduInfo::ImageInfo { .. } => 0,
+                    HduInfo::TableInfo { .. } => 2,
+                    HduInfo::AnyInfo => -1,
                 }
             }
         }
     )
 }
 
-hdutype_into_impl!(i8);
-hdutype_into_impl!(i32);
-hdutype_into_impl!(i64);
+hduinfo_into_impl!(i8);
+hduinfo_into_impl!(i32);
+hduinfo_into_impl!(i64);
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
@@ -186,10 +191,16 @@ mod test {
 
     #[test]
     fn hdu_types() {
-        assert_eq!(i32::from(HduType::IMAGE_HDU), 0);
-        assert_eq!(i32::from(HduType::ASCII_TBL), 1);
-        assert_eq!(i32::from(HduType::BINARY_TBL), 2);
-        assert_eq!(i32::from(HduType::ANY_HDU), -1);
+        let image_info = HduInfo::ImageInfo { shape: Vec::new() };
+
+        let table_info = HduInfo::TableInfo {
+            column_descriptions: Vec::new(),
+            num_rows: 0,
+        };
+
+        assert_eq!(i32::from(image_info), 0);
+        assert_eq!(i32::from(table_info), 2);
+        assert_eq!(i32::from(HduInfo::AnyInfo), -1);
     }
 
     #[test]

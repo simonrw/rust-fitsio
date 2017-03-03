@@ -12,7 +12,7 @@ pub struct FitsError {
     pub message: String,
 }
 
-/// Display implementation for FitsError
+/// Display implementation for `FitsError`
 ///
 /// This enables the error to be printed in a user-facing way
 impl fmt::Display for FitsError {
@@ -22,7 +22,7 @@ impl fmt::Display for FitsError {
     }
 }
 
-/// Error implementation for FitsError
+/// Error implementation for `FitsError`
 ///
 /// This enables the fits error type to be treated as a Box<Error>
 impl ::std::error::Error for FitsError {

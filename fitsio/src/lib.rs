@@ -49,29 +49,8 @@
 //! ## HDU access
 //!
 //! HDU information belongs to the [`FitsHdu`](struct.FitsHdu.html) object. HDUs can be fetched by
-//! `String`/`str` or integer (0-indexed). The HDU object contains information about the current
-//! HDU:
-//!
-//! ```rust
-//! # extern crate fitsio;
-//! # extern crate fitsio_sys;
-//! # use fitsio::FitsFile;
-//! #
-//! # fn main() {
-//! # let filename = "../testdata/full_example.fits";
-//! # let fptr = FitsFile::open(filename).unwrap();
-//! use fitsio::types::HduType;
-//! let hdu = fptr.hdu(0).unwrap();
-//!
-//! match hdu.hdu_type() {
-//!     Ok(HduType::IMAGE_HDU) => println!("Found image"),
-//!     Ok(HduType::BINARY_TBL) => println!("Found table"),
-//!     _ => {},
-//! }
-//! # }
-//! ```
-//!
-//! or fetching metadata about the current HDU:
+//! `String`/`str` or integer (0-indexed).
+//! The `HduInfo` object contains information about the current HDU:
 //!
 //! ```rust
 //! # extern crate fitsio;
@@ -204,4 +183,5 @@ mod fitsfile;
 pub mod fitshdu;
 mod conversions;
 
-pub use self::fitsfile::{FitsFile, HduInfo};
+pub use self::fitsfile::FitsFile;
+pub use self::types::HduInfo;
