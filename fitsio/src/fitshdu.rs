@@ -367,8 +367,8 @@ pub trait ReadWriteImage: Sized {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::ImageInfo { shape }) => {
                 let mut npixels = 1;
-                for dim in 0..shape.len() {
-                    npixels *= shape[dim];
+                for dimension in &shape {
+                    npixels *= *dimension;
                 }
                 Self::read_section(fits_file, 0, npixels)
             }
