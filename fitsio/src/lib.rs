@@ -180,7 +180,6 @@ mod stringutils;
 pub mod types;
 mod columndescription;
 mod fitsfile;
-pub mod fitshdu;
 mod conversions;
 
 pub use self::fitsfile::FitsFile;
