@@ -114,7 +114,7 @@ impl FitsFile {
     }
 
     /// Change the current HDU
-    pub fn change_hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<()> {
+    fn change_hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<()> {
         hdu_description.change_hdu(self)
     }
 
@@ -123,7 +123,7 @@ impl FitsFile {
         FitsHdu::new(self, hdu_description)
     }
 
-    pub fn hdu_number(&self) -> usize {
+    fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
         unsafe {
             sys::ffghdn(self.fptr as *mut _, &mut hdu_num);
@@ -138,7 +138,7 @@ impl FitsFile {
     }
 
     /// Get the current hdu info
-    pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
+    fn fetch_hdu_info(&self) -> Result<HduInfo> {
         let mut status = 0;
         let mut hdu_type = 0;
 
