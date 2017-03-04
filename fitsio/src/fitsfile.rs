@@ -29,61 +29,6 @@ impl Clone for FitsFile {
     }
 }
 
-unsafe fn fetch_hdu_info(fptr: *mut sys::fitsfile) -> Result<HduInfo> {
-    let mut status = 0;
-    let mut hdu_type = 0;
-
-    sys::ffghdt(fptr, &mut hdu_type, &mut status);
-    let hdu_type = match hdu_type {
-        0 => {
-            let mut dimensions = 0;
-            sys::ffgidm(fptr, &mut dimensions, &mut status);
-
-            let mut shape = vec![0; dimensions as usize];
-            sys::ffgisz(fptr, dimensions, shape.as_mut_ptr(), &mut status);
-
-            HduInfo::ImageInfo { shape: shape.iter().map(|v| *v as usize).collect() }
-        }
-        1 | 2 => {
-            let mut num_rows = 0;
-            sys::ffgnrw(fptr, &mut num_rows, &mut status);
-
-            let mut num_cols = 0;
-            sys::ffgncl(fptr, &mut num_cols, &mut status);
-            let mut column_descriptions = Vec::with_capacity(num_cols as usize);
-
-            for i in 0..num_cols {
-                let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
-                let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
-                sys::ffgbcl(fptr,
-                            (i + 1) as i32,
-                            name_buffer.as_mut_ptr(),
-                            ptr::null_mut(),
-                            type_buffer.as_mut_ptr(),
-                            ptr::null_mut(),
-                            ptr::null_mut(),
-                            ptr::null_mut(),
-                            ptr::null_mut(),
-                            ptr::null_mut(),
-                            &mut status);
-
-                column_descriptions.push(ColumnDescription {
-                    name: stringutils::buf_to_string(&name_buffer).unwrap(),
-                    data_type: stringutils::buf_to_string(&type_buffer).unwrap(),
-                });
-            }
-
-            HduInfo::TableInfo {
-                column_descriptions: column_descriptions,
-                num_rows: num_rows as usize,
-            }
-        }
-        _ => panic!("Invalid hdu type found"),
-    };
-
-    fits_try!(status, hdu_type)
-}
-
 impl FitsFile {
     /// Open a fits file from disk
     ///
@@ -195,7 +140,74 @@ impl FitsFile {
 
     /// Get the current hdu info
     pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
-        unsafe { fetch_hdu_info(self.fptr as *mut _) }
+        let mut status = 0;
+        let mut hdu_type = 0;
+
+        unsafe {
+            sys::ffghdt(self.fptr as *mut _, &mut hdu_type, &mut status);
+        }
+
+        let hdu_type = match hdu_type {
+            0 => {
+                let mut dimensions = 0;
+                unsafe {
+                    sys::ffgidm(self.fptr as *mut _, &mut dimensions, &mut status);
+                }
+
+                let mut shape = vec![0; dimensions as usize];
+                unsafe {
+                    sys::ffgisz(self.fptr as *mut _,
+                                dimensions,
+                                shape.as_mut_ptr(),
+                                &mut status);
+                }
+
+                HduInfo::ImageInfo { shape: shape.iter().map(|v| *v as usize).collect() }
+            }
+            1 | 2 => {
+                let mut num_rows = 0;
+                unsafe {
+                    sys::ffgnrw(self.fptr as *mut _, &mut num_rows, &mut status);
+                }
+
+                let mut num_cols = 0;
+                unsafe {
+                    sys::ffgncl(self.fptr as *mut _, &mut num_cols, &mut status);
+                }
+                let mut column_descriptions = Vec::with_capacity(num_cols as usize);
+
+                for i in 0..num_cols {
+                    let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
+                    let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
+                    unsafe {
+                        sys::ffgbcl(self.fptr as *mut _,
+                                    (i + 1) as i32,
+                                    name_buffer.as_mut_ptr(),
+                                    ptr::null_mut(),
+                                    type_buffer.as_mut_ptr(),
+                                    ptr::null_mut(),
+                                    ptr::null_mut(),
+                                    ptr::null_mut(),
+                                    ptr::null_mut(),
+                                    ptr::null_mut(),
+                                    &mut status);
+                    }
+
+                    column_descriptions.push(ColumnDescription {
+                        name: stringutils::buf_to_string(&name_buffer).unwrap(),
+                        data_type: stringutils::buf_to_string(&type_buffer).unwrap(),
+                    });
+                }
+
+                HduInfo::TableInfo {
+                    column_descriptions: column_descriptions,
+                    num_rows: num_rows as usize,
+                }
+            }
+            _ => panic!("Invalid hdu type found"),
+        };
+
+        fits_try!(status, hdu_type)
     }
 
     pub fn create_table(&self,
