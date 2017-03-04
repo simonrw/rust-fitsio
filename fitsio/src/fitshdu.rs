@@ -702,7 +702,7 @@ impl<'open> FitsHdu<'open> {
     }
 
     /// Write header key
-    pub fn write_key<T: WritesKey>(&self, name: &str, value: T) -> Result<()> {
+    pub fn write_key<T: WritesKey>(&mut self, name: &str, value: T) -> Result<()> {
         T::write_key(self.fits_file, name, value)
     }
 
@@ -730,7 +730,7 @@ impl<'open> FitsHdu<'open> {
     }
 
     /// Write contiguous data to a fits image
-    pub fn write_section<T: ReadWriteImage>(&self,
+    pub fn write_section<T: ReadWriteImage>(&mut self,
                                             start: usize,
                                             end: usize,
                                             data: &[T])
@@ -739,7 +739,7 @@ impl<'open> FitsHdu<'open> {
     }
 
     /// Write a rectangular region to a fits image
-    pub fn write_region<T: ReadWriteImage>(&self,
+    pub fn write_region<T: ReadWriteImage>(&mut self,
                                            ranges: &[&Range<usize>],
                                            data: &[T])
                                            -> Result<()> {
@@ -779,11 +779,14 @@ impl<'open> FitsHdu<'open> {
         T::read_col_range(self.fits_file, name, range)
     }
 
-    pub fn write_col<T: WritesCol, N: Into<String>>(&self, name: N, col_data: &[T]) -> Result<()> {
+    pub fn write_col<T: WritesCol, N: Into<String>>(&mut self,
+                                                    name: N,
+                                                    col_data: &[T])
+                                                    -> Result<()> {
         T::write_col(self.fits_file, self, name, col_data)
     }
 
-    pub fn write_col_range<T: WritesCol, N: Into<String>>(&self,
+    pub fn write_col_range<T: WritesCol, N: Into<String>>(&mut self,
                                                           name: N,
                                                           col_data: &[T],
                                                           rows: &Range<usize>)
@@ -954,7 +957,7 @@ mod test {
                                              data_type: "1J".to_string(),
                                          }];
             f.create_table("foo".to_string(), &table_description).unwrap();
-            let hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.hdu("foo").unwrap();
 
             hdu.write_col("bar", &data_to_write).unwrap();
         }
@@ -981,7 +984,7 @@ mod test {
                                              data_type: "1J".to_string(),
                                          }];
             f.create_table("foo".to_string(), &table_description).unwrap();
-            let hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.hdu("foo").unwrap();
 
             hdu.write_col_range("bar", &data_to_write, &(0..5)).unwrap();
         }
@@ -1091,7 +1094,7 @@ mod test {
             };
             f.create_image("foo".to_string(), &image_description).unwrap();
 
-            let hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.hdu("foo").unwrap();
             hdu.write_section(0, 100, &data_to_write).unwrap();
         }
 
@@ -1119,7 +1122,7 @@ mod test {
             };
             f.create_image("foo".to_string(), &image_description).unwrap();
 
-            let hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.hdu("foo").unwrap();
 
             let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
             hdu.write_region(&vec![&(0..10), &(0..10)], &data).unwrap();
@@ -1149,7 +1152,7 @@ mod test {
                                      }];
         f.create_table("foo".to_string(), &table_description).unwrap();
 
-        let hdu = f.hdu("foo").unwrap();
+        let mut hdu = f.hdu("foo").unwrap();
         if let Err(e) = hdu.write_section(0, 100, &data_to_write) {
             assert_eq!(e.status, 601);
             assert_eq!(e.message, "cannot write image data to a table hdu");
@@ -1174,7 +1177,7 @@ mod test {
                                      }];
         f.create_table("foo".to_string(), &table_description).unwrap();
 
-        let hdu = f.hdu("foo").unwrap();
+        let mut hdu = f.hdu("foo").unwrap();
 
         if let Err(e) = hdu.write_region(&vec![&(0..10), &(0..10)], &data_to_write) {
             assert_eq!(e.status, 601);

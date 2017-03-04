@@ -282,7 +282,7 @@ impl FitsFile {
         }
 
         // Current HDU should be at the new HDU
-        let current_hdu = try!(self.current_hdu());
+        let mut current_hdu = try!(self.current_hdu());
         try!(current_hdu.write_key("EXTNAME".into(), extname));
 
         if status != 0 {
@@ -374,7 +374,7 @@ mod test {
 
         {
             let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
-            let image_hdu = f.hdu(0).unwrap();
+            let mut image_hdu = f.hdu(0).unwrap();
 
             let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
             image_hdu.write_section(0, 100, &data_to_write).unwrap();
