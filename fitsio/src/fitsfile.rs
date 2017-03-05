@@ -742,7 +742,7 @@ macro_rules! read_write_image_impl {
                 Self::read_rows(fits_file, row, 1)
             }
 
-            fn read_region( fits_file: &FitsFile, ranges: &[&Range<usize>])
+            fn read_region(fits_file: &FitsFile, ranges: &[&Range<usize>])
                 -> Result<Vec<Self>> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { shape }) => {
@@ -760,13 +760,13 @@ macro_rules! read_write_image_impl {
                                 (ranges[1].start + 1) as _
                             ];
                             let mut lpixel = [
-                                (ranges[1].end + 1) as _,
+                                (ranges[0].end + 1) as _,
                                 (ranges[1].end + 1) as _
                             ];
 
                             let mut inc = [ 1, 1 ];
                             let nelements =
-                                ((lpixel[1] - fpixel[1]) + 1) * ((lpixel[0] - fpixel[0]) + 1);
+                                ((lpixel[0] - fpixel[0]) + 1) * ((lpixel[1] - fpixel[1]) + 1);
                             let mut out = vec![0 as $t; nelements as usize];
                             let mut status = 0;
 
@@ -1614,14 +1614,13 @@ mod test {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
 
-        let xcoord = 0..10;
-        let ycoord = 0..10;
+        let xcoord = 5..7;
+        let ycoord = 2..3;
 
-        let chunk: Vec<i32> = hdu.read_region(&vec![&xcoord, &ycoord]).unwrap();
-        assert_eq!(chunk.len(), 11 * 11);
-        assert_eq!(chunk[0], 108);
-        assert_eq!(chunk[11], 177);
-        assert_eq!(chunk[chunk.len() - 1], 160);
+        let chunk: Vec<i32> = hdu.read_region(&vec![&ycoord, &xcoord]).unwrap();
+        assert_eq!(chunk.len(), 2 * 3);
+        assert_eq!(chunk[0], 168);
+        assert_eq!(chunk[chunk.len() - 1], 132);
     }
 
     #[test]
