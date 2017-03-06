@@ -22,12 +22,6 @@ pub struct FitsFile {
     fptr: *const sys::fitsfile,
 }
 
-impl Clone for FitsFile {
-    fn clone(&self) -> Self {
-        FitsFile::open(self.filename.clone()).unwrap()
-    }
-}
-
 impl FitsFile {
     /// Open a fits file from disk
     ///
@@ -1229,17 +1223,6 @@ mod test {
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
         }
-    }
-
-    #[test]
-    fn cloning() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let f2 = f.clone();
-
-        assert!(f.fptr != f2.fptr);
-
-        f.change_hdu(1).unwrap();
-        assert!(f.hdu_number() != f2.hdu_number());
     }
 
     #[test]
