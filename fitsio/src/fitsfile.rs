@@ -9,6 +9,7 @@ use std::ffi;
 use std::ptr;
 use std::ops::Range;
 
+/// Description of a new image
 pub struct ImageDescription {
     pub data_type: ImageType,
     pub dimensions: Vec<usize>,
@@ -203,6 +204,14 @@ impl FitsFile {
         fits_try!(status, hdu_type)
     }
 
+    /// Create a new fits table
+    ///
+    /// Create a new fits table, with columns as detailed in the `ColumnDescription` object.
+    ///
+    ///
+    ///
+    ///
+    ///
     pub fn create_table(&self,
                         extname: String,
                         table_description: &[ColumnDescription])
@@ -253,6 +262,7 @@ impl FitsFile {
 
     }
 
+    /// Create a new fits image, and return the [`FitsHdu`](struct.FitsHdu.html) object
     pub fn create_image(&self,
                         extname: String,
                         image_description: &ImageDescription)
@@ -965,8 +975,13 @@ impl<'a> Iterator for ColumnIterator<'a> {
     }
 }
 
+/// Struct representing a FITS HDU
+///
+///
 pub struct FitsHdu<'open> {
     fits_file: &'open FitsFile,
+
+    /// Information about the current HDU
     pub info: HduInfo,
 }
 
@@ -1148,6 +1163,25 @@ mod test {
                 assert_eq!(naxis, 0);
             })
             .unwrap();
+    }
+
+    /* XXX why does this test fail?!?!?! */
+    #[test]
+    #[ignore]
+    fn cannot_write_to_readonly_file() {
+        use std::fs;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
+
+        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+        let mut hdu = f.hdu(0).unwrap();
+
+        let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
+        assert!(hdu.write_section(0, 100, &data_to_write).is_err());
     }
 
     #[test]
