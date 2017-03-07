@@ -99,6 +99,23 @@ impl FitsFile {
         })
     }
 
+    /// Method to extract what open mode the file is in
+    fn open_mode(&self) -> Result<FileOpenMode> {
+        let mut status = 0;
+        let mut iomode = 0;
+        unsafe {
+            sys::ffflmd(self.fptr as *mut _,
+                        &mut iomode,
+                        &mut status);
+        }
+
+        fits_try!(status, match iomode {
+            0 => FileOpenMode::READONLY,
+            1 => FileOpenMode::READWRITE,
+            _ => unreachable!(),
+        })
+    }
+
     fn add_empty_primary(&self) -> Result<()> {
         let mut status = 0;
         unsafe {
@@ -1285,6 +1302,19 @@ mod test {
                        status: status,
                        message: stringutils::status_to_string(status).unwrap(),
                    }));
+    }
+
+    #[test]
+    fn getting_file_open_mode() {
+        {
+            let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+            assert_eq!(f.open_mode().unwrap(), FileOpenMode::READONLY);
+        }
+
+        {
+            let f = FitsFile::edit("../testdata/full_example.fits").unwrap();
+            assert_eq!(f.open_mode().unwrap(), FileOpenMode::READWRITE);
+        }
     }
 
     #[test]
