@@ -104,16 +104,15 @@ impl FitsFile {
         let mut status = 0;
         let mut iomode = 0;
         unsafe {
-            sys::ffflmd(self.fptr as *mut _,
-                        &mut iomode,
-                        &mut status);
+            sys::ffflmd(self.fptr as *mut _, &mut iomode, &mut status);
         }
 
-        fits_try!(status, match iomode {
-            0 => FileOpenMode::READONLY,
-            1 => FileOpenMode::READWRITE,
-            _ => unreachable!(),
-        })
+        fits_try!(status,
+                  match iomode {
+                      0 => FileOpenMode::READONLY,
+                      1 => FileOpenMode::READWRITE,
+                      _ => unreachable!(),
+                  })
     }
 
     fn add_empty_primary(&self) -> Result<()> {
@@ -233,6 +232,18 @@ impl FitsFile {
                         extname: String,
                         table_description: &[ColumnDescription])
                         -> Result<FitsHdu> {
+
+        /* @Hacky cfitsio should take care of this for us, but it doesn't */
+        match self.open_mode() {
+            Ok(FileOpenMode::READONLY) => {
+                return Err(FitsError {
+                    status: 602,
+                    message: "cannot add image to readonly file".to_string(),
+                });
+            }
+            _ => {}
+        }
+
         let tfields = {
             let stringlist = table_description.iter()
                 .map(|desc| desc.name.clone())
@@ -284,8 +295,36 @@ impl FitsFile {
                         extname: String,
                         image_description: &ImageDescription)
                         -> Result<FitsHdu> {
+
+        /* @Hacky cfitsio should take care of this for us, but it doesn't */
+        match self.open_mode() {
+            Ok(FileOpenMode::READONLY) => {
+                return Err(FitsError {
+                    status: 602,
+                    message: "cannot add image to readonly file".to_string(),
+                });
+            }
+            _ => {}
+        }
+
         let naxis = image_description.dimensions.len();
         let mut status = 0;
+        let mut iomode = 0;
+
+        println!("CURRENT HDU BEFORE: {:?}", self.current_hdu().unwrap());
+        unsafe {
+            sys::ffflmd(self.fptr as *mut _, &mut iomode, &mut status);
+        }
+
+        if status != 0 {
+            return Err(FitsError {
+                status: status,
+                message: status_to_string(status).unwrap(),
+            });
+        }
+
+        println!("FILE IS OPEN IN MODE: {}", iomode);
+
         unsafe {
             sys::ffcrim(self.fptr as *mut _,
                         image_description.data_type.into(),
@@ -1184,8 +1223,8 @@ mod test {
 
     /* XXX why does this test fail?!?!?! */
     #[test]
-    #[ignore]
     fn cannot_write_to_readonly_file() {
+        use super::super::columndescription::ColumnDescription;
         use std::fs;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
@@ -1193,25 +1232,29 @@ mod test {
         let filename = tdir_path.join("test.fits");
 
         fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
-        let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
-        {
-            let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
 
-            let mut hdu = f.create_image("FOO".to_string(),
-                              &ImageDescription {
-                                  data_type: ImageType::LONG_IMG,
-                                  dimensions: vec![100, 100],
-                              })
-                .unwrap();
-
-            hdu.write_section(0, data_to_write.len(), &data_to_write).unwrap();
+        match f.create_image("FOO".to_string(),
+                             &ImageDescription {
+                                 data_type: ImageType::LONG_IMG,
+                                 dimensions: vec![100, 100],
+                             }) {
+            Ok(_) => panic!("Should fail"),
+            Err(e) => {
+                assert_eq!(e.status, 602);
+            }
         }
 
-        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
-        let hdu = f.hdu("FOO").unwrap();
-        let data: Vec<i64> = hdu.read_section(0, data_to_write.len()).unwrap();
-        assert_eq!(data, data_to_write);
-
+        match f.create_table("FOO".to_string(),
+                             &vec![ColumnDescription {
+                                       name: "bar".to_string(),
+                                       data_type: "1J".to_string(),
+                                   }]) {
+            Ok(_) => panic!("Should fail"),
+            Err(e) => {
+                assert_eq!(e.status, 602);
+            }
+        }
     }
 
     #[test]
@@ -1306,13 +1349,21 @@ mod test {
 
     #[test]
     fn getting_file_open_mode() {
+        use std::fs;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
         {
-            let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+            fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
+            let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
             assert_eq!(f.open_mode().unwrap(), FileOpenMode::READONLY);
         }
 
         {
-            let f = FitsFile::edit("../testdata/full_example.fits").unwrap();
+            fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
+            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
             assert_eq!(f.open_mode().unwrap(), FileOpenMode::READWRITE);
         }
     }
