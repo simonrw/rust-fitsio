@@ -1176,12 +1176,25 @@ mod test {
         let filename = tdir_path.join("test.fits");
 
         fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
+        let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
+        {
+            let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+
+            let mut hdu = f.create_image("FOO".to_string(),
+                              &ImageDescription {
+                                  data_type: ImageType::LONG_IMG,
+                                  dimensions: vec![100, 100],
+                              })
+                .unwrap();
+
+            hdu.write_section(0, data_to_write.len(), &data_to_write).unwrap();
+        }
 
         let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
-        let mut hdu = f.hdu(0).unwrap();
+        let hdu = f.hdu("FOO").unwrap();
+        let data: Vec<i64> = hdu.read_section(0, data_to_write.len()).unwrap();
+        assert_eq!(data, data_to_write);
 
-        let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
-        assert!(hdu.write_section(0, 100, &data_to_write).is_err());
     }
 
     #[test]
