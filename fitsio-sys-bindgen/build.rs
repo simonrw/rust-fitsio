@@ -1,4 +1,4 @@
-extern crate libbindgen;
+extern crate bindgen;
 extern crate pkg_config;
 
 use std::io::Write;
@@ -11,7 +11,7 @@ fn main() {
     let package_name = "cfitsio";
     match pkg_config::probe_library(package_name) {
         Ok(_) => {
-            let bindings = libbindgen::Builder::default()
+            let bindings = bindgen::Builder::default()
                 .no_unstable_rust()
                 .header("wrapper.h")
                 .generate()

@@ -1,6 +1,6 @@
 [package]
 name = "fitsio-sys-bindgen"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "FFI wrapper around cfitsio"
 homepage = "https://github.com/mindriot101/rust-fitsio"
@@ -12,11 +12,11 @@ documentation = "https://docs.rs/fitsio-sys-bindgen"
 categories = ["external-ffi-bindings", "science"]
 
 [dependencies]
-libc = "0.2.11"
+libc = "0.2.21"
 
 [dev-dependencies]
 tempdir = "0.3.4"
 
 [build-dependencies]
 pkg-config = "0.3"
-libbindgen = "0.1.2"
+bindgen = "0.22.1"
