@@ -43,9 +43,47 @@ impl ColumnDataDescription {
     }
 }
 
+impl From<ColumnDataDescription> for String {
+    fn from(orig: ColumnDataDescription) -> String {
+        match orig.typ {
+            ColumnDataType::Text => {
+                if orig.width > 1 {
+                    format!("{repeat}{data_type}{width}",
+                            data_type=String::from(orig.typ),
+                            repeat=orig.repeat,
+                            width=orig.width)
+                } else {
+                    format!("{repeat}{data_type}",
+                            data_type=String::from(orig.typ),
+                            repeat=orig.repeat)
+                }
+            },
+            _ => {
+                format!("{repeat}{data_type}",
+                        data_type=String::from(orig.typ),
+                        repeat=orig.repeat)
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum ColumnDataType {
     Int,
+    Float,
+    Text,
+}
+
+impl From<ColumnDataType> for String {
+    fn from(orig: ColumnDataType) -> String {
+        use self::ColumnDataType::*;
+
+        match orig {
+            Int => "J",
+            Float => "E",
+            Text => "A",
+        }.to_string()
+    }
 }
 
 #[cfg(test)]
@@ -59,5 +97,25 @@ mod test {
             .repeats(5);
         assert_eq!(desc.repeat, 5);
         assert_eq!(desc.width, 100);
+    }
+
+    #[test]
+    fn from_impls() {
+        {
+            let desc = ColumnDataDescription::new(ColumnDataType::Int)
+                .repeats(5);
+            assert_eq!(String::from(desc), "5J");
+        }
+
+        {
+            let desc = ColumnDataDescription::new(ColumnDataType::Float);
+            assert_eq!(String::from(desc), "1E");
+        }
+
+        {
+            let desc = ColumnDataDescription::new(ColumnDataType::Text)
+                .width(100);
+            assert_eq!(String::from(desc), "1A100");
+        }
     }
 }
