@@ -9,6 +9,21 @@ use std::ffi;
 use std::ptr;
 use std::ops::Range;
 
+/// Macro to return a fits error if the fits file is not open in readwrite mode
+macro_rules! fits_check_readwrite {
+    ($fitsfile: expr) => (
+        match $fitsfile.open_mode() {
+            Ok(FileOpenMode::READONLY) => {
+                return Err(FitsError {
+                    status: 602,
+                    message: "cannot alter readonly file".to_string(),
+                });
+            },
+            _ => {},
+        }
+    )
+}
+
 /// Description of a new image
 pub struct ImageDescription {
     pub data_type: ImageType,
@@ -234,15 +249,7 @@ impl FitsFile {
                         -> Result<FitsHdu> {
 
         /* @Hacky cfitsio should take care of this for us, but it doesn't */
-        match self.open_mode() {
-            Ok(FileOpenMode::READONLY) => {
-                return Err(FitsError {
-                    status: 602,
-                    message: "cannot add image to readonly file".to_string(),
-                });
-            }
-            _ => {}
-        }
+        fits_check_readwrite!(self);
 
         let tfields = {
             let stringlist = table_description.iter()
@@ -297,15 +304,7 @@ impl FitsFile {
                         -> Result<FitsHdu> {
 
         /* @Hacky cfitsio should take care of this for us, but it doesn't */
-        match self.open_mode() {
-            Ok(FileOpenMode::READONLY) => {
-                return Err(FitsError {
-                    status: 602,
-                    message: "cannot add image to readonly file".to_string(),
-                });
-            }
-            _ => {}
-        }
+        fits_check_readwrite!(self);
 
         let naxis = image_description.dimensions.len();
         let mut status = 0;
@@ -1055,16 +1054,7 @@ impl<'open> FitsHdu<'open> {
     /// Write header key
     pub fn write_key<T: WritesKey>(&mut self, name: &str, value: T) -> Result<()> {
         /* @Hacky cfitsio should take care of this for us, but it doesn't */
-        match self.fits_file.open_mode() {
-            Ok(FileOpenMode::READONLY) => {
-                return Err(FitsError {
-                    status: 602,
-                    message: "cannot add image to readonly file".to_string(),
-                });
-            }
-            _ => {}
-        }
-
+        fits_check_readwrite!(self.fits_file);
         T::write_key(self.fits_file, name, value)
     }
 
@@ -1098,16 +1088,7 @@ impl<'open> FitsHdu<'open> {
                                             data: &[T])
                                             -> Result<()> {
         /* @Hacky cfitsio should take care of this for us, but it doesn't */
-        match self.fits_file.open_mode() {
-            Ok(FileOpenMode::READONLY) => {
-                return Err(FitsError {
-                    status: 602,
-                    message: "cannot add image to readonly file".to_string(),
-                });
-            }
-            _ => {}
-        }
-
+        fits_check_readwrite!(self.fits_file);
         T::write_section(self.fits_file, start, end, data)
     }
 
@@ -1117,16 +1098,7 @@ impl<'open> FitsHdu<'open> {
                                            data: &[T])
                                            -> Result<()> {
         /* @Hacky cfitsio should take care of this for us, but it doesn't */
-        match self.fits_file.open_mode() {
-            Ok(FileOpenMode::READONLY) => {
-                return Err(FitsError {
-                    status: 602,
-                    message: "cannot add image to readonly file".to_string(),
-                });
-            }
-            _ => {}
-        }
-
+        fits_check_readwrite!(self.fits_file);
         T::write_region(self.fits_file, ranges, data)
     }
 
@@ -1168,16 +1140,7 @@ impl<'open> FitsHdu<'open> {
                                                     col_data: &[T])
                                                     -> Result<()> {
         /* @Hacky cfitsio should take care of this for us, but it doesn't */
-        match self.fits_file.open_mode() {
-            Ok(FileOpenMode::READONLY) => {
-                return Err(FitsError {
-                    status: 602,
-                    message: "cannot add image to readonly file".to_string(),
-                });
-            }
-            _ => {}
-        }
-
+        fits_check_readwrite!(self.fits_file);
         T::write_col(self.fits_file, self, name, col_data)
     }
 
@@ -1187,16 +1150,7 @@ impl<'open> FitsHdu<'open> {
                                                           rows: &Range<usize>)
                                                           -> Result<()> {
         /* @Hacky cfitsio should take care of this for us, but it doesn't */
-        match self.fits_file.open_mode() {
-            Ok(FileOpenMode::READONLY) => {
-                return Err(FitsError {
-                    status: 602,
-                    message: "cannot add image to readonly file".to_string(),
-                });
-            }
-            _ => {}
-        }
-
+        fits_check_readwrite!(self.fits_file);
         T::write_col_range(self.fits_file, self, name, col_data, rows)
     }
 
