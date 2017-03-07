@@ -309,12 +309,6 @@ impl FitsFile {
 
         let naxis = image_description.dimensions.len();
         let mut status = 0;
-        let mut iomode = 0;
-
-        println!("CURRENT HDU BEFORE: {:?}", self.current_hdu().unwrap());
-        unsafe {
-            sys::ffflmd(self.fptr as *mut _, &mut iomode, &mut status);
-        }
 
         if status != 0 {
             return Err(FitsError {
@@ -322,8 +316,6 @@ impl FitsFile {
                 message: status_to_string(status).unwrap(),
             });
         }
-
-        println!("FILE IS OPEN IN MODE: {}", iomode);
 
         unsafe {
             sys::ffcrim(self.fptr as *mut _,
@@ -1062,6 +1054,17 @@ impl<'open> FitsHdu<'open> {
 
     /// Write header key
     pub fn write_key<T: WritesKey>(&mut self, name: &str, value: T) -> Result<()> {
+        /* @Hacky cfitsio should take care of this for us, but it doesn't */
+        match self.fits_file.open_mode() {
+            Ok(FileOpenMode::READONLY) => {
+                return Err(FitsError {
+                    status: 602,
+                    message: "cannot add image to readonly file".to_string(),
+                });
+            }
+            _ => {}
+        }
+
         T::write_key(self.fits_file, name, value)
     }
 
@@ -1094,6 +1097,17 @@ impl<'open> FitsHdu<'open> {
                                             end: usize,
                                             data: &[T])
                                             -> Result<()> {
+        /* @Hacky cfitsio should take care of this for us, but it doesn't */
+        match self.fits_file.open_mode() {
+            Ok(FileOpenMode::READONLY) => {
+                return Err(FitsError {
+                    status: 602,
+                    message: "cannot add image to readonly file".to_string(),
+                });
+            }
+            _ => {}
+        }
+
         T::write_section(self.fits_file, start, end, data)
     }
 
@@ -1102,6 +1116,17 @@ impl<'open> FitsHdu<'open> {
                                            ranges: &[&Range<usize>],
                                            data: &[T])
                                            -> Result<()> {
+        /* @Hacky cfitsio should take care of this for us, but it doesn't */
+        match self.fits_file.open_mode() {
+            Ok(FileOpenMode::READONLY) => {
+                return Err(FitsError {
+                    status: 602,
+                    message: "cannot add image to readonly file".to_string(),
+                });
+            }
+            _ => {}
+        }
+
         T::write_region(self.fits_file, ranges, data)
     }
 
@@ -1142,6 +1167,17 @@ impl<'open> FitsHdu<'open> {
                                                     name: N,
                                                     col_data: &[T])
                                                     -> Result<()> {
+        /* @Hacky cfitsio should take care of this for us, but it doesn't */
+        match self.fits_file.open_mode() {
+            Ok(FileOpenMode::READONLY) => {
+                return Err(FitsError {
+                    status: 602,
+                    message: "cannot add image to readonly file".to_string(),
+                });
+            }
+            _ => {}
+        }
+
         T::write_col(self.fits_file, self, name, col_data)
     }
 
@@ -1150,6 +1186,17 @@ impl<'open> FitsHdu<'open> {
                                                           col_data: &[T],
                                                           rows: &Range<usize>)
                                                           -> Result<()> {
+        /* @Hacky cfitsio should take care of this for us, but it doesn't */
+        match self.fits_file.open_mode() {
+            Ok(FileOpenMode::READONLY) => {
+                return Err(FitsError {
+                    status: 602,
+                    message: "cannot add image to readonly file".to_string(),
+                });
+            }
+            _ => {}
+        }
+
         T::write_col_range(self.fits_file, self, name, col_data, rows)
     }
 
