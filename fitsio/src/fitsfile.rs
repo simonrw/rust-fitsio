@@ -1222,7 +1222,6 @@ mod test {
             .unwrap();
     }
 
-    /* XXX why does this test fail?!?!?! */
     #[test]
     fn cannot_write_to_readonly_file() {
         use super::super::columndescription::ColumnDescription;
