@@ -1,8 +1,7 @@
 use super::sys;
 use super::stringutils::{self, status_to_string};
 use super::fitserror::{FitsError, Result};
-use super::columndescription::ColumnDescription;
-use super::conversions::typechar_to_data_type;
+use super::columndescription::*;
 use super::libc;
 use super::types::{DataType, CaseSensitivity, HduInfo, FileOpenMode, ImageType};
 use std::ffi;
@@ -220,7 +219,10 @@ impl FitsFile {
 
                     column_descriptions.push(ColumnDescription {
                         name: stringutils::buf_to_string(&name_buffer).unwrap(),
-                        data_type: stringutils::buf_to_string(&type_buffer).unwrap(),
+                        data_type: stringutils::buf_to_string(&type_buffer)
+                            .unwrap()
+                            .parse::<ColumnDataDescription>()
+                            .unwrap(),
                     });
                 }
 
@@ -248,7 +250,6 @@ impl FitsFile {
                         table_description: &[ColumnDescription])
                         -> Result<FitsHdu> {
 
-        /* @Hacky cfitsio should take care of this for us, but it doesn't */
         fits_check_readwrite!(self);
 
         let tfields = {
@@ -260,7 +261,7 @@ impl FitsFile {
 
         let ttype = {
             let stringlist = table_description.iter()
-                .map(|desc| desc.data_type.clone())
+                .map(|desc| String::from(desc.clone().data_type))
                 .collect();
             stringutils::StringList::from_vec(stringlist)
         };
@@ -303,7 +304,6 @@ impl FitsFile {
                         image_description: &ImageDescription)
                         -> Result<FitsHdu> {
 
-        /* @Hacky cfitsio should take care of this for us, but it doesn't */
         fits_check_readwrite!(self);
 
         let naxis = image_description.dimensions.len();
@@ -966,10 +966,11 @@ impl<'a> Iterator for ColumnIterator<'a> {
         if self.current < ncols {
             let description = &self.column_descriptions[self.current];
             let current_name = description.name.as_str();
-            let current_type = typechar_to_data_type(description.data_type.as_str());
+            // let current_type = typechar_to_data_type(description.data_type.as_str());
+            let current_type = description.data_type.typ;
 
             let retval = match current_type {
-                DataType::TSHORT => {
+                ColumnDataType::Int => {
                     i32::read_col(self.fits_file, current_name)
                         .map(|data| {
                             Some(Column::Int32 {
@@ -979,7 +980,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
                         })
                         .unwrap()
                 }
-                DataType::TLONG => {
+                ColumnDataType::Long => {
                     i64::read_col(self.fits_file, current_name)
                         .map(|data| {
                             Some(Column::Int64 {
@@ -989,7 +990,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
                         })
                         .unwrap()
                 }
-                DataType::TFLOAT => {
+                ColumnDataType::Float => {
                     f32::read_col(self.fits_file, current_name)
                         .map(|data| {
                             Some(Column::Float {
@@ -999,7 +1000,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
                         })
                         .unwrap()
                 }
-                DataType::TDOUBLE => {
+                ColumnDataType::Double => {
                     f64::read_col(self.fits_file, current_name)
                         .map(|data| {
                             Some(Column::Double {
@@ -1053,7 +1054,6 @@ impl<'open> FitsHdu<'open> {
 
     /// Write header key
     pub fn write_key<T: WritesKey>(&mut self, name: &str, value: T) -> Result<()> {
-        /* @Hacky cfitsio should take care of this for us, but it doesn't */
         fits_check_readwrite!(self.fits_file);
         T::write_key(self.fits_file, name, value)
     }
@@ -1087,7 +1087,6 @@ impl<'open> FitsHdu<'open> {
                                             end: usize,
                                             data: &[T])
                                             -> Result<()> {
-        /* @Hacky cfitsio should take care of this for us, but it doesn't */
         fits_check_readwrite!(self.fits_file);
         T::write_section(self.fits_file, start, end, data)
     }
@@ -1097,7 +1096,6 @@ impl<'open> FitsHdu<'open> {
                                            ranges: &[&Range<usize>],
                                            data: &[T])
                                            -> Result<()> {
-        /* @Hacky cfitsio should take care of this for us, but it doesn't */
         fits_check_readwrite!(self.fits_file);
         T::write_region(self.fits_file, ranges, data)
     }
@@ -1139,7 +1137,6 @@ impl<'open> FitsHdu<'open> {
                                                     name: N,
                                                     col_data: &[T])
                                                     -> Result<()> {
-        /* @Hacky cfitsio should take care of this for us, but it doesn't */
         fits_check_readwrite!(self.fits_file);
         T::write_col(self.fits_file, self, name, col_data)
     }
@@ -1149,7 +1146,6 @@ impl<'open> FitsHdu<'open> {
                                                           col_data: &[T],
                                                           rows: &Range<usize>)
                                                           -> Result<()> {
-        /* @Hacky cfitsio should take care of this for us, but it doesn't */
         fits_check_readwrite!(self.fits_file);
         T::write_col_range(self.fits_file, self, name, col_data, rows)
     }
@@ -1170,28 +1166,7 @@ mod test {
     use super::super::types::*;
     use super::ImageDescription;
     use fitserror::FitsError;
-    use conversions::typechar_to_data_type;
     use std::{f32, f64};
-
-    // FitsFile tests
-    #[test]
-    fn typechar_conversions() {
-        let input = vec!["X", "B", "L", "A", "I", "J", "E", "D", "C", "M"];
-        let expected = vec![DataType::TBIT,
-                            DataType::TBYTE,
-                            DataType::TLOGICAL,
-                            DataType::TSTRING,
-                            DataType::TSHORT,
-                            DataType::TLONG,
-                            DataType::TFLOAT,
-                            DataType::TDOUBLE,
-                            DataType::TCOMPLEX,
-                            DataType::TDBLCOMPLEX];
-
-        for (i, e) in input.iter().zip(expected) {
-            assert_eq!(typechar_to_data_type(i), e);
-        }
-    }
 
     #[test]
     fn opening_an_existing_file() {
@@ -1224,7 +1199,7 @@ mod test {
 
     #[test]
     fn cannot_write_to_readonly_file() {
-        use super::super::columndescription::ColumnDescription;
+        use super::super::columndescription::*;
         use std::fs;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
@@ -1248,7 +1223,7 @@ mod test {
         match f.create_table("FOO".to_string(),
                              &vec![ColumnDescription {
                                        name: "bar".to_string(),
-                                       data_type: "1J".to_string(),
+                                       data_type: ColumnDataDescription::new(ColumnDataType::Int),
                                    }]) {
             Ok(_) => panic!("Should fail"),
             Err(e) => {
@@ -1302,6 +1277,8 @@ mod test {
 
     #[test]
     fn fetching_hdu_info() {
+        use super::super::columndescription::*;
+
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
             Ok(HduInfo::ImageInfo { shape }) => {
@@ -1323,9 +1300,11 @@ mod test {
                                 "floatcol".to_string(),
                                 "doublecol".to_string()]);
                 assert_eq!(column_descriptions.iter()
-                               .map(|ref desc| typechar_to_data_type(desc.data_type.clone()))
-                               .collect::<Vec<DataType>>(),
-                           vec![DataType::TLONG, DataType::TFLOAT, DataType::TDOUBLE]);
+                               .map(|ref desc| desc.data_type.typ.clone())
+                               .collect::<Vec<ColumnDataType>>(),
+                           vec![ColumnDataType::Int,
+                                ColumnDataType::Float,
+                                ColumnDataType::Double]);
             }
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
@@ -1370,7 +1349,7 @@ mod test {
 
     #[test]
     fn adding_new_table() {
-        use super::super::columndescription::ColumnDescription;
+        use super::super::columndescription::*;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1380,7 +1359,8 @@ mod test {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             let table_description = vec![ColumnDescription {
                                              name: "bar".to_string(),
-                                             data_type: "1J".to_string(),
+                                             data_type:
+                                                 ColumnDataDescription::new(ColumnDataType::Int),
                                          }];
             f.create_table("foo".to_string(), &table_description).unwrap();
         }
@@ -1394,10 +1374,10 @@ mod test {
                             .map(|desc| desc.name.clone())
                             .collect::<Vec<String>>();
                         let column_types = column_descriptions.iter()
-                            .map(|desc| typechar_to_data_type(desc.data_type.clone()))
-                            .collect::<Vec<DataType>>();
+                            .map(|desc| desc.data_type.typ.clone())
+                            .collect::<Vec<_>>();
                         assert_eq!(column_names, vec!["bar".to_string()]);
-                        assert_eq!(column_types, vec![DataType::TLONG]);
+                        assert_eq!(column_types, vec![ColumnDataType::Int]);
                     }
                     thing => panic!("{:?}", thing),
                 }
@@ -1474,7 +1454,7 @@ mod test {
 
     #[test]
     fn creating_new_table_returns_hdu_object() {
-        use super::super::columndescription::ColumnDescription;
+        use super::super::columndescription::*;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1483,7 +1463,7 @@ mod test {
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
         let table_description = vec![ColumnDescription {
                                          name: "bar".to_string(),
-                                         data_type: "1J".to_string(),
+                                         data_type: ColumnDataDescription::new(ColumnDataType::Int),
                                      }];
         let hdu: FitsHdu = f.create_table("foo".to_string(), &table_description)
             .unwrap();
@@ -1626,7 +1606,7 @@ mod test {
 
     #[test]
     fn write_column_data() {
-        use super::super::columndescription::ColumnDescription;
+        use super::super::columndescription::*;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1637,7 +1617,8 @@ mod test {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             let table_description = vec![ColumnDescription {
                                              name: "bar".to_string(),
-                                             data_type: "1J".to_string(),
+                                             data_type:
+                                                 ColumnDataDescription::new(ColumnDataType::Int),
                                          }];
             f.create_table("foo".to_string(), &table_description).unwrap();
             let mut hdu = f.hdu("foo").unwrap();
@@ -1653,7 +1634,7 @@ mod test {
 
     #[test]
     fn write_column_subset() {
-        use super::super::columndescription::ColumnDescription;
+        use super::super::columndescription::*;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1664,7 +1645,8 @@ mod test {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             let table_description = vec![ColumnDescription {
                                              name: "bar".to_string(),
-                                             data_type: "1J".to_string(),
+                                             data_type:
+                                                 ColumnDataDescription::new(ColumnDataType::Int),
                                          }];
             f.create_table("foo".to_string(), &table_description).unwrap();
             let mut hdu = f.hdu("foo").unwrap();
@@ -1825,12 +1807,12 @@ mod test {
         let filename = tdir_path.join("test.fits");
         let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
-        use columndescription::ColumnDescription;
+        use columndescription::*;
 
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
         let table_description = vec![ColumnDescription {
                                          name: "bar".to_string(),
-                                         data_type: "1J".to_string(),
+                                         data_type: ColumnDataDescription::new(ColumnDataType::Int),
                                      }];
         f.create_table("foo".to_string(), &table_description).unwrap();
 
@@ -1845,7 +1827,7 @@ mod test {
 
     #[test]
     fn write_image_region_to_table() {
-        use columndescription::ColumnDescription;
+        use columndescription::*;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1855,7 +1837,7 @@ mod test {
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
         let table_description = vec![ColumnDescription {
                                          name: "bar".to_string(),
-                                         data_type: "1J".to_string(),
+                                         data_type: ColumnDataDescription::new(ColumnDataType::Int),
                                      }];
         f.create_table("foo".to_string(), &table_description).unwrap();
 

@@ -120,7 +120,7 @@
 //! ```rust
 //! # extern crate tempdir;
 //! # extern crate fitsio;
-//! # use fitsio::columndescription::ColumnDescription;
+//! # use fitsio::columndescription::*;
 //! # fn main() {
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
@@ -128,11 +128,11 @@
 //! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! let first_description = ColumnDescription {
 //!     name: "A".to_string(),
-//!     data_type: "1J".to_string(),
+//!     data_type: ColumnDataDescription::new(ColumnDataType::Int),
 //! };
 //! let second_description = ColumnDescription {
 //!     name: "B".to_string(),
-//!     data_type: "1K".to_string(),
+//!     data_type: ColumnDataDescription::new(ColumnDataType::Long),
 //! };
 //! let descriptions = [first_description, second_description];
 //! let mut hdu = fptr.create_table("EXTNAME".to_string(), &descriptions).unwrap();
@@ -352,7 +352,6 @@ mod stringutils;
 pub mod types;
 pub mod columndescription;
 pub mod fitsfile;
-mod conversions;
 
 pub use self::fitsfile::{FitsFile, FitsHdu};
 pub use self::types::HduInfo;

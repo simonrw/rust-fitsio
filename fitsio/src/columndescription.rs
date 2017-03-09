@@ -7,7 +7,7 @@ pub struct ColumnDescription {
 
     // TODO: make this use one of the enums
     /// Type of the data, see the cfitsio documentation
-    pub data_type: String,
+    pub data_type: ColumnDataDescription,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -51,20 +51,20 @@ impl From<ColumnDataDescription> for String {
             ColumnDataType::Text => {
                 if orig.width > 1 {
                     format!("{repeat}{data_type}{width}",
-                            data_type=String::from(orig.typ),
-                            repeat=orig.repeat,
-                            width=orig.width)
+                            data_type = String::from(orig.typ),
+                            repeat = orig.repeat,
+                            width = orig.width)
                 } else {
                     format!("{repeat}{data_type}",
-                            data_type=String::from(orig.typ),
-                            repeat=orig.repeat)
+                            data_type = String::from(orig.typ),
+                            repeat = orig.repeat)
                 }
-            },
+            }
             _ => {
                 format!("{repeat}{data_type}",
-                        data_type=String::from(orig.typ),
-                        repeat=orig.repeat)
-            },
+                        data_type = String::from(orig.typ),
+                        repeat = orig.repeat)
+            }
         }
     }
 }
@@ -84,13 +84,14 @@ impl From<ColumnDataType> for String {
         use self::ColumnDataType::*;
 
         match orig {
-            Int => "J",
-            Float => "E",
-            Text => "A",
-            Double => "D",
-            Short => "I",
-            Long => "K",
-        }.to_string()
+                Int => "J",
+                Float => "E",
+                Text => "A",
+                Double => "D",
+                Short => "I",
+                Long => "K",
+            }
+            .to_string()
     }
 }
 
@@ -146,7 +147,10 @@ impl FromStr for ColumnDataDescription {
             'D' => ColumnDataType::Double,
             'I' => ColumnDataType::Short,
             'K' => ColumnDataType::Long,
-            _ => panic!("Have not implemented str -> ColumnDataType for {}", data_type_char),
+            _ => {
+                panic!("Have not implemented str -> ColumnDataType for {}",
+                       data_type_char)
+            }
         };
 
         Ok(ColumnDataDescription {
@@ -173,8 +177,7 @@ mod test {
     #[test]
     fn from_impls() {
         {
-            let desc = ColumnDataDescription::new(ColumnDataType::Int)
-                .repeats(5);
+            let desc = ColumnDataDescription::new(ColumnDataType::Int).repeats(5);
             assert_eq!(String::from(desc), "5J");
         }
 
@@ -184,8 +187,7 @@ mod test {
         }
 
         {
-            let desc = ColumnDataDescription::new(ColumnDataType::Text)
-                .width(100);
+            let desc = ColumnDataDescription::new(ColumnDataType::Text).width(100);
             assert_eq!(String::from(desc), "1A100");
         }
     }
@@ -194,32 +196,32 @@ mod test {
     fn parsing() {
         let s = "1E";
         assert_eq!(s.parse::<ColumnDataDescription>().unwrap(),
-            ColumnDataDescription {
-                repeat: 1,
-                width: 1,
-                typ: ColumnDataType::Float,
-            });
+                   ColumnDataDescription {
+                       repeat: 1,
+                       width: 1,
+                       typ: ColumnDataType::Float,
+                   });
     }
 
     #[test]
     fn parse_many_repeats() {
         let s = "100E";
         assert_eq!(s.parse::<ColumnDataDescription>().unwrap(),
-            ColumnDataDescription {
-                repeat: 100,
-                width: 1,
-                typ: ColumnDataType::Float,
-            });
+                   ColumnDataDescription {
+                       repeat: 100,
+                       width: 1,
+                       typ: ColumnDataType::Float,
+                   });
     }
 
     #[test]
     fn parse_with_width() {
         let s = "1E26";
         assert_eq!(s.parse::<ColumnDataDescription>().unwrap(),
-            ColumnDataDescription {
-                repeat: 1,
-                width: 26,
-                typ: ColumnDataType::Float,
-            });
+                   ColumnDataDescription {
+                       repeat: 1,
+                       width: 26,
+                       typ: ColumnDataType::Float,
+                   });
     }
 }
