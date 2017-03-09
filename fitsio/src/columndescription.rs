@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 /// Description for new columns
 #[derive(Debug, Clone)]
 pub struct ColumnDescription {
@@ -8,7 +10,7 @@ pub struct ColumnDescription {
     pub data_type: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ColumnDataDescription {
     pub repeat: usize,
     pub width: usize,
@@ -67,11 +69,14 @@ impl From<ColumnDataDescription> for String {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColumnDataType {
     Int,
     Float,
     Text,
+    Double,
+    Short,
+    Long,
 }
 
 impl From<ColumnDataType> for String {
@@ -82,7 +87,73 @@ impl From<ColumnDataType> for String {
             Int => "J",
             Float => "E",
             Text => "A",
+            Double => "D",
+            Short => "I",
+            Long => "K",
         }.to_string()
+    }
+}
+
+impl FromStr for ColumnDataDescription {
+    type Err = Box<::std::error::Error>;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let chars: Vec<_> = s.chars().collect();
+
+        let mut repeat_str = Vec::new();
+        let mut last_position = 0;
+        for i in 0..chars.len() {
+            if chars[i].is_digit(10) {
+                repeat_str.push(chars[i]);
+                last_position += 1;
+            } else {
+                break;
+            }
+        }
+
+        let repeat = if repeat_str.is_empty() {
+            1
+        } else {
+            let repeat_str: String = repeat_str.into_iter().collect();
+            repeat_str.parse::<usize>()?
+        };
+
+
+        let data_type_char = chars[last_position];
+        last_position += 1;
+
+        let mut width_str = Vec::new();
+        for i in last_position..chars.len() {
+            if chars[i].is_digit(10) {
+                width_str.push(chars[i]);
+            } else {
+                break;
+            }
+        }
+
+        /* TODO: validate that the whole string has been used up */
+
+        let width = if width_str.is_empty() {
+            1
+        } else {
+            let width_str: String = width_str.into_iter().collect();
+            width_str.parse::<usize>()?
+        };
+
+        let data_type = match data_type_char {
+            'E' => ColumnDataType::Float,
+            'J' => ColumnDataType::Int,
+            'D' => ColumnDataType::Double,
+            'I' => ColumnDataType::Short,
+            'K' => ColumnDataType::Long,
+            _ => panic!("Have not implemented str -> ColumnDataType for {}", data_type_char),
+        };
+
+        Ok(ColumnDataDescription {
+            repeat: repeat,
+            typ: data_type,
+            width: width,
+        })
     }
 }
 
@@ -117,5 +188,38 @@ mod test {
                 .width(100);
             assert_eq!(String::from(desc), "1A100");
         }
+    }
+
+    #[test]
+    fn parsing() {
+        let s = "1E";
+        assert_eq!(s.parse::<ColumnDataDescription>().unwrap(),
+            ColumnDataDescription {
+                repeat: 1,
+                width: 1,
+                typ: ColumnDataType::Float,
+            });
+    }
+
+    #[test]
+    fn parse_many_repeats() {
+        let s = "100E";
+        assert_eq!(s.parse::<ColumnDataDescription>().unwrap(),
+            ColumnDataDescription {
+                repeat: 100,
+                width: 1,
+                typ: ColumnDataType::Float,
+            });
+    }
+
+    #[test]
+    fn parse_with_width() {
+        let s = "1E26";
+        assert_eq!(s.parse::<ColumnDataDescription>().unwrap(),
+            ColumnDataDescription {
+                repeat: 1,
+                width: 26,
+                typ: ColumnDataType::Float,
+            });
     }
 }
