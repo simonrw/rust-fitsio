@@ -152,7 +152,7 @@
 //! [`ColumnDataType`](columndescription/enum.ColumnDataType.html) members
 //!
 //! For the common case of a scalar column, a `ColumnDataDescription` object can be constructed
-//! with the `new` method:
+//! with the `scalar` method:
 //!
 //! ```rust
 //! # extern crate fitsio;
@@ -160,6 +160,18 @@
 //! # fn main() {
 //! let desc = ColumnDataDescription::scalar(ColumnDataType::Int);
 //! assert_eq!(desc.repeat, 1);
+//! assert_eq!(desc.width, 1);
+//! # }
+//! ```
+//!
+//! Vector columns can be constructed with the `vector` method:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # use fitsio::columndescription::*;
+//! # fn main() {
+//! let desc = ColumnDataDescription::vector(ColumnDataType::Int, 100);
+//! assert_eq!(desc.repeat, 100);
 //! assert_eq!(desc.width, 1);
 //! # }
 //! ```

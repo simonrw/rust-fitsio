@@ -18,13 +18,21 @@ pub struct ColumnDataDescription {
 }
 
 impl ColumnDataDescription {
-    /// Shortcut for creating a scalar column
-    pub fn scalar(typ: ColumnDataType) -> Self {
+    pub fn new(typ: ColumnDataType, repeat: usize, width: usize) -> Self {
         ColumnDataDescription {
-            repeat: 1,
-            width: 1,
+            repeat: repeat,
+            width: width,
             typ: typ,
         }
+    }
+
+    /// Shortcut for creating a scalar column
+    pub fn scalar(typ: ColumnDataType) -> Self {
+        ColumnDataDescription::new(typ, 1, 1)
+    }
+
+    pub fn vector(typ: ColumnDataType, repeat: usize) -> Self {
+        ColumnDataDescription::new(typ, repeat, 1)
     }
 
     /* XXX These two methods force a call to clone which is wasteful of memory. I do not know if
