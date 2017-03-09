@@ -1220,11 +1220,12 @@ mod test {
             }
         }
 
-        match f.create_table("FOO".to_string(),
-                             &vec![ColumnDescription {
-                                       name: "bar".to_string(),
-                                       data_type: ColumnDataDescription::new(ColumnDataType::Int),
-                                   }]) {
+        match f.create_table(
+            "FOO".to_string(),
+            &vec![ColumnDescription {
+                name: "bar".to_string(),
+                data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
+            }]) {
             Ok(_) => panic!("Should fail"),
             Err(e) => {
                 assert_eq!(e.status, 602);
@@ -1360,7 +1361,7 @@ mod test {
             let table_description = vec![ColumnDescription {
                                              name: "bar".to_string(),
                                              data_type:
-                                                 ColumnDataDescription::new(ColumnDataType::Int),
+                                                 ColumnDataDescription::scalar(ColumnDataType::Int),
                                          }];
             f.create_table("foo".to_string(), &table_description).unwrap();
         }
@@ -1463,7 +1464,7 @@ mod test {
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
         let table_description = vec![ColumnDescription {
                                          name: "bar".to_string(),
-                                         data_type: ColumnDataDescription::new(ColumnDataType::Int),
+                                         data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
                                      }];
         let hdu: FitsHdu = f.create_table("foo".to_string(), &table_description)
             .unwrap();
@@ -1618,7 +1619,7 @@ mod test {
             let table_description = vec![ColumnDescription {
                                              name: "bar".to_string(),
                                              data_type:
-                                                 ColumnDataDescription::new(ColumnDataType::Int),
+                                                 ColumnDataDescription::scalar(ColumnDataType::Int),
                                          }];
             f.create_table("foo".to_string(), &table_description).unwrap();
             let mut hdu = f.hdu("foo").unwrap();
@@ -1646,7 +1647,7 @@ mod test {
             let table_description = vec![ColumnDescription {
                                              name: "bar".to_string(),
                                              data_type:
-                                                 ColumnDataDescription::new(ColumnDataType::Int),
+                                                 ColumnDataDescription::scalar(ColumnDataType::Int),
                                          }];
             f.create_table("foo".to_string(), &table_description).unwrap();
             let mut hdu = f.hdu("foo").unwrap();
@@ -1812,7 +1813,7 @@ mod test {
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
         let table_description = vec![ColumnDescription {
                                          name: "bar".to_string(),
-                                         data_type: ColumnDataDescription::new(ColumnDataType::Int),
+                                         data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
                                      }];
         f.create_table("foo".to_string(), &table_description).unwrap();
 
@@ -1837,7 +1838,7 @@ mod test {
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
         let table_description = vec![ColumnDescription {
                                          name: "bar".to_string(),
-                                         data_type: ColumnDataDescription::new(ColumnDataType::Int),
+                                         data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
                                      }];
         f.create_table("foo".to_string(), &table_description).unwrap();
 

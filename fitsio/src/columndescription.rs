@@ -9,6 +9,7 @@ pub struct ColumnDescription {
     pub data_type: ColumnDataDescription,
 }
 
+/// Description of the column data
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ColumnDataDescription {
     pub repeat: usize,
@@ -17,7 +18,8 @@ pub struct ColumnDataDescription {
 }
 
 impl ColumnDataDescription {
-    pub fn new(typ: ColumnDataType) -> Self {
+    /// Shortcut for creating a scalar column
+    pub fn scalar(typ: ColumnDataType) -> Self {
         ColumnDataDescription {
             repeat: 1,
             width: 1,
@@ -166,7 +168,7 @@ mod test {
 
     #[test]
     fn test_column_data_descriptions_builder_pattern() {
-        let desc = ColumnDataDescription::new(ColumnDataType::Int)
+        let desc = ColumnDataDescription::scalar(ColumnDataType::Int)
             .width(100)
             .repeats(5);
         assert_eq!(desc.repeat, 5);
@@ -176,17 +178,17 @@ mod test {
     #[test]
     fn from_impls() {
         {
-            let desc = ColumnDataDescription::new(ColumnDataType::Int).repeats(5);
+            let desc = ColumnDataDescription::scalar(ColumnDataType::Int).repeats(5);
             assert_eq!(String::from(desc), "5J");
         }
 
         {
-            let desc = ColumnDataDescription::new(ColumnDataType::Float);
+            let desc = ColumnDataDescription::scalar(ColumnDataType::Float);
             assert_eq!(String::from(desc), "1E");
         }
 
         {
-            let desc = ColumnDataDescription::new(ColumnDataType::Text).width(100);
+            let desc = ColumnDataDescription::scalar(ColumnDataType::Text).width(100);
             assert_eq!(String::from(desc), "1A100");
         }
     }

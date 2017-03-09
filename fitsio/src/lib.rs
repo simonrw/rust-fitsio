@@ -128,11 +128,11 @@
 //! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! let first_description = ColumnDescription {
 //!     name: "A".to_string(),
-//!     data_type: ColumnDataDescription::new(ColumnDataType::Int),
+//!     data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
 //! };
 //! let second_description = ColumnDescription {
 //!     name: "B".to_string(),
-//!     data_type: ColumnDataDescription::new(ColumnDataType::Long),
+//!     data_type: ColumnDataDescription::scalar(ColumnDataType::Long),
 //! };
 //! let descriptions = [first_description, second_description];
 //! let mut hdu = fptr.create_table("EXTNAME".to_string(), &descriptions).unwrap();
@@ -158,7 +158,7 @@
 //! # extern crate fitsio;
 //! # use fitsio::columndescription::*;
 //! # fn main() {
-//! let desc = ColumnDataDescription::new(ColumnDataType::Int);
+//! let desc = ColumnDataDescription::scalar(ColumnDataType::Int);
 //! assert_eq!(desc.repeat, 1);
 //! assert_eq!(desc.width, 1);
 //! # }
@@ -171,7 +171,7 @@
 //! # extern crate fitsio;
 //! # use fitsio::columndescription::*;
 //! # fn main() {
-//! let desc = ColumnDataDescription::new(ColumnDataType::Int);
+//! let desc = ColumnDataDescription::scalar(ColumnDataType::Int);
 //! assert_eq!(String::from(desc), "1J".to_string());
 //! # }
 //! ```
