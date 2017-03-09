@@ -139,6 +139,43 @@
 //! # }
 //! ```
 //!
+//! #### Column descriptions
+//!
+//! Columns are described with the
+//! [`ColumnDescription`](columndescription/struct.ColumnDescription.html) struct. This
+//! encapsulates: the name of the column, and the data format.
+//!
+//! The fits specification allows scalar or vector columns, and the data format is described the
+//! [`ColumnDataDescription`](columndescription/struct.ColumnDataDescription.html) struct, which in
+//! turn encapsulates the number of elements per row element (typically 1), the width of the
+//! column (for strings), and the data type, which is one of the 
+//! [`ColumnDataType`](columndescription/enum.ColumnDataType.html) members
+//!
+//! For the common case of a scalar column, a `ColumnDataDescription` object can be constructed
+//! with the `new` method:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # use fitsio::columndescription::*;
+//! # fn main() {
+//! let desc = ColumnDataDescription::new(ColumnDataType::Int);
+//! assert_eq!(desc.repeat, 1);
+//! assert_eq!(desc.width, 1);
+//! # }
+//! ```
+//!
+//! These impl `From<...> for String` such that the traditional fits column description string can
+//! be obtained:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # use fitsio::columndescription::*;
+//! # fn main() {
+//! let desc = ColumnDataDescription::new(ColumnDataType::Int);
+//! assert_eq!(String::from(desc), "1J".to_string());
+//! # }
+//! ```
+//!
 //! ## Header keys
 //!
 //! Header keys are read through the [`read_key`](struct.FitsFile.html#method.read_key) function,
