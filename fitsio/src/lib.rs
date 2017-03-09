@@ -105,7 +105,7 @@
 //! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! let image_description = ImageDescription {
 //!     data_type: ImageType::FLOAT_IMG,
-//!     dimensions: vec![100, 100],
+//!     dimensions: &[100, 100],
 //! };
 //! let mut hdu = fptr.create_image("EXTNAME".to_string(), &image_description).unwrap();
 //! # }
@@ -253,7 +253,7 @@
 //!
 //! let xcoord = 0..10;
 //! let ycoord = 0..10;
-//! let chunk: Vec<i32> = hdu.read_region(&vec![&ycoord, &xcoord]).unwrap();
+//! let chunk: Vec<i32> = hdu.read_region(&[&ycoord, &xcoord]).unwrap();
 //! # }
 //! ```
 //!
@@ -351,7 +351,7 @@
 //! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! # let desc = ImageDescription {
 //! #    data_type: ImageType::FLOAT_IMG,
-//! #    dimensions: vec![100, 100],
+//! #    dimensions: &[100, 100],
 //! # };
 //! # let mut hdu = fptr.create_image("".to_string(), &desc).unwrap();
 //! let data_to_write: Vec<f64> = vec![1.0, 2.0, 3.0];
@@ -375,7 +375,7 @@
 //! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! # let desc = ImageDescription {
 //! #    data_type: ImageType::FLOAT_IMG,
-//! #    dimensions: vec![100, 100],
+//! #    dimensions: &[100, 100],
 //! # };
 //! # let mut hdu = fptr.create_image("".to_string(), &desc).unwrap();
 //! let data_to_write: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];

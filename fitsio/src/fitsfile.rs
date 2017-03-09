@@ -24,9 +24,9 @@ macro_rules! fits_check_readwrite {
 }
 
 /// Description of a new image
-pub struct ImageDescription {
+pub struct ImageDescription<'a> {
     pub data_type: ImageType,
-    pub dimensions: Vec<usize>,
+    pub dimensions: &'a [usize],
 }
 
 /// Main entry point to the FITS file format
@@ -728,15 +728,25 @@ pub trait ReadWriteImage: Sized {
         }
     }
 
-    fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> FitsResult<()>;
+    fn write_section(fits_file: &FitsFile,
+                     start: usize,
+                     end: usize,
+                     data: &[Self])
+                     -> FitsResult<()>;
 
-    fn write_region(fits_file: &FitsFile, ranges: &[&Range<usize>], data: &[Self]) -> FitsResult<()>;
+    fn write_region(fits_file: &FitsFile,
+                    ranges: &[&Range<usize>],
+                    data: &[Self])
+                    -> FitsResult<()>;
 }
 
 macro_rules! read_write_image_impl {
     ($t: ty, $data_type: expr) => (
         impl ReadWriteImage for $t {
-            fn read_section(fits_file: &FitsFile, start: usize, end: usize) -> FitsResult<Vec<Self>> {
+            fn read_section(
+                fits_file: &FitsFile,
+                start: usize,
+                end: usize) -> FitsResult<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::ImageInfo { shape: _shape }) => {
                         let nelements = end - start;
@@ -1034,7 +1044,9 @@ pub struct FitsHdu<'open> {
 }
 
 impl<'open> FitsHdu<'open> {
-    pub fn new<T: DescribesHdu>(fits_file: &'open FitsFile, hdu_description: T) -> FitsResult<Self> {
+    pub fn new<T: DescribesHdu>(fits_file: &'open FitsFile,
+                                hdu_description: T)
+                                -> FitsResult<Self> {
         try!(fits_file.change_hdu(hdu_description));
         match fits_file.fetch_hdu_info() {
             Ok(hdu_info) => {
@@ -1129,7 +1141,10 @@ impl<'open> FitsHdu<'open> {
         T::read_col(self.fits_file, name)
     }
 
-    pub fn read_col_range<T: ReadsCol>(&self, name: &str, range: &Range<usize>) -> FitsResult<Vec<T>> {
+    pub fn read_col_range<T: ReadsCol>(&self,
+                                       name: &str,
+                                       range: &Range<usize>)
+                                       -> FitsResult<Vec<T>> {
         T::read_col_range(self.fits_file, name, range)
     }
 
@@ -1212,7 +1227,7 @@ mod test {
         match f.create_image("FOO".to_string(),
                              &ImageDescription {
                                  data_type: ImageType::LONG_IMG,
-                                 dimensions: vec![100, 100],
+                                 dimensions: &[100, 100],
                              }) {
             Ok(_) => panic!("Should fail"),
             Err(e) => {
@@ -1394,7 +1409,7 @@ mod test {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             let image_description = ImageDescription {
                 data_type: ImageType::LONG_IMG,
-                dimensions: vec![100, 20],
+                dimensions: &[100, 20],
             };
             f.create_image("foo".to_string(), &image_description).unwrap();
         }
@@ -1444,7 +1459,7 @@ mod test {
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
         let image_description = ImageDescription {
             data_type: ImageType::LONG_IMG,
-            dimensions: vec![100, 20],
+            dimensions: &[100, 20],
         };
         let hdu: FitsHdu = f.create_image("foo".to_string(), &image_description).unwrap();
         assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
@@ -1751,7 +1766,7 @@ mod test {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             let image_description = ImageDescription {
                 data_type: ImageType::LONG_IMG,
-                dimensions: vec![100, 20],
+                dimensions: &[100, 20],
             };
             f.create_image("foo".to_string(), &image_description).unwrap();
 
@@ -1779,19 +1794,19 @@ mod test {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             let image_description = ImageDescription {
                 data_type: ImageType::LONG_IMG,
-                dimensions: vec![100, 20],
+                dimensions: &[100, 20],
             };
             f.create_image("foo".to_string(), &image_description).unwrap();
 
             let mut hdu = f.hdu("foo").unwrap();
 
             let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
-            hdu.write_region(&vec![&(0..10), &(0..10)], &data).unwrap();
+            hdu.write_region(&[&(0..10), &(0..10)], &data).unwrap();
         }
 
         let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
         let hdu = f.hdu("foo").unwrap();
-        let chunk: Vec<i64> = hdu.read_region(&vec![&(0..10), &(0..10)]).unwrap();
+        let chunk: Vec<i64> = hdu.read_region(&[&(0..10), &(0..10)]).unwrap();
         assert_eq!(chunk.len(), 11 * 11);
         assert_eq!(chunk[0], 50);
         assert_eq!(chunk[25], 75);
@@ -1807,11 +1822,11 @@ mod test {
         use columndescription::*;
 
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-        let table_description = vec![ColumnDescription::new("bar")
-                                         .with_type(ColumnDataType::Int)
-                                         .create()
-                                         .unwrap()];
-        f.create_table("foo".to_string(), &table_description).unwrap();
+        let table_description = &[ColumnDescription::new("bar")
+                                      .with_type(ColumnDataType::Int)
+                                      .create()
+                                      .unwrap()];
+        f.create_table("foo".to_string(), table_description).unwrap();
 
         let mut hdu = f.hdu("foo").unwrap();
         if let Err(e) = hdu.write_section(0, 100, &data_to_write) {
@@ -1832,11 +1847,11 @@ mod test {
         let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-        let table_description = vec![ColumnDescription::new("bar")
-                                         .with_type(ColumnDataType::Int)
-                                         .create()
-                                         .unwrap()];
-        f.create_table("foo".to_string(), &table_description).unwrap();
+        let table_description = &[ColumnDescription::new("bar")
+                                      .with_type(ColumnDataType::Int)
+                                      .create()
+                                      .unwrap()];
+        f.create_table("foo".to_string(), table_description).unwrap();
 
         let mut hdu = f.hdu("foo").unwrap();
 
