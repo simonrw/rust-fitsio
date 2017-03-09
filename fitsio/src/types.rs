@@ -1,4 +1,4 @@
-use super::columndescription::ColumnDescription;
+use super::columndescription::*;
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -96,7 +96,7 @@ imagetype_into_impl!(i64);
 pub enum HduInfo {
     ImageInfo { shape: Vec<usize> },
     TableInfo {
-        column_descriptions: Vec<ColumnDescription>,
+        column_descriptions: Vec<ConcreteColumnDescription>,
         num_rows: usize,
     },
     AnyInfo,
