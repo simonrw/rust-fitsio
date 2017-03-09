@@ -217,7 +217,7 @@ impl FitsFile {
                                     &mut status);
                     }
 
-                    column_descriptions.push(ColumnDescription {
+                    column_descriptions.push(ConcreteColumnDescription {
                         name: stringutils::buf_to_string(&name_buffer).unwrap(),
                         data_type: stringutils::buf_to_string(&type_buffer)
                             .unwrap()
@@ -247,7 +247,7 @@ impl FitsFile {
     ///
     pub fn create_table(&self,
                         extname: String,
-                        table_description: &[ColumnDescription])
+                        table_description: &[ConcreteColumnDescription])
                         -> Result<FitsHdu> {
 
         fits_check_readwrite!(self);
@@ -937,7 +937,7 @@ pub enum Column {
 
 pub struct ColumnIterator<'a> {
     current: usize,
-    column_descriptions: Vec<ColumnDescription>,
+    column_descriptions: Vec<ConcreteColumnDescription>,
     fits_file: &'a FitsFile,
 }
 
@@ -1220,12 +1220,11 @@ mod test {
             }
         }
 
-        match f.create_table(
-            "FOO".to_string(),
-            &vec![ColumnDescription {
-                name: "bar".to_string(),
-                data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
-            }]) {
+        let bar_column_description = ColumnDescription::new("bar")
+            .with_type(ColumnDataType::Int)
+            .create().unwrap();
+        match f.create_table("FOO".to_string(),
+        &vec![bar_column_description]) {
             Ok(_) => panic!("Should fail"),
             Err(e) => {
                 assert_eq!(e.status, 602);
@@ -1358,11 +1357,10 @@ mod test {
 
         {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let table_description = vec![ColumnDescription {
-                                             name: "bar".to_string(),
-                                             data_type:
-                                                 ColumnDataDescription::scalar(ColumnDataType::Int),
-                                         }];
+            let table_description = vec![
+                ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::Int)
+                    .create().unwrap()];
             f.create_table("foo".to_string(), &table_description).unwrap();
         }
 
@@ -1462,10 +1460,10 @@ mod test {
         let filename = tdir_path.join("test.fits");
 
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-        let table_description = vec![ColumnDescription {
-                                         name: "bar".to_string(),
-                                         data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
-                                     }];
+        let table_description = vec![
+            ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create().unwrap()];
         let hdu: FitsHdu = f.create_table("foo".to_string(), &table_description)
             .unwrap();
         assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
@@ -1616,11 +1614,10 @@ mod test {
         let data_to_write: Vec<i32> = vec![10101; 10];
         {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let table_description = vec![ColumnDescription {
-                                             name: "bar".to_string(),
-                                             data_type:
-                                                 ColumnDataDescription::scalar(ColumnDataType::Int),
-                                         }];
+            let table_description = vec![
+                ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::Int)
+                    .create().unwrap()];
             f.create_table("foo".to_string(), &table_description).unwrap();
             let mut hdu = f.hdu("foo").unwrap();
 
@@ -1644,11 +1641,10 @@ mod test {
         let data_to_write: Vec<i32> = vec![10101; 10];
         {
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let table_description = vec![ColumnDescription {
-                                             name: "bar".to_string(),
-                                             data_type:
-                                                 ColumnDataDescription::scalar(ColumnDataType::Int),
-                                         }];
+            let table_description = vec![
+                ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::Int)
+                    .create().unwrap()];
             f.create_table("foo".to_string(), &table_description).unwrap();
             let mut hdu = f.hdu("foo").unwrap();
 
@@ -1811,10 +1807,10 @@ mod test {
         use columndescription::*;
 
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-        let table_description = vec![ColumnDescription {
-                                         name: "bar".to_string(),
-                                         data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
-                                     }];
+        let table_description = vec![
+            ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create().unwrap()];
         f.create_table("foo".to_string(), &table_description).unwrap();
 
         let mut hdu = f.hdu("foo").unwrap();
@@ -1836,10 +1832,10 @@ mod test {
         let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
         let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-        let table_description = vec![ColumnDescription {
-                                         name: "bar".to_string(),
-                                         data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
-                                     }];
+        let table_description = vec![
+            ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create().unwrap()];
         f.create_table("foo".to_string(), &table_description).unwrap();
 
         let mut hdu = f.hdu("foo").unwrap();

@@ -126,11 +126,11 @@
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
 //! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
-//! let first_description = ColumnDescription {
+//! let first_description = ConcreteColumnDescription {
 //!     name: "A".to_string(),
 //!     data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
 //! };
-//! let second_description = ColumnDescription {
+//! let second_description = ConcreteColumnDescription {
 //!     name: "B".to_string(),
 //!     data_type: ColumnDataDescription::scalar(ColumnDataType::Long),
 //! };

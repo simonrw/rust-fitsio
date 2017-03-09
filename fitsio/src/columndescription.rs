@@ -6,7 +6,53 @@ pub struct ColumnDescription {
     pub name: String,
 
     /// Type of the data, see the cfitsio documentation
-    pub data_type: ColumnDataDescription,
+    pub data_type: Option<ColumnDataDescription>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ConcreteColumnDescription {
+    pub name: String,
+    pub data_type: ColumnDataDescription
+}
+
+impl ColumnDescription {
+    pub fn new<T: Into<String>>(name: T) -> Self {
+        ColumnDescription {
+            name: name.into(),
+            data_type: None,
+        }
+    }
+
+    pub fn with_type<'a>(&'a mut self, typ: ColumnDataType) -> &'a mut ColumnDescription {
+        self.data_type = Some(ColumnDataDescription::scalar(typ));
+        self
+    }
+
+    pub fn that_repeats<'a>(&'a mut self, repeat: usize) -> &'a mut ColumnDescription {
+        match self.data_type {
+            Some(ref mut desc) => desc.repeat = repeat,
+            None => {},
+        }
+        self
+    }
+
+    pub fn with_width<'a>(&'a mut self, width: usize) -> &'a mut ColumnDescription {
+        match self.data_type {
+            Some(ref mut desc) => desc.width = width,
+            None => {},
+        }
+        self
+    }
+
+    pub fn create(&self) -> Result<ConcreteColumnDescription, Box<::std::error::Error>> {
+        match self.data_type {
+            Some(ref d) => Ok(ConcreteColumnDescription {
+                name: self.name.clone(),
+                data_type: d.clone(),
+            }),
+            None => Err("No data type given. Ensure the `with_type` method has been called.".into()),
+        }
+    }
 }
 
 /// Description of the column data
@@ -232,5 +278,21 @@ mod test {
                        width: 26,
                        typ: ColumnDataType::Float,
                    });
+    }
+
+    #[test]
+    fn creating_data_description() {
+        let concrete_desc = ColumnDescription::new("FOO")
+            .with_type(ColumnDataType::Int)
+            .that_repeats(10)
+            .create().unwrap();
+        assert_eq!(concrete_desc.name, "FOO".to_string());
+        assert_eq!(concrete_desc.data_type.repeat, 10);
+        assert_eq!(concrete_desc.data_type.width, 1);
+
+        /* Do not call `with_type` */
+        let bad_desc = ColumnDescription::new("FOO")
+            .create();
+        assert!(bad_desc.is_err());
     }
 }
