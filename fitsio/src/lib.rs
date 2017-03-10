@@ -126,14 +126,12 @@
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
 //! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
-//! let first_description = ConcreteColumnDescription {
-//!     name: "A".to_string(),
-//!     data_type: ColumnDataDescription::scalar(ColumnDataType::Int),
-//! };
-//! let second_description = ConcreteColumnDescription {
-//!     name: "B".to_string(),
-//!     data_type: ColumnDataDescription::scalar(ColumnDataType::Long),
-//! };
+//! let first_description = ColumnDescription::new("A")
+//!     .with_type(ColumnDataType::Int)
+//!     .create().unwrap();
+//! let second_description = ColumnDescription::new("B")
+//!     .with_type(ColumnDataType::Long)
+//!     .create().unwrap();
 //! let descriptions = [first_description, second_description];
 //! let mut hdu = fptr.create_table("EXTNAME".to_string(), &descriptions).unwrap();
 //! # }
