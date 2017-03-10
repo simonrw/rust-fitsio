@@ -172,7 +172,9 @@ impl FromStr for ColumnDataDescription {
         let repeat = if repeat_str.is_empty() {
             1
         } else {
-            let repeat_str: String = repeat_str.into_iter().collect();
+            /* TODO: in nightly the following line works
+            let repeat_str: String = repeat_str.into_iter().collect(); */
+            let repeat_str: String = repeat_str.into_iter().cloned().collect();
             repeat_str.parse::<usize>()?
         };
 
@@ -194,7 +196,9 @@ impl FromStr for ColumnDataDescription {
         let width = if width_str.is_empty() {
             1
         } else {
-            let width_str: String = width_str.into_iter().collect();
+            /* TODO: in nightly the following line works
+            let width_str: String = width_str.into_iter().collect(); */
+            let width_str: String = width_str.into_iter().cloned().collect();
             width_str.parse::<usize>()?
         };
 
