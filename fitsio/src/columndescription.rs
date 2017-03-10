@@ -23,23 +23,21 @@ impl ColumnDescription {
         }
     }
 
-    pub fn with_type<'a>(&'a mut self, typ: ColumnDataType) -> &'a mut ColumnDescription {
+    pub fn with_type(&mut self, typ: ColumnDataType) -> &mut ColumnDescription {
         self.data_type = Some(ColumnDataDescription::scalar(typ));
         self
     }
 
-    pub fn that_repeats<'a>(&'a mut self, repeat: usize) -> &'a mut ColumnDescription {
-        match self.data_type {
-            Some(ref mut desc) => desc.repeat = repeat,
-            None => {}
+    pub fn that_repeats(&mut self, repeat: usize) -> &mut ColumnDescription {
+        if let Some(ref mut desc) = self.data_type {
+            desc.repeat = repeat;
         }
         self
     }
 
-    pub fn with_width<'a>(&'a mut self, width: usize) -> &'a mut ColumnDescription {
-        match self.data_type {
-            Some(ref mut desc) => desc.width = width,
-            None => {}
+    pub fn with_width(&mut self, width: usize) -> &mut ColumnDescription {
+        if let Some(ref mut desc) = self.data_type {
+            desc.width = width;
         }
         self
     }
@@ -162,9 +160,9 @@ impl FromStr for ColumnDataDescription {
 
         let mut repeat_str = Vec::new();
         let mut last_position = 0;
-        for i in 0..chars.len() {
-            if chars[i].is_digit(10) {
-                repeat_str.push(chars[i]);
+        for c in &chars {
+            if c.is_digit(10) {
+                repeat_str.push(c);
                 last_position += 1;
             } else {
                 break;
@@ -183,9 +181,9 @@ impl FromStr for ColumnDataDescription {
         last_position += 1;
 
         let mut width_str = Vec::new();
-        for i in last_position..chars.len() {
-            if chars[i].is_digit(10) {
-                width_str.push(chars[i]);
+        for c in chars.iter().skip(last_position) {
+            if c.is_digit(10) {
+                width_str.push(c);
             } else {
                 break;
             }
