@@ -317,7 +317,7 @@ impl FitsFile {
             sys::ffcrim(self.fptr as *mut _,
                         image_description.data_type.into(),
                         naxis as i32,
-                        image_description.dimensions.as_ptr() as *mut i64,
+                        image_description.dimensions.as_ptr() as *mut libc::c_long,
                         &mut status);
         }
 
@@ -475,10 +475,14 @@ macro_rules! reads_col_impl {
 
 reads_col_impl!(i32, ffgcvk, 0);
 reads_col_impl!(u32, ffgcvuk, 0);
-reads_col_impl!(i64, ffgcvj, 0);
-reads_col_impl!(u64, ffgcvuj, 0);
 reads_col_impl!(f32, ffgcve, 0.0);
 reads_col_impl!(f64, ffgcvd, 0.0);
+#[cfg(pointer_width = "64")]
+reads_col_impl!(i64, ffgcvj, 0);
+#[cfg(not(pointer_width = "64"))]
+reads_col_impl!(i64, ffgcvjj, 0);
+#[cfg(pointer_width = "64")]
+reads_col_impl!(u64, ffgcvuj, 0);
 
 // TODO: impl for string
 
@@ -591,7 +595,10 @@ macro_rules! reads_key_impl {
 }
 
 reads_key_impl!(i32, ffgkyl);
+#[cfg(pointer_width = "64")]
 reads_key_impl!(i64, ffgkyj);
+#[cfg(not(pointer_width = "64"))]
+reads_key_impl!(i64, ffgkyjj);
 reads_key_impl!(f32, ffgkye);
 reads_key_impl!(f64, ffgkyd);
 
@@ -1174,7 +1181,6 @@ mod test {
 
     use super::FitsHdu;
     use super::super::fitsfile::FitsFile;
-    use super::super::types::HduInfo;
     use super::super::types::*;
     use super::ImageDescription;
     use fitserror::FitsError;
@@ -1581,7 +1587,7 @@ mod test {
 
     #[test]
     fn read_column_region_check_ranges() {
-        use super::FitsResult;
+        use super::super::fitserror::FitsResult;
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let result_data: FitsResult<Vec<i32>> = hdu.read_col_range("intcol", &(0..2_000_000));
