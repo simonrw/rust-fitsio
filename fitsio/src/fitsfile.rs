@@ -1537,7 +1537,12 @@ mod test {
         }
 
         match hdu.read_key::<f64>("DBLTEST") {
-            Ok(value) => assert!(floats_close_f64(value, 0.09375)),
+            Ok(value) => {
+                assert!(floats_close_f64(value, 0.09375),
+                        "{:?} != {:?}",
+                        value,
+                        0.09375)
+            }
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
@@ -1581,14 +1586,32 @@ mod test {
         assert_eq!(intcol_data[49], 12);
 
         let floatcol_data: Vec<f32> = hdu.read_col("floatcol").unwrap();
-        assert!(floats_close_f32(floatcol_data[0], 17.496801));
-        assert!(floats_close_f32(floatcol_data[15], 19.570272));
-        assert!(floats_close_f32(floatcol_data[49], 10.217053));
+        assert!(floats_close_f32(floatcol_data[0], 17.496801),
+                "{:?} != {:?}",
+                floatcol_data[0],
+                17.496801);
+        assert!(floats_close_f32(floatcol_data[15], 19.570272),
+                "{:?} != {:?}",
+                floatcol_data[15],
+                19.570272);
+        assert!(floats_close_f32(floatcol_data[49], 10.217053),
+                "{:?} != {:?}",
+                floatcol_data[49],
+                10.217053);
 
         let doublecol_data: Vec<f64> = hdu.read_col("doublecol").unwrap();
-        assert!(floats_close_f64(doublecol_data[0], 16.959972808730814));
-        assert!(floats_close_f64(doublecol_data[15], 19.013522579233065));
-        assert!(floats_close_f64(doublecol_data[49], 16.61153656123406));
+        assert!(floats_close_f64(doublecol_data[0], 16.959972808730814),
+                "{:?} != {:?}",
+                doublecol_data[0],
+                16.959972808730814);
+        assert!(floats_close_f64(doublecol_data[15], 19.013522579233065),
+                "{:?} != {:?}",
+                doublecol_data[15],
+                19.013522579233065);
+        assert!(floats_close_f64(doublecol_data[49], 16.61153656123406),
+                "{:?} != {:?}",
+                doublecol_data[49],
+                16.61153656123406);
     }
 
     #[test]
