@@ -1,3 +1,11 @@
+/* Depending on the architecture, different functions have to be called. For example arm systems
+ * define `int` as 4 bytes, and `long` as 4 bytes, unlike x86_64 systems which define `long` types
+ * as 8 bytes.
+ *
+ * In this case, we have to use `_longlong` cfitsio functions on arm architectures (and other
+ * similar architectures).
+ */
+
 use super::sys;
 use super::stringutils::{self, status_to_string};
 use super::fitserror::{FitsError, FitsResult};
@@ -317,7 +325,7 @@ impl FitsFile {
             sys::ffcrim(self.fptr as *mut _,
                         image_description.data_type.into(),
                         naxis as i32,
-                        image_description.dimensions.as_ptr() as *mut i64,
+                        image_description.dimensions.as_ptr() as *mut libc::c_long,
                         &mut status);
         }
 
@@ -475,10 +483,14 @@ macro_rules! reads_col_impl {
 
 reads_col_impl!(i32, ffgcvk, 0);
 reads_col_impl!(u32, ffgcvuk, 0);
-reads_col_impl!(i64, ffgcvj, 0);
-reads_col_impl!(u64, ffgcvuj, 0);
 reads_col_impl!(f32, ffgcve, 0.0);
 reads_col_impl!(f64, ffgcvd, 0.0);
+#[cfg(target_arch = "x86_64")]
+reads_col_impl!(i64, ffgcvj, 0);
+#[cfg(target_arch = "arm")]
+reads_col_impl!(i64, ffgcvjj, 0);
+#[cfg(target_arch = "x86_64")]
+reads_col_impl!(u64, ffgcvuj, 0);
 
 // TODO: impl for string
 
@@ -549,9 +561,13 @@ macro_rules! writes_col_impl {
 }
 
 writes_col_impl!(u32, DataType::TUINT);
+#[cfg(target_arch = "x86_64")]
 writes_col_impl!(u64, DataType::TULONG);
 writes_col_impl!(i32, DataType::TINT);
+#[cfg(target_arch = "x86_64")]
 writes_col_impl!(i64, DataType::TLONG);
+#[cfg(target_arch = "arm")]
+writes_col_impl!(i64, DataType::TLONGLONG);
 writes_col_impl!(f32, DataType::TFLOAT);
 writes_col_impl!(f64, DataType::TDOUBLE);
 
@@ -591,7 +607,10 @@ macro_rules! reads_key_impl {
 }
 
 reads_key_impl!(i32, ffgkyl);
+#[cfg(target_arch = "x86_64")]
 reads_key_impl!(i64, ffgkyj);
+#[cfg(target_arch = "arm")]
+reads_key_impl!(i64, ffgkyjj);
 reads_key_impl!(f32, ffgkye);
 reads_key_impl!(f64, ffgkyd);
 
@@ -928,9 +947,13 @@ macro_rules! read_write_image_impl {
 
 read_write_image_impl!(i8, DataType::TSHORT);
 read_write_image_impl!(i32, DataType::TINT);
+#[cfg(target_arch = "x86_64")]
 read_write_image_impl!(i64, DataType::TLONG);
+#[cfg(target_arch = "arm")]
+read_write_image_impl!(i64, DataType::TLONGLONG);
 read_write_image_impl!(u8, DataType::TUSHORT);
 read_write_image_impl!(u32, DataType::TUINT);
+#[cfg(target_arch = "x86_64")]
 read_write_image_impl!(u64, DataType::TULONG);
 read_write_image_impl!(f32, DataType::TFLOAT);
 read_write_image_impl!(f64, DataType::TDOUBLE);
@@ -1174,7 +1197,6 @@ mod test {
 
     use super::FitsHdu;
     use super::super::fitsfile::FitsFile;
-    use super::super::types::HduInfo;
     use super::super::types::*;
     use super::ImageDescription;
     use fitserror::FitsError;
@@ -1515,7 +1537,12 @@ mod test {
         }
 
         match hdu.read_key::<f64>("DBLTEST") {
-            Ok(value) => assert!(floats_close_f64(value, 0.09375)),
+            Ok(value) => {
+                assert!(floats_close_f64(value, 0.09375),
+                        "{:?} != {:?}",
+                        value,
+                        0.09375)
+            }
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
@@ -1559,14 +1586,32 @@ mod test {
         assert_eq!(intcol_data[49], 12);
 
         let floatcol_data: Vec<f32> = hdu.read_col("floatcol").unwrap();
-        assert!(floats_close_f32(floatcol_data[0], 17.496801));
-        assert!(floats_close_f32(floatcol_data[15], 19.570272));
-        assert!(floats_close_f32(floatcol_data[49], 10.217053));
+        assert!(floats_close_f32(floatcol_data[0], 17.496801),
+                "{:?} != {:?}",
+                floatcol_data[0],
+                17.496801);
+        assert!(floats_close_f32(floatcol_data[15], 19.570272),
+                "{:?} != {:?}",
+                floatcol_data[15],
+                19.570272);
+        assert!(floats_close_f32(floatcol_data[49], 10.217053),
+                "{:?} != {:?}",
+                floatcol_data[49],
+                10.217053);
 
         let doublecol_data: Vec<f64> = hdu.read_col("doublecol").unwrap();
-        assert!(floats_close_f64(doublecol_data[0], 16.959972808730814));
-        assert!(floats_close_f64(doublecol_data[15], 19.013522579233065));
-        assert!(floats_close_f64(doublecol_data[49], 16.61153656123406));
+        assert!(floats_close_f64(doublecol_data[0], 16.959972808730814),
+                "{:?} != {:?}",
+                doublecol_data[0],
+                16.959972808730814);
+        assert!(floats_close_f64(doublecol_data[15], 19.013522579233065),
+                "{:?} != {:?}",
+                doublecol_data[15],
+                19.013522579233065);
+        assert!(floats_close_f64(doublecol_data[49], 16.61153656123406),
+                "{:?} != {:?}",
+                doublecol_data[49],
+                16.61153656123406);
     }
 
     #[test]
@@ -1581,7 +1626,7 @@ mod test {
 
     #[test]
     fn read_column_region_check_ranges() {
-        use super::FitsResult;
+        use super::super::fitserror::FitsResult;
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let result_data: FitsResult<Vec<i32>> = hdu.read_col_range("intcol", &(0..2_000_000));
