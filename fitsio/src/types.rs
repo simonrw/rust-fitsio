@@ -1,4 +1,4 @@
-use super::columndescription::*;
+use columndescription::*;
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

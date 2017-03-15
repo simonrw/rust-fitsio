@@ -6,12 +6,12 @@
  * similar architectures).
  */
 
-use super::sys;
-use super::stringutils::{self, status_to_string};
-use super::fitserror::{FitsError, FitsResult};
-use super::columndescription::*;
-use super::libc;
-use super::types::{DataType, CaseSensitivity, HduInfo, FileOpenMode, ImageType};
+use sys;
+use stringutils::{self, status_to_string};
+use fitserror::{FitsError, FitsResult};
+use columndescription::*;
+use libc;
+use types::{DataType, CaseSensitivity, HduInfo, FileOpenMode, ImageType};
 use std::ffi;
 use std::ptr;
 use std::ops::Range;
@@ -1195,10 +1195,10 @@ impl<'open> FitsHdu<'open> {
 mod test {
     extern crate tempdir;
 
-    use super::FitsHdu;
-    use super::super::fitsfile::FitsFile;
-    use super::super::types::*;
-    use super::ImageDescription;
+    use FitsHdu;
+    use fitsfile::FitsFile;
+    use types::*;
+    use fitsfile::ImageDescription;
     use fitserror::FitsError;
     use std::{f32, f64};
 
@@ -1233,7 +1233,7 @@ mod test {
 
     #[test]
     fn cannot_write_to_readonly_file() {
-        use super::super::columndescription::*;
+        use columndescription::*;
         use std::fs;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
@@ -1311,7 +1311,7 @@ mod test {
 
     #[test]
     fn fetching_hdu_info() {
-        use super::super::columndescription::*;
+        use columndescription::*;
 
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
@@ -1383,7 +1383,7 @@ mod test {
 
     #[test]
     fn adding_new_table() {
-        use super::super::columndescription::*;
+        use columndescription::*;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1487,7 +1487,7 @@ mod test {
 
     #[test]
     fn creating_new_table_returns_hdu_object() {
-        use super::super::columndescription::*;
+        use columndescription::*;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1626,7 +1626,7 @@ mod test {
 
     #[test]
     fn read_column_region_check_ranges() {
-        use super::super::fitserror::FitsResult;
+        use fitserror::FitsResult;
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let result_data: FitsResult<Vec<i32>> = hdu.read_col_range("intcol", &(0..2_000_000));
@@ -1662,7 +1662,7 @@ mod test {
 
     #[test]
     fn write_column_data() {
-        use super::super::columndescription::*;
+        use columndescription::*;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1689,7 +1689,7 @@ mod test {
 
     #[test]
     fn write_column_subset() {
-        use super::super::columndescription::*;
+        use columndescription::*;
 
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -1803,7 +1803,7 @@ mod test {
 
         // Scope ensures file is closed properly
         {
-            use super::super::fitsfile::ImageDescription;
+            use fitsfile::ImageDescription;
 
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             let image_description = ImageDescription {
@@ -1831,7 +1831,7 @@ mod test {
 
         // Scope ensures file is closed properly
         {
-            use super::super::fitsfile::ImageDescription;
+            use fitsfile::ImageDescription;
 
             let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
             let image_description = ImageDescription {

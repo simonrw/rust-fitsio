@@ -1,6 +1,6 @@
 use std::result;
 use std::fmt;
-use super::stringutils::status_to_string;
+use stringutils::status_to_string;
 
 /// Error type
 ///
