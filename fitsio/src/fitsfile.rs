@@ -545,18 +545,19 @@ impl ReadsCol for String {
 }
 
 pub trait WritesCol {
-    fn write_col<T: Into<String>>(fits_file: &FitsFile,
-                                  hdu: &FitsHdu,
-                                  col_name: T,
-                                  col_data: &[Self])
-                                  -> FitsResult<()>
-        where Self: Sized;
     fn write_col_range<T: Into<String>>(fits_file: &FitsFile,
                                         hdu: &FitsHdu,
                                         col_name: T,
                                         col_data: &[Self],
                                         rows: &Range<usize>)
                                         -> FitsResult<()>
+        where Self: Sized;
+
+    fn write_col<T: Into<String>>(fits_file: &FitsFile,
+                                  hdu: &FitsHdu,
+                                  col_name: T,
+                                  col_data: &[Self])
+                                  -> FitsResult<()>
         where Self: Sized;
 }
 
@@ -590,21 +591,27 @@ macro_rules! writes_col_impl {
                 col_data: &[Self],
                 rows: &Range<usize>)
             -> FitsResult<()> {
-                let colno = hdu.get_column_no(col_name.into())?;
-                let mut status = 0;
-                unsafe {
-                    sys::ffpcl(
-                        fits_file.fptr as *mut _,
-                        $data_type.into(),
-                        (colno + 1) as _,
-                        (rows.start + 1) as _,
-                        1,
-                        (rows.end + 1) as _,
-                        col_data.as_ptr() as *mut _,
-                        &mut status
-                    );
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
+                        let colno = hdu.get_column_no(col_name.into())?;
+                        let mut status = 0;
+                        unsafe {
+                            sys::ffpcl(
+                                fits_file.fptr as *mut _,
+                                $data_type.into(),
+                                (colno + 1) as _,
+                                (rows.start + 1) as _,
+                                1,
+                                (rows.end + 1) as _,
+                                col_data.as_ptr() as *mut _,
+                                &mut status
+                            );
+                        }
+                        fits_try!(status, ())
+                    },
+                    Err(e) => Err(e),
+                    _ => panic!("Unknown error"),
                 }
-                fits_try!(status, ())
             }
         }
     )
