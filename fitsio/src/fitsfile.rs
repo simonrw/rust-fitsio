@@ -492,7 +492,8 @@ impl ReadsCol for String {
 
                 let mut status = 0;
                 /* Get the number of characters (excluding null byte) for the strings */
-                /* TODO: can we allocate on less element, since we don't care about the null byte? */
+                /* TODO: can we allocate on less element, since we don't care about the
+                    null byte? */
                 let mut width = 0;
                 unsafe {
                     sys::ffgcdw(fits_file.fptr as *mut _,
