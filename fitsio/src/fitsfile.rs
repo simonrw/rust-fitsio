@@ -403,49 +403,30 @@ impl<'a> DescribesHdu for &'a str {
 
 /// Trait for reading a fits column
 pub trait ReadsCol {
-    fn read_col<T: Into<String>>(fits_file: &FitsFile, name: T) -> FitsResult<Vec<Self>>
-        where Self: Sized;
     fn read_col_range<T: Into<String>>(fits_file: &FitsFile,
                                        name: T,
                                        range: &Range<usize>)
                                        -> FitsResult<Vec<Self>>
         where Self: Sized;
+
+    /// Default implementation which uses `read_col_range`
+    fn read_col<T: Into<String>>(fits_file: &FitsFile, name: T) -> FitsResult<Vec<Self>>
+        where Self: Sized
+    {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo { num_rows, .. }) => {
+                let range = 0..num_rows - 1;
+                Self::read_col_range(fits_file, name, &range)
+            }
+            Err(e) => Err(e),
+            _ => panic!("Unknown error occurred"),
+        }
+    }
 }
 
 macro_rules! reads_col_impl {
     ($t: ty, $func: ident, $nullval: expr) => (
         impl ReadsCol for $t {
-            fn read_col<T: Into<String>>(fits_file: &FitsFile, name: T) -> FitsResult<Vec<Self>> {
-                match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::TableInfo {
-                        column_descriptions, num_rows, ..
-                    }) => {
-                        let mut out = vec![$nullval; num_rows];
-                        let test_name = name.into();
-                        assert_eq!(out.len(), num_rows);
-                        let column_number = column_descriptions.iter().position(|ref desc| {
-                            desc.name == test_name
-                        }).unwrap();
-                        let mut status = 0;
-                        unsafe {
-                            sys::$func(fits_file.fptr as *mut _,
-                                       (column_number + 1) as i32,
-                                       1,
-                                       1,
-                                       num_rows as i64,
-                                       $nullval,
-                                       out.as_mut_ptr(),
-                                       ptr::null_mut(),
-                                       &mut status);
-
-                        }
-                        fits_try!(status, out)
-                    },
-                    Err(e) => Err(e),
-                    _ => panic!("Unknown error occurred"),
-                }
-            }
-
             // TODO: should we check the bounds? cfitsio will raise an error, but we
             // could be more friendly and raise our own?
             fn read_col_range<T: Into<String>>(fits_file: &FitsFile, name: T, range: &Range<usize>)
@@ -492,7 +473,75 @@ reads_col_impl!(i64, ffgcvjj, 0);
 #[cfg(target_arch = "x86_64")]
 reads_col_impl!(u64, ffgcvuj, 0);
 
-// TODO: impl for string
+impl ReadsCol for String {
+    fn read_col_range<T: Into<String>>(fits_file: &FitsFile,
+                                       name: T,
+                                       range: &Range<usize>)
+                                       -> FitsResult<Vec<Self>> {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
+                let num_output_rows = range.end - range.start + 1;
+                let test_name = name.into();
+                let column_number = column_descriptions.iter()
+                    .position(|ref desc| desc.name == test_name)
+                    .unwrap();
+
+                /* Set up the storage arrays for the column string values */
+                let mut raw_char_data: Vec<*mut libc::c_char> =
+                    Vec::with_capacity(num_output_rows as usize);
+
+                let mut status = 0;
+                /* Get the number of characters (excluding null byte) for the strings */
+                /* TODO: can we allocate on less element, since we don't care about the null byte? */
+                let mut width = 0;
+                unsafe {
+                    sys::ffgcdw(fits_file.fptr as *mut _,
+                                (column_number + 1) as _,
+                                &mut width,
+                                &mut status);
+                }
+
+                // TODO: check the status code
+                assert!(status == 0, "Status code is not 0: {}", status);
+
+                let mut vecs: Vec<Vec<libc::c_char>> = Vec::with_capacity(num_output_rows as usize);
+                for _ in 0..num_output_rows {
+                    let mut data: Vec<libc::c_char> = vec![0; (width + 1) as _];
+                    let data_p = data.as_mut_ptr();
+                    vecs.push(data);
+                    raw_char_data.push(data_p);
+                }
+
+                unsafe {
+                    sys::ffgcvs(fits_file.fptr as *mut _,
+                                (column_number + 1) as _,
+                                (range.start + 1) as _,
+                                1,
+                                raw_char_data.len() as _,
+                                ptr::null_mut(),
+                                raw_char_data.as_ptr() as *mut *mut _,
+                                ptr::null_mut(),
+                                &mut status);
+                }
+                // TODO: check the status code
+                assert!(status == 0, "Status code is not 0: {}", status);
+
+                let mut out = Vec::with_capacity(num_output_rows);
+                for val in vecs.iter() {
+                    let bytes: Vec<u8> = val.into_iter()
+                        .filter(|v| **v != 0)
+                        .map(|v| *v as u8)
+                        .collect();
+                    let cstr = String::from_utf8(bytes).unwrap();
+                    out.push(cstr);
+                }
+                Ok(out)
+            }
+            Err(e) => Err(e),
+            _ => panic!("Unknown error occurred"),
+        }
+    }
+}
 
 pub trait WritesCol {
     fn write_col<T: Into<String>>(fits_file: &FitsFile,
@@ -963,6 +1012,7 @@ pub enum Column {
     Int64 { name: String, data: Vec<i64> },
     Float { name: String, data: Vec<f32> },
     Double { name: String, data: Vec<f64> },
+    String { name: String, data: Vec<String> },
 }
 
 pub struct ColumnIterator<'a> {
@@ -1034,6 +1084,16 @@ impl<'a> Iterator for ColumnIterator<'a> {
                     f64::read_col(self.fits_file, current_name)
                         .map(|data| {
                             Some(Column::Double {
+                                name: current_name.to_string(),
+                                data: data,
+                            })
+                        })
+                        .unwrap()
+                }
+                ColumnDataType::String => {
+                    String::read_col(self.fits_file, current_name)
+                        .map(|data| {
+                            Some(Column::String {
                                 name: current_name.to_string(),
                                 data: data,
                             })
@@ -1332,13 +1392,15 @@ mod test {
                                .collect::<Vec<String>>(),
                            vec!["intcol".to_string(),
                                 "floatcol".to_string(),
-                                "doublecol".to_string()]);
+                                "doublecol".to_string(),
+                                "strcol".to_string()]);
                 assert_eq!(column_descriptions.iter()
                                .map(|ref desc| desc.data_type.typ.clone())
                                .collect::<Vec<ColumnDataType>>(),
                            vec![ColumnDataType::Int,
                                 ColumnDataType::Float,
-                                ColumnDataType::Double]);
+                                ColumnDataType::Double,
+                                ColumnDataType::String]);
             }
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
@@ -1615,6 +1677,17 @@ mod test {
     }
 
     #[test]
+    fn read_string_col() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let strcol: Vec<String> = hdu.read_col("strcol").unwrap();
+        assert_eq!(strcol.len(), 50);
+        assert_eq!(strcol[0], "value0");
+        assert_eq!(strcol[15], "value15");
+        assert_eq!(strcol[49], "value49");
+    }
+
+    #[test]
     fn read_column_regions() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
@@ -1622,6 +1695,16 @@ mod test {
         assert_eq!(intcol_data.len(), 3);
         assert_eq!(intcol_data[0], 18);
         assert_eq!(intcol_data[1], 13);
+    }
+
+    #[test]
+    fn read_string_column_regions() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let intcol_data: Vec<String> = hdu.read_col_range("strcol", &(0..2)).unwrap();
+        assert_eq!(intcol_data.len(), 3);
+        assert_eq!(intcol_data[0], "value0");
+        assert_eq!(intcol_data[1], "value1");
     }
 
     #[test]
@@ -1641,14 +1724,19 @@ mod test {
         let hdu = f.hdu(1).unwrap();
         let column_names: Vec<String> = hdu.columns()
             .map(|col| match col {
-                Column::Int32 { name, data: _data } => name,
-                Column::Int64 { name, data: _data } => name,
-                Column::Float { name, data: _data } => name,
-                Column::Double { name, data: _data } => name,
+                Column::Int32 { name, .. } => name,
+                Column::Int64 { name, .. } => name,
+                Column::Float { name, .. } => name,
+                Column::Double { name, .. } => name,
+                Column::String { name, .. } => name,
             })
             .collect();
+
         assert_eq!(column_names,
-                   vec!["intcol".to_string(), "floatcol".to_string(), "doublecol".to_string()]);
+                   vec!["intcol".to_string(),
+                        "floatcol".to_string(),
+                        "doublecol".to_string(),
+                        "strcol".to_string()]);
     }
 
     #[test]

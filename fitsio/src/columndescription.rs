@@ -134,6 +134,7 @@ pub enum ColumnDataType {
     Double,
     Short,
     Long,
+    String,
 }
 
 impl From<ColumnDataType> for String {
@@ -147,6 +148,7 @@ impl From<ColumnDataType> for String {
                 Double => "D",
                 Short => "I",
                 Long => "K",
+                String => "A",
             }
             .to_string()
     }
@@ -208,6 +210,7 @@ impl FromStr for ColumnDataDescription {
             'D' => ColumnDataType::Double,
             'I' => ColumnDataType::Short,
             'K' => ColumnDataType::Long,
+            'A' => ColumnDataType::String,
             _ => {
                 panic!("Have not implemented str -> ColumnDataType for {}",
                        data_type_char)
