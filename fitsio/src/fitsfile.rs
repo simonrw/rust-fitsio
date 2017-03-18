@@ -504,23 +504,11 @@ impl ReadsCol for String {
                     Vec::with_capacity(num_output_rows as usize);
 
                 let mut status = 0;
-                /* Get the number of characters (excluding null byte) for the strings */
-                /* TODO: can we allocate on less element, since we don't care about the
-                    null byte? */
-                let mut width = 0;
-                unsafe {
-                    sys::ffgcdw(fits_file.fptr as *mut _,
-                                (column_number + 1) as _,
-                                &mut width,
-                                &mut status);
-                }
-
-                // TODO: check the status code
-                assert!(status == 0, "Status code is not 0: {}", status);
+                let width = column_display_width(fits_file, column_number)?;
 
                 let mut vecs: Vec<Vec<libc::c_char>> = Vec::with_capacity(num_output_rows as usize);
                 for _ in 0..num_output_rows {
-                    let mut data: Vec<libc::c_char> = vec![0; (width + 1) as _];
+                    let mut data: Vec<libc::c_char> = vec![0; width as _];
                     let data_p = data.as_mut_ptr();
                     vecs.push(data);
                     raw_char_data.push(data_p);
@@ -635,6 +623,50 @@ writes_col_impl!(i64, DataType::TLONG);
 writes_col_impl!(i64, DataType::TLONGLONG);
 writes_col_impl!(f32, DataType::TFLOAT);
 writes_col_impl!(f64, DataType::TDOUBLE);
+
+impl WritesCol for String {
+    fn write_col_range<T: Into<String>>(fits_file: &FitsFile,
+                                        hdu: &FitsHdu,
+                                        col_name: T,
+                                        col_data: &[Self],
+                                        rows: &Range<usize>)
+                                        -> FitsResult<()> {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo { .. }) => {
+                let colno = hdu.get_column_no(col_name.into())?;
+                let width = column_display_width(fits_file, colno)?;
+                let mut status = 0;
+
+                // TODO: try to find a way to not dupliicate every string somehow!
+                let padded_strings: Vec<String> = col_data.iter()
+                    .map(|s| format!("{0:>1$}", s, width))
+                    .collect();
+
+                let mut ptr_array: Vec<*mut i8> = Vec::with_capacity(rows.end - rows.start);
+                for s in padded_strings {
+                    let ptr = s.as_bytes().as_ptr();
+                    ptr_array.push(ptr as *mut _);
+                }
+
+                unsafe {
+                    sys::ffpcls(fits_file.fptr as *mut _,
+                                (colno + 1) as _,
+                                1,
+                                1,
+                                col_data.len() as _,
+                                ptr_array.as_mut_ptr(),
+                                &mut status);
+                }
+                fits_try!(status, ())
+            }
+            Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
+            Ok(HduInfo::AnyInfo { .. }) => {
+                Err("Cannot determine HDU type, so cannot write column data".into())
+            }
+            Err(e) => Err(e),
+        }
+    }
+}
 
 /// Trait applied to types which can be read from a FITS header
 ///
@@ -1831,6 +1863,39 @@ mod test {
         let data: Vec<i32> = hdu.read_col("bar").unwrap();
         assert_eq!(data.len(), 6);
         assert_eq!(data[..], data_to_write[0..6]);
+    }
+
+    #[test]
+    fn write_string_col() {
+        use columndescription::*;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        let mut data_to_write: Vec<String> = Vec::new();
+        for i in 0..50 {
+            data_to_write.push(format!("value{}", i));
+        }
+
+        {
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let table_description = vec![ColumnDescription::new("bar")
+                                             .with_type(ColumnDataType::String)
+                                             .that_repeats(7)
+                                             .create()
+                                             .unwrap()];
+            let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
+
+            hdu.write_col("bar", &data_to_write).unwrap();
+        }
+
+        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+        let hdu = f.hdu("foo").unwrap();
+        let data: Vec<String> = hdu.read_col("bar").unwrap();
+        assert_eq!(data.len(), data_to_write.len());
+        assert_eq!(data[0], " value0");
+        assert_eq!(data[49], "value49");
     }
 
     #[test]
