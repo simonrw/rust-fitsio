@@ -265,7 +265,7 @@ impl ::std::default::Default for PixelFilter {
         unsafe { ::std::mem::zeroed() }
     }
 }
-#[link(name = "cfitsio", kind = "dylib")]
+
 extern "C" {
     pub fn fits_read_wcstab(fptr: *mut fitsfile,
                             nwtb: c_int,

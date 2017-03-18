@@ -12,7 +12,7 @@ categories = ["external-ffi-bindings", "science"]
 
 [dependencies]
 libc = "0.2.11"
-fitsio-sys = { version = "0.2.3", path = "../fitsio-sys" }
+fitsio-sys = { version = "0.3.0", path = "../fitsio-sys" }
 clippy = { version = "0.0.108", optional = true }
 
 [dev-dependencies]
