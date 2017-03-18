@@ -565,8 +565,11 @@ pub trait WritesCol {
                 let row_range = 0..col_data.len() - 1;
                 Self::write_col_range(fits_file, hdu, col_name, col_data, &row_range)
             }
+            Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
+            Ok(HduInfo::AnyInfo { .. }) => {
+                Err("Cannot determine HDU type, so cannot write column data".into())
+            }
             Err(e) => Err(e),
-            _ => panic!("Unknown error"),
         }
     }
 }
@@ -598,8 +601,11 @@ macro_rules! writes_col_impl {
                         }
                         fits_try!(status, ())
                     },
+                    Ok(HduInfo::ImageInfo { .. }) =>
+                        Err("Cannot write column data to FITS image".into()),
+                    Ok(HduInfo::AnyInfo { .. }) =>
+                        Err("Cannot determine HDU type, so cannot write column data".into()),
                     Err(e) => Err(e),
-                    _ => panic!("Unknown error"),
                 }
             }
         }
@@ -1770,6 +1776,30 @@ mod test {
         let hdu = f.hdu("foo").unwrap();
         let data: Vec<i32> = hdu.read_col("bar").unwrap();
         assert_eq!(data, data_to_write);
+    }
+
+    #[test]
+    fn cannot_write_column_to_image_hdu() {
+        use columndescription::*;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        let data_to_write: Vec<i32> = vec![10101; 10];
+
+        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+
+        let image_description = ImageDescription {
+            data_type: ImageType::LONG_IMG,
+            dimensions: &[100, 20],
+        };
+        let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
+
+        match hdu.write_col("bar", &data_to_write) {
+            Ok(_) => panic!("Should return an error"),
+            Err(e) => assert_eq!(e.status, 600),
+        }
     }
 
     #[test]
