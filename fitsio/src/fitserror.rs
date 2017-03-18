@@ -31,6 +31,26 @@ impl ::std::error::Error for FitsError {
     }
 }
 
+/// Allowing any custom error messages to be turned into a `FitsError`
+///
+/// For example:
+///
+/// ```rust
+/// # use fitsio::fitserror::FitsResult;
+/// let result: FitsResult<()> = Err("error messsage".into());
+/// if let Err(e) = result {
+///     assert_eq!(e.status, 600);
+/// }
+/// ```
+impl<'a> From<&'a str> for FitsError {
+    fn from(s: &'a str) -> Self {
+        FitsError {
+            status: 600,
+            message: s.to_string(),
+        }
+    }
+}
+
 /// Macro for returning a FITS error type
 macro_rules! fits_try {
     ($status: ident, $e: expr) => {

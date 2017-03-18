@@ -473,6 +473,19 @@ reads_col_impl!(i64, ffgcvjj, 0);
 #[cfg(target_arch = "x86_64")]
 reads_col_impl!(u64, ffgcvuj, 0);
 
+/// Helper function to get the display width of a column
+fn column_display_width(fits_file: &FitsFile, column_number: usize) -> FitsResult<usize> {
+    let mut status = 0;
+    let mut width = 0;
+    unsafe {
+        sys::ffgcdw(fits_file.fptr as *mut _,
+                    (column_number + 1) as _,
+                    &mut width,
+                    &mut status);
+    }
+    fits_try!(status, width as usize)
+}
+
 impl ReadsCol for String {
     fn read_col_range<T: Into<String>>(fits_file: &FitsFile,
                                        name: T,
@@ -491,23 +504,11 @@ impl ReadsCol for String {
                     Vec::with_capacity(num_output_rows as usize);
 
                 let mut status = 0;
-                /* Get the number of characters (excluding null byte) for the strings */
-                /* TODO: can we allocate on less element, since we don't care about the
-                    null byte? */
-                let mut width = 0;
-                unsafe {
-                    sys::ffgcdw(fits_file.fptr as *mut _,
-                                (column_number + 1) as _,
-                                &mut width,
-                                &mut status);
-                }
-
-                // TODO: check the status code
-                assert!(status == 0, "Status code is not 0: {}", status);
+                let width = column_display_width(fits_file, column_number)?;
 
                 let mut vecs: Vec<Vec<libc::c_char>> = Vec::with_capacity(num_output_rows as usize);
                 for _ in 0..num_output_rows {
-                    let mut data: Vec<libc::c_char> = vec![0; (width + 1) as _];
+                    let mut data: Vec<libc::c_char> = vec![0; width as _];
                     let data_p = data.as_mut_ptr();
                     vecs.push(data);
                     raw_char_data.push(data_p);
@@ -545,12 +546,6 @@ impl ReadsCol for String {
 }
 
 pub trait WritesCol {
-    fn write_col<T: Into<String>>(fits_file: &FitsFile,
-                                  hdu: &FitsHdu,
-                                  col_name: T,
-                                  col_data: &[Self])
-                                  -> FitsResult<()>
-        where Self: Sized;
     fn write_col_range<T: Into<String>>(fits_file: &FitsFile,
                                         hdu: &FitsHdu,
                                         col_name: T,
@@ -558,53 +553,61 @@ pub trait WritesCol {
                                         rows: &Range<usize>)
                                         -> FitsResult<()>
         where Self: Sized;
+
+    fn write_col<T: Into<String>>(fits_file: &FitsFile,
+                                  hdu: &FitsHdu,
+                                  col_name: T,
+                                  col_data: &[Self])
+                                  -> FitsResult<()>
+        where Self: Sized
+    {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo { .. }) => {
+                let row_range = 0..col_data.len() - 1;
+                Self::write_col_range(fits_file, hdu, col_name, col_data, &row_range)
+            }
+            Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
+            Ok(HduInfo::AnyInfo { .. }) => {
+                Err("Cannot determine HDU type, so cannot write column data".into())
+            }
+            Err(e) => Err(e),
+        }
+    }
 }
 
 macro_rules! writes_col_impl {
     ($t: ty, $data_type: expr) => (
         impl WritesCol for $t {
-            fn write_col<T: Into<String>>(
-                fits_file: &FitsFile,
-                hdu: &FitsHdu,
-                col_name: T,
-                col_data: &[Self]) -> FitsResult<()> {
-                let colno = hdu.get_column_no(col_name.into())?;
-                let mut status = 0;
-                unsafe {
-                    sys::ffpcl(
-                        fits_file.fptr as *mut _,
-                        $data_type.into(),
-                        (colno + 1) as _,
-                        1,
-                        1,
-                        col_data.len() as _,
-                        col_data.as_ptr() as *mut _,
-                        &mut status);
-                }
-                fits_try!(status, ())
-            }
-
             fn write_col_range<T: Into<String>>(fits_file: &FitsFile,
                 hdu: &FitsHdu,
                 col_name: T,
                 col_data: &[Self],
                 rows: &Range<usize>)
             -> FitsResult<()> {
-                let colno = hdu.get_column_no(col_name.into())?;
-                let mut status = 0;
-                unsafe {
-                    sys::ffpcl(
-                        fits_file.fptr as *mut _,
-                        $data_type.into(),
-                        (colno + 1) as _,
-                        (rows.start + 1) as _,
-                        1,
-                        (rows.end + 1) as _,
-                        col_data.as_ptr() as *mut _,
-                        &mut status
-                    );
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::TableInfo { .. }) => {
+                        let colno = hdu.get_column_no(col_name.into())?;
+                        let mut status = 0;
+                        unsafe {
+                            sys::ffpcl(
+                                fits_file.fptr as *mut _,
+                                $data_type.into(),
+                                (colno + 1) as _,
+                                (rows.start + 1) as _,
+                                1,
+                                (rows.end + 1) as _,
+                                col_data.as_ptr() as *mut _,
+                                &mut status
+                            );
+                        }
+                        fits_try!(status, ())
+                    },
+                    Ok(HduInfo::ImageInfo { .. }) =>
+                        Err("Cannot write column data to FITS image".into()),
+                    Ok(HduInfo::AnyInfo { .. }) =>
+                        Err("Cannot determine HDU type, so cannot write column data".into()),
+                    Err(e) => Err(e),
                 }
-                fits_try!(status, ())
             }
         }
     )
@@ -620,6 +623,50 @@ writes_col_impl!(i64, DataType::TLONG);
 writes_col_impl!(i64, DataType::TLONGLONG);
 writes_col_impl!(f32, DataType::TFLOAT);
 writes_col_impl!(f64, DataType::TDOUBLE);
+
+impl WritesCol for String {
+    fn write_col_range<T: Into<String>>(fits_file: &FitsFile,
+                                        hdu: &FitsHdu,
+                                        col_name: T,
+                                        col_data: &[Self],
+                                        rows: &Range<usize>)
+                                        -> FitsResult<()> {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo { .. }) => {
+                let colno = hdu.get_column_no(col_name.into())?;
+                let width = column_display_width(fits_file, colno)?;
+                let mut status = 0;
+
+                // TODO: try to find a way to not dupliicate every string somehow!
+                let padded_strings: Vec<String> = col_data.iter()
+                    .map(|s| format!("{0:>1$}", s, width))
+                    .collect();
+
+                let mut ptr_array: Vec<*mut i8> = Vec::with_capacity(rows.end - rows.start);
+                for s in padded_strings {
+                    let ptr = s.as_bytes().as_ptr();
+                    ptr_array.push(ptr as *mut _);
+                }
+
+                unsafe {
+                    sys::ffpcls(fits_file.fptr as *mut _,
+                                (colno + 1) as _,
+                                1,
+                                1,
+                                col_data.len() as _,
+                                ptr_array.as_mut_ptr(),
+                                &mut status);
+                }
+                fits_try!(status, ())
+            }
+            Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
+            Ok(HduInfo::AnyInfo { .. }) => {
+                Err("Cannot determine HDU type, so cannot write column data".into())
+            }
+            Err(e) => Err(e),
+        }
+    }
+}
 
 /// Trait applied to types which can be read from a FITS header
 ///
@@ -783,12 +830,7 @@ pub trait ReadWriteImage: Sized {
                 }
                 Self::read_section(fits_file, 0, npixels)
             }
-            Ok(HduInfo::TableInfo { .. }) => {
-                Err(FitsError {
-                    status: 601,
-                    message: "cannot read image data from a table hdu".to_string(),
-                })
-            }
+            Ok(HduInfo::TableInfo { .. }) => Err("cannot read image data from a table hdu".into()),
             Ok(HduInfo::AnyInfo) => unreachable!(),
             Err(e) => Err(e),
         }
@@ -833,10 +875,8 @@ macro_rules! read_write_image_impl {
                         fits_try!(status, out)
 
                     },
-                    Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
-                        status: 601,
-                        message: "cannot read image data from a table hdu".to_string(),
-                    }),
+                    Ok(HduInfo::TableInfo { .. }) =>
+                        Err("cannot read image data from a table hdu".into()),
                     Ok(HduInfo::AnyInfo) => unreachable!(),
                     Err(e) => Err(e),
                 }
@@ -856,10 +896,8 @@ macro_rules! read_write_image_impl {
 
                         Self::read_section(fits_file, start, end)
                     },
-                    Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
-                        status: 601,
-                        message: "cannot read image data from a table hdu".to_string(),
-                    }),
+                    Ok(HduInfo::TableInfo { .. }) =>
+                        Err("cannot read image data from a table hdu".into()),
                     Ok(HduInfo::AnyInfo) => unreachable!(),
                     Err(e) => Err(e),
                 }
@@ -913,10 +951,8 @@ macro_rules! read_write_image_impl {
 
                             fits_try!(status, out)
                         }
-                        Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
-                            status: 601,
-                            message: "cannot read image data from a table hdu".to_string(),
-                        }),
+                        Ok(HduInfo::TableInfo { .. }) =>
+                            Err("cannot read image data from a table hdu".into()),
                         Ok(HduInfo::AnyInfo) => unreachable!(),
                         Err(e) => Err(e),
                     }
@@ -944,10 +980,8 @@ macro_rules! read_write_image_impl {
 
                             fits_try!(status, ())
                         },
-                        Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
-                            status: 601,
-                            message: "cannot write image data to a table hdu".to_string(),
-                        }),
+                        Ok(HduInfo::TableInfo { .. }) =>
+                            Err("cannot write image data to a table hdu".into()),
                         Ok(HduInfo::AnyInfo) => unreachable!(),
                         Err(e) => Err(e),
                     }
@@ -982,10 +1016,8 @@ macro_rules! read_write_image_impl {
 
                             fits_try!(status, ())
                         },
-                        Ok(HduInfo::TableInfo { .. }) => Err(FitsError {
-                            status: 601,
-                            message: "cannot write image data to a table hdu".to_string(),
-                        }),
+                        Ok(HduInfo::TableInfo { .. }) =>
+                            Err("cannot write image data to a table hdu".into()),
                         Ok(HduInfo::AnyInfo) => unreachable!(),
                         Err(e) => Err(e),
                     }
@@ -1638,6 +1670,15 @@ mod test {
             .unwrap();
     }
 
+    #[test]
+    fn fetching_column_width() {
+        use super::column_display_width;
+
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        f.hdu(1).unwrap();
+        let width = column_display_width(&f, 3).unwrap();
+        assert_eq!(width, 7);
+    }
 
     #[test]
     fn read_columns() {
@@ -1764,8 +1805,7 @@ mod test {
                                              .with_type(ColumnDataType::Int)
                                              .create()
                                              .unwrap()];
-            f.create_table("foo".to_string(), &table_description).unwrap();
-            let mut hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
 
             hdu.write_col("bar", &data_to_write).unwrap();
         }
@@ -1774,6 +1814,28 @@ mod test {
         let hdu = f.hdu("foo").unwrap();
         let data: Vec<i32> = hdu.read_col("bar").unwrap();
         assert_eq!(data, data_to_write);
+    }
+
+    #[test]
+    fn cannot_write_column_to_image_hdu() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        let data_to_write: Vec<i32> = vec![10101; 10];
+
+        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+
+        let image_description = ImageDescription {
+            data_type: ImageType::LONG_IMG,
+            dimensions: &[100, 20],
+        };
+        let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
+
+        match hdu.write_col("bar", &data_to_write) {
+            Ok(_) => panic!("Should return an error"),
+            Err(e) => assert_eq!(e.status, 600),
+        }
     }
 
     #[test]
@@ -1791,8 +1853,7 @@ mod test {
                                              .with_type(ColumnDataType::Int)
                                              .create()
                                              .unwrap()];
-            f.create_table("foo".to_string(), &table_description).unwrap();
-            let mut hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
 
             hdu.write_col_range("bar", &data_to_write, &(0..5)).unwrap();
         }
@@ -1802,6 +1863,39 @@ mod test {
         let data: Vec<i32> = hdu.read_col("bar").unwrap();
         assert_eq!(data.len(), 6);
         assert_eq!(data[..], data_to_write[0..6]);
+    }
+
+    #[test]
+    fn write_string_col() {
+        use columndescription::*;
+
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        let mut data_to_write: Vec<String> = Vec::new();
+        for i in 0..50 {
+            data_to_write.push(format!("value{}", i));
+        }
+
+        {
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let table_description = vec![ColumnDescription::new("bar")
+                                             .with_type(ColumnDataType::String)
+                                             .that_repeats(7)
+                                             .create()
+                                             .unwrap()];
+            let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
+
+            hdu.write_col("bar", &data_to_write).unwrap();
+        }
+
+        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+        let hdu = f.hdu("foo").unwrap();
+        let data: Vec<String> = hdu.read_col("bar").unwrap();
+        assert_eq!(data.len(), data_to_write.len());
+        assert_eq!(data[0], " value0");
+        assert_eq!(data[49], "value49");
     }
 
     #[test]
@@ -1864,7 +1958,7 @@ mod test {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("TESTEXT").unwrap();
         if let Err(e) = hdu.read_region::<i32>(&vec![&(0..10), &(0..10)]) {
-            assert_eq!(e.status, 601);
+            assert_eq!(e.status, 600);
             assert_eq!(e.message, "cannot read image data from a table hdu");
         } else {
             panic!("Should have been an error");
@@ -1876,7 +1970,7 @@ mod test {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("TESTEXT").unwrap();
         if let Err(e) = hdu.read_section::<i32>(0, 100) {
-            assert_eq!(e.status, 601);
+            assert_eq!(e.status, 600);
             assert_eq!(e.message, "cannot read image data from a table hdu");
         } else {
             panic!("Should have been an error");
@@ -1899,9 +1993,7 @@ mod test {
                 data_type: ImageType::LONG_IMG,
                 dimensions: &[100, 20],
             };
-            f.create_image("foo".to_string(), &image_description).unwrap();
-
-            let mut hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
             hdu.write_section(0, 100, &data_to_write).unwrap();
         }
 
@@ -1927,9 +2019,7 @@ mod test {
                 data_type: ImageType::LONG_IMG,
                 dimensions: &[100, 20],
             };
-            f.create_image("foo".to_string(), &image_description).unwrap();
-
-            let mut hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
 
             let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
             hdu.write_region(&[&(0..10), &(0..10)], &data).unwrap();
@@ -1957,11 +2047,9 @@ mod test {
                                       .with_type(ColumnDataType::Int)
                                       .create()
                                       .unwrap()];
-        f.create_table("foo".to_string(), table_description).unwrap();
-
-        let mut hdu = f.hdu("foo").unwrap();
+        let mut hdu = f.create_table("foo".to_string(), table_description).unwrap();
         if let Err(e) = hdu.write_section(0, 100, &data_to_write) {
-            assert_eq!(e.status, 601);
+            assert_eq!(e.status, 600);
             assert_eq!(e.message, "cannot write image data to a table hdu");
         } else {
             panic!("Should have thrown an error");
@@ -1982,12 +2070,10 @@ mod test {
                                       .with_type(ColumnDataType::Int)
                                       .create()
                                       .unwrap()];
-        f.create_table("foo".to_string(), table_description).unwrap();
-
-        let mut hdu = f.hdu("foo").unwrap();
+        let mut hdu = f.create_table("foo".to_string(), table_description).unwrap();
 
         if let Err(e) = hdu.write_region(&vec![&(0..10), &(0..10)], &data_to_write) {
-            assert_eq!(e.status, 601);
+            assert_eq!(e.status, 600);
             assert_eq!(e.message, "cannot write image data to a table hdu");
         } else {
             panic!("Should have thrown an error");
