@@ -1766,8 +1766,7 @@ mod test {
                                              .with_type(ColumnDataType::Int)
                                              .create()
                                              .unwrap()];
-            f.create_table("foo".to_string(), &table_description).unwrap();
-            let mut hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
 
             hdu.write_col("bar", &data_to_write).unwrap();
         }
@@ -1817,8 +1816,7 @@ mod test {
                                              .with_type(ColumnDataType::Int)
                                              .create()
                                              .unwrap()];
-            f.create_table("foo".to_string(), &table_description).unwrap();
-            let mut hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
 
             hdu.write_col_range("bar", &data_to_write, &(0..5)).unwrap();
         }
@@ -1925,9 +1923,7 @@ mod test {
                 data_type: ImageType::LONG_IMG,
                 dimensions: &[100, 20],
             };
-            f.create_image("foo".to_string(), &image_description).unwrap();
-
-            let mut hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
             hdu.write_section(0, 100, &data_to_write).unwrap();
         }
 
@@ -1953,9 +1949,7 @@ mod test {
                 data_type: ImageType::LONG_IMG,
                 dimensions: &[100, 20],
             };
-            f.create_image("foo".to_string(), &image_description).unwrap();
-
-            let mut hdu = f.hdu("foo").unwrap();
+            let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
 
             let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
             hdu.write_region(&[&(0..10), &(0..10)], &data).unwrap();
@@ -1983,9 +1977,7 @@ mod test {
                                       .with_type(ColumnDataType::Int)
                                       .create()
                                       .unwrap()];
-        f.create_table("foo".to_string(), table_description).unwrap();
-
-        let mut hdu = f.hdu("foo").unwrap();
+        let mut hdu = f.create_table("foo".to_string(), table_description).unwrap();
         if let Err(e) = hdu.write_section(0, 100, &data_to_write) {
             assert_eq!(e.status, 601);
             assert_eq!(e.message, "cannot write image data to a table hdu");
@@ -2008,9 +2000,7 @@ mod test {
                                       .with_type(ColumnDataType::Int)
                                       .create()
                                       .unwrap()];
-        f.create_table("foo".to_string(), table_description).unwrap();
-
-        let mut hdu = f.hdu("foo").unwrap();
+        let mut hdu = f.create_table("foo".to_string(), table_description).unwrap();
 
         if let Err(e) = hdu.write_region(&vec![&(0..10), &(0..10)], &data_to_write) {
             assert_eq!(e.status, 601);
