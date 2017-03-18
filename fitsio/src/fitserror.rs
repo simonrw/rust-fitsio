@@ -31,6 +31,15 @@ impl ::std::error::Error for FitsError {
     }
 }
 
+impl<'a> From<&'a str> for FitsError {
+    fn from(s: &'a str) -> Self {
+        FitsError {
+            status: 600,
+            message: s.to_string(),
+        }
+    }
+}
+
 /// Macro for returning a FITS error type
 macro_rules! fits_try {
     ($status: ident, $e: expr) => {
