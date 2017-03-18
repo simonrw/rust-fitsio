@@ -558,33 +558,22 @@ pub trait WritesCol {
                                   col_name: T,
                                   col_data: &[Self])
                                   -> FitsResult<()>
-        where Self: Sized;
+        where Self: Sized
+    {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo { .. }) => {
+                let row_range = 0..col_data.len() - 1;
+                Self::write_col_range(fits_file, hdu, col_name, col_data, &row_range)
+            }
+            Err(e) => Err(e),
+            _ => panic!("Unknown error"),
+        }
+    }
 }
 
 macro_rules! writes_col_impl {
     ($t: ty, $data_type: expr) => (
         impl WritesCol for $t {
-            fn write_col<T: Into<String>>(
-                fits_file: &FitsFile,
-                hdu: &FitsHdu,
-                col_name: T,
-                col_data: &[Self]) -> FitsResult<()> {
-                let colno = hdu.get_column_no(col_name.into())?;
-                let mut status = 0;
-                unsafe {
-                    sys::ffpcl(
-                        fits_file.fptr as *mut _,
-                        $data_type.into(),
-                        (colno + 1) as _,
-                        1,
-                        1,
-                        col_data.len() as _,
-                        col_data.as_ptr() as *mut _,
-                        &mut status);
-                }
-                fits_try!(status, ())
-            }
-
             fn write_col_range<T: Into<String>>(fits_file: &FitsFile,
                 hdu: &FitsHdu,
                 col_name: T,
@@ -592,7 +581,7 @@ macro_rules! writes_col_impl {
                 rows: &Range<usize>)
             -> FitsResult<()> {
                 match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
+                    Ok(HduInfo::TableInfo { .. }) => {
                         let colno = hdu.get_column_no(col_name.into())?;
                         let mut status = 0;
                         unsafe {
