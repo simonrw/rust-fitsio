@@ -1154,6 +1154,7 @@ pub struct FitsHdu<'open> {
 
     /// Information about the current HDU
     pub info: HduInfo,
+    hdu_num: usize,
 }
 
 impl<'open> FitsHdu<'open> {
@@ -1166,25 +1167,34 @@ impl<'open> FitsHdu<'open> {
                 Ok(FitsHdu {
                     fits_file: fits_file,
                     info: hdu_info,
+                    hdu_num: fits_file.hdu_number(),
                 })
             }
             Err(e) => Err(e),
         }
     }
 
+    /// Function to make the HDU the current hdu
+    fn make_current(&self) -> FitsResult<()> {
+        self.fits_file.change_hdu(self.hdu_num)
+    }
+
     /// Read header key
     pub fn read_key<T: ReadsKey>(&self, name: &str) -> FitsResult<T> {
+        self.make_current()?;
         T::read_key(self.fits_file, name)
     }
 
     /// Write header key
     pub fn write_key<T: WritesKey>(&mut self, name: &str, value: T) -> FitsResult<()> {
+        self.make_current()?;
         fits_check_readwrite!(self.fits_file);
         T::write_key(self.fits_file, name, value)
     }
 
     /// Read an image between pixel a and pixel b into a `Vec`
     pub fn read_section<T: ReadWriteImage>(&self, start: usize, end: usize) -> FitsResult<Vec<T>> {
+        self.make_current()?;
         T::read_section(self.fits_file, start, end)
     }
 
@@ -1193,16 +1203,19 @@ impl<'open> FitsHdu<'open> {
                                         start_row: usize,
                                         num_rows: usize)
                                         -> FitsResult<Vec<T>> {
+        self.make_current()?;
         T::read_rows(self.fits_file, start_row, num_rows)
     }
 
     /// Read a single row from a fits image
     pub fn read_row<T: ReadWriteImage>(&self, row: usize) -> FitsResult<Vec<T>> {
+        self.make_current()?;
         T::read_row(self.fits_file, row)
     }
 
     /// Read a whole fits image into a vector
     pub fn read_image<T: ReadWriteImage>(&self) -> FitsResult<Vec<T>> {
+        self.make_current()?;
         T::read_image(self.fits_file)
     }
 
@@ -1212,6 +1225,7 @@ impl<'open> FitsHdu<'open> {
                                             end: usize,
                                             data: &[T])
                                             -> FitsResult<()> {
+        self.make_current()?;
         fits_check_readwrite!(self.fits_file);
         T::write_section(self.fits_file, start, end, data)
     }
@@ -1221,16 +1235,20 @@ impl<'open> FitsHdu<'open> {
                                            ranges: &[&Range<usize>],
                                            data: &[T])
                                            -> FitsResult<()> {
+        self.make_current()?;
         fits_check_readwrite!(self.fits_file);
         T::write_region(self.fits_file, ranges, data)
     }
 
     /// Read a square region into a `Vec`
     pub fn read_region<T: ReadWriteImage>(&self, ranges: &[&Range<usize>]) -> FitsResult<Vec<T>> {
+        self.make_current()?;
         T::read_region(self.fits_file, ranges)
     }
 
     pub fn get_column_no<T: Into<String>>(&self, col_name: T) -> FitsResult<usize> {
+        self.make_current()?;
+
         let mut status = 0;
         let mut colno = 0;
 
@@ -1251,6 +1269,7 @@ impl<'open> FitsHdu<'open> {
 
     /// Read a binary table column
     pub fn read_col<T: ReadsCol>(&self, name: &str) -> FitsResult<Vec<T>> {
+        self.make_current()?;
         T::read_col(self.fits_file, name)
     }
 
@@ -1258,6 +1277,7 @@ impl<'open> FitsHdu<'open> {
                                        name: &str,
                                        range: &Range<usize>)
                                        -> FitsResult<Vec<T>> {
+        self.make_current()?;
         T::read_col_range(self.fits_file, name, range)
     }
 
@@ -1265,6 +1285,7 @@ impl<'open> FitsHdu<'open> {
                                                     name: N,
                                                     col_data: &[T])
                                                     -> FitsResult<()> {
+        self.make_current()?;
         fits_check_readwrite!(self.fits_file);
         T::write_col(self.fits_file, self, name, col_data)
     }
@@ -1274,11 +1295,13 @@ impl<'open> FitsHdu<'open> {
                                                           col_data: &[T],
                                                           rows: &Range<usize>)
                                                           -> FitsResult<()> {
+        self.make_current()?;
         fits_check_readwrite!(self.fits_file);
         T::write_col_range(self.fits_file, self, name, col_data, rows)
     }
 
     pub fn columns(&self) -> ColumnIterator {
+        self.make_current().expect("Could not change current hdu");
         ColumnIterator::new(self.fits_file)
     }
 }
@@ -2078,5 +2101,23 @@ mod test {
         } else {
             panic!("Should have thrown an error");
         }
+    }
+
+    #[test]
+    fn multi_hdu_workflow() {
+        /* Check that hdu objects change the current HDU on every file access method */
+
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let primary_hdu = f.hdu(0).unwrap();
+        let column_hdu = f.hdu(1).unwrap();
+
+        let first_row: Vec<i32> = primary_hdu.read_section(0, 100).unwrap();
+        assert_eq!(first_row.len(), 100);
+        assert_eq!(first_row[0], 108);
+        assert_eq!(first_row[49], 176);
+
+        let intcol_data: Vec<i32> = column_hdu.read_col("intcol").unwrap();
+        assert_eq!(intcol_data[0], 18);
+        assert_eq!(intcol_data[49], 12);
     }
 }
