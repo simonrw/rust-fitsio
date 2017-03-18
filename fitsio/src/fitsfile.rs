@@ -473,6 +473,19 @@ reads_col_impl!(i64, ffgcvjj, 0);
 #[cfg(target_arch = "x86_64")]
 reads_col_impl!(u64, ffgcvuj, 0);
 
+/// Helper function to get the display width of a column
+fn column_display_width(fits_file: &FitsFile, column_number: usize) -> FitsResult<usize> {
+    let mut status = 0;
+    let mut width = 0;
+    unsafe {
+        sys::ffgcdw(fits_file.fptr as *mut _,
+                    (column_number + 1) as _,
+                    &mut width,
+                    &mut status);
+    }
+    fits_try!(status, width as usize)
+}
+
 impl ReadsCol for String {
     fn read_col_range<T: Into<String>>(fits_file: &FitsFile,
                                        name: T,
@@ -1625,6 +1638,15 @@ mod test {
             .unwrap();
     }
 
+    #[test]
+    fn fetching_column_width() {
+        use super::column_display_width;
+
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        f.hdu(1).unwrap();
+        let width = column_display_width(&f, 3).unwrap();
+        assert_eq!(width, 7);
+    }
 
     #[test]
     fn read_columns() {
