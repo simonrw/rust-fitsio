@@ -1889,6 +1889,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn write_string_col() {
         use columndescription::*;
 
