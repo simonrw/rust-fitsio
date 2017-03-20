@@ -654,7 +654,7 @@ impl WritesCol for String {
                                 1,
                                 1,
                                 col_data.len() as _,
-                                ptr_array.as_mut_ptr(),
+                                ptr_array.as_mut_ptr() as _,
                                 &mut status);
                 }
                 fits_try!(status, ())
