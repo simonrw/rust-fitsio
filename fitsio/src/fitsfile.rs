@@ -466,11 +466,11 @@ reads_col_impl!(i32, ffgcvk, 0);
 reads_col_impl!(u32, ffgcvuk, 0);
 reads_col_impl!(f32, ffgcve, 0.0);
 reads_col_impl!(f64, ffgcvd, 0.0);
-#[cfg(target_arch = "x86_64")]
+#[cfg(target_pointer_width = "64")]
 reads_col_impl!(i64, ffgcvj, 0);
-#[cfg(target_arch = "arm")]
+#[cfg(target_pointer_width = "32")]
 reads_col_impl!(i64, ffgcvjj, 0);
-#[cfg(target_arch = "x86_64")]
+#[cfg(target_pointer_width = "64")]
 reads_col_impl!(u64, ffgcvuj, 0);
 
 /// Helper function to get the display width of a column
@@ -614,12 +614,12 @@ macro_rules! writes_col_impl {
 }
 
 writes_col_impl!(u32, DataType::TUINT);
-#[cfg(target_arch = "x86_64")]
+#[cfg(target_pointer_width = "64")]
 writes_col_impl!(u64, DataType::TULONG);
 writes_col_impl!(i32, DataType::TINT);
-#[cfg(target_arch = "x86_64")]
+#[cfg(target_pointer_width = "64")]
 writes_col_impl!(i64, DataType::TLONG);
-#[cfg(target_arch = "arm")]
+#[cfg(target_pointer_width = "32")]
 writes_col_impl!(i64, DataType::TLONGLONG);
 writes_col_impl!(f32, DataType::TFLOAT);
 writes_col_impl!(f64, DataType::TDOUBLE);
@@ -704,9 +704,9 @@ macro_rules! reads_key_impl {
 }
 
 reads_key_impl!(i32, ffgkyl);
-#[cfg(target_arch = "x86_64")]
+#[cfg(target_pointer_width = "64")]
 reads_key_impl!(i64, ffgkyj);
-#[cfg(target_arch = "arm")]
+#[cfg(target_pointer_width = "32")]
 reads_key_impl!(i64, ffgkyjj);
 reads_key_impl!(f32, ffgkye);
 reads_key_impl!(f64, ffgkyd);
@@ -1029,13 +1029,13 @@ macro_rules! read_write_image_impl {
 
 read_write_image_impl!(i8, DataType::TSHORT);
 read_write_image_impl!(i32, DataType::TINT);
-#[cfg(target_arch = "x86_64")]
+#[cfg(target_pointer_width = "64")]
 read_write_image_impl!(i64, DataType::TLONG);
-#[cfg(target_arch = "arm")]
+#[cfg(target_pointer_width = "32")]
 read_write_image_impl!(i64, DataType::TLONGLONG);
 read_write_image_impl!(u8, DataType::TUSHORT);
 read_write_image_impl!(u32, DataType::TUINT);
-#[cfg(target_arch = "x86_64")]
+#[cfg(target_pointer_width = "64")]
 read_write_image_impl!(u64, DataType::TULONG);
 read_write_image_impl!(f32, DataType::TFLOAT);
 read_write_image_impl!(f64, DataType::TDOUBLE);
