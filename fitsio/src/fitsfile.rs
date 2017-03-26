@@ -1274,7 +1274,23 @@ impl<'open> FitsHdu<'open> {
     pub fn resize(&mut self, new_size: &[usize]) -> FitsResult<()> {
         self.make_current()?;
         fits_check_readwrite!(self.fits_file);
-        Ok(())
+
+        match self.info {
+            HduInfo::ImageInfo { image_type, .. } => {
+                let mut status = 0;
+                unsafe {
+                    sys::ffrsim(self.fits_file.fptr as *mut _,
+                                image_type.into(),
+                                2,
+                                new_size.as_ptr() as *mut _,
+                                &mut status);
+                }
+                fits_try!(status, ())
+            },
+            HduInfo::TableInfo { .. } => return Err("cannot resize binary table".into()),
+            HduInfo::AnyInfo => unreachable!(),
+        }
+
     }
 
     pub fn get_column_no<T: Into<String>>(&self, col_name: T) -> FitsResult<usize> {
@@ -2090,7 +2106,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn resizing_images() {
         let tdir = tempdir::TempDir::new("fitsio-").unwrap();
         let tdir_path = tdir.path();
@@ -2105,17 +2120,27 @@ mod test {
                 data_type: ImageType::LONG_IMG,
                 dimensions: &[100, 20],
             };
-            let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
+            f.create_image("foo".to_string(), &image_description).unwrap();
         }
 
-        let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
-        let mut hdu = f.hdu("foo").unwrap();
-        hdu.resize(&vec![1024, 1024]).unwrap();
-        match hdu.info {
-            HduInfo::ImageInfo { shape } => {
-                assert_eq!(shape, vec![1024, 1024]);
-            },
-            _ => panic!("Unexpected hdu type"),
+        /* Now resize the image */
+        {
+            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
+            let mut hdu = f.hdu("foo").unwrap();
+            hdu.resize(&vec![1024, 1024]).unwrap();
+        }
+
+        /* Images are only resized when flushed to disk, so close the file and
+         * open it again */
+        {
+            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            match hdu.info {
+                HduInfo::ImageInfo { shape, .. } => {
+                    assert_eq!(shape, vec![1024, 1024]);
+                },
+                _ => panic!("Unexpected hdu type"),
+            }
         }
     }
 
