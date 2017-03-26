@@ -198,16 +198,14 @@ impl FitsFile {
                      * See description here:
                      * https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node40.html
                      */
-                    sys::ffgiet(self.fptr as *mut _,
-                                &mut bitpix,
-                                &mut status);
+                    sys::ffgiet(self.fptr as *mut _, &mut bitpix, &mut status);
                 }
 
                 let image_type = match bitpix {
-                    8   => ImageType::BYTE_IMG,
-                    16  => ImageType::SHORT_IMG,
-                    32  => ImageType::LONG_IMG,
-                    64  => ImageType::LONGLONG_IMG,
+                    8 => ImageType::BYTE_IMG,
+                    16 => ImageType::SHORT_IMG,
+                    32 => ImageType::LONG_IMG,
+                    64 => ImageType::LONGLONG_IMG,
                     -32 => ImageType::FLOAT_IMG,
                     -64 => ImageType::DOUBLE_IMG,
                     _ => unreachable!(),
@@ -1286,7 +1284,7 @@ impl<'open> FitsHdu<'open> {
                                 &mut status);
                 }
                 fits_try!(status, ())
-            },
+            }
             HduInfo::TableInfo { .. } => return Err("cannot resize binary table".into()),
             HduInfo::AnyInfo => unreachable!(),
         }
@@ -2138,7 +2136,7 @@ mod test {
             match hdu.info {
                 HduInfo::ImageInfo { shape, .. } => {
                     assert_eq!(shape, vec![1024, 1024]);
-                },
+                }
                 _ => panic!("Unexpected hdu type"),
             }
         }
