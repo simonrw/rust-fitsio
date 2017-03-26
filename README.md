@@ -39,6 +39,10 @@ This repository contains `fitsio-sys-bindgen` which generates the C wrapper usin
 `fitsio-sys` [![`fitsio-sys` documentation](https://docs.rs/fitsio-sys/badge.svg)](https://docs.rs/fitsio-sys)<br />
 `fitsio-sys-bindgen` [![`fitsio-sys-bindgen` documentation](https://docs.rs/fitsio-sys-bindgen/badge.svg)](https://docs.rs/fitsio-sys-bindgen)<br />
 
+## Feature support
+
+Supported features of the underlying `cfitsio` library that _are_ available in `fitsio` are detailed in [this tracking issue](https://github.com/mindriot101/rust-fitsio/issues/15).
+
 ## Examples
 
 Open a fits file
