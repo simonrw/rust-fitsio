@@ -80,7 +80,7 @@ macro_rules! imagetype_into_impl {
                 }
             }
         }
-        )
+    )
 }
 
 imagetype_into_impl!(i8);
@@ -94,7 +94,7 @@ imagetype_into_impl!(i64);
 /// Otherwise the variant is `HduInfo::TableInfo`.
 #[derive(Debug)]
 pub enum HduInfo {
-    ImageInfo { shape: Vec<usize> },
+    ImageInfo { shape: Vec<usize>, image_type: ImageType },
     TableInfo {
         column_descriptions: Vec<ConcreteColumnDescription>,
         num_rows: usize,
@@ -191,7 +191,7 @@ mod test {
 
     #[test]
     fn hdu_types() {
-        let image_info = HduInfo::ImageInfo { shape: Vec::new() };
+        let image_info = HduInfo::ImageInfo { shape: Vec::new(), image_type: ImageType::LONGLONG_IMG };
 
         let table_info = HduInfo::TableInfo {
             column_descriptions: Vec::new(),
