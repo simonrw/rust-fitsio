@@ -191,7 +191,32 @@ impl FitsFile {
                                 &mut status);
                 }
 
-                HduInfo::ImageInfo { shape: shape.iter().map(|v| *v as usize).collect() }
+                let mut bitpix = 0;
+                unsafe {
+                    /* Use equiv type as this is more useful
+                     *
+                     * See description here:
+                     * https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node40.html
+                     */
+                    sys::ffgiet(self.fptr as *mut _,
+                                &mut bitpix,
+                                &mut status);
+                }
+
+                let image_type = match bitpix {
+                    8   => ImageType::BYTE_IMG,
+                    16  => ImageType::SHORT_IMG,
+                    32  => ImageType::LONG_IMG,
+                    64  => ImageType::LONGLONG_IMG,
+                    -32 => ImageType::FLOAT_IMG,
+                    -64 => ImageType::DOUBLE_IMG,
+                    _ => unreachable!(),
+                };
+
+                HduInfo::ImageInfo {
+                    shape: shape.iter().map(|v| *v as usize).collect(),
+                    image_type: image_type,
+                }
             }
             1 | 2 => {
                 let mut num_rows = 0;
@@ -823,7 +848,7 @@ pub trait ReadWriteImage: Sized {
     /// This reads an entire image into a one-dimensional vector
     fn read_image(fits_file: &FitsFile) -> FitsResult<Vec<Self>> {
         match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::ImageInfo { shape }) => {
+            Ok(HduInfo::ImageInfo { shape, .. }) => {
                 let mut npixels = 1;
                 for dimension in &shape {
                     npixels *= *dimension;
@@ -856,7 +881,7 @@ macro_rules! read_write_image_impl {
                 start: usize,
                 end: usize) -> FitsResult<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { shape: _shape }) => {
+                    Ok(HduInfo::ImageInfo { shape: _shape, .. }) => {
                         let nelements = end - start;
                         let mut out = vec![0 as $t; nelements];
                         let mut status = 0;
@@ -885,7 +910,7 @@ macro_rules! read_write_image_impl {
             fn read_rows(fits_file: &FitsFile, start_row: usize, num_rows: usize)
                 -> FitsResult<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { shape }) => {
+                    Ok(HduInfo::ImageInfo { shape, .. }) => {
                         if shape.len() != 2 {
                             unimplemented!();
                         }
@@ -910,7 +935,7 @@ macro_rules! read_write_image_impl {
             fn read_region(fits_file: &FitsFile, ranges: &[&Range<usize>])
                 -> FitsResult<Vec<Self>> {
                     match fits_file.fetch_hdu_info() {
-                        Ok(HduInfo::ImageInfo { shape }) => {
+                        Ok(HduInfo::ImageInfo { shape, .. }) => {
                             if shape.len() != 2 {
                                 unimplemented!();
                             }
@@ -1431,9 +1456,10 @@ mod test {
 
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
-            Ok(HduInfo::ImageInfo { shape }) => {
+            Ok(HduInfo::ImageInfo { shape, image_type }) => {
                 assert_eq!(shape.len(), 2);
                 assert_eq!(shape, vec![100, 100]);
+                assert_eq!(image_type, ImageType::LONG_IMG);
             }
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),

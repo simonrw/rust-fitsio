@@ -70,7 +70,7 @@
 //! # let fptr = FitsFile::open(filename).unwrap();
 //! let hdu = fptr.hdu(0).unwrap();
 //! // image HDU
-//! if let HduInfo::ImageInfo { shape } = hdu.info {
+//! if let HduInfo::ImageInfo { shape, .. } = hdu.info {
 //!    println!("Image is {}-dimensional", shape.len());
 //!    println!("Found image with shape {:?}", shape);
 //! }
