@@ -1271,6 +1271,12 @@ impl<'open> FitsHdu<'open> {
         T::read_region(self.fits_file, ranges)
     }
 
+    pub fn resize(&mut self, new_size: &[usize]) -> FitsResult<()> {
+        self.make_current()?;
+        fits_check_readwrite!(self.fits_file);
+        Ok(())
+    }
+
     pub fn get_column_no<T: Into<String>>(&self, col_name: T) -> FitsResult<usize> {
         self.make_current()?;
 
@@ -2081,6 +2087,36 @@ mod test {
         assert_eq!(chunk.len(), 11 * 11);
         assert_eq!(chunk[0], 50);
         assert_eq!(chunk[25], 75);
+    }
+
+    #[test]
+    #[ignore]
+    fn resizing_images() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        // Scope ensures file is closed properly
+        {
+            use fitsfile::ImageDescription;
+
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let image_description = ImageDescription {
+                data_type: ImageType::LONG_IMG,
+                dimensions: &[100, 20],
+            };
+            let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
+        }
+
+        let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
+        let mut hdu = f.hdu("foo").unwrap();
+        hdu.resize(&vec![1024, 1024]).unwrap();
+        match hdu.info {
+            HduInfo::ImageInfo { shape } => {
+                assert_eq!(shape, vec![1024, 1024]);
+            },
+            _ => panic!("Unexpected hdu type"),
+        }
     }
 
     #[test]
