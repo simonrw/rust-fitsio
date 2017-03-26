@@ -191,7 +191,30 @@ impl FitsFile {
                                 &mut status);
                 }
 
-                HduInfo::ImageInfo { shape: shape.iter().map(|v| *v as usize).collect() }
+                let mut bitpix = 0;
+                unsafe {
+                    /* Use equiv type as this is more useful
+                     *
+                     * See description here:
+                     * https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node40.html
+                     */
+                    sys::ffgiet(self.fptr as *mut _, &mut bitpix, &mut status);
+                }
+
+                let image_type = match bitpix {
+                    8 => ImageType::BYTE_IMG,
+                    16 => ImageType::SHORT_IMG,
+                    32 => ImageType::LONG_IMG,
+                    64 => ImageType::LONGLONG_IMG,
+                    -32 => ImageType::FLOAT_IMG,
+                    -64 => ImageType::DOUBLE_IMG,
+                    _ => unreachable!(),
+                };
+
+                HduInfo::ImageInfo {
+                    shape: shape.iter().map(|v| *v as usize).collect(),
+                    image_type: image_type,
+                }
             }
             1 | 2 => {
                 let mut num_rows = 0;
@@ -823,7 +846,7 @@ pub trait ReadWriteImage: Sized {
     /// This reads an entire image into a one-dimensional vector
     fn read_image(fits_file: &FitsFile) -> FitsResult<Vec<Self>> {
         match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::ImageInfo { shape }) => {
+            Ok(HduInfo::ImageInfo { shape, .. }) => {
                 let mut npixels = 1;
                 for dimension in &shape {
                     npixels *= *dimension;
@@ -856,7 +879,7 @@ macro_rules! read_write_image_impl {
                 start: usize,
                 end: usize) -> FitsResult<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { shape: _shape }) => {
+                    Ok(HduInfo::ImageInfo { shape: _shape, .. }) => {
                         let nelements = end - start;
                         let mut out = vec![0 as $t; nelements];
                         let mut status = 0;
@@ -885,7 +908,7 @@ macro_rules! read_write_image_impl {
             fn read_rows(fits_file: &FitsFile, start_row: usize, num_rows: usize)
                 -> FitsResult<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { shape }) => {
+                    Ok(HduInfo::ImageInfo { shape, .. }) => {
                         if shape.len() != 2 {
                             unimplemented!();
                         }
@@ -910,7 +933,7 @@ macro_rules! read_write_image_impl {
             fn read_region(fits_file: &FitsFile, ranges: &[&Range<usize>])
                 -> FitsResult<Vec<Self>> {
                     match fits_file.fetch_hdu_info() {
-                        Ok(HduInfo::ImageInfo { shape }) => {
+                        Ok(HduInfo::ImageInfo { shape, .. }) => {
                             if shape.len() != 2 {
                                 unimplemented!();
                             }
@@ -1246,6 +1269,28 @@ impl<'open> FitsHdu<'open> {
         T::read_region(self.fits_file, ranges)
     }
 
+    pub fn resize(&mut self, new_size: &[usize]) -> FitsResult<()> {
+        self.make_current()?;
+        fits_check_readwrite!(self.fits_file);
+
+        match self.info {
+            HduInfo::ImageInfo { image_type, .. } => {
+                let mut status = 0;
+                unsafe {
+                    sys::ffrsim(self.fits_file.fptr as *mut _,
+                                image_type.into(),
+                                2,
+                                new_size.as_ptr() as *mut _,
+                                &mut status);
+                }
+                fits_try!(status, ())
+            }
+            HduInfo::TableInfo { .. } => return Err("cannot resize binary table".into()),
+            HduInfo::AnyInfo => unreachable!(),
+        }
+
+    }
+
     pub fn get_column_no<T: Into<String>>(&self, col_name: T) -> FitsResult<usize> {
         self.make_current()?;
 
@@ -1431,9 +1476,10 @@ mod test {
 
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
-            Ok(HduInfo::ImageInfo { shape }) => {
+            Ok(HduInfo::ImageInfo { shape, image_type }) => {
                 assert_eq!(shape.len(), 2);
                 assert_eq!(shape, vec![100, 100]);
+                assert_eq!(image_type, ImageType::LONG_IMG);
             }
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
@@ -2055,6 +2101,45 @@ mod test {
         assert_eq!(chunk.len(), 11 * 11);
         assert_eq!(chunk[0], 50);
         assert_eq!(chunk[25], 75);
+    }
+
+    #[test]
+    fn resizing_images() {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        // Scope ensures file is closed properly
+        {
+            use fitsfile::ImageDescription;
+
+            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let image_description = ImageDescription {
+                data_type: ImageType::LONG_IMG,
+                dimensions: &[100, 20],
+            };
+            f.create_image("foo".to_string(), &image_description).unwrap();
+        }
+
+        /* Now resize the image */
+        {
+            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
+            let mut hdu = f.hdu("foo").unwrap();
+            hdu.resize(&vec![1024, 1024]).unwrap();
+        }
+
+        /* Images are only resized when flushed to disk, so close the file and
+         * open it again */
+        {
+            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            match hdu.info {
+                HduInfo::ImageInfo { shape, .. } => {
+                    assert_eq!(shape, vec![1024, 1024]);
+                }
+                _ => panic!("Unexpected hdu type"),
+            }
+        }
     }
 
     #[test]
