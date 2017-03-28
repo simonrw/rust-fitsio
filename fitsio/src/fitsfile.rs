@@ -1361,7 +1361,19 @@ mod test {
     use types::*;
     use fitsfile::ImageDescription;
     use fitserror::FitsError;
+    use std::path::Path;
     use std::{f32, f64};
+
+    /// Function to allow access to a temporary file
+    fn with_temp_file<F>(callback: F)
+        where F: for<'a> Fn(&'a str) {
+        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("test.fits");
+
+        let filename_str = filename.to_str().expect("cannot create string filename");
+        callback(filename_str);
+    }
 
     #[test]
     fn opening_an_existing_file() {
@@ -1373,23 +1385,20 @@ mod test {
 
     #[test]
     fn creating_a_new_file() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
-        assert!(!filename.exists());
+        with_temp_file(|filename| {
+            FitsFile::create(filename)
+                .map(|f| {
+                    assert!(Path::new(filename).exists());
 
-        FitsFile::create(filename.to_str().unwrap())
-            .map(|f| {
-                assert!(filename.exists());
-
-                // Ensure the empty primary has been written
-                let naxis: i64 = f.hdu(0)
-                    .unwrap()
-                    .read_key("NAXIS")
-                    .unwrap();
-                assert_eq!(naxis, 0);
-            })
+                    // Ensure the empty primary has been written
+                    let naxis: i64 = f.hdu(0)
+                        .unwrap()
+                        .read_key("NAXIS")
+                        .unwrap();
+                    assert_eq!(naxis, 0);
+                })
             .unwrap();
+        });
     }
 
     #[test]
@@ -1397,60 +1406,58 @@ mod test {
         use columndescription::*;
         use std::fs;
 
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
 
-        fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
-        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
+            fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
+            let f = FitsFile::open(filename).unwrap();
 
-        match f.create_image("FOO".to_string(),
-                             &ImageDescription {
-                                 data_type: ImageType::LONG_IMG,
-                                 dimensions: &[100, 100],
-                             }) {
-            Ok(_) => panic!("Should fail"),
-            Err(e) => {
-                assert_eq!(e.status, 602);
+            match f.create_image("FOO".to_string(),
+            &ImageDescription {
+                data_type: ImageType::LONG_IMG,
+                dimensions: &[100, 100],
+            }) {
+                Ok(_) => panic!("Should fail"),
+                Err(e) => {
+                    assert_eq!(e.status, 602);
+                }
             }
-        }
 
-        let bar_column_description = ColumnDescription::new("bar")
-            .with_type(ColumnDataType::Int)
-            .create()
-            .unwrap();
-        match f.create_table("FOO".to_string(), &vec![bar_column_description]) {
-            Ok(_) => panic!("Should fail"),
-            Err(e) => {
-                assert_eq!(e.status, 602);
+            let bar_column_description = ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap();
+            match f.create_table("FOO".to_string(), &vec![bar_column_description]) {
+                Ok(_) => panic!("Should fail"),
+                Err(e) => {
+                    assert_eq!(e.status, 602);
+                }
             }
-        }
+        });
     }
 
     #[test]
     fn editing_a_current_file() {
         use std::fs;
 
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
 
-        fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
+            fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
 
-        {
-            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
-            let mut image_hdu = f.hdu(0).unwrap();
+            {
+                let f = FitsFile::edit(filename).unwrap();
+                let mut image_hdu = f.hdu(0).unwrap();
 
-            let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
-            image_hdu.write_section(0, 100, &data_to_write).unwrap();
-        }
+                let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
+                image_hdu.write_section(0, 100, &data_to_write).unwrap();
+            }
 
-        {
-            let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
-            let hdu = f.hdu(0).unwrap();
-            let read_data: Vec<i64> = hdu.read_section(0, 10).unwrap();
-            assert_eq!(read_data, vec![10101; 10]);
-        }
+            {
+                let f = FitsFile::open(filename).unwrap();
+                let hdu = f.hdu(0).unwrap();
+                let read_data: Vec<i64> = hdu.read_section(0, 10).unwrap();
+                assert_eq!(read_data, vec![10101; 10]);
+            }
+        });
     }
 
     #[test]
@@ -1528,87 +1535,82 @@ mod test {
     fn getting_file_open_mode() {
         use std::fs;
 
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
+            {
+                fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
+                let f = FitsFile::open(filename).unwrap();
+                assert_eq!(f.open_mode().unwrap(), FileOpenMode::READONLY);
+            }
 
-        {
-            fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
-            let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
-            assert_eq!(f.open_mode().unwrap(), FileOpenMode::READONLY);
-        }
-
-        {
-            fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
-            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
-            assert_eq!(f.open_mode().unwrap(), FileOpenMode::READWRITE);
-        }
+            {
+                fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
+                let f = FitsFile::edit(filename).unwrap();
+                assert_eq!(f.open_mode().unwrap(), FileOpenMode::READWRITE);
+            }
+        });
     }
 
     #[test]
     fn adding_new_table() {
         use columndescription::*;
 
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
 
-        {
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let table_description = vec![ColumnDescription::new("bar")
-                                             .with_type(ColumnDataType::Int)
-                                             .create()
-                                             .unwrap()];
-            f.create_table("foo".to_string(), &table_description).unwrap();
-        }
+            {
+                let f = FitsFile::create(filename).unwrap();
+                let table_description = vec![ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::Int)
+                    .create()
+                    .unwrap()];
+                f.create_table("foo".to_string(), &table_description).unwrap();
+            }
 
-        FitsFile::open(filename.to_str().unwrap())
-            .map(|f| {
-                f.change_hdu("foo").unwrap();
-                match f.fetch_hdu_info() {
-                    Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
-                        let column_names = column_descriptions.iter()
-                            .map(|desc| desc.name.clone())
-                            .collect::<Vec<String>>();
-                        let column_types = column_descriptions.iter()
-                            .map(|desc| desc.data_type.typ.clone())
-                            .collect::<Vec<_>>();
-                        assert_eq!(column_names, vec!["bar".to_string()]);
-                        assert_eq!(column_types, vec![ColumnDataType::Int]);
+            FitsFile::open(filename)
+                .map(|f| {
+                    f.change_hdu("foo").unwrap();
+                    match f.fetch_hdu_info() {
+                        Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
+                            let column_names = column_descriptions.iter()
+                                .map(|desc| desc.name.clone())
+                                .collect::<Vec<String>>();
+                            let column_types = column_descriptions.iter()
+                                .map(|desc| desc.data_type.typ.clone())
+                                .collect::<Vec<_>>();
+                            assert_eq!(column_names, vec!["bar".to_string()]);
+                            assert_eq!(column_types, vec![ColumnDataType::Int]);
+                        }
+                        thing => panic!("{:?}", thing),
                     }
-                    thing => panic!("{:?}", thing),
-                }
-            })
+                })
             .unwrap();
+        });
     }
 
     #[test]
     fn adding_new_image() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
+            {
+                let f = FitsFile::create(filename).unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::LONG_IMG,
+                    dimensions: &[100, 20],
+                };
+                f.create_image("foo".to_string(), &image_description).unwrap();
+            }
 
-        {
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let image_description = ImageDescription {
-                data_type: ImageType::LONG_IMG,
-                dimensions: &[100, 20],
-            };
-            f.create_image("foo".to_string(), &image_description).unwrap();
-        }
-
-        FitsFile::open(filename.to_str().unwrap())
-            .map(|f| {
-                f.change_hdu("foo").unwrap();
-                match f.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { shape, .. }) => {
-                        assert_eq!(shape, vec![100, 20]);
+            FitsFile::open(filename)
+                .map(|f| {
+                    f.change_hdu("foo").unwrap();
+                    match f.fetch_hdu_info() {
+                        Ok(HduInfo::ImageInfo { shape, .. }) => {
+                            assert_eq!(shape, vec![100, 20]);
+                        }
+                        thing => panic!("{:?}", thing),
                     }
-                    thing => panic!("{:?}", thing),
-                }
-            })
+                })
             .unwrap();
 
+        });
     }
 
     #[test]
@@ -1635,37 +1637,33 @@ mod test {
 
     #[test]
     fn creating_new_image_returns_hdu_object() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
-
-        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-        let image_description = ImageDescription {
-            data_type: ImageType::LONG_IMG,
-            dimensions: &[100, 20],
-        };
-        let hdu: FitsHdu = f.create_image("foo".to_string(), &image_description).unwrap();
-        assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
-                   "foo".to_string());
+        with_temp_file(|filename| {
+            let f = FitsFile::create(filename).unwrap();
+            let image_description = ImageDescription {
+                data_type: ImageType::LONG_IMG,
+                dimensions: &[100, 20],
+            };
+            let hdu: FitsHdu = f.create_image("foo".to_string(), &image_description).unwrap();
+            assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
+            "foo".to_string());
+        });
     }
 
     #[test]
     fn creating_new_table_returns_hdu_object() {
         use columndescription::*;
 
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
-
-        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-        let table_description = vec![ColumnDescription::new("bar")
-                                         .with_type(ColumnDataType::Int)
-                                         .create()
-                                         .unwrap()];
-        let hdu: FitsHdu = f.create_table("foo".to_string(), &table_description)
-            .unwrap();
-        assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
-                   "foo".to_string());
+        with_temp_file(|filename| {
+            let f = FitsFile::create(filename).unwrap();
+            let table_description = vec![ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap()];
+            let hdu: FitsHdu = f.create_table("foo".to_string(), &table_description)
+                .unwrap();
+            assert_eq!(hdu.read_key::<String>("EXTNAME").unwrap(),
+            "foo".to_string());
+        });
     }
 
     // FitsHdu tests
@@ -1719,24 +1717,22 @@ mod test {
     // Writing data
     #[test]
     fn writing_header_keywords() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
+            // Scope ensures file is closed properly
+            {
+                let f = FitsFile::create(filename).unwrap();
+                f.hdu(0).unwrap().write_key("FOO", 1i64).unwrap();
+                f.hdu(0).unwrap().write_key("BAR", "baz".to_string()).unwrap();
+            }
 
-        // Scope ensures file is closed properly
-        {
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            f.hdu(0).unwrap().write_key("FOO", 1i64).unwrap();
-            f.hdu(0).unwrap().write_key("BAR", "baz".to_string()).unwrap();
-        }
-
-        FitsFile::open(filename.to_str().unwrap())
-            .map(|f| {
-                assert_eq!(f.hdu(0).unwrap().read_key::<i64>("foo").unwrap(), 1);
-                assert_eq!(f.hdu(0).unwrap().read_key::<String>("bar").unwrap(),
-                           "baz".to_string());
-            })
+            FitsFile::open(filename)
+                .map(|f| {
+                    assert_eq!(f.hdu(0).unwrap().read_key::<i64>("foo").unwrap(), 1);
+                    assert_eq!(f.hdu(0).unwrap().read_key::<String>("bar").unwrap(),
+                    "baz".to_string());
+                })
             .unwrap();
+        });
     }
 
     #[test]
@@ -1863,75 +1859,69 @@ mod test {
     fn write_column_data() {
         use columndescription::*;
 
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
+            let data_to_write: Vec<i32> = vec![10101; 10];
+            {
+                let f = FitsFile::create(filename).unwrap();
+                let table_description = vec![ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::Int)
+                    .create()
+                    .unwrap()];
+                let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
 
-        let data_to_write: Vec<i32> = vec![10101; 10];
-        {
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let table_description = vec![ColumnDescription::new("bar")
-                                             .with_type(ColumnDataType::Int)
-                                             .create()
-                                             .unwrap()];
-            let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
+                hdu.write_col("bar", &data_to_write).unwrap();
+            }
 
-            hdu.write_col("bar", &data_to_write).unwrap();
-        }
-
-        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
-        let hdu = f.hdu("foo").unwrap();
-        let data: Vec<i32> = hdu.read_col("bar").unwrap();
-        assert_eq!(data, data_to_write);
+            let f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let data: Vec<i32> = hdu.read_col("bar").unwrap();
+            assert_eq!(data, data_to_write);
+        });
     }
 
     #[test]
     fn cannot_write_column_to_image_hdu() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
+            let data_to_write: Vec<i32> = vec![10101; 10];
 
-        let data_to_write: Vec<i32> = vec![10101; 10];
+            let f = FitsFile::create(filename).unwrap();
 
-        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
+            let image_description = ImageDescription {
+                data_type: ImageType::LONG_IMG,
+                dimensions: &[100, 20],
+            };
+            let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
 
-        let image_description = ImageDescription {
-            data_type: ImageType::LONG_IMG,
-            dimensions: &[100, 20],
-        };
-        let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
-
-        match hdu.write_col("bar", &data_to_write) {
-            Ok(_) => panic!("Should return an error"),
-            Err(e) => assert_eq!(e.status, 600),
-        }
+            match hdu.write_col("bar", &data_to_write) {
+                Ok(_) => panic!("Should return an error"),
+                Err(e) => assert_eq!(e.status, 600),
+            }
+        });
     }
 
     #[test]
     fn write_column_subset() {
         use columndescription::*;
 
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
+            let data_to_write: Vec<i32> = vec![10101; 10];
+            {
+                let f = FitsFile::create(filename).unwrap();
+                let table_description = vec![ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::Int)
+                    .create()
+                    .unwrap()];
+                let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
 
-        let data_to_write: Vec<i32> = vec![10101; 10];
-        {
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let table_description = vec![ColumnDescription::new("bar")
-                                             .with_type(ColumnDataType::Int)
-                                             .create()
-                                             .unwrap()];
-            let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
+                hdu.write_col_range("bar", &data_to_write, &(0..5)).unwrap();
+            }
 
-            hdu.write_col_range("bar", &data_to_write, &(0..5)).unwrap();
-        }
-
-        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
-        let hdu = f.hdu("foo").unwrap();
-        let data: Vec<i32> = hdu.read_col("bar").unwrap();
-        assert_eq!(data.len(), 6);
-        assert_eq!(data[..], data_to_write[0..6]);
+            let f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let data: Vec<i32> = hdu.read_col("bar").unwrap();
+            assert_eq!(data.len(), 6);
+            assert_eq!(data[..], data_to_write[0..6]);
+        });
     }
 
     #[test]
@@ -1939,33 +1929,31 @@ mod test {
     fn write_string_col() {
         use columndescription::*;
 
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
+            let mut data_to_write: Vec<String> = Vec::new();
+            for i in 0..50 {
+                data_to_write.push(format!("value{}", i));
+            }
 
-        let mut data_to_write: Vec<String> = Vec::new();
-        for i in 0..50 {
-            data_to_write.push(format!("value{}", i));
-        }
+            {
+                let f = FitsFile::create(filename).unwrap();
+                let table_description = vec![ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::String)
+                    .that_repeats(7)
+                    .create()
+                    .unwrap()];
+                let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
 
-        {
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let table_description = vec![ColumnDescription::new("bar")
-                                             .with_type(ColumnDataType::String)
-                                             .that_repeats(7)
-                                             .create()
-                                             .unwrap()];
-            let mut hdu = f.create_table("foo".to_string(), &table_description).unwrap();
+                hdu.write_col("bar", &data_to_write).unwrap();
+            }
 
-            hdu.write_col("bar", &data_to_write).unwrap();
-        }
-
-        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
-        let hdu = f.hdu("foo").unwrap();
-        let data: Vec<String> = hdu.read_col("bar").unwrap();
-        assert_eq!(data.len(), data_to_write.len());
-        assert_eq!(data[0], " value0");
-        assert_eq!(data[49], "value49");
+            let f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let data: Vec<String> = hdu.read_col("bar").unwrap();
+            assert_eq!(data.len(), data_to_write.len());
+            assert_eq!(data[0], " value0");
+            assert_eq!(data[49], "value49");
+        });
     }
 
     #[test]
@@ -2049,144 +2037,138 @@ mod test {
 
     #[test]
     fn test_write_image_section() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
-        let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
+        with_temp_file(|filename| {
+            let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
-        // Scope ensures file is closed properly
-        {
-            use fitsfile::ImageDescription;
+            // Scope ensures file is closed properly
+            {
+                use fitsfile::ImageDescription;
 
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let image_description = ImageDescription {
-                data_type: ImageType::LONG_IMG,
-                dimensions: &[100, 20],
-            };
-            let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
-            hdu.write_section(0, 100, &data_to_write).unwrap();
-        }
+                let f = FitsFile::create(filename).unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::LONG_IMG,
+                    dimensions: &[100, 20],
+                };
+                let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
+                hdu.write_section(0, 100, &data_to_write).unwrap();
+            }
 
-        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
-        let hdu = f.hdu("foo").unwrap();
-        let first_row: Vec<i64> = hdu.read_section(0, 100).unwrap();
-        assert_eq!(first_row, data_to_write);
+            let f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let first_row: Vec<i64> = hdu.read_section(0, 100).unwrap();
+            assert_eq!(first_row, data_to_write);
 
+        });
     }
 
     #[test]
     fn test_write_image_region() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
+            // Scope ensures file is closed properly
+            {
+                use fitsfile::ImageDescription;
 
-        // Scope ensures file is closed properly
-        {
-            use fitsfile::ImageDescription;
+                let f = FitsFile::create(filename).unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::LONG_IMG,
+                    dimensions: &[100, 20],
+                };
+                let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
 
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let image_description = ImageDescription {
-                data_type: ImageType::LONG_IMG,
-                dimensions: &[100, 20],
-            };
-            let mut hdu = f.create_image("foo".to_string(), &image_description).unwrap();
+                let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
+                hdu.write_region(&[&(0..10), &(0..10)], &data).unwrap();
+            }
 
-            let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
-            hdu.write_region(&[&(0..10), &(0..10)], &data).unwrap();
-        }
-
-        let f = FitsFile::open(filename.to_str().unwrap()).unwrap();
-        let hdu = f.hdu("foo").unwrap();
-        let chunk: Vec<i64> = hdu.read_region(&[&(0..10), &(0..10)]).unwrap();
-        assert_eq!(chunk.len(), 11 * 11);
-        assert_eq!(chunk[0], 50);
-        assert_eq!(chunk[25], 75);
+            let f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let chunk: Vec<i64> = hdu.read_region(&[&(0..10), &(0..10)]).unwrap();
+            assert_eq!(chunk.len(), 11 * 11);
+            assert_eq!(chunk[0], 50);
+            assert_eq!(chunk[25], 75);
+        });
     }
 
     #[test]
     fn resizing_images() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
+        with_temp_file(|filename| {
 
-        // Scope ensures file is closed properly
-        {
-            use fitsfile::ImageDescription;
+            // Scope ensures file is closed properly
+            {
+                use fitsfile::ImageDescription;
 
-            let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-            let image_description = ImageDescription {
-                data_type: ImageType::LONG_IMG,
-                dimensions: &[100, 20],
-            };
-            f.create_image("foo".to_string(), &image_description).unwrap();
-        }
-
-        /* Now resize the image */
-        {
-            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
-            let mut hdu = f.hdu("foo").unwrap();
-            hdu.resize(&vec![1024, 1024]).unwrap();
-        }
-
-        /* Images are only resized when flushed to disk, so close the file and
-         * open it again */
-        {
-            let f = FitsFile::edit(filename.to_str().unwrap()).unwrap();
-            let hdu = f.hdu("foo").unwrap();
-            match hdu.info {
-                HduInfo::ImageInfo { shape, .. } => {
-                    assert_eq!(shape, vec![1024, 1024]);
-                }
-                _ => panic!("Unexpected hdu type"),
+                let f = FitsFile::create(filename).unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::LONG_IMG,
+                    dimensions: &[100, 20],
+                };
+                f.create_image("foo".to_string(), &image_description).unwrap();
             }
-        }
+
+            /* Now resize the image */
+            {
+                let f = FitsFile::edit(filename).unwrap();
+                let mut hdu = f.hdu("foo").unwrap();
+                hdu.resize(&vec![1024, 1024]).unwrap();
+            }
+
+            /* Images are only resized when flushed to disk, so close the file and
+             * open it again */
+            {
+                let f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                match hdu.info {
+                    HduInfo::ImageInfo { shape, .. } => {
+                        assert_eq!(shape, vec![1024, 1024]);
+                    }
+                    _ => panic!("Unexpected hdu type"),
+                }
+            }
+        });
     }
 
     #[test]
     fn write_image_section_to_table() {
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
-        let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
+        with_temp_file(|filename| {
+            let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
-        use columndescription::*;
+            use columndescription::*;
 
-        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-        let table_description = &[ColumnDescription::new("bar")
-                                      .with_type(ColumnDataType::Int)
-                                      .create()
-                                      .unwrap()];
-        let mut hdu = f.create_table("foo".to_string(), table_description).unwrap();
-        if let Err(e) = hdu.write_section(0, 100, &data_to_write) {
-            assert_eq!(e.status, 600);
-            assert_eq!(e.message, "cannot write image data to a table hdu");
-        } else {
-            panic!("Should have thrown an error");
-        }
+            let f = FitsFile::create(filename).unwrap();
+            let table_description = &[ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap()];
+            let mut hdu = f.create_table("foo".to_string(), table_description).unwrap();
+            if let Err(e) = hdu.write_section(0, 100, &data_to_write) {
+                assert_eq!(e.status, 600);
+                assert_eq!(e.message, "cannot write image data to a table hdu");
+            } else {
+                panic!("Should have thrown an error");
+            }
+        });
     }
 
     #[test]
     fn write_image_region_to_table() {
         use columndescription::*;
 
-        let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-        let tdir_path = tdir.path();
-        let filename = tdir_path.join("test.fits");
-        let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
+        with_temp_file(|filename| {
+            let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
-        let f = FitsFile::create(filename.to_str().unwrap()).unwrap();
-        let table_description = &[ColumnDescription::new("bar")
-                                      .with_type(ColumnDataType::Int)
-                                      .create()
-                                      .unwrap()];
-        let mut hdu = f.create_table("foo".to_string(), table_description).unwrap();
+            let f = FitsFile::create(filename).unwrap();
+            let table_description = &[ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap()];
+            let mut hdu = f.create_table("foo".to_string(), table_description).unwrap();
 
-        if let Err(e) = hdu.write_region(&vec![&(0..10), &(0..10)], &data_to_write) {
-            assert_eq!(e.status, 600);
-            assert_eq!(e.message, "cannot write image data to a table hdu");
-        } else {
-            panic!("Should have thrown an error");
-        }
+            if let Err(e) = hdu.write_region(&vec![&(0..10), &(0..10)], &data_to_write) {
+                assert_eq!(e.status, 600);
+                assert_eq!(e.message, "cannot write image data to a table hdu");
+            } else {
+                panic!("Should have thrown an error");
+            }
+        });
     }
 
     #[test]
