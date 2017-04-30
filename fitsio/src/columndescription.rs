@@ -46,9 +46,9 @@ impl ColumnDescription {
         match self.data_type {
             Some(ref d) => {
                 Ok(ConcreteColumnDescription {
-                    name: self.name.clone(),
-                    data_type: d.clone(),
-                })
+                       name: self.name.clone(),
+                       data_type: d.clone(),
+                   })
             }
             None => {
                 Err("No data type given. Ensure the `with_type` method has been called.".into())
@@ -218,10 +218,10 @@ impl FromStr for ColumnDataDescription {
         };
 
         Ok(ColumnDataDescription {
-            repeat: repeat,
-            typ: data_type,
-            width: width,
-        })
+               repeat: repeat,
+               typ: data_type,
+               width: width,
+           })
     }
 }
 

@@ -405,8 +405,8 @@ extern "C" {
                   buffsize: *mut size_t,
                   deltasize: size_t,
                   mem_realloc: ::std::option::Option<unsafe extern "C" fn(p: *mut c_void,
-                                                                            newsize: size_t)
-                                                                            -> *mut c_void>,
+                                                                          newsize: size_t)
+                                                                          -> *mut c_void>,
                   status: *mut c_int)
                   -> c_int;
     pub fn ffopen(fptr: *mut *mut fitsfile,
@@ -454,8 +454,8 @@ extern "C" {
                   buffsize: *mut size_t,
                   deltasize: size_t,
                   mem_realloc: ::std::option::Option<unsafe extern "C" fn(p: *mut c_void,
-                                                                            newsize: size_t)
-                                                                            -> *mut c_void>,
+                                                                          newsize: size_t)
+                                                                          -> *mut c_void>,
                   status: *mut c_int)
                   -> c_int;
     pub fn fftplt(fptr: *mut *mut fitsfile,
@@ -3644,13 +3644,13 @@ extern "C" {
                   offset: c_long,
                   nPerLoop: c_long,
                   workFn: ::std::option::Option<unsafe extern "C" fn(totaln: c_long,
-                                                                       offset: c_long,
-                                                                       firstn: c_long,
-                                                                       nvalues: c_long,
-                                                                       narrays: c_int,
-                                                                       data: *mut iteratorCol,
-                                                                       userPointer: *mut c_void)
-                                                                       -> c_int>,
+                                                                     offset: c_long,
+                                                                     firstn: c_long,
+                                                                     nvalues: c_long,
+                                                                     narrays: c_int,
+                                                                     data: *mut iteratorCol,
+                                                                     userPointer: *mut c_void)
+                                                                     -> c_int>,
                   userPointer: *mut c_void,
                   status: *mut c_int)
                   -> c_int;
@@ -4577,7 +4577,11 @@ mod test {
         assert_eq!(double_value, 3. / 32.);
 
         // TODO Hacky way of getting a string out. This should be simplified.
-        let comment: Vec<u8> = comment.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
+        let comment: Vec<u8> = comment
+            .iter()
+            .map(|&x| x as u8)
+            .filter(|&x| x != 0)
+            .collect();
         let comment = String::from_utf8(comment).unwrap();
         assert_eq!(comment, "Double value");
     }
