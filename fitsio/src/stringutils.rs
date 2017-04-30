@@ -6,10 +6,11 @@ use std::mem;
 
 /// Helper function converting a C string pointer to Rust String
 pub fn buf_to_string(buffer: &[c_char]) -> Result<String, FromUtf8Error> {
-    String::from_utf8(buffer.iter()
-        .map(|&x| x as u8)
-        .filter(|&x| x != 0)
-        .collect())
+    String::from_utf8(buffer
+                          .iter()
+                          .map(|&x| x as u8)
+                          .filter(|&x| x != 0)
+                          .collect())
 }
 
 #[repr(C)]
@@ -21,8 +22,10 @@ pub struct StringList {
 
 impl StringList {
     pub fn from_vec(stringvec: Vec<String>) -> Self {
-        let mut converted: Vec<*mut c_char> =
-            stringvec.iter().map(|x| CString::new(x.clone()).unwrap().into_raw()).collect();
+        let mut converted: Vec<*mut c_char> = stringvec
+            .iter()
+            .map(|x| CString::new(x.clone()).unwrap().into_raw())
+            .collect();
         let listlen = converted.len();
         let listcap = converted.capacity();
         let ptr = converted.as_mut_ptr();

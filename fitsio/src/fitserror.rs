@@ -73,9 +73,9 @@ pub type FitsResult<T> = result::Result<T, FitsError>;
 
 pub fn status_to_error(status: i32) -> FitsResult<()> {
     Err(FitsError {
-        status: status,
-        message: status_to_string(status).unwrap(),
-    })
+            status: status,
+            message: status_to_string(status).unwrap(),
+        })
 }
 
 #[cfg(test)]
