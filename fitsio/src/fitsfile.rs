@@ -372,6 +372,17 @@ impl FitsFile {
             self.current_hdu()
         }
     }
+
+    /// Return a pointer to the underlying C `fitsfile` object representing the current file.
+    ///
+    /// This is marked as `unsafe` as it is definitely something that is not required by most
+    /// users, and hence the unsafe-ness marks it as an advanced feature. I have also not
+    /// considered possible concurrency or data race issues as yet.
+    // XXX This may have to be wrapped in some form of access control structure, such as an
+    // `std::rc::Rc`.
+    pub unsafe fn as_raw(&self) -> *const sys::fitsfile {
+        self.fptr
+    }
 }
 
 impl Drop for FitsFile {
@@ -1354,6 +1365,7 @@ impl<'open> FitsHdu<'open> {
 
 #[cfg(test)]
 mod test {
+    extern crate fitsio_sys as sys;
     extern crate tempdir;
 
     use FitsHdu;
@@ -2185,5 +2197,12 @@ mod test {
         let intcol_data: Vec<i32> = column_hdu.read_col("intcol").unwrap();
         assert_eq!(intcol_data[0], 18);
         assert_eq!(intcol_data[49], 12);
+    }
+
+    #[test]
+    fn access_fptr_unsafe() {
+        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let fptr: *const sys::fitsfile = unsafe { f.as_raw() };
+        assert!(!fptr.is_null());
     }
 }
