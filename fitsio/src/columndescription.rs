@@ -144,11 +144,10 @@ impl From<ColumnDataType> for String {
         match orig {
                 Int => "J",
                 Float => "E",
-                Text => "A",
+                Text | String => "A",
                 Double => "D",
                 Short => "I",
                 Long => "K",
-                String => "A",
             }
             .to_string()
     }

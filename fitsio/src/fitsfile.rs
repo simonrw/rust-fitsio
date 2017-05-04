@@ -535,7 +535,7 @@ impl ReadsCol for String {
                 let test_name = name.into();
                 let column_number = column_descriptions
                     .iter()
-                    .position(|ref desc| desc.name == test_name)
+                    .position(|desc| desc.name == test_name)
                     .unwrap();
 
                 /* Set up the storage arrays for the column string values */
@@ -565,10 +565,10 @@ impl ReadsCol for String {
                                 &mut status);
                 }
                 // TODO: check the status code
-                assert!(status == 0, "Status code is not 0: {}", status);
+                assert_eq!(status, 0, "Status code is not 0: {}", status);
 
                 let mut out = Vec::with_capacity(num_output_rows);
-                for val in vecs.iter() {
+                for val in &vecs {
                     let bytes: Vec<u8> = val.into_iter()
                         .filter(|v| **v != 0)
                         .map(|v| *v as u8)
@@ -1306,7 +1306,7 @@ impl<'open> FitsHdu<'open> {
                 }
                 fits_try!(status, ())
             }
-            HduInfo::TableInfo { .. } => return Err("cannot resize binary table".into()),
+            HduInfo::TableInfo { .. } => Err("cannot resize binary table".into()),
             HduInfo::AnyInfo => unreachable!(),
         }
 
