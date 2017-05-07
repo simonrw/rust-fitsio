@@ -2243,4 +2243,15 @@ mod test {
         let fptr: *const sys::fitsfile = unsafe { f.as_raw() };
         assert!(!fptr.is_null());
     }
+
+    #[test]
+    fn extended_filename_syntax() {
+        let filename = "../testdata/full_example.fits[TESTEXT]";
+        let f = FitsFile::open(filename).unwrap();
+        match f.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo { .. }) => {}
+            Ok(HduInfo::ImageInfo { .. }) => panic!("Should be binary table"),
+            _ => panic!("ERROR!"),
+        }
+    }
 }
