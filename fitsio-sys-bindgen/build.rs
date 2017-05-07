@@ -20,14 +20,14 @@ fn main() {
             bindings
                 .write_to_file(out_path.join("bindings.rs"))
                 .expect("Couldn't write bindings");
-        },
+        }
         Err(Error::Failure { output, .. }) => {
             // Handle the case where the user has not installed cfitsio, and thusly it is not on
             // the PKG_CONFIG_PATH
             let stderr = String::from_utf8(output.stderr).unwrap();
             if stderr.contains::<&str>(format!("{} was not found in the pkg-config search path",
                                                package_name)
-                .as_ref()) {
+                                               .as_ref()) {
                 let err_msg = format!("
 Cannot find {} on the pkg-config search path.  Consider installing the library for your
 system (e.g. through homebrew, apt-get etc.).  Alternatively if it is installed, then add

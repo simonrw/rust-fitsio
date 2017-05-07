@@ -186,7 +186,11 @@ mod test {
         assert_eq!(double_value, 3. / 32.);
 
         // TODO Hacky way of getting a string out. This should be simplified.
-        let comment: Vec<u8> = comment.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
+        let comment: Vec<u8> = comment
+            .iter()
+            .map(|&x| x as u8)
+            .filter(|&x| x != 0)
+            .collect();
         let comment = String::from_utf8(comment).unwrap();
         assert_eq!(comment, "Double value");
     }

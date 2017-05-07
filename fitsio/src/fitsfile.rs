@@ -16,6 +16,8 @@ use std::ffi;
 use std::ptr;
 use std::ops::Range;
 
+pub static MAX_VALUE_LENGTH: usize = 71;
+
 /// Macro to return a fits error if the fits file is not open in readwrite mode
 macro_rules! fits_check_readwrite {
     ($fitsfile: expr) => (
@@ -755,7 +757,7 @@ impl ReadsKey for String {
     fn read_key(f: &FitsFile, name: &str) -> FitsResult<Self> {
         let c_name = ffi::CString::new(name).unwrap();
         let mut status = 0;
-        let mut value: Vec<libc::c_char> = vec![0; sys::MAX_VALUE_LENGTH];
+        let mut value: Vec<libc::c_char> = vec![0; MAX_VALUE_LENGTH];
 
         unsafe {
             sys::ffgkys(f.fptr as *mut _,
@@ -908,7 +910,7 @@ macro_rules! read_write_image_impl {
                                        (start + 1) as i64,
                                        nelements as i64,
                                        ptr::null_mut(),
-                                       out.as_mut_ptr() as *mut libc::c_void,
+                                       out.as_mut_ptr() as *mut _,
                                        ptr::null_mut(),
                                        &mut status);
                         }
@@ -984,7 +986,7 @@ macro_rules! read_write_image_impl {
                                     lpixel.as_mut_ptr(),
                                     inc.as_mut_ptr(),
                                     ptr::null_mut(),
-                                    out.as_mut_ptr() as *mut libc::c_void,
+                                    out.as_mut_ptr() as *mut _,
                                     ptr::null_mut(),
                                     &mut status);
 
@@ -1051,7 +1053,7 @@ macro_rules! read_write_image_impl {
                                     $data_type.into(),
                                     fpixel.as_mut_ptr(),
                                     lpixel.as_mut_ptr(),
-                                    data.as_ptr() as *mut libc::c_void,
+                                    data.as_ptr() as *mut _,
                                     &mut status);
                             }
 
@@ -1376,7 +1378,11 @@ impl<'open> FitsHdu<'open> {
 
 #[cfg(test)]
 mod test {
+    #[cfg(feature = "default")]
     extern crate fitsio_sys as sys;
+    #[cfg(feature = "bindgen")]
+    extern crate fitsio_sys_bindgen as sys;
+
     extern crate tempdir;
 
     use FitsHdu;
