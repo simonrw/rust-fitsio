@@ -31,7 +31,24 @@ Or pin a specific version:
 fitsio = "0.2.0"
 ```
 
-This repository contains `fitsio-sys-bindgen` which generates the C wrapper using `bindgen` at build time. This requires clang to build, and as this is likely to not be available in general, I do not recommend using it. It is contained here but is not actively developed, and untested. Use at your own peril.
+This repository contains `fitsio-sys-bindgen` which generates the C
+wrapper using `bindgen` at build time. This requires clang to build, and
+as this is likely to not be available in general, I do not recommend
+using it. It is contained here but is not actively developed, and
+untested. Use at your own peril. To opt in to building with `bindgen`,
+compile as:
+
+```sh
+cargo build --no-default-features --features bindgen
+```
+
+or use from your `Cargo.toml` as such:
+
+```toml
+[dependencies]
+fitsio = { version = "0.2.0", default-features = false, features = ["bindgen"] }
+```
+
 
 ## Documentation
 
