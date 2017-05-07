@@ -62,7 +62,10 @@
 //!
 //! ```rust
 //! # extern crate fitsio;
-//! # extern crate fitsio_sys;
+//! #[cfg(feature = "default")]
+//! # extern crate fitsio_sys as sys;
+//! #[cfg(feature = "bindgen")]
+//! # extern crate fitsio_sys_bindgen as sys;
 //! # use fitsio::{FitsFile, HduInfo};
 //! #
 //! # fn main() {
@@ -390,7 +393,11 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
+#[cfg(feature = "default")]
 extern crate fitsio_sys as sys;
+#[cfg(feature = "bindgen")]
+extern crate fitsio_sys_bindgen as sys;
+
 extern crate libc;
 
 #[macro_use]
