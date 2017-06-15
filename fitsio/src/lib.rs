@@ -9,6 +9,7 @@
 //! * [Writing file data](#writing-file-data)
 //!     * [Images](#images)
 //!     * [Tables](#tables)
+//! * [Raw fits file access](#raw-fits-file-access)
 //!
 //! This library wraps the low level `cfitsio` bindings: [`fitsio-sys`][2] and provides a more
 //! native experience for rust users.
@@ -386,6 +387,40 @@
 //! ```
 //!
 //! ### Tables
+//!
+//! ## Raw fits file access
+//!
+//! If this library does not support the particular use case that is needed, the raw `fitsfile`
+//! pointer can be accessed:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! #[cfg(not(feature="bindgen"))]
+//! extern crate fitsio_sys;
+//! #[cfg(feature="bindgen")]
+//! # extern crate fitsio_sys_bindgen as fitsio_sys;
+//!
+//! # use fitsio::FitsFile;
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! let fptr = FitsFile::open(filename).unwrap();
+//!
+//! /* Find out the number of HDUs in the file */
+//! let mut num_hdus = 0;
+//! let mut status = 0;
+//!
+//! unsafe {
+//!     let fitsfile = fptr.as_raw();
+//!
+//!     /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
+//!     implemented in this crate */
+//!     fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
+//! }
+//! assert_eq!(num_hdus, 2);
+//! # }
+//! ```
+//!
+//! This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][2] library directly.
 //!
 //! [1]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
 //! [2]: https://crates.io/crates/fitsio-sys
