@@ -73,10 +73,12 @@ mod test {
         let c_filename = ffi::CString::new("../testdata/full_example.fits").unwrap();
 
         unsafe {
-            ffopen(&mut fptr as *mut *mut fitsfile,
-                   c_filename.as_ptr(),
-                   0,
-                   &mut status);
+            ffopen(
+                &mut fptr as *mut *mut fitsfile,
+                c_filename.as_ptr(),
+                0,
+                &mut status,
+            );
             ffclos(fptr, &mut status);
         }
 
@@ -95,9 +97,11 @@ mod test {
         let c_filename = ffi::CString::new(filename.to_str().unwrap()).unwrap();
 
         unsafe {
-            ffinit(&mut fptr as *mut *mut fitsfile,
-                   c_filename.as_ptr(),
-                   &mut status);
+            ffinit(
+                &mut fptr as *mut *mut fitsfile,
+                c_filename.as_ptr(),
+                &mut status,
+            );
         }
 
         assert!(filename.exists());
@@ -111,10 +115,12 @@ mod test {
         let mut hdu_num = -1;
 
         unsafe {
-            ffopen(&mut fptr as *mut *mut fitsfile,
-                   c_filename.as_ptr(),
-                   0,
-                   &mut status);
+            ffopen(
+                &mut fptr as *mut *mut fitsfile,
+                c_filename.as_ptr(),
+                0,
+                &mut status,
+            );
             ffghdn(fptr, &mut hdu_num);
             ffclos(fptr, &mut status);
         }
@@ -132,10 +138,12 @@ mod test {
         let mut hdu_num = 0;
 
         unsafe {
-            ffopen(&mut fptr as *mut *mut fitsfile,
-                   c_filename.as_ptr(),
-                   0,
-                   &mut status);
+            ffopen(
+                &mut fptr as *mut *mut fitsfile,
+                c_filename.as_ptr(),
+                0,
+                &mut status,
+            );
             ffmahd(fptr, 2, &mut hdu_type, &mut status);
             ffghdn(fptr, &mut hdu_num);
             ffclos(fptr, &mut status);
@@ -157,27 +165,35 @@ mod test {
         let double_keyname = ffi::CString::new("DBLTEST").unwrap();
         let mut comment: Vec<c_char> = vec![0; 73];
         unsafe {
-            ffopen(&mut fptr as *mut *mut fitsfile,
-                   c_filename.as_ptr(),
-                   0,
-                   &mut status);
-            ffgkyj(fptr,
-                   keyname.as_ptr(),
-                   &mut long_value,
-                   ptr::null_mut(),
-                   &mut status);
-            ffgkye(fptr,
-                   keyname.as_ptr(),
-                   &mut float_value,
-                   ptr::null_mut(),
-                   &mut status);
+            ffopen(
+                &mut fptr as *mut *mut fitsfile,
+                c_filename.as_ptr(),
+                0,
+                &mut status,
+            );
+            ffgkyj(
+                fptr,
+                keyname.as_ptr(),
+                &mut long_value,
+                ptr::null_mut(),
+                &mut status,
+            );
+            ffgkye(
+                fptr,
+                keyname.as_ptr(),
+                &mut float_value,
+                ptr::null_mut(),
+                &mut status,
+            );
 
             // Double version is different
-            ffgkyd(fptr,
-                   double_keyname.as_ptr(),
-                   &mut double_value,
-                   comment.as_mut_ptr(),
-                   &mut status);
+            ffgkyd(
+                fptr,
+                double_keyname.as_ptr(),
+                &mut double_value,
+                comment.as_mut_ptr(),
+                &mut status,
+            );
             ffclos(fptr, &mut status);
         }
 
