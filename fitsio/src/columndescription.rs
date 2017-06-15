@@ -88,7 +88,7 @@ impl ColumnDataDescription {
     /* XXX These two methods force a call to clone which is wasteful of memory. I do not know if
      * this means that memory is leaked, or that destructors are needlessly called (I suspect the
      * latter) but it is fairly wasteful. On the other hand, it's unlikely this sort of thing will
-     * be called in performance-critical code, and is more likely a one-dime definition. I will
+     * be called in performance-critical code, and is more likely a one-time definition. I will
      * leave it for now - SRW 2017-03-07
      * */
     pub fn repeats(&mut self, repeat: usize) -> Self {
