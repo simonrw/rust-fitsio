@@ -59,6 +59,7 @@ macro_rules! fits_try {
             _ => {
                 Err(FitsError {
                     status: $status,
+                    // unwrap guaranteed to work as we know $status > 0
                     message: stringutils::status_to_string($status).unwrap(),
                 })
             }
@@ -73,9 +74,10 @@ pub type FitsResult<T> = result::Result<T, FitsError>;
 
 pub fn status_to_error(status: i32) -> FitsResult<()> {
     Err(FitsError {
-            status: status,
-            message: status_to_string(status).unwrap(),
-        })
+        status: status,
+        // unwrap guaranteed to work as we know status > 0
+        message: status_to_string(status).unwrap(),
+    })
 }
 
 #[cfg(test)]

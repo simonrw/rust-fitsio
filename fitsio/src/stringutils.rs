@@ -71,7 +71,9 @@ mod test {
 
     #[test]
     fn returning_error_messages() {
-        assert_eq!(status_to_string(105).unwrap(),
-                   "couldn't create the named file");
+        assert_eq!(
+            status_to_string(105).unwrap(),
+            "couldn't create the named file"
+        );
     }
 }

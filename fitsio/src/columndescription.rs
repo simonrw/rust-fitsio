@@ -46,12 +46,14 @@ impl ColumnDescription {
         match self.data_type {
             Some(ref d) => {
                 Ok(ConcreteColumnDescription {
-                       name: self.name.clone(),
-                       data_type: d.clone(),
-                   })
+                    name: self.name.clone(),
+                    data_type: d.clone(),
+                })
             }
             None => {
-                Err("No data type given. Ensure the `with_type` method has been called.".into())
+                Err(
+                    "No data type given. Ensure the `with_type` method has been called.".into(),
+                )
             }
         }
     }
@@ -107,20 +109,26 @@ impl From<ColumnDataDescription> for String {
         match orig.typ {
             ColumnDataType::Text => {
                 if orig.width > 1 {
-                    format!("{repeat}{data_type}{width}",
-                            data_type = String::from(orig.typ),
-                            repeat = orig.repeat,
-                            width = orig.width)
+                    format!(
+                        "{repeat}{data_type}{width}",
+                        data_type = String::from(orig.typ),
+                        repeat = orig.repeat,
+                        width = orig.width
+                    )
                 } else {
-                    format!("{repeat}{data_type}",
-                            data_type = String::from(orig.typ),
-                            repeat = orig.repeat)
+                    format!(
+                        "{repeat}{data_type}",
+                        data_type = String::from(orig.typ),
+                        repeat = orig.repeat
+                    )
                 }
             }
             _ => {
-                format!("{repeat}{data_type}",
-                        data_type = String::from(orig.typ),
-                        repeat = orig.repeat)
+                format!(
+                    "{repeat}{data_type}",
+                    data_type = String::from(orig.typ),
+                    repeat = orig.repeat
+                )
             }
         }
     }
@@ -142,14 +150,13 @@ impl From<ColumnDataType> for String {
         use self::ColumnDataType::*;
 
         match orig {
-                Int => "J",
-                Float => "E",
-                Text | String => "A",
-                Double => "D",
-                Short => "I",
-                Long => "K",
-            }
-            .to_string()
+            Int => "J",
+            Float => "E",
+            Text | String => "A",
+            Double => "D",
+            Short => "I",
+            Long => "K",
+        }.to_string()
     }
 }
 
@@ -211,16 +218,18 @@ impl FromStr for ColumnDataDescription {
             'K' => ColumnDataType::Long,
             'A' => ColumnDataType::String,
             _ => {
-                panic!("Have not implemented str -> ColumnDataType for {}",
-                       data_type_char)
+                panic!(
+                    "Have not implemented str -> ColumnDataType for {}",
+                    data_type_char
+                )
             }
         };
 
         Ok(ColumnDataDescription {
-               repeat: repeat,
-               typ: data_type,
-               width: width,
-           })
+            repeat: repeat,
+            typ: data_type,
+            width: width,
+        })
     }
 }
 
@@ -258,34 +267,40 @@ mod test {
     #[test]
     fn parsing() {
         let s = "1E";
-        assert_eq!(s.parse::<ColumnDataDescription>().unwrap(),
-                   ColumnDataDescription {
-                       repeat: 1,
-                       width: 1,
-                       typ: ColumnDataType::Float,
-                   });
+        assert_eq!(
+            s.parse::<ColumnDataDescription>().unwrap(),
+            ColumnDataDescription {
+                repeat: 1,
+                width: 1,
+                typ: ColumnDataType::Float,
+            }
+        );
     }
 
     #[test]
     fn parse_many_repeats() {
         let s = "100E";
-        assert_eq!(s.parse::<ColumnDataDescription>().unwrap(),
-                   ColumnDataDescription {
-                       repeat: 100,
-                       width: 1,
-                       typ: ColumnDataType::Float,
-                   });
+        assert_eq!(
+            s.parse::<ColumnDataDescription>().unwrap(),
+            ColumnDataDescription {
+                repeat: 100,
+                width: 1,
+                typ: ColumnDataType::Float,
+            }
+        );
     }
 
     #[test]
     fn parse_with_width() {
         let s = "1E26";
-        assert_eq!(s.parse::<ColumnDataDescription>().unwrap(),
-                   ColumnDataDescription {
-                       repeat: 1,
-                       width: 26,
-                       typ: ColumnDataType::Float,
-                   });
+        assert_eq!(
+            s.parse::<ColumnDataDescription>().unwrap(),
+            ColumnDataDescription {
+                repeat: 1,
+                width: 26,
+                typ: ColumnDataType::Float,
+            }
+        );
     }
 
     #[test]
