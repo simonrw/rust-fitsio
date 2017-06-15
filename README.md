@@ -58,7 +58,7 @@ fitsio = { version = "*", default-features = false, features = ["bindgen"] }
 
 ## Feature support
 
-Supported features of the underlying `cfitsio` library that _are_ available in `fitsio` are detailed in [this tracking issue](https://github.com/mindriot101/rust-fitsio/issues/15).
+Supported features of the underlying `cfitsio` library that _are_ available in `fitsio` are detailed in [this tracking issue](https://github.com/mindriot101/rust-fitsio/issues/15). If a particular function is not implemented in `fitsio`, then the underlying `fitsfile` pointer can be accessed through an unsafe API.
 
 ## Examples
 
@@ -66,4 +66,29 @@ Open a fits file
 
 ```rust
 let f = fitsio::FitsFile::open("test.fits");
+```
+
+Accessing the underlying `fitsfile` object
+
+```rust
+extern crate fitsio;
+extern crate fitsio_sys;
+
+fn main() {
+  let filename = "../testdata/full_example.fits";
+  let fptr = fitsio::FitsFile::open(filename).unwrap();
+
+  /* Find out the number of HDUs in the file */
+  let mut num_hdus = 0;
+  let mut status = 0;
+
+  unsafe {
+    let fitsfile = fptr.as_raw();
+
+    /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
+       implemented in this crate */
+    fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
+  }
+  assert_eq!(num_hdus, 2);
+}
 ```
