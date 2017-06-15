@@ -75,20 +75,20 @@ extern crate fitsio;
 extern crate fitsio_sys;
 
 fn main() {
-  let filename = "../testdata/full_example.fits";
-  let fptr = fitsio::FitsFile::open(filename).unwrap();
+    let filename = "../testdata/full_example.fits";
+    let fptr = fitsio::FitsFile::open(filename).unwrap();
 
-  /* Find out the number of HDUs in the file */
-  let mut num_hdus = 0;
-  let mut status = 0;
+    /* Find out the number of HDUs in the file */
+    let mut num_hdus = 0;
+    let mut status = 0;
 
-  unsafe {
-    let fitsfile = fptr.as_raw();
+    unsafe {
+        let fitsfile = fptr.as_raw();
 
-    /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
+        /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
        implemented in this crate */
-    fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
-  }
-  assert_eq!(num_hdus, 2);
+        fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
+    }
+    assert_eq!(num_hdus, 2);
 }
 ```
