@@ -417,8 +417,8 @@ impl FitsFile {
     /// considered possible concurrency or data race issues as yet.
     // XXX This may have to be wrapped in some form of access control structure, such as an
     // `std::rc::Rc`.
-    pub unsafe fn as_raw(&self) -> *const sys::fitsfile {
-        self.fptr
+    pub unsafe fn as_raw(&self) -> *mut sys::fitsfile {
+        self.fptr as *mut _
     }
 }
 
