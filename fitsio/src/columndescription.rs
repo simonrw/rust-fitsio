@@ -1,3 +1,4 @@
+use errors::Result;
 use std::str::FromStr;
 
 /// Description for new columns
@@ -42,7 +43,7 @@ impl ColumnDescription {
         self
     }
 
-    pub fn create(&self) -> Result<ConcreteColumnDescription, Box<::std::error::Error>> {
+    pub fn create(&self) -> Result<ConcreteColumnDescription> {
         match self.data_type {
             Some(ref d) => {
                 Ok(ConcreteColumnDescription {
@@ -163,7 +164,7 @@ impl From<ColumnDataType> for String {
 impl FromStr for ColumnDataDescription {
     type Err = Box<::std::error::Error>;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> ::std::result::Result<Self, Self::Err> {
         let chars: Vec<_> = s.chars().collect();
 
         let mut repeat_str = Vec::new();
