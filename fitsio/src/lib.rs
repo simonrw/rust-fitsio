@@ -401,7 +401,8 @@ extern crate fitsio_sys_bindgen as sys;
 extern crate libc;
 
 #[macro_use]
-pub mod fitserror;
+mod fitserror;
+pub mod errors;
 mod stringutils;
 pub mod types;
 pub mod columndescription;
@@ -409,3 +410,4 @@ pub mod fitsfile;
 
 pub use self::fitsfile::{FitsFile, FitsHdu};
 pub use self::types::HduInfo;
+pub use self::errors::{Error, Result};
