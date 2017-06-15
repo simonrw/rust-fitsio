@@ -1,16 +1,12 @@
 use sys::ffgerr;
 use libc::{c_char, c_int, size_t};
-use std::string::FromUtf8Error;
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::mem;
 
 /// Helper function converting a C string pointer to Rust String
-pub fn buf_to_string(buffer: &[c_char]) -> Result<String, FromUtf8Error> {
-    String::from_utf8(buffer
-                          .iter()
-                          .map(|&x| x as u8)
-                          .filter(|&x| x != 0)
-                          .collect())
+pub fn buf_to_string(buffer: &[c_char]) -> Result<String, Box<::std::error::Error>> {
+    let c_str = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+    Ok(c_str.to_str()?.to_string())
 }
 
 #[repr(C)]
