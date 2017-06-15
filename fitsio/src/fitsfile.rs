@@ -61,7 +61,7 @@ impl FitsFile {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
         let filename = filename.into();
-        let c_filename = ffi::CString::new(filename.as_str()).unwrap();
+        let c_filename = ffi::CString::new(filename.as_str())?;
 
         unsafe {
             sys::ffopen(
@@ -86,7 +86,7 @@ impl FitsFile {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
         let filename = filename.into();
-        let c_filename = ffi::CString::new(filename.as_str()).unwrap();
+        let c_filename = ffi::CString::new(filename.as_str())?;
 
         unsafe {
             sys::ffopen(
@@ -111,7 +111,7 @@ impl FitsFile {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
         let path = path.into();
-        let c_filename = ffi::CString::new(path.as_str()).unwrap();
+        let c_filename = ffi::CString::new(path.as_str())?;
 
         unsafe {
             sys::ffinit(
@@ -265,11 +265,9 @@ impl FitsFile {
                     }
 
                     column_descriptions.push(ConcreteColumnDescription {
-                        name: stringutils::buf_to_string(&name_buffer).unwrap(),
-                        data_type: stringutils::buf_to_string(&type_buffer)
-                            .unwrap()
-                            .parse::<ColumnDataDescription>()
-                            .unwrap(),
+                        name: stringutils::buf_to_string(&name_buffer)?,
+                        data_type: stringutils::buf_to_string(&type_buffer)?
+                            .parse::<ColumnDataDescription>()?,
                     });
                 }
 
@@ -305,7 +303,7 @@ impl FitsFile {
                 .iter()
                 .map(|desc| desc.name.clone())
                 .collect();
-            stringutils::StringList::from_vec(stringlist)
+            stringutils::StringList::from_vec(stringlist)?
         };
 
         let ttype = {
@@ -313,10 +311,10 @@ impl FitsFile {
                 .iter()
                 .map(|desc| String::from(desc.clone().data_type))
                 .collect();
-            stringutils::StringList::from_vec(stringlist)
+            stringutils::StringList::from_vec(stringlist)?
         };
 
-        let c_extname = ffi::CString::new(extname).unwrap();
+        let c_extname = ffi::CString::new(extname)?;
 
 
         let hdu_info = HduInfo::TableInfo {
@@ -331,8 +329,8 @@ impl FitsFile {
                 hdu_info.into(),
                 0,
                 tfields.len as libc::c_int,
-                tfields.list,
-                ttype.list,
+                tfields.as_ptr(),
+                ttype.as_ptr(),
                 ptr::null_mut(),
                 c_extname.into_raw(),
                 &mut status,
@@ -340,10 +338,13 @@ impl FitsFile {
         }
 
         if status != 0 {
-            Err(FitsError {
-                status: status,
-                message: status_to_string(status).unwrap(),
-            }.into())
+            Err(
+                FitsError {
+                    status: status,
+                    // unwrap guaranteed to succesed as status > 0
+                    message: status_to_string(status)?.unwrap(),
+                }.into(),
+            )
         } else {
             self.current_hdu()
         }
@@ -363,10 +364,13 @@ impl FitsFile {
         let mut status = 0;
 
         if status != 0 {
-            return Err(FitsError {
-                status: status,
-                message: status_to_string(status).unwrap(),
-            }.into());
+            return Err(
+                FitsError {
+                    status: status,
+                    // unwrap guaranteed to succesed as status > 0
+                    message: status_to_string(status)?.unwrap(),
+                }.into(),
+            );
         }
 
         unsafe {
@@ -380,10 +384,13 @@ impl FitsFile {
         }
 
         if status != 0 {
-            return Err(FitsError {
-                status: status,
-                message: status_to_string(status).unwrap(),
-            }.into());
+            return Err(
+                FitsError {
+                    status: status,
+                    // unwrap guaranteed to succesed as status > 0
+                    message: status_to_string(status)?.unwrap(),
+                }.into(),
+            );
         }
 
         // Current HDU should be at the new HDU
@@ -391,10 +398,13 @@ impl FitsFile {
         try!(current_hdu.write_key("EXTNAME".into(), extname));
 
         if status != 0 {
-            Err(FitsError {
-                status: status,
-                message: status_to_string(status).unwrap(),
-            }.into())
+            Err(
+                FitsError {
+                    status: status,
+                    // unwrap guaranteed to succesed as status > 0
+                    message: status_to_string(status)?.unwrap(),
+                }.into(),
+            )
         } else {
             self.current_hdu()
         }
@@ -450,7 +460,7 @@ impl<'a> DescribesHdu for &'a str {
     fn change_hdu(&self, f: &FitsFile) -> Result<()> {
         let mut _hdu_type = 0;
         let mut status = 0;
-        let c_hdu_name = ffi::CString::new(*self).unwrap();
+        let c_hdu_name = ffi::CString::new(*self)?;
 
         unsafe {
             sys::ffmnhd(
@@ -504,9 +514,10 @@ macro_rules! reads_col_impl {
                         let num_output_rows = range.end - range.start + 1;
                         let mut out = vec![$nullval; num_output_rows];
                         let test_name = name.into();
-                        let column_number = column_descriptions.iter().position(|ref desc| {
-                            desc.name == test_name
-                        }).unwrap();
+                        let column_number = column_descriptions
+                            .iter()
+                            .position(|ref desc| { desc.name == test_name })
+                            .ok_or(Error::Message(format!("Cannot find column {:?}", test_name)))?;
                         let mut status = 0;
                         unsafe {
                             sys::$func(fits_file.fptr as *mut _,
@@ -569,7 +580,9 @@ impl ReadsCol for String {
                 let column_number = column_descriptions
                     .iter()
                     .position(|desc| desc.name == test_name)
-                    .unwrap();
+                    .ok_or_else(|| {
+                        Error::Message(format!("Cannot find column {:?}", test_name))
+                    })?;
 
                 /* Set up the storage arrays for the column string values */
                 let mut raw_char_data: Vec<*mut libc::c_char> =
@@ -608,7 +621,7 @@ impl ReadsCol for String {
                         .filter(|v| **v != 0)
                         .map(|v| *v as u8)
                         .collect();
-                    let cstr = String::from_utf8(bytes).unwrap();
+                    let cstr = String::from_utf8(bytes)?;
                     out.push(cstr);
                 }
                 Ok(out)
@@ -773,7 +786,7 @@ macro_rules! reads_key_impl {
     ($t:ty, $func:ident) => (
         impl ReadsKey for $t {
             fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
-                let c_name = ffi::CString::new(name).unwrap();
+                let c_name = ffi::CString::new(name)?;
                 let mut status = 0;
                 let mut value: Self = Self::default();
 
@@ -801,7 +814,7 @@ reads_key_impl!(f64, ffgkyd);
 
 impl ReadsKey for String {
     fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
-        let c_name = ffi::CString::new(name).unwrap();
+        let c_name = ffi::CString::new(name)?;
         let mut status = 0;
         let mut value: Vec<libc::c_char> = vec![0; MAX_VALUE_LENGTH];
 
@@ -817,7 +830,7 @@ impl ReadsKey for String {
 
         fits_try!(status, {
             let value: Vec<u8> = value.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
-            String::from_utf8(value).unwrap()
+            String::from_utf8(value)?
         })
     }
 }
@@ -831,7 +844,7 @@ macro_rules! writes_key_impl_flt {
     ($t:ty, $func:ident) => (
         impl WritesKey for $t {
             fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-                let c_name = ffi::CString::new(name).unwrap();
+                let c_name = ffi::CString::new(name)?;
                 let mut status = 0;
 
                 unsafe {
@@ -850,7 +863,7 @@ macro_rules! writes_key_impl_flt {
 
 impl WritesKey for i64 {
     fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-        let c_name = ffi::CString::new(name).unwrap();
+        let c_name = ffi::CString::new(name)?;
         let mut status = 0;
 
         unsafe {
@@ -871,14 +884,14 @@ writes_key_impl_flt!(f64, ffpkyd);
 
 impl WritesKey for String {
     fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-        let c_name = ffi::CString::new(name).unwrap();
+        let c_name = ffi::CString::new(name)?;
         let mut status = 0;
 
         unsafe {
             sys::ffpkys(
                 f.fptr as *mut _,
                 c_name.into_raw(),
-                ffi::CString::new(value).unwrap().into_raw(),
+                ffi::CString::new(value)?.into_raw(),
                 ptr::null_mut(),
                 &mut status,
             );
@@ -927,18 +940,9 @@ pub trait ReadWriteImage: Sized {
         }
     }
 
-    fn write_section(
-        fits_file: &FitsFile,
-        start: usize,
-        end: usize,
-        data: &[Self],
-    ) -> Result<()>;
+    fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
 
-    fn write_region(
-        fits_file: &FitsFile,
-        ranges: &[&Range<usize>],
-        data: &[Self],
-    ) -> Result<()>;
+    fn write_region(fits_file: &FitsFile, ranges: &[&Range<usize>], data: &[Self]) -> Result<()>;
 }
 
 macro_rules! read_write_image_impl {
@@ -1182,52 +1186,52 @@ impl<'a> Iterator for ColumnIterator<'a> {
                 ColumnDataType::Int => {
                     i32::read_col(self.fits_file, current_name)
                         .map(|data| {
-                            Some(Column::Int32 {
+                            Column::Int32 {
                                 name: current_name.to_string(),
                                 data: data,
-                            })
+                            }
                         })
-                        .unwrap()
+                        .ok()
                 }
                 ColumnDataType::Long => {
                     i64::read_col(self.fits_file, current_name)
                         .map(|data| {
-                            Some(Column::Int64 {
+                            Column::Int64 {
                                 name: current_name.to_string(),
                                 data: data,
-                            })
+                            }
                         })
-                        .unwrap()
+                        .ok()
                 }
                 ColumnDataType::Float => {
                     f32::read_col(self.fits_file, current_name)
                         .map(|data| {
-                            Some(Column::Float {
+                            Column::Float {
                                 name: current_name.to_string(),
                                 data: data,
-                            })
+                            }
                         })
-                        .unwrap()
+                        .ok()
                 }
                 ColumnDataType::Double => {
                     f64::read_col(self.fits_file, current_name)
                         .map(|data| {
-                            Some(Column::Double {
+                            Column::Double {
                                 name: current_name.to_string(),
                                 data: data,
-                            })
+                            }
                         })
-                        .unwrap()
+                        .ok()
                 }
                 ColumnDataType::String => {
                     String::read_col(self.fits_file, current_name)
                         .map(|data| {
-                            Some(Column::String {
+                            Column::String {
                                 name: current_name.to_string(),
                                 data: data,
-                            })
+                            }
                         })
-                        .unwrap()
+                        .ok()
                 }
                 _ => unimplemented!(),
             };
@@ -1254,10 +1258,7 @@ pub struct FitsHdu<'open> {
 }
 
 impl<'open> FitsHdu<'open> {
-    pub fn new<T: DescribesHdu>(
-        fits_file: &'open FitsFile,
-        hdu_description: T,
-    ) -> Result<Self> {
+    pub fn new<T: DescribesHdu>(fits_file: &'open FitsFile, hdu_description: T) -> Result<Self> {
         try!(fits_file.change_hdu(hdu_description));
         match fits_file.fetch_hdu_info() {
             Ok(hdu_info) => {
@@ -1378,7 +1379,7 @@ impl<'open> FitsHdu<'open> {
 
         let c_col_name = {
             let col_name = col_name.into();
-            ffi::CString::new(col_name.as_str()).unwrap()
+            ffi::CString::new(col_name.as_str())?
         };
 
         unsafe {
@@ -1399,11 +1400,7 @@ impl<'open> FitsHdu<'open> {
         T::read_col(self.fits_file, name)
     }
 
-    pub fn read_col_range<T: ReadsCol>(
-        &self,
-        name: &str,
-        range: &Range<usize>,
-    ) -> Result<Vec<T>> {
+    pub fn read_col_range<T: ReadsCol>(&self, name: &str, range: &Range<usize>) -> Result<Vec<T>> {
         self.make_current()?;
         T::read_col_range(self.fits_file, name, range)
     }
@@ -1517,7 +1514,7 @@ mod test {
             ) {
                 Err(Error::Fits(e)) => {
                     assert_eq!(e.status, 602);
-                },
+                }
                 _ => panic!("Should fail"),
             }
 
@@ -1637,7 +1634,7 @@ mod test {
             fits_try!(status, 10),
             Err(Error::Fits(FitsError {
                 status: status,
-                message: stringutils::status_to_string(status).unwrap(),
+                message: stringutils::status_to_string(status).unwrap().unwrap(),
             }))
         );
     }
@@ -2039,7 +2036,9 @@ mod test {
                 .unwrap();
 
             match hdu.write_col("bar", &data_to_write) {
-                Err(Error::Message(msg)) => assert_eq!(msg, "Cannot write column data to FITS image"),
+                Err(Error::Message(msg)) => {
+                    assert_eq!(msg, "Cannot write column data to FITS image")
+                }
                 _ => panic!("Should return an error"),
             }
         });
@@ -2168,7 +2167,9 @@ mod test {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("TESTEXT").unwrap();
         match hdu.read_region::<i32>(&vec![&(0..10), &(0..10)]) {
-            Err(Error::Message(msg)) => assert!(msg.contains("cannot read image data from a table hdu")),
+            Err(Error::Message(msg)) => {
+                assert!(msg.contains("cannot read image data from a table hdu"))
+            }
             _ => panic!("SHOULD FAIL"),
         }
     }
@@ -2319,7 +2320,9 @@ mod test {
             let mut hdu = f.create_table("foo".to_string(), table_description)
                 .unwrap();
 
-            if let Err(Error::Message(msg)) = hdu.write_region(&vec![&(0..10), &(0..10)], &data_to_write) {
+            if let Err(Error::Message(msg)) =
+                hdu.write_region(&vec![&(0..10), &(0..10)], &data_to_write)
+            {
                 assert_eq!(msg, "cannot write image data to a table hdu");
             } else {
                 panic!("Should have thrown an error");

@@ -17,7 +17,7 @@ macro_rules! fits_try {
                 Err(Error::Fits(FitsError {
                     status: $status,
                     // unwrap guaranteed to work as we know $status > 0
-                    message: stringutils::status_to_string($status).unwrap(),
+                    message: stringutils::status_to_string($status).unwrap().unwrap(),
                 }))
             }
         }

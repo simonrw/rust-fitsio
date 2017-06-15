@@ -1,66 +1,55 @@
 use sys::ffgerr;
 use libc::{c_char, c_int, size_t};
 use std::ffi::{CStr, CString};
-use std::mem;
+use errors::Result;
 
 /// Helper function converting a C string pointer to Rust String
-pub fn buf_to_string(buffer: &[c_char]) -> Result<String, Box<::std::error::Error>> {
+pub fn buf_to_string(buffer: &[c_char]) -> Result<String> {
     let c_str = unsafe { CStr::from_ptr(buffer.as_ptr()) };
     Ok(c_str.to_str()?.to_string())
 }
 
 #[repr(C)]
 pub struct StringList {
-    pub list: *mut *mut c_char,
     pub len: size_t,
     cap: size_t,
+    mem: Vec<*mut c_char>,
 }
 
 impl StringList {
-    pub fn from_vec(stringvec: Vec<String>) -> Self {
-        let mut converted: Vec<*mut c_char> = stringvec
+    pub fn from_vec(stringvec: Vec<String>) -> Result<Self> {
+        let converted: Vec<*mut c_char> = stringvec
             .iter()
             .map(|x| CString::new(x.clone()).unwrap().into_raw())
             .collect();
         let listlen = converted.len();
         let listcap = converted.capacity();
-        let ptr = converted.as_mut_ptr();
-
-        assert!(!ptr.is_null());
 
         let stringlist = StringList {
-            list: ptr,
             len: listlen,
             cap: listcap,
+            mem: converted,
         };
-        mem::forget(converted);
-        stringlist
+
+        Ok(stringlist)
+    }
+
+    pub fn as_ptr(&self) -> *mut *mut c_char {
+        self.mem.as_slice().as_ptr() as *mut _
     }
 }
-
-impl Drop for StringList {
-    fn drop(&mut self) {
-        unsafe {
-            let v: Vec<*mut c_char> = Vec::from_raw_parts(self.list, self.len, self.cap);
-            for ptr in v {
-                let _ = CString::from_raw(ptr);
-            }
-        }
-    }
-}
-
 
 /// Internal function to get the fits error description from a status code
-pub fn status_to_string(status: c_int) -> Option<String> {
+pub fn status_to_string(status: c_int) -> Result<Option<String>> {
     match status {
-        0 => None,
+        0 => Ok(None),
         status => {
             let mut buffer: Vec<c_char> = vec![0; 31];
             unsafe {
                 ffgerr(status, buffer.as_mut_ptr());
             }
-            let result_str = buf_to_string(&buffer).unwrap();
-            Some(result_str)
+            let result_str = buf_to_string(&buffer)?;
+            Ok(Some(result_str))
         }
     }
 }
@@ -72,7 +61,7 @@ mod test {
     #[test]
     fn returning_error_messages() {
         assert_eq!(
-            status_to_string(105).unwrap(),
+            status_to_string(105).unwrap().unwrap(),
             "couldn't create the named file"
         );
     }
