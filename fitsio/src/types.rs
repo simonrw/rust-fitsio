@@ -60,7 +60,9 @@ datatype_into_impl!(u64);
 pub enum ImageType {
     BYTE_IMG,
     SHORT_IMG,
+    USHORT_IMG,
     LONG_IMG,
+    ULONG_IMG,
     LONGLONG_IMG,
     FLOAT_IMG,
     DOUBLE_IMG,
@@ -73,7 +75,9 @@ macro_rules! imagetype_into_impl {
                 match original {
                     ImageType::BYTE_IMG => 8,
                     ImageType::SHORT_IMG => 16,
+                    ImageType::USHORT_IMG => 20,
                     ImageType::LONG_IMG => 32,
+                    ImageType::ULONG_IMG => 40,
                     ImageType::LONGLONG_IMG => 64,
                     ImageType::FLOAT_IMG => -32,
                     ImageType::DOUBLE_IMG => -64,
@@ -186,6 +190,7 @@ mod test {
     fn image_types() {
         assert_eq!(i8::from(ImageType::BYTE_IMG), 8);
         assert_eq!(i8::from(ImageType::SHORT_IMG), 16);
+        assert_eq!(i8::from(ImageType::USHORT_IMG), 20);
         assert_eq!(i8::from(ImageType::LONG_IMG), 32);
         assert_eq!(i8::from(ImageType::LONGLONG_IMG), 64);
         assert_eq!(i8::from(ImageType::FLOAT_IMG), -32);
