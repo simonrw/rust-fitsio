@@ -59,6 +59,7 @@ datatype_into_impl!(u64);
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ImageType {
     BYTE_IMG,
+    SBYTE_IMG,
     SHORT_IMG,
     USHORT_IMG,
     LONG_IMG,
@@ -74,6 +75,7 @@ macro_rules! imagetype_into_impl {
             fn from(original: ImageType) -> $t {
                 match original {
                     ImageType::BYTE_IMG => 8,
+                    ImageType::SBYTE_IMG => 10,
                     ImageType::SHORT_IMG => 16,
                     ImageType::USHORT_IMG => 20,
                     ImageType::LONG_IMG => 32,
@@ -189,6 +191,7 @@ mod test {
     #[test]
     fn image_types() {
         assert_eq!(i8::from(ImageType::BYTE_IMG), 8);
+        assert_eq!(i8::from(ImageType::SBYTE_IMG), 10);
         assert_eq!(i8::from(ImageType::SHORT_IMG), 16);
         assert_eq!(i8::from(ImageType::USHORT_IMG), 20);
         assert_eq!(i8::from(ImageType::LONG_IMG), 32);
