@@ -215,7 +215,7 @@ impl FitsFile {
                      * See description here:
                      * https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node40.html
                      */
-                    sys::ffgiet(self.fptr as *mut _, &mut bitpix, &mut status);
+                    sys::ffgidt(self.fptr as *mut _, &mut bitpix, &mut status);
                 }
 
                 let image_type = match bitpix {
