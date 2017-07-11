@@ -221,11 +221,13 @@ impl FitsFile {
                 let image_type = match bitpix {
                     8 => ImageType::BYTE_IMG,
                     16 => ImageType::SHORT_IMG,
+                    20 => ImageType::USHORT_IMG,
                     32 => ImageType::LONG_IMG,
+                    40 => ImageType::ULONG_IMG,
                     64 => ImageType::LONGLONG_IMG,
                     -32 => ImageType::FLOAT_IMG,
                     -64 => ImageType::DOUBLE_IMG,
-                    _ => unreachable!(),
+                    _ => unreachable!(&format!("Unhandled image bitpix type: {}", bitpix)),
                 };
 
                 HduInfo::ImageInfo {
