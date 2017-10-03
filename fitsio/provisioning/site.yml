@@ -1,0 +1,56 @@
+---
+- hosts: all
+  tasks:
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        update_cache: yes
+        cache_valid_time: 86400
+      with_items:
+        - curl
+        - git
+        - build-essential
+        - vim
+        - python-openssl
+        - python-pip
+        - python-pyasn1
+        - pkg-config
+        - gdb
+        - python-dev
+        - python-numpy
+      become: yes
+
+    - name: Install pip packages
+      pip:
+        name: "{{ item }}"
+      with_items:
+        ndg-httpsclient
+      become: yes
+
+    - name: Download the rust installer script
+      get_url:
+        url: https://sh.rustup.rs
+        dest: /tmp/install-rust.sh
+        mode: 0777
+
+    - name: Install rust
+      command: bash /tmp/install-rust.sh -y --default-toolchain stable
+      args:
+        creates: /home/vagrant/.cargo/bin/cargo
+
+    - name: Unpack cfitsio
+      unarchive:
+        src: cfitsio3390.tar.gz
+        dest: /tmp
+        creates: /tmp/cfitsio
+
+    - name: Install cfitsio
+      shell: ./configure --prefix /usr/local --enable-reentrant && make && make shared && make install
+      args:
+        chdir: /tmp/cfitsio
+        creates: /usr/local/include/fitsio.h
+      become: yes
+
+    - name: Ensure new lib dir is on the linker path
+      command: ldconfig /usr/local/lib
+      become: yes
