@@ -61,7 +61,6 @@ impl ::std::fmt::Display for Error {
             Error::Message(ref s) => write!(f, "Error: {}", s),
             Error::Null(ref e) => write!(f, "Error: {}", e),
             Error::Utf8(ref e) => write!(f, "Error: {}", e),
-            _ => Ok(()),
         }
     }
 }
