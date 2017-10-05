@@ -1154,7 +1154,6 @@ pub enum Column {
     String { name: String, data: Vec<String> },
 }
 
-/*
 pub struct ColumnIterator<'a> {
     current: usize,
     column_descriptions: Vec<ConcreteColumnDescription>,
@@ -1255,7 +1254,6 @@ impl<'a> Iterator for ColumnIterator<'a> {
         }
     }
 }
-*/
 
 /// Struct representing a FITS HDU
 ///
@@ -1461,14 +1459,12 @@ impl FitsHdu {
         T::write_col_range(fits_file, self, name, col_data, rows)
     }
 
-    /*
-    pub fn columns(&self, fits_file: &mut FitsFile) -> ColumnIterator {
+    pub fn columns<'a>(&self, fits_file: &'a mut FitsFile) -> ColumnIterator<'a> {
         fits_file.make_current(&self).expect(
             "Cannot make hdu current",
         );
         ColumnIterator::new(fits_file)
     }
-    */
 }
 
 
@@ -2000,14 +1996,13 @@ mod test {
         assert!(result_data.is_err());
     }
 
-    /*
     #[test]
     fn column_iterator() {
         use super::Column;
 
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
-        let column_names: Vec<String> = hdu.columns()
+        let column_names: Vec<String> = hdu.columns(&mut f)
             .map(|col| match col {
                 Column::Int32 { name, .. } => name,
                 Column::Int64 { name, .. } => name,
@@ -2027,7 +2022,6 @@ mod test {
             ]
         );
     }
-    */
 
     #[test]
     fn column_number() {
@@ -2117,7 +2111,6 @@ mod test {
         });
     }
 
-    /*
     #[test]
     #[ignore]
     fn write_string_col() {
@@ -2130,7 +2123,7 @@ mod test {
             }
 
             {
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::String)
@@ -2141,18 +2134,17 @@ mod test {
                 let mut hdu = f.create_table("foo".to_string(), &table_description)
                     .unwrap();
 
-                hdu.write_col("bar", &data_to_write).unwrap();
+                hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
             }
 
-            let f = FitsFile::open(filename).unwrap();
+            let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
-            let data: Vec<String> = hdu.read_col("bar").unwrap();
+            let data: Vec<String> = hdu.read_col(&mut f, "bar").unwrap();
             assert_eq!(data.len(), data_to_write.len());
             assert_eq!(data[0], " value0");
             assert_eq!(data[49], "value49");
         });
     }
-    */
 
     #[test]
     fn read_image_data() {
