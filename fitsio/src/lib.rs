@@ -106,7 +106,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! let image_description = ImageDescription {
 //!     data_type: ImageType::FLOAT_IMG,
 //!     dimensions: &[100, 100],
@@ -200,14 +200,14 @@
 //! #
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
-//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! # let mut fptr = fitsio::FitsFile::open(filename).unwrap();
 //! # {
-//! let int_value: i64 = fptr.hdu(0).unwrap().read_key("INTTEST").unwrap();
+//! let int_value: i64 = fptr.hdu(0).unwrap().read_key(&mut fptr, "INTTEST").unwrap();
 //! # }
 //!
 //! // Alternatively
 //! # {
-//! let int_value = fptr.hdu(0).unwrap().read_key::<i64>("INTTEST").unwrap();
+//! let int_value = fptr.hdu(0).unwrap().read_key::<i64>(&mut fptr, "INTTEST").unwrap();
 //! # }
 //!
 //! // Or let the compiler infer the types (if possible)
@@ -225,9 +225,9 @@
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
 //! # {
-//! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
-//! fptr.hdu(0).unwrap().write_key("foo", 1i64).unwrap();
-//! assert_eq!(fptr.hdu(0).unwrap().read_key::<i64>("foo").unwrap(), 1i64);
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! fptr.hdu(0).unwrap().write_key(&mut fptr, "foo", 1i64).unwrap();
+//! assert_eq!(fptr.hdu(0).unwrap().read_key::<i64>(&mut fptr, "foo").unwrap(), 1i64);
 //! # }
 //! ```
 //!
@@ -246,16 +246,16 @@
 //! #
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
-//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! # let mut fptr = fitsio::FitsFile::open(filename).unwrap();
 //! # let hdu = fptr.hdu(0).unwrap();
 //! // Read the first 100 pixels
-//! let first_row: Vec<i32> = hdu.read_section(0, 100).unwrap();
+//! let first_row: Vec<i32> = hdu.read_section(&mut fptr, 0, 100).unwrap();
 //!
 //! // Read a square section of the image
 //!
 //! let xcoord = 0..10;
 //! let ycoord = 0..10;
-//! let chunk: Vec<i32> = hdu.read_region(&[&ycoord, &xcoord]).unwrap();
+//! let chunk: Vec<i32> = hdu.read_region(&mut fptr, &[&ycoord, &xcoord]).unwrap();
 //! # }
 //! ```
 //!
@@ -267,11 +267,11 @@
 //! #
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
-//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! # let mut fptr = fitsio::FitsFile::open(filename).unwrap();
 //! # let hdu = fptr.hdu(0).unwrap();
 //! let start_row = 0;
 //! let num_rows = 10;
-//! let first_few_rows: Vec<f32> = hdu.read_rows(start_row, num_rows).unwrap();
+//! let first_few_rows: Vec<f32> = hdu.read_rows(&mut fptr, start_row, num_rows).unwrap();
 //!
 //! // 10 rows of 100 columns
 //! assert_eq!(first_few_rows.len(), 1000);
@@ -285,9 +285,9 @@
 //! #
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
-//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! # let mut fptr = fitsio::FitsFile::open(filename).unwrap();
 //! # let hdu = fptr.hdu(0).unwrap();
-//! let image_data: Vec<f32> = hdu.read_image().unwrap();
+//! let image_data: Vec<f32> = hdu.read_image(&mut fptr, ).unwrap();
 //!
 //! // 100 rows of 100 columns
 //! assert_eq!(image_data.len(), 10_000);
@@ -305,9 +305,9 @@
 //! #
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
-//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
+//! # let mut fptr = fitsio::FitsFile::open(filename).unwrap();
 //! # let hdu = fptr.hdu(1);
-//! let integer_data: Vec<i32> = hdu.and_then(|hdu| hdu.read_col("intcol")).unwrap();
+//! let integer_data: Vec<i32> = hdu.and_then(|hdu| hdu.read_col(&mut fptr, "intcol")).unwrap();
 //! # }
 //! ```
 //!
@@ -350,14 +350,14 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! # let desc = ImageDescription {
 //! #    data_type: ImageType::FLOAT_IMG,
 //! #    dimensions: &[100, 100],
 //! # };
 //! # let mut hdu = fptr.create_image("".to_string(), &desc).unwrap();
 //! let data_to_write: Vec<f64> = vec![1.0, 2.0, 3.0];
-//! hdu.write_section(0, data_to_write.len(), &data_to_write).unwrap();
+//! hdu.write_section(&mut fptr, 0, data_to_write.len(), &data_to_write).unwrap();
 //! # }
 //! ```
 //!
@@ -374,7 +374,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! # let desc = ImageDescription {
 //! #    data_type: ImageType::FLOAT_IMG,
 //! #    dimensions: &[100, 100],
@@ -382,7 +382,7 @@
 //! # let mut hdu = fptr.create_image("".to_string(), &desc).unwrap();
 //! let data_to_write: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];
 //! let ranges = [&(0..1), &(0..1)];
-//! hdu.write_region(&ranges, &data_to_write).unwrap();
+//! hdu.write_region(&mut fptr, &ranges, &data_to_write).unwrap();
 //! # }
 //! ```
 //!
