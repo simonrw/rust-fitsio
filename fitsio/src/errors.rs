@@ -53,3 +53,21 @@ impl ::std::convert::From<Box<::std::error::Error>> for Error {
         Error::Message(message)
     }
 }
+
+impl ::std::fmt::Display for Error {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::result::Result<(), ::std::fmt::Error> {
+        match *self {
+            Error::Fits(ref e) => write!(f, "Fits error: {:?}", e),
+            Error::Message(ref s) => write!(f, "Error: {}", s),
+            Error::Null(ref e) => write!(f, "Error: {}", e),
+            Error::Utf8(ref e) => write!(f, "Error: {}", e),
+            _ => Ok(()),
+        }
+    }
+}
+
+impl ::std::error::Error for Error {
+    fn description(&self) -> &str {
+        "fitsio error"
+    }
+}
