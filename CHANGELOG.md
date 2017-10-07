@@ -2,13 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Added
 
+* (`fitsio`) add `insert_column` and `append_column` methods to `FitsHdu`
 * add contribution guide
 * cfitsio license
 
@@ -46,3 +46,7 @@ Nothing
 [pull-34]: https://github.com/mindriot101/rust-fitsio/pull/34
 [pull-32]: https://github.com/mindriot101/rust-fitsio/pull/32
 [pull-31]: https://github.com/mindriot101/rust-fitsio/pull/31
+
+---
+
+vim: ft=markdown:textwidth=0:wrap:nocindent
