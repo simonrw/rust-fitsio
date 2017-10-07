@@ -300,7 +300,7 @@ impl FitsFile {
     ///
     ///
     pub fn create_table(
-        &self,
+        &mut self,
         extname: String,
         table_description: &[ConcreteColumnDescription],
     ) -> Result<FitsHdu> {
@@ -1697,7 +1697,7 @@ mod test {
         with_temp_file(|filename| {
 
             {
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::Int)

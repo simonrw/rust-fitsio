@@ -129,7 +129,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! let first_description = ColumnDescription::new("A")
 //!     .with_type(ColumnDataType::Int)
 //!     .create().unwrap();
@@ -137,7 +137,7 @@
 //!     .with_type(ColumnDataType::Long)
 //!     .create().unwrap();
 //! let descriptions = [first_description, second_description];
-//! let mut hdu = fptr.create_table("EXTNAME".to_string(), &descriptions).unwrap();
+//! let hdu = fptr.create_table("EXTNAME".to_string(), &descriptions).unwrap();
 //! # }
 //! ```
 //!
