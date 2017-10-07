@@ -2514,17 +2514,15 @@ mod test {
         duplicate_test_file(|filename| {
             use columndescription::{ColumnDataType, ColumnDescription};
 
-            let newhdu = {
-                let mut f = FitsFile::edit(filename).unwrap();
-                let hdu = f.hdu("TESTEXT").unwrap();
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
 
-                let coldesc = ColumnDescription::new("abcdefg")
-                    .with_type(ColumnDataType::Int)
-                    .create()
-                    .unwrap();
+            let coldesc = ColumnDescription::new("abcdefg")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap();
 
-                hdu.append_column(&mut f, &coldesc).unwrap()
-            };
+            let newhdu = hdu.append_column(&mut f, &coldesc).unwrap();
 
             match newhdu.info {
                 HduInfo::TableInfo { column_descriptions, .. } => {
