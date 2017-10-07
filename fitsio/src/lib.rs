@@ -317,8 +317,7 @@
 //! ## Writing file data
 //!
 //! When writing to the file, all methods are attached to the `FitsHdu` object to which data is to
-//! be written. As these methods manipulate the underlying file information, the `FitsHdu` object
-//! must be `mut`.
+//! be written.
 //!
 //! ```rust
 //! # extern crate fitsio;
@@ -334,7 +333,7 @@
 //!
 //! Image data is written through two methods on the HDU object:
 //! [`write_section`](struct.FitsHdu.html#method.write_section) and
-//! [`write_region`](struct.FitsHdu.html#method.write_region):o
+//! [`write_region`](struct.FitsHdu.html#method.write_region).
 //!
 //! [`write_section`](struct.FitsHdu.html#method.write_section) requires a start index and
 //! end index and data to write. The data parameter needs to be a slice, meaning any contiguous
@@ -388,6 +387,88 @@
 //!
 //! ### Tables
 //!
+//! #### Inserting columns
+//!
+//! Two methods on the HDU object allow for adding new columns: [`append_column`][append-column]
+//! and [`insert_column`](struct.FitsHdu.html#method.insert_column).
+//! [`append_column`][append-column] adds a new column as the last column member, and is generally
+//! preferred as it does not require shifting of data within the file.
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # extern crate tempdir;
+//! # use fitsio::fitsfile::ImageDescription;
+//! # use fitsio::types::ImageType;
+//! # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+//! #
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let table_description = &[
+//! #     ColumnDescription::new("bar")
+//! #         .with_type(ColumnDataType::Int)
+//! #         .create()
+//! #         .unwrap(),
+//! # ];
+//! # let hdu = fptr.create_table("foo".to_string(), table_description)
+//! #     .unwrap();
+//! let column_description = ColumnDescription::new("abcdefg")
+//! .with_type(ColumnDataType::Int)
+//! .create().unwrap();
+//! hdu.append_column(&mut fptr, &column_description).unwrap();
+//! # }
+//!
+//! ```
+//!
+//! #### Deleting columns
+//!
+//! The HDU object has the method [`delete_column`][delete-column] which removes a column. The
+//! column can either be accessed by integer or name
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # extern crate tempdir;
+//! # use fitsio::fitsfile::ImageDescription;
+//! # use fitsio::types::ImageType;
+//! # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+//! #
+//! # fn main() {
+//! # {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let table_description = &[
+//! #     ColumnDescription::new("bar")
+//! #         .with_type(ColumnDataType::Int)
+//! #         .create()
+//! #         .unwrap(),
+//! # ];
+//! # let hdu = fptr.create_table("foo".to_string(), table_description)
+//! #     .unwrap();
+//! let newhdu = hdu.delete_column(&mut fptr, "bar").unwrap();
+//! # }
+//! # {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let table_description = &[
+//! #     ColumnDescription::new("bar")
+//! #         .with_type(ColumnDataType::Int)
+//! #         .create()
+//! #         .unwrap(),
+//! # ];
+//! # let hdu = fptr.create_table("foo".to_string(), table_description)
+//! #     .unwrap();
+//! // or
+//! let newhdu = hdu.delete_column(&mut fptr, 0).unwrap();
+//! # }
+//! # }
+//! ```
+//!
 //! ## Raw fits file access
 //!
 //! If this library does not support the particular use case that is needed, the raw `fitsfile`
@@ -424,6 +505,8 @@
 //!
 //! [1]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
 //! [2]: https://crates.io/crates/fitsio-sys
+//! [append-column]: fitsfile/struct.FitsHdu.html#method.append_column
+//! [delete-column]: fitsfile/struct.FitsHdu.html#method.delete_column
 
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]

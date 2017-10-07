@@ -485,6 +485,26 @@ impl<'a> DescribesHdu for &'a str {
     }
 }
 
+/// Way of describing a column location
+pub trait DescribesColumnLocation {
+    fn get_column_no(&self, hdu: &FitsHdu, fptr: &mut FitsFile) -> Result<i32>;
+}
+
+impl DescribesColumnLocation for usize {
+    fn get_column_no(&self, _: &FitsHdu, _: &mut FitsFile) -> Result<i32> {
+        Ok(*self as i32)
+    }
+}
+
+impl<'a> DescribesColumnLocation for &'a str {
+    fn get_column_no(&self, hdu: &FitsHdu, fits_file: &mut FitsFile) -> Result<i32> {
+        match hdu.get_column_no(fits_file, *self) {
+            Ok(value) => Ok(value as _),
+            Err(e) => Err(e),
+        }
+    }
+}
+
 /// Trait for reading a fits column
 pub trait ReadsCol {
     fn read_col_range<T: Into<String>>(
@@ -1402,6 +1422,76 @@ impl FitsHdu {
             HduInfo::AnyInfo => unreachable!(),
         }
 
+    }
+
+    pub fn insert_column(
+        self,
+        fits_file: &mut FitsFile,
+        position: usize,
+        description: &ConcreteColumnDescription,
+    ) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
+
+        let mut status = 0;
+
+        let c_name = ffi::CString::new(description.name.clone())?;
+        let c_type = ffi::CString::new(String::from(description.data_type.clone()))?;
+
+        unsafe {
+            sys::fficol(
+                fits_file.fptr as *mut _,
+                (position + 1) as _,
+                c_name.into_raw(),
+                c_type.into_raw(),
+                &mut status,
+            );
+        }
+
+        check_status(status).and_then(|_| fits_file.current_hdu())
+    }
+
+
+    pub fn append_column(
+        self,
+        fits_file: &mut FitsFile,
+        description: &ConcreteColumnDescription,
+    ) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
+
+        /* We have to split up the fetching of the number of columns from the inserting of the
+         * new column, as otherwise we're trying move out of self */
+        let result = match &self.info {
+            &HduInfo::TableInfo { ref column_descriptions, .. } => Ok(column_descriptions.len()),
+            &HduInfo::ImageInfo { .. } => Err("Cannot add columns to FITS image".into()),
+            &HduInfo::AnyInfo { .. } => {
+                Err("Cannot determine HDU type, so cannot add columns".into())
+            }
+        };
+
+        match result {
+            Ok(colno) => self.insert_column(fits_file, colno, description),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn delete_column<T: DescribesColumnLocation>(
+        self,
+        fits_file: &mut FitsFile,
+        col_identifier: T,
+    ) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
+
+        let colno = T::get_column_no(&col_identifier, &self, fits_file)?;
+        let mut status = 0;
+
+        unsafe {
+            sys::ffdcol(fits_file.fptr as *mut _, (colno + 1) as _, &mut status);
+        }
+
+        check_status(status).and_then(|_| fits_file.current_hdu())
     }
 
     pub fn get_column_no<T: Into<String>>(
@@ -2429,6 +2519,93 @@ mod test {
                     assert_eq!(shape, vec![1024, 1024]);
                 }
                 _ => panic!("ERROR!"),
+            }
+        });
+    }
+
+    #[test]
+    fn inserting_columns() {
+        duplicate_test_file(|filename| {
+            use columndescription::{ColumnDataType, ColumnDescription};
+
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+
+            let coldesc = ColumnDescription::new("abcdefg")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap();
+
+            let newhdu = hdu.insert_column(&mut f, 0, &coldesc).unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo { column_descriptions, .. } => {
+                    assert_eq!(column_descriptions[0].name, "abcdefg");
+                }
+                _ => panic!("ERROR"),
+            }
+        });
+    }
+
+    #[test]
+    fn appending_columns() {
+        duplicate_test_file(|filename| {
+            use columndescription::{ColumnDataType, ColumnDescription};
+
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+
+            let coldesc = ColumnDescription::new("abcdefg")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap();
+
+            let newhdu = hdu.append_column(&mut f, &coldesc).unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo { column_descriptions, .. } => {
+                    assert_eq!(
+                        column_descriptions[column_descriptions.len() - 1].name,
+                        "abcdefg"
+                    );
+                }
+                _ => panic!("ERROR"),
+            }
+        });
+    }
+
+    #[test]
+    fn deleting_columns_by_name() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+            let newhdu = hdu.delete_column(&mut f, "intcol").unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo { column_descriptions, .. } => {
+                    for col in column_descriptions {
+                        assert!(col.name != "intcol");
+                    }
+                }
+                _ => panic!("ERROR"),
+            }
+        });
+    }
+
+    #[test]
+    fn deleting_columns_by_number() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+            let newhdu = hdu.delete_column(&mut f, 0).unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo { column_descriptions, .. } => {
+                    for col in column_descriptions {
+                        assert!(col.name != "intcol");
+                    }
+                }
+                _ => panic!("ERROR"),
             }
         });
     }
