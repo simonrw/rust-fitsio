@@ -1,3 +1,6 @@
+use errors::{Error, Result};
+use stringutils::status_to_string;
+
 /// Error type
 ///
 /// `cfitsio` passes errors through integer status codes. This struct wraps this and its associated
@@ -6,6 +9,17 @@
 pub struct FitsError {
     pub status: i32,
     pub message: String,
+}
+
+/// Function for chaining result types
+pub fn check_status(status: i32) -> Result<()> {
+    match status {
+        0 => Ok(()),
+        _ => Err(Error::Fits(FitsError {
+            status: status,
+            message: status_to_string(status).unwrap().unwrap(),
+        })),
+    }
 }
 
 /// Macro for returning a FITS error type
