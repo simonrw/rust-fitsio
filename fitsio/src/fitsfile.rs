@@ -9,7 +9,7 @@
 use sys;
 use stringutils::{self, status_to_string};
 use errors::{Error, Result};
-use fitserror::FitsError;
+use fitserror::{check_status, FitsError};
 use columndescription::*;
 use libc;
 use types::{DataType, CaseSensitivity, HduInfo, FileOpenMode, ImageType};
@@ -648,7 +648,7 @@ pub trait WritesCol {
         col_name: T,
         col_data: &[Self],
         rows: &Range<usize>,
-    ) -> Result<()>
+    ) -> Result<FitsHdu>
     where
         Self: Sized;
 
@@ -657,7 +657,7 @@ pub trait WritesCol {
         hdu: &FitsHdu,
         col_name: T,
         col_data: &[Self],
-    ) -> Result<()>
+    ) -> Result<FitsHdu>
     where
         Self: Sized,
     {
@@ -685,7 +685,7 @@ macro_rules! writes_col_impl {
                 col_name: T,
                 col_data: &[Self],
                 rows: &Range<usize>)
-            -> Result<()> {
+            -> Result<FitsHdu> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { .. }) => {
                         let colno = hdu.get_column_no(fits_file, col_name.into())?;
@@ -702,7 +702,7 @@ macro_rules! writes_col_impl {
                                 &mut status
                             );
                         }
-                        fits_try!(status, ())
+                        check_status(status).and_then(|_| fits_file.current_hdu())
                     },
                     Ok(HduInfo::ImageInfo { .. }) =>
                         Err("Cannot write column data to FITS image".into()),
@@ -733,7 +733,7 @@ impl WritesCol for String {
         col_name: T,
         col_data: &[Self],
         rows: &Range<usize>,
-    ) -> Result<()> {
+    ) -> Result<FitsHdu> {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { .. }) => {
                 let colno = hdu.get_column_no(fits_file, col_name.into())?;
@@ -763,7 +763,7 @@ impl WritesCol for String {
                         &mut status,
                     );
                 }
-                fits_try!(status, ())
+                check_status(status).and_then(|_| fits_file.current_hdu())
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
             Ok(HduInfo::AnyInfo { .. }) => {
@@ -954,13 +954,13 @@ pub trait ReadWriteImage: Sized {
         start: usize,
         end: usize,
         data: &[Self],
-    ) -> Result<()>;
+    ) -> Result<FitsHdu>;
 
     fn write_region(
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
         data: &[Self],
-    ) -> Result<()>;
+    ) -> Result<FitsHdu>;
 }
 
 macro_rules! read_write_image_impl {
@@ -1078,7 +1078,7 @@ macro_rules! read_write_image_impl {
                 start: usize,
                 end: usize,
                 data: &[Self])
-                -> Result<()> {
+                -> Result<FitsHdu> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { .. }) => {
                             let nelements = end - start;
@@ -1093,7 +1093,7 @@ macro_rules! read_write_image_impl {
                                            &mut status);
                             }
 
-                            fits_try!(status, ())
+                            check_status(status).and_then(|_| fits_file.current_hdu())
                         },
                         Ok(HduInfo::TableInfo { .. }) =>
                             Err("cannot write image data to a table hdu".into()),
@@ -1106,7 +1106,7 @@ macro_rules! read_write_image_impl {
                 fits_file: &mut FitsFile,
                 ranges: &[&Range<usize>],
                 data: &[Self])
-                -> Result<()> {
+                -> Result<FitsHdu> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { .. }) => {
                             let mut fpixel = [
@@ -1129,7 +1129,7 @@ macro_rules! read_write_image_impl {
                                     &mut status);
                             }
 
-                            fits_try!(status, ())
+                            check_status(status).and_then(|_| fits_file.current_hdu())
                         },
                         Ok(HduInfo::TableInfo { .. }) =>
                             Err("cannot write image data to a table hdu".into()),
@@ -1344,13 +1344,15 @@ impl FitsHdu {
     }
 
     /// Write contiguous data to a fits image
+    ///
+    /// Returns the new HDU object
     pub fn write_section<T: ReadWriteImage>(
-        &self,
+        self,
         fits_file: &mut FitsFile,
         start: usize,
         end: usize,
         data: &[T],
-    ) -> Result<()> {
+    ) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
         T::write_section(fits_file, start, end, data)
@@ -1358,11 +1360,11 @@ impl FitsHdu {
 
     /// Write a rectangular region to a fits image
     pub fn write_region<T: ReadWriteImage>(
-        &self,
+        self,
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
         data: &[T],
-    ) -> Result<()> {
+    ) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
         T::write_region(fits_file, ranges, data)
@@ -1378,8 +1380,8 @@ impl FitsHdu {
         T::read_region(fits_file, ranges)
     }
 
-    pub fn resize(&self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<()> {
-        fits_file.make_current(self)?;
+    pub fn resize(self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
         match self.info {
@@ -1394,7 +1396,7 @@ impl FitsHdu {
                         &mut status,
                     );
                 }
-                fits_try!(status, ())
+                check_status(status).and_then(|_| fits_file.current_hdu())
             }
             HduInfo::TableInfo { .. } => Err("cannot resize binary table".into()),
             HduInfo::AnyInfo => unreachable!(),
@@ -1446,26 +1448,26 @@ impl FitsHdu {
     }
 
     pub fn write_col<T: WritesCol, N: Into<String>>(
-        &self,
+        self,
         fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
-    ) -> Result<()> {
+    ) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
-        T::write_col(fits_file, self, name, col_data)
+        T::write_col(fits_file, &self, name, col_data)
     }
 
     pub fn write_col_range<T: WritesCol, N: Into<String>>(
-        &self,
+        self,
         fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
         rows: &Range<usize>,
-    ) -> Result<()> {
+    ) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
-        T::write_col_range(fits_file, self, name, col_data, rows)
+        T::write_col_range(fits_file, &self, name, col_data, rows)
     }
 
     pub fn columns<'a>(&self, fits_file: &'a mut FitsFile) -> ColumnIterator<'a> {
@@ -2413,5 +2415,21 @@ mod test {
             Ok(HduInfo::ImageInfo { .. }) => panic!("Should be binary table"),
             _ => panic!("ERROR!"),
         }
+    }
+
+    #[test]
+    fn changing_image_returns_new_hdu() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu(0).unwrap();
+            let newhdu = hdu.resize(&mut f, &vec![1024, 1024]).unwrap();
+
+            match newhdu.info {
+                HduInfo::ImageInfo { shape, .. } => {
+                    assert_eq!(shape, vec![1024, 1024]);
+                }
+                _ => panic!("ERROR!"),
+            }
+        });
     }
 }
