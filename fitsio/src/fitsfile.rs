@@ -1456,6 +1456,24 @@ impl FitsHdu {
         }
     }
 
+    pub fn delete_column<T: Into<String>>(
+        self,
+        fits_file: &mut FitsFile,
+        col_name: T,
+    ) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
+
+        let colno = self.get_column_no(fits_file, col_name)?;
+        let mut status = 0;
+
+        unsafe {
+            sys::ffdcol(fits_file.fptr as *mut _, (colno + 1) as _, &mut status);
+        }
+
+        check_status(status).and_then(|_| fits_file.current_hdu())
+    }
+
     pub fn get_column_no<T: Into<String>>(
         &self,
         fits_file: &mut FitsFile,
@@ -2530,6 +2548,24 @@ mod test {
                         column_descriptions[column_descriptions.len() - 1].name,
                         "abcdefg"
                     );
+                }
+                _ => panic!("ERROR"),
+            }
+        });
+    }
+
+    #[test]
+    fn deleting_columns() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+            let newhdu = hdu.delete_column(&mut f, "intcol").unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo { column_descriptions, .. } => {
+                    for col in column_descriptions {
+                        assert!(col.name != "intcol");
+                    }
                 }
                 _ => panic!("ERROR"),
             }
