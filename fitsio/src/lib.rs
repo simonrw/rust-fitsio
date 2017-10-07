@@ -476,9 +476,9 @@
 //!
 //! ```rust
 //! # extern crate fitsio;
-//! #[cfg(not(feature="bindgen"))]
+//! # #[cfg(not(feature="bindgen"))]
 //! extern crate fitsio_sys;
-//! #[cfg(feature="bindgen")]
+//! # #[cfg(feature="bindgen")]
 //! # extern crate fitsio_sys_bindgen as fitsio_sys;
 //!
 //! # use fitsio::FitsFile;
