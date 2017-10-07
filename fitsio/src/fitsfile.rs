@@ -9,7 +9,7 @@
 use sys;
 use stringutils::{self, status_to_string};
 use errors::{Error, Result};
-use fitserror::FitsError;
+use fitserror::{check_status, FitsError};
 use columndescription::*;
 use libc;
 use types::{DataType, CaseSensitivity, HduInfo, FileOpenMode, ImageType};
@@ -159,14 +159,20 @@ impl FitsFile {
     }
 
     /// Change the current HDU
-    fn change_hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<()> {
+    fn change_hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<()> {
         hdu_description.change_hdu(self)
     }
 
     /// Return a new HDU object
-    pub fn hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<FitsHdu> {
+    pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<FitsHdu> {
         FitsHdu::new(self, hdu_description)
     }
+
+    /// Function to make the HDU the current hdu
+    fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
+        self.change_hdu(hdu.hdu_num)
+    }
+
 
     fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
@@ -177,7 +183,7 @@ impl FitsFile {
     }
 
     /// Get the current hdu as an HDU object
-    pub fn current_hdu(&self) -> Result<FitsHdu> {
+    pub fn current_hdu(&mut self) -> Result<FitsHdu> {
         let current_hdu_number = self.hdu_number();
         self.hdu(current_hdu_number)
     }
@@ -220,6 +226,7 @@ impl FitsFile {
 
                 let image_type = match bitpix {
                     8 => ImageType::BYTE_IMG,
+                    10 => ImageType::SBYTE_IMG,
                     16 => ImageType::SHORT_IMG,
                     20 => ImageType::USHORT_IMG,
                     32 => ImageType::LONG_IMG,
@@ -293,7 +300,7 @@ impl FitsFile {
     ///
     ///
     pub fn create_table(
-        &self,
+        &mut self,
         extname: String,
         table_description: &[ConcreteColumnDescription],
     ) -> Result<FitsHdu> {
@@ -355,7 +362,7 @@ impl FitsFile {
 
     /// Create a new fits image, and return the [`FitsHdu`](struct.FitsHdu.html) object
     pub fn create_image(
-        &self,
+        &mut self,
         extname: String,
         image_description: &ImageDescription,
     ) -> Result<FitsHdu> {
@@ -396,8 +403,8 @@ impl FitsFile {
         }
 
         // Current HDU should be at the new HDU
-        let mut current_hdu = try!(self.current_hdu());
-        try!(current_hdu.write_key("EXTNAME".into(), extname));
+        let current_hdu = try!(self.current_hdu());
+        try!(current_hdu.write_key(self, "EXTNAME".into(), extname));
 
         if status != 0 {
             Err(
@@ -438,11 +445,11 @@ impl Drop for FitsFile {
 /// Any way of describing a HDU - number or string which either
 /// changes the hdu by absolute number, or by name.
 pub trait DescribesHdu {
-    fn change_hdu(&self, fptr: &FitsFile) -> Result<()>;
+    fn change_hdu(&self, fptr: &mut FitsFile) -> Result<()>;
 }
 
 impl DescribesHdu for usize {
-    fn change_hdu(&self, f: &FitsFile) -> Result<()> {
+    fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
         let mut _hdu_type = 0;
         let mut status = 0;
         unsafe {
@@ -459,7 +466,7 @@ impl DescribesHdu for usize {
 }
 
 impl<'a> DescribesHdu for &'a str {
-    fn change_hdu(&self, f: &FitsFile) -> Result<()> {
+    fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
         let mut _hdu_type = 0;
         let mut status = 0;
         let c_hdu_name = ffi::CString::new(*self)?;
@@ -636,21 +643,21 @@ impl ReadsCol for String {
 
 pub trait WritesCol {
     fn write_col_range<T: Into<String>>(
-        fits_file: &FitsFile,
+        fits_file: &mut FitsFile,
         hdu: &FitsHdu,
         col_name: T,
         col_data: &[Self],
         rows: &Range<usize>,
-    ) -> Result<()>
+    ) -> Result<FitsHdu>
     where
         Self: Sized;
 
     fn write_col<T: Into<String>>(
-        fits_file: &FitsFile,
+        fits_file: &mut FitsFile,
         hdu: &FitsHdu,
         col_name: T,
         col_data: &[Self],
-    ) -> Result<()>
+    ) -> Result<FitsHdu>
     where
         Self: Sized,
     {
@@ -673,15 +680,15 @@ pub trait WritesCol {
 macro_rules! writes_col_impl {
     ($t: ty, $data_type: expr) => (
         impl WritesCol for $t {
-            fn write_col_range<T: Into<String>>(fits_file: &FitsFile,
+            fn write_col_range<T: Into<String>>(fits_file: &mut FitsFile,
                 hdu: &FitsHdu,
                 col_name: T,
                 col_data: &[Self],
                 rows: &Range<usize>)
-            -> Result<()> {
+            -> Result<FitsHdu> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { .. }) => {
-                        let colno = hdu.get_column_no(col_name.into())?;
+                        let colno = hdu.get_column_no(fits_file, col_name.into())?;
                         let mut status = 0;
                         unsafe {
                             sys::ffpcl(
@@ -695,7 +702,7 @@ macro_rules! writes_col_impl {
                                 &mut status
                             );
                         }
-                        fits_try!(status, ())
+                        check_status(status).and_then(|_| fits_file.current_hdu())
                     },
                     Ok(HduInfo::ImageInfo { .. }) =>
                         Err("Cannot write column data to FITS image".into()),
@@ -721,15 +728,15 @@ writes_col_impl!(f64, DataType::TDOUBLE);
 
 impl WritesCol for String {
     fn write_col_range<T: Into<String>>(
-        fits_file: &FitsFile,
+        fits_file: &mut FitsFile,
         hdu: &FitsHdu,
         col_name: T,
         col_data: &[Self],
         rows: &Range<usize>,
-    ) -> Result<()> {
+    ) -> Result<FitsHdu> {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { .. }) => {
-                let colno = hdu.get_column_no(col_name.into())?;
+                let colno = hdu.get_column_no(fits_file, col_name.into())?;
                 let width = column_display_width(fits_file, colno)?;
                 let mut status = 0;
 
@@ -756,7 +763,7 @@ impl WritesCol for String {
                         &mut status,
                     );
                 }
-                fits_try!(status, ())
+                check_status(status).and_then(|_| fits_file.current_hdu())
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
             Ok(HduInfo::AnyInfo { .. }) => {
@@ -942,9 +949,18 @@ pub trait ReadWriteImage: Sized {
         }
     }
 
-    fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
+    fn write_section(
+        fits_file: &mut FitsFile,
+        start: usize,
+        end: usize,
+        data: &[Self],
+    ) -> Result<FitsHdu>;
 
-    fn write_region(fits_file: &FitsFile, ranges: &[&Range<usize>], data: &[Self]) -> Result<()>;
+    fn write_region(
+        fits_file: &mut FitsFile,
+        ranges: &[&Range<usize>],
+        data: &[Self],
+    ) -> Result<FitsHdu>;
 }
 
 macro_rules! read_write_image_impl {
@@ -1058,11 +1074,11 @@ macro_rules! read_write_image_impl {
                 }
 
             fn write_section(
-                fits_file: &FitsFile,
+                fits_file: &mut FitsFile,
                 start: usize,
                 end: usize,
                 data: &[Self])
-                -> Result<()> {
+                -> Result<FitsHdu> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { .. }) => {
                             let nelements = end - start;
@@ -1077,7 +1093,7 @@ macro_rules! read_write_image_impl {
                                            &mut status);
                             }
 
-                            fits_try!(status, ())
+                            check_status(status).and_then(|_| fits_file.current_hdu())
                         },
                         Ok(HduInfo::TableInfo { .. }) =>
                             Err("cannot write image data to a table hdu".into()),
@@ -1087,10 +1103,10 @@ macro_rules! read_write_image_impl {
                 }
 
             fn write_region(
-                fits_file: &FitsFile,
+                fits_file: &mut FitsFile,
                 ranges: &[&Range<usize>],
                 data: &[Self])
-                -> Result<()> {
+                -> Result<FitsHdu> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { .. }) => {
                             let mut fpixel = [
@@ -1113,7 +1129,7 @@ macro_rules! read_write_image_impl {
                                     &mut status);
                             }
 
-                            fits_try!(status, ())
+                            check_status(status).and_then(|_| fits_file.current_hdu())
                         },
                         Ok(HduInfo::TableInfo { .. }) =>
                             Err("cannot write image data to a table hdu".into()),
@@ -1251,21 +1267,18 @@ impl<'a> Iterator for ColumnIterator<'a> {
 /// Struct representing a FITS HDU
 ///
 ///
-pub struct FitsHdu<'open> {
-    fits_file: &'open FitsFile,
-
+pub struct FitsHdu {
     /// Information about the current HDU
     pub info: HduInfo,
     hdu_num: usize,
 }
 
-impl<'open> FitsHdu<'open> {
-    pub fn new<T: DescribesHdu>(fits_file: &'open FitsFile, hdu_description: T) -> Result<Self> {
+impl FitsHdu {
+    pub fn new<T: DescribesHdu>(fits_file: &mut FitsFile, hdu_description: T) -> Result<Self> {
         try!(fits_file.change_hdu(hdu_description));
         match fits_file.fetch_hdu_info() {
             Ok(hdu_info) => {
                 Ok(FitsHdu {
-                    fits_file: fits_file,
                     info: hdu_info,
                     hdu_num: fits_file.hdu_number(),
                 })
@@ -1274,98 +1287,116 @@ impl<'open> FitsHdu<'open> {
         }
     }
 
-    /// Function to make the HDU the current hdu
-    fn make_current(&self) -> Result<()> {
-        self.fits_file.change_hdu(self.hdu_num)
-    }
-
     /// Read header key
-    pub fn read_key<T: ReadsKey>(&self, name: &str) -> Result<T> {
-        self.make_current()?;
-        T::read_key(self.fits_file, name)
+    pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
+        fits_file.make_current(&self)?;
+        T::read_key(fits_file, name)
     }
 
     /// Write header key
-    pub fn write_key<T: WritesKey>(&mut self, name: &str, value: T) -> Result<()> {
-        self.make_current()?;
-        fits_check_readwrite!(self.fits_file);
-        T::write_key(self.fits_file, name, value)
+    pub fn write_key<T: WritesKey>(
+        &self,
+        fits_file: &mut FitsFile,
+        name: &str,
+        value: T,
+    ) -> Result<()> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
+        T::write_key(fits_file, name, value)
     }
 
     /// Read an image between pixel a and pixel b into a `Vec`
-    pub fn read_section<T: ReadWriteImage>(&self, start: usize, end: usize) -> Result<Vec<T>> {
-        self.make_current()?;
-        T::read_section(self.fits_file, start, end)
+    pub fn read_section<T: ReadWriteImage>(
+        &self,
+        fits_file: &mut FitsFile,
+        start: usize,
+        end: usize,
+    ) -> Result<Vec<T>> {
+        fits_file.make_current(&self)?;
+        T::read_section(fits_file, start, end)
     }
 
     /// Read multiple rows from a fits image
     pub fn read_rows<T: ReadWriteImage>(
         &self,
+        fits_file: &mut FitsFile,
         start_row: usize,
         num_rows: usize,
     ) -> Result<Vec<T>> {
-        self.make_current()?;
-        T::read_rows(self.fits_file, start_row, num_rows)
+        fits_file.make_current(&self)?;
+        T::read_rows(fits_file, start_row, num_rows)
     }
 
     /// Read a single row from a fits image
-    pub fn read_row<T: ReadWriteImage>(&self, row: usize) -> Result<Vec<T>> {
-        self.make_current()?;
-        T::read_row(self.fits_file, row)
+    pub fn read_row<T: ReadWriteImage>(
+        &self,
+        fits_file: &mut FitsFile,
+        row: usize,
+    ) -> Result<Vec<T>> {
+        fits_file.make_current(&self)?;
+        T::read_row(fits_file, row)
     }
 
     /// Read a whole fits image into a vector
-    pub fn read_image<T: ReadWriteImage>(&self) -> Result<Vec<T>> {
-        self.make_current()?;
-        T::read_image(self.fits_file)
+    pub fn read_image<T: ReadWriteImage>(&self, fits_file: &mut FitsFile) -> Result<Vec<T>> {
+        fits_file.make_current(&self)?;
+        T::read_image(fits_file)
     }
 
     /// Write contiguous data to a fits image
+    ///
+    /// Returns the new HDU object
     pub fn write_section<T: ReadWriteImage>(
-        &mut self,
+        self,
+        fits_file: &mut FitsFile,
         start: usize,
         end: usize,
         data: &[T],
-    ) -> Result<()> {
-        self.make_current()?;
-        fits_check_readwrite!(self.fits_file);
-        T::write_section(self.fits_file, start, end, data)
+    ) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
+        T::write_section(fits_file, start, end, data)
     }
 
     /// Write a rectangular region to a fits image
     pub fn write_region<T: ReadWriteImage>(
-        &mut self,
+        self,
+        fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
         data: &[T],
-    ) -> Result<()> {
-        self.make_current()?;
-        fits_check_readwrite!(self.fits_file);
-        T::write_region(self.fits_file, ranges, data)
+    ) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
+        T::write_region(fits_file, ranges, data)
     }
 
     /// Read a square region into a `Vec`
-    pub fn read_region<T: ReadWriteImage>(&self, ranges: &[&Range<usize>]) -> Result<Vec<T>> {
-        self.make_current()?;
-        T::read_region(self.fits_file, ranges)
+    pub fn read_region<T: ReadWriteImage>(
+        &self,
+        fits_file: &mut FitsFile,
+        ranges: &[&Range<usize>],
+    ) -> Result<Vec<T>> {
+        fits_file.make_current(&self)?;
+        T::read_region(fits_file, ranges)
     }
 
-    pub fn resize(&mut self, new_size: &[usize]) -> Result<()> {
-        self.make_current()?;
-        fits_check_readwrite!(self.fits_file);
+    pub fn resize(self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
 
         match self.info {
             HduInfo::ImageInfo { image_type, .. } => {
                 let mut status = 0;
                 unsafe {
                     sys::ffrsim(
-                        self.fits_file.fptr as *mut _,
+                        fits_file.fptr as *mut _,
                         image_type.into(),
                         2,
                         new_size.as_ptr() as *mut _,
                         &mut status,
                     );
                 }
-                fits_try!(status, ())
+                check_status(status).and_then(|_| fits_file.current_hdu())
             }
             HduInfo::TableInfo { .. } => Err("cannot resize binary table".into()),
             HduInfo::AnyInfo => unreachable!(),
@@ -1373,8 +1404,12 @@ impl<'open> FitsHdu<'open> {
 
     }
 
-    pub fn get_column_no<T: Into<String>>(&self, col_name: T) -> Result<usize> {
-        self.make_current()?;
+    pub fn get_column_no<T: Into<String>>(
+        &self,
+        fits_file: &mut FitsFile,
+        col_name: T,
+    ) -> Result<usize> {
+        fits_file.make_current(&self)?;
 
         let mut status = 0;
         let mut colno = 0;
@@ -1386,7 +1421,7 @@ impl<'open> FitsHdu<'open> {
 
         unsafe {
             sys::ffgcno(
-                self.fits_file.fptr as *mut _,
+                fits_file.fptr as *mut _,
                 CaseSensitivity::CASEINSEN as _,
                 c_col_name.as_ptr() as *mut _,
                 &mut colno,
@@ -1397,40 +1432,49 @@ impl<'open> FitsHdu<'open> {
     }
 
     /// Read a binary table column
-    pub fn read_col<T: ReadsCol>(&self, name: &str) -> Result<Vec<T>> {
-        self.make_current()?;
-        T::read_col(self.fits_file, name)
+    pub fn read_col<T: ReadsCol>(&self, fits_file: &mut FitsFile, name: &str) -> Result<Vec<T>> {
+        fits_file.make_current(&self)?;
+        T::read_col(fits_file, name)
     }
 
-    pub fn read_col_range<T: ReadsCol>(&self, name: &str, range: &Range<usize>) -> Result<Vec<T>> {
-        self.make_current()?;
-        T::read_col_range(self.fits_file, name, range)
+    pub fn read_col_range<T: ReadsCol>(
+        &self,
+        fits_file: &mut FitsFile,
+        name: &str,
+        range: &Range<usize>,
+    ) -> Result<Vec<T>> {
+        fits_file.make_current(&self)?;
+        T::read_col_range(fits_file, name, range)
     }
 
     pub fn write_col<T: WritesCol, N: Into<String>>(
-        &mut self,
+        self,
+        fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
-    ) -> Result<()> {
-        self.make_current()?;
-        fits_check_readwrite!(self.fits_file);
-        T::write_col(self.fits_file, self, name, col_data)
+    ) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
+        T::write_col(fits_file, &self, name, col_data)
     }
 
     pub fn write_col_range<T: WritesCol, N: Into<String>>(
-        &mut self,
+        self,
+        fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
         rows: &Range<usize>,
-    ) -> Result<()> {
-        self.make_current()?;
-        fits_check_readwrite!(self.fits_file);
-        T::write_col_range(self.fits_file, self, name, col_data, rows)
+    ) -> Result<FitsHdu> {
+        fits_file.make_current(&self)?;
+        fits_check_readwrite!(fits_file);
+        T::write_col_range(fits_file, &self, name, col_data, rows)
     }
 
-    pub fn columns(&self) -> ColumnIterator {
-        self.make_current().expect("Could not change current hdu");
-        ColumnIterator::new(self.fits_file)
+    pub fn columns<'a>(&self, fits_file: &'a mut FitsFile) -> ColumnIterator<'a> {
+        fits_file.make_current(&self).expect(
+            "Cannot make hdu current",
+        );
+        ColumnIterator::new(fits_file)
     }
 }
 
@@ -1489,11 +1533,12 @@ mod test {
     fn creating_a_new_file() {
         with_temp_file(|filename| {
             FitsFile::create(filename)
-                .map(|f| {
+                .map(|mut f| {
                     assert!(Path::new(filename).exists());
 
                     // Ensure the empty primary has been written
-                    let naxis: i64 = f.hdu(0).unwrap().read_key("NAXIS").unwrap();
+                    let hdu = f.hdu(0).unwrap();
+                    let naxis: i64 = hdu.read_key(&mut f, "NAXIS").unwrap();
                     assert_eq!(naxis, 0);
                 })
                 .unwrap();
@@ -1505,7 +1550,7 @@ mod test {
         use columndescription::*;
 
         duplicate_test_file(|filename| {
-            let f = FitsFile::open(filename).unwrap();
+            let mut f = FitsFile::open(filename).unwrap();
 
             match f.create_image(
                 "FOO".to_string(),
@@ -1537,17 +1582,19 @@ mod test {
     fn editing_a_current_file() {
         duplicate_test_file(|filename| {
             {
-                let f = FitsFile::edit(filename).unwrap();
-                let mut image_hdu = f.hdu(0).unwrap();
+                let mut f = FitsFile::edit(filename).unwrap();
+                let image_hdu = f.hdu(0).unwrap();
 
                 let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
-                image_hdu.write_section(0, 100, &data_to_write).unwrap();
+                image_hdu
+                    .write_section(&mut f, 0, 100, &data_to_write)
+                    .unwrap();
             }
 
             {
-                let f = FitsFile::open(filename).unwrap();
+                let mut f = FitsFile::open(filename).unwrap();
                 let hdu = f.hdu(0).unwrap();
-                let read_data: Vec<i64> = hdu.read_section(0, 10).unwrap();
+                let read_data: Vec<i64> = hdu.read_section(&mut f, 0, 10).unwrap();
                 assert_eq!(read_data, vec![10101; 10]);
             }
         });
@@ -1555,7 +1602,7 @@ mod test {
 
     #[test]
     fn fetching_a_hdu() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         for i in 0..2 {
             f.change_hdu(i).unwrap();
             assert_eq!(f.hdu_number(), i);
@@ -1574,7 +1621,7 @@ mod test {
     fn fetching_hdu_info() {
         use columndescription::*;
 
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
             Ok(HduInfo::ImageInfo { shape, image_type }) => {
                 assert_eq!(shape.len(), 2);
@@ -1661,7 +1708,7 @@ mod test {
         with_temp_file(|filename| {
 
             {
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::Int)
@@ -1673,7 +1720,7 @@ mod test {
             }
 
             FitsFile::open(filename)
-                .map(|f| {
+                .map(|mut f| {
                     f.change_hdu("foo").unwrap();
                     match f.fetch_hdu_info() {
                         Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
@@ -1699,7 +1746,7 @@ mod test {
     fn adding_new_image() {
         with_temp_file(|filename| {
             {
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
@@ -1709,7 +1756,7 @@ mod test {
             }
 
             FitsFile::open(filename)
-                .map(|f| {
+                .map(|mut f| {
                     f.change_hdu("foo").unwrap();
                     match f.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { shape, .. }) => {
@@ -1725,7 +1772,7 @@ mod test {
 
     #[test]
     fn fetching_hdu_object_hdu_info() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let testext = f.hdu("TESTEXT").unwrap();
         match testext.info {
             HduInfo::TableInfo { num_rows, .. } => {
@@ -1737,12 +1784,12 @@ mod test {
 
     #[test]
     fn fetch_current_hdu() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.change_hdu("TESTEXT").unwrap();
         let hdu = f.current_hdu().unwrap();
 
         assert_eq!(
-            hdu.read_key::<String>("EXTNAME").unwrap(),
+            hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
             "TESTEXT".to_string()
         );
     }
@@ -1750,7 +1797,7 @@ mod test {
     #[test]
     fn creating_new_image_returns_hdu_object() {
         with_temp_file(|filename| {
-            let f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).unwrap();
             let image_description = ImageDescription {
                 data_type: ImageType::LONG_IMG,
                 dimensions: &[100, 20],
@@ -1758,7 +1805,7 @@ mod test {
             let hdu: FitsHdu = f.create_image("foo".to_string(), &image_description)
                 .unwrap();
             assert_eq!(
-                hdu.read_key::<String>("EXTNAME").unwrap(),
+                hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
                 "foo".to_string()
             );
         });
@@ -1769,7 +1816,7 @@ mod test {
         use columndescription::*;
 
         with_temp_file(|filename| {
-            let f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).unwrap();
             let table_description = vec![
                 ColumnDescription::new("bar")
                     .with_type(ColumnDataType::Int)
@@ -1779,7 +1826,7 @@ mod test {
             let hdu: FitsHdu = f.create_table("foo".to_string(), &table_description)
                 .unwrap();
             assert_eq!(
-                hdu.read_key::<String>("EXTNAME").unwrap(),
+                hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
                 "foo".to_string()
             );
         });
@@ -1798,8 +1845,8 @@ mod test {
 
     #[test]
     fn test_manually_creating_a_fits_hdu() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let hdu = FitsHdu::new(&f, "TESTEXT").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = FitsHdu::new(&mut f, "TESTEXT").unwrap();
         match hdu.info {
             HduInfo::TableInfo { num_rows, .. } => {
                 assert_eq!(num_rows, 50);
@@ -1810,14 +1857,14 @@ mod test {
 
     #[test]
     fn reading_header_keys() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
-        match hdu.read_key::<i64>("INTTEST") {
+        match hdu.read_key::<i64>(&mut f, "INTTEST") {
             Ok(value) => assert_eq!(value, 42),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
-        match hdu.read_key::<f64>("DBLTEST") {
+        match hdu.read_key::<f64>(&mut f, "DBLTEST") {
             Ok(value) => {
                 assert!(
                     floats_close_f64(value, 0.09375),
@@ -1829,7 +1876,7 @@ mod test {
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
-        match hdu.read_key::<String>("TEST") {
+        match hdu.read_key::<String>(&mut f, "TEST") {
             Ok(value) => assert_eq!(value, "value"),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
@@ -1841,19 +1888,19 @@ mod test {
         with_temp_file(|filename| {
             // Scope ensures file is closed properly
             {
-                let f = FitsFile::create(filename).unwrap();
-                f.hdu(0).unwrap().write_key("FOO", 1i64).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
+                f.hdu(0).unwrap().write_key(&mut f, "FOO", 1i64).unwrap();
                 f.hdu(0)
                     .unwrap()
-                    .write_key("BAR", "baz".to_string())
+                    .write_key(&mut f, "BAR", "baz".to_string())
                     .unwrap();
             }
 
             FitsFile::open(filename)
-                .map(|f| {
-                    assert_eq!(f.hdu(0).unwrap().read_key::<i64>("foo").unwrap(), 1);
+                .map(|mut f| {
+                    assert_eq!(f.hdu(0).unwrap().read_key::<i64>(&mut f, "foo").unwrap(), 1);
                     assert_eq!(
-                        f.hdu(0).unwrap().read_key::<String>("bar").unwrap(),
+                        f.hdu(0).unwrap().read_key::<String>(&mut f, "bar").unwrap(),
                         "baz".to_string()
                     );
                 })
@@ -1865,7 +1912,7 @@ mod test {
     fn fetching_column_width() {
         use super::column_display_width;
 
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.hdu(1).unwrap();
         let width = column_display_width(&f, 3).unwrap();
         assert_eq!(width, 7);
@@ -1873,14 +1920,14 @@ mod test {
 
     #[test]
     fn read_columns() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
-        let intcol_data: Vec<i32> = hdu.read_col("intcol").unwrap();
+        let intcol_data: Vec<i32> = hdu.read_col(&mut f, "intcol").unwrap();
         assert_eq!(intcol_data[0], 18);
         assert_eq!(intcol_data[15], 10);
         assert_eq!(intcol_data[49], 12);
 
-        let floatcol_data: Vec<f32> = hdu.read_col("floatcol").unwrap();
+        let floatcol_data: Vec<f32> = hdu.read_col(&mut f, "floatcol").unwrap();
         assert!(
             floats_close_f32(floatcol_data[0], 17.496801),
             "{:?} != {:?}",
@@ -1900,7 +1947,7 @@ mod test {
             10.217053
         );
 
-        let doublecol_data: Vec<f64> = hdu.read_col("doublecol").unwrap();
+        let doublecol_data: Vec<f64> = hdu.read_col(&mut f, "doublecol").unwrap();
         assert!(
             floats_close_f64(doublecol_data[0], 16.959972808730814),
             "{:?} != {:?}",
@@ -1923,9 +1970,9 @@ mod test {
 
     #[test]
     fn read_string_col() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
-        let strcol: Vec<String> = hdu.read_col("strcol").unwrap();
+        let strcol: Vec<String> = hdu.read_col(&mut f, "strcol").unwrap();
         assert_eq!(strcol.len(), 50);
         assert_eq!(strcol[0], "value0");
         assert_eq!(strcol[15], "value15");
@@ -1934,9 +1981,9 @@ mod test {
 
     #[test]
     fn read_column_regions() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
-        let intcol_data: Vec<i32> = hdu.read_col_range("intcol", &(0..2)).unwrap();
+        let intcol_data: Vec<i32> = hdu.read_col_range(&mut f, "intcol", &(0..2)).unwrap();
         assert_eq!(intcol_data.len(), 3);
         assert_eq!(intcol_data[0], 18);
         assert_eq!(intcol_data[1], 13);
@@ -1944,9 +1991,9 @@ mod test {
 
     #[test]
     fn read_string_column_regions() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
-        let intcol_data: Vec<String> = hdu.read_col_range("strcol", &(0..2)).unwrap();
+        let intcol_data: Vec<String> = hdu.read_col_range(&mut f, "strcol", &(0..2)).unwrap();
         assert_eq!(intcol_data.len(), 3);
         assert_eq!(intcol_data[0], "value0");
         assert_eq!(intcol_data[1], "value1");
@@ -1954,9 +2001,9 @@ mod test {
 
     #[test]
     fn read_column_region_check_ranges() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
-        let result_data: Result<Vec<i32>> = hdu.read_col_range("intcol", &(0..2_000_000));
+        let result_data: Result<Vec<i32>> = hdu.read_col_range(&mut f, "intcol", &(0..2_000_000));
         assert!(result_data.is_err());
     }
 
@@ -1964,9 +2011,9 @@ mod test {
     fn column_iterator() {
         use super::Column;
 
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
-        let column_names: Vec<String> = hdu.columns()
+        let column_names: Vec<String> = hdu.columns(&mut f)
             .map(|col| match col {
                 Column::Int32 { name, .. } => name,
                 Column::Int64 { name, .. } => name,
@@ -1989,11 +2036,11 @@ mod test {
 
     #[test]
     fn column_number() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("testext").unwrap();
-        assert_eq!(hdu.get_column_no("intcol").unwrap(), 0);
-        assert_eq!(hdu.get_column_no("floatcol").unwrap(), 1);
-        assert_eq!(hdu.get_column_no("doublecol").unwrap(), 2);
+        assert_eq!(hdu.get_column_no(&mut f, "intcol").unwrap(), 0);
+        assert_eq!(hdu.get_column_no(&mut f, "floatcol").unwrap(), 1);
+        assert_eq!(hdu.get_column_no(&mut f, "doublecol").unwrap(), 2);
     }
 
     #[test]
@@ -2003,22 +2050,22 @@ mod test {
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
             {
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::Int)
                         .create()
                         .unwrap(),
                 ];
-                let mut hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f.create_table("foo".to_string(), &table_description)
                     .unwrap();
 
-                hdu.write_col("bar", &data_to_write).unwrap();
+                hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
             }
 
-            let f = FitsFile::open(filename).unwrap();
+            let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
-            let data: Vec<i32> = hdu.read_col("bar").unwrap();
+            let data: Vec<i32> = hdu.read_col(&mut f, "bar").unwrap();
             assert_eq!(data, data_to_write);
         });
     }
@@ -2028,16 +2075,16 @@ mod test {
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
 
-            let f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).unwrap();
 
             let image_description = ImageDescription {
                 data_type: ImageType::LONG_IMG,
                 dimensions: &[100, 20],
             };
-            let mut hdu = f.create_image("foo".to_string(), &image_description)
+            let hdu = f.create_image("foo".to_string(), &image_description)
                 .unwrap();
 
-            match hdu.write_col("bar", &data_to_write) {
+            match hdu.write_col(&mut f, "bar", &data_to_write) {
                 Err(Error::Message(msg)) => {
                     assert_eq!(msg, "Cannot write column data to FITS image")
                 }
@@ -2053,22 +2100,23 @@ mod test {
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
             {
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::Int)
                         .create()
                         .unwrap(),
                 ];
-                let mut hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f.create_table("foo".to_string(), &table_description)
                     .unwrap();
 
-                hdu.write_col_range("bar", &data_to_write, &(0..5)).unwrap();
+                hdu.write_col_range(&mut f, "bar", &data_to_write, &(0..5))
+                    .unwrap();
             }
 
-            let f = FitsFile::open(filename).unwrap();
+            let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
-            let data: Vec<i32> = hdu.read_col("bar").unwrap();
+            let data: Vec<i32> = hdu.read_col(&mut f, "bar").unwrap();
             assert_eq!(data.len(), 6);
             assert_eq!(data[..], data_to_write[0..6]);
         });
@@ -2086,7 +2134,7 @@ mod test {
             }
 
             {
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::String)
@@ -2094,15 +2142,15 @@ mod test {
                         .create()
                         .unwrap(),
                 ];
-                let mut hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f.create_table("foo".to_string(), &table_description)
                     .unwrap();
 
-                hdu.write_col("bar", &data_to_write).unwrap();
+                hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
             }
 
-            let f = FitsFile::open(filename).unwrap();
+            let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
-            let data: Vec<String> = hdu.read_col("bar").unwrap();
+            let data: Vec<String> = hdu.read_col(&mut f, "bar").unwrap();
             assert_eq!(data.len(), data_to_write.len());
             assert_eq!(data[0], " value0");
             assert_eq!(data[49], "value49");
@@ -2111,14 +2159,14 @@ mod test {
 
     #[test]
     fn read_image_data() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
-        let first_row: Vec<i32> = hdu.read_section(0, 100).unwrap();
+        let first_row: Vec<i32> = hdu.read_section(&mut f, 0, 100).unwrap();
         assert_eq!(first_row.len(), 100);
         assert_eq!(first_row[0], 108);
         assert_eq!(first_row[49], 176);
 
-        let second_row: Vec<i32> = hdu.read_section(100, 200).unwrap();
+        let second_row: Vec<i32> = hdu.read_section(&mut f, 100, 200).unwrap();
         assert_eq!(second_row.len(), 100);
         assert_eq!(second_row[0], 177);
         assert_eq!(second_row[49], 168);
@@ -2126,39 +2174,39 @@ mod test {
 
     #[test]
     fn read_whole_image() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
-        let image: Vec<i32> = hdu.read_image().unwrap();
+        let image: Vec<i32> = hdu.read_image(&mut f).unwrap();
         assert_eq!(image.len(), 10000);
     }
 
     #[test]
     fn read_image_rows() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
-        let row: Vec<i32> = hdu.read_rows(0, 2).unwrap();
-        let ref_row: Vec<i32> = hdu.read_section(0, 200).unwrap();
+        let row: Vec<i32> = hdu.read_rows(&mut f, 0, 2).unwrap();
+        let ref_row: Vec<i32> = hdu.read_section(&mut f, 0, 200).unwrap();
         assert_eq!(row, ref_row);
     }
 
     #[test]
     fn read_image_row() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
-        let row: Vec<i32> = hdu.read_row(0).unwrap();
-        let ref_row: Vec<i32> = hdu.read_section(0, 100).unwrap();
+        let row: Vec<i32> = hdu.read_row(&mut f, 0).unwrap();
+        let ref_row: Vec<i32> = hdu.read_section(&mut f, 0, 100).unwrap();
         assert_eq!(row, ref_row);
     }
 
     #[test]
     fn read_image_slice() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
 
         let xcoord = 5..7;
         let ycoord = 2..3;
 
-        let chunk: Vec<i32> = hdu.read_region(&vec![&ycoord, &xcoord]).unwrap();
+        let chunk: Vec<i32> = hdu.read_region(&mut f, &vec![&ycoord, &xcoord]).unwrap();
         assert_eq!(chunk.len(), 2 * 3);
         assert_eq!(chunk[0], 168);
         assert_eq!(chunk[chunk.len() - 1], 132);
@@ -2166,9 +2214,9 @@ mod test {
 
     #[test]
     fn read_image_region_from_table() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("TESTEXT").unwrap();
-        match hdu.read_region::<i32>(&vec![&(0..10), &(0..10)]) {
+        match hdu.read_region::<i32>(&mut f, &vec![&(0..10), &(0..10)]) {
             Err(Error::Message(msg)) => {
                 assert!(msg.contains("cannot read image data from a table hdu"))
             }
@@ -2178,9 +2226,9 @@ mod test {
 
     #[test]
     fn read_image_section_from_table() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("TESTEXT").unwrap();
-        if let Err(Error::Message(msg)) = hdu.read_section::<i32>(0, 100) {
+        if let Err(Error::Message(msg)) = hdu.read_section::<i32>(&mut f, 0, 100) {
             assert!(msg.contains("cannot read image data from a table hdu"));
         } else {
             panic!("Should have been an error");
@@ -2196,19 +2244,19 @@ mod test {
             {
                 use fitsfile::ImageDescription;
 
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
                 };
-                let mut hdu = f.create_image("foo".to_string(), &image_description)
+                let hdu = f.create_image("foo".to_string(), &image_description)
                     .unwrap();
-                hdu.write_section(0, 100, &data_to_write).unwrap();
+                hdu.write_section(&mut f, 0, 100, &data_to_write).unwrap();
             }
 
-            let f = FitsFile::open(filename).unwrap();
+            let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
-            let first_row: Vec<i64> = hdu.read_section(0, 100).unwrap();
+            let first_row: Vec<i64> = hdu.read_section(&mut f, 0, 100).unwrap();
             assert_eq!(first_row, data_to_write);
 
         });
@@ -2221,21 +2269,22 @@ mod test {
             {
                 use fitsfile::ImageDescription;
 
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
                 };
-                let mut hdu = f.create_image("foo".to_string(), &image_description)
+                let hdu = f.create_image("foo".to_string(), &image_description)
                     .unwrap();
 
                 let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
-                hdu.write_region(&[&(0..10), &(0..10)], &data).unwrap();
+                hdu.write_region(&mut f, &[&(0..10), &(0..10)], &data)
+                    .unwrap();
             }
 
-            let f = FitsFile::open(filename).unwrap();
+            let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
-            let chunk: Vec<i64> = hdu.read_region(&[&(0..10), &(0..10)]).unwrap();
+            let chunk: Vec<i64> = hdu.read_region(&mut f, &[&(0..10), &(0..10)]).unwrap();
             assert_eq!(chunk.len(), 11 * 11);
             assert_eq!(chunk[0], 50);
             assert_eq!(chunk[25], 75);
@@ -2250,7 +2299,7 @@ mod test {
             {
                 use fitsfile::ImageDescription;
 
-                let f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
@@ -2261,15 +2310,15 @@ mod test {
 
             /* Now resize the image */
             {
-                let f = FitsFile::edit(filename).unwrap();
-                let mut hdu = f.hdu("foo").unwrap();
-                hdu.resize(&vec![1024, 1024]).unwrap();
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                hdu.resize(&mut f, &vec![1024, 1024]).unwrap();
             }
 
             /* Images are only resized when flushed to disk, so close the file and
              * open it again */
             {
-                let f = FitsFile::edit(filename).unwrap();
+                let mut f = FitsFile::edit(filename).unwrap();
                 let hdu = f.hdu("foo").unwrap();
                 match hdu.info {
                     HduInfo::ImageInfo { shape, .. } => {
@@ -2288,16 +2337,16 @@ mod test {
 
             use columndescription::*;
 
-            let f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).unwrap();
             let table_description = &[
                 ColumnDescription::new("bar")
                     .with_type(ColumnDataType::Int)
                     .create()
                     .unwrap(),
             ];
-            let mut hdu = f.create_table("foo".to_string(), table_description)
+            let hdu = f.create_table("foo".to_string(), table_description)
                 .unwrap();
-            if let Err(Error::Message(msg)) = hdu.write_section(0, 100, &data_to_write) {
+            if let Err(Error::Message(msg)) = hdu.write_section(&mut f, 0, 100, &data_to_write) {
                 assert_eq!(msg, "cannot write image data to a table hdu");
             } else {
                 panic!("Should have thrown an error");
@@ -2312,18 +2361,18 @@ mod test {
         with_temp_file(|filename| {
             let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
-            let f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).unwrap();
             let table_description = &[
                 ColumnDescription::new("bar")
                     .with_type(ColumnDataType::Int)
                     .create()
                     .unwrap(),
             ];
-            let mut hdu = f.create_table("foo".to_string(), table_description)
+            let hdu = f.create_table("foo".to_string(), table_description)
                 .unwrap();
 
             if let Err(Error::Message(msg)) =
-                hdu.write_region(&vec![&(0..10), &(0..10)], &data_to_write)
+                hdu.write_region(&mut f, &vec![&(0..10), &(0..10)], &data_to_write)
             {
                 assert_eq!(msg, "cannot write image data to a table hdu");
             } else {
@@ -2336,16 +2385,16 @@ mod test {
     fn multi_hdu_workflow() {
         /* Check that hdu objects change the current HDU on every file access method */
 
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let primary_hdu = f.hdu(0).unwrap();
         let column_hdu = f.hdu(1).unwrap();
 
-        let first_row: Vec<i32> = primary_hdu.read_section(0, 100).unwrap();
+        let first_row: Vec<i32> = primary_hdu.read_section(&mut f, 0, 100).unwrap();
         assert_eq!(first_row.len(), 100);
         assert_eq!(first_row[0], 108);
         assert_eq!(first_row[49], 176);
 
-        let intcol_data: Vec<i32> = column_hdu.read_col("intcol").unwrap();
+        let intcol_data: Vec<i32> = column_hdu.read_col(&mut f, "intcol").unwrap();
         assert_eq!(intcol_data[0], 18);
         assert_eq!(intcol_data[49], 12);
     }
@@ -2366,5 +2415,21 @@ mod test {
             Ok(HduInfo::ImageInfo { .. }) => panic!("Should be binary table"),
             _ => panic!("ERROR!"),
         }
+    }
+
+    #[test]
+    fn changing_image_returns_new_hdu() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu(0).unwrap();
+            let newhdu = hdu.resize(&mut f, &vec![1024, 1024]).unwrap();
+
+            match newhdu.info {
+                HduInfo::ImageInfo { shape, .. } => {
+                    assert_eq!(shape, vec![1024, 1024]);
+                }
+                _ => panic!("ERROR!"),
+            }
+        });
     }
 }
