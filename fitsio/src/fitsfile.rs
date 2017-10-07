@@ -159,17 +159,17 @@ impl FitsFile {
     }
 
     /// Change the current HDU
-    fn change_hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<()> {
+    fn change_hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<()> {
         hdu_description.change_hdu(self)
     }
 
     /// Return a new HDU object
-    pub fn hdu<T: DescribesHdu>(&self, hdu_description: T) -> Result<FitsHdu> {
+    pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<FitsHdu> {
         FitsHdu::new(self, hdu_description)
     }
 
     /// Function to make the HDU the current hdu
-    fn make_current(&self, hdu: &FitsHdu) -> Result<()> {
+    fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
         self.change_hdu(hdu.hdu_num)
     }
 
@@ -183,7 +183,7 @@ impl FitsFile {
     }
 
     /// Get the current hdu as an HDU object
-    pub fn current_hdu(&self) -> Result<FitsHdu> {
+    pub fn current_hdu(&mut self) -> Result<FitsHdu> {
         let current_hdu_number = self.hdu_number();
         self.hdu(current_hdu_number)
     }
@@ -403,7 +403,7 @@ impl FitsFile {
         }
 
         // Current HDU should be at the new HDU
-        let mut current_hdu = try!(self.current_hdu());
+        let current_hdu = try!(self.current_hdu());
         try!(current_hdu.write_key(self, "EXTNAME".into(), extname));
 
         if status != 0 {
@@ -445,11 +445,11 @@ impl Drop for FitsFile {
 /// Any way of describing a HDU - number or string which either
 /// changes the hdu by absolute number, or by name.
 pub trait DescribesHdu {
-    fn change_hdu(&self, fptr: &FitsFile) -> Result<()>;
+    fn change_hdu(&self, fptr: &mut FitsFile) -> Result<()>;
 }
 
 impl DescribesHdu for usize {
-    fn change_hdu(&self, f: &FitsFile) -> Result<()> {
+    fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
         let mut _hdu_type = 0;
         let mut status = 0;
         unsafe {
@@ -466,7 +466,7 @@ impl DescribesHdu for usize {
 }
 
 impl<'a> DescribesHdu for &'a str {
-    fn change_hdu(&self, f: &FitsFile) -> Result<()> {
+    fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
         let mut _hdu_type = 0;
         let mut status = 0;
         let c_hdu_name = ffi::CString::new(*self)?;
@@ -949,9 +949,18 @@ pub trait ReadWriteImage: Sized {
         }
     }
 
-    fn write_section(fits_file: &FitsFile, start: usize, end: usize, data: &[Self]) -> Result<()>;
+    fn write_section(
+        fits_file: &mut FitsFile,
+        start: usize,
+        end: usize,
+        data: &[Self],
+    ) -> Result<()>;
 
-    fn write_region(fits_file: &FitsFile, ranges: &[&Range<usize>], data: &[Self]) -> Result<()>;
+    fn write_region(
+        fits_file: &mut FitsFile,
+        ranges: &[&Range<usize>],
+        data: &[Self],
+    ) -> Result<()>;
 }
 
 macro_rules! read_write_image_impl {
@@ -1065,7 +1074,7 @@ macro_rules! read_write_image_impl {
                 }
 
             fn write_section(
-                fits_file: &FitsFile,
+                fits_file: &mut FitsFile,
                 start: usize,
                 end: usize,
                 data: &[Self])
@@ -1094,7 +1103,7 @@ macro_rules! read_write_image_impl {
                 }
 
             fn write_region(
-                fits_file: &FitsFile,
+                fits_file: &mut FitsFile,
                 ranges: &[&Range<usize>],
                 data: &[Self])
                 -> Result<()> {
@@ -1265,7 +1274,7 @@ pub struct FitsHdu {
 }
 
 impl FitsHdu {
-    pub fn new<T: DescribesHdu>(fits_file: &FitsFile, hdu_description: T) -> Result<Self> {
+    pub fn new<T: DescribesHdu>(fits_file: &mut FitsFile, hdu_description: T) -> Result<Self> {
         try!(fits_file.change_hdu(hdu_description));
         match fits_file.fetch_hdu_info() {
             Ok(hdu_info) => {
@@ -1286,7 +1295,7 @@ impl FitsHdu {
 
     /// Write header key
     pub fn write_key<T: WritesKey>(
-        &mut self,
+        &self,
         fits_file: &mut FitsFile,
         name: &str,
         value: T,
@@ -1336,7 +1345,7 @@ impl FitsHdu {
 
     /// Write contiguous data to a fits image
     pub fn write_section<T: ReadWriteImage>(
-        &mut self,
+        &self,
         fits_file: &mut FitsFile,
         start: usize,
         end: usize,
@@ -1349,7 +1358,7 @@ impl FitsHdu {
 
     /// Write a rectangular region to a fits image
     pub fn write_region<T: ReadWriteImage>(
-        &mut self,
+        &self,
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
         data: &[T],
@@ -1369,8 +1378,8 @@ impl FitsHdu {
         T::read_region(fits_file, ranges)
     }
 
-    pub fn resize(&mut self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<()> {
-        fits_file.make_current(&self)?;
+    pub fn resize(&self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<()> {
+        fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
 
         match self.info {
@@ -1437,7 +1446,7 @@ impl FitsHdu {
     }
 
     pub fn write_col<T: WritesCol, N: Into<String>>(
-        &mut self,
+        &self,
         fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
@@ -1448,7 +1457,7 @@ impl FitsHdu {
     }
 
     pub fn write_col_range<T: WritesCol, N: Into<String>>(
-        &mut self,
+        &self,
         fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
@@ -1572,7 +1581,7 @@ mod test {
         duplicate_test_file(|filename| {
             {
                 let mut f = FitsFile::edit(filename).unwrap();
-                let mut image_hdu = f.hdu(0).unwrap();
+                let image_hdu = f.hdu(0).unwrap();
 
                 let data_to_write: Vec<i64> = (0..100).map(|_| 10101).collect();
                 image_hdu
@@ -1591,7 +1600,7 @@ mod test {
 
     #[test]
     fn fetching_a_hdu() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         for i in 0..2 {
             f.change_hdu(i).unwrap();
             assert_eq!(f.hdu_number(), i);
@@ -1610,7 +1619,7 @@ mod test {
     fn fetching_hdu_info() {
         use columndescription::*;
 
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
             Ok(HduInfo::ImageInfo { shape, image_type }) => {
                 assert_eq!(shape.len(), 2);
@@ -1709,7 +1718,7 @@ mod test {
             }
 
             FitsFile::open(filename)
-                .map(|f| {
+                .map(|mut f| {
                     f.change_hdu("foo").unwrap();
                     match f.fetch_hdu_info() {
                         Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
@@ -1745,7 +1754,7 @@ mod test {
             }
 
             FitsFile::open(filename)
-                .map(|f| {
+                .map(|mut f| {
                     f.change_hdu("foo").unwrap();
                     match f.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { shape, .. }) => {
@@ -1761,7 +1770,7 @@ mod test {
 
     #[test]
     fn fetching_hdu_object_hdu_info() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let testext = f.hdu("TESTEXT").unwrap();
         match testext.info {
             HduInfo::TableInfo { num_rows, .. } => {
@@ -1834,8 +1843,8 @@ mod test {
 
     #[test]
     fn test_manually_creating_a_fits_hdu() {
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let hdu = FitsHdu::new(&f, "TESTEXT").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = FitsHdu::new(&mut f, "TESTEXT").unwrap();
         match hdu.info {
             HduInfo::TableInfo { num_rows, .. } => {
                 assert_eq!(num_rows, 50);
@@ -1901,7 +1910,7 @@ mod test {
     fn fetching_column_width() {
         use super::column_display_width;
 
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.hdu(1).unwrap();
         let width = column_display_width(&f, 3).unwrap();
         assert_eq!(width, 7);
@@ -2046,7 +2055,7 @@ mod test {
                         .create()
                         .unwrap(),
                 ];
-                let mut hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f.create_table("foo".to_string(), &table_description)
                     .unwrap();
 
                 hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
@@ -2070,7 +2079,7 @@ mod test {
                 data_type: ImageType::LONG_IMG,
                 dimensions: &[100, 20],
             };
-            let mut hdu = f.create_image("foo".to_string(), &image_description)
+            let hdu = f.create_image("foo".to_string(), &image_description)
                 .unwrap();
 
             match hdu.write_col(&mut f, "bar", &data_to_write) {
@@ -2096,7 +2105,7 @@ mod test {
                         .create()
                         .unwrap(),
                 ];
-                let mut hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f.create_table("foo".to_string(), &table_description)
                     .unwrap();
 
                 hdu.write_col_range(&mut f, "bar", &data_to_write, &(0..5))
@@ -2131,7 +2140,7 @@ mod test {
                         .create()
                         .unwrap(),
                 ];
-                let mut hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f.create_table("foo".to_string(), &table_description)
                     .unwrap();
 
                 hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
@@ -2238,7 +2247,7 @@ mod test {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
                 };
-                let mut hdu = f.create_image("foo".to_string(), &image_description)
+                let hdu = f.create_image("foo".to_string(), &image_description)
                     .unwrap();
                 hdu.write_section(&mut f, 0, 100, &data_to_write).unwrap();
             }
@@ -2263,7 +2272,7 @@ mod test {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
                 };
-                let mut hdu = f.create_image("foo".to_string(), &image_description)
+                let hdu = f.create_image("foo".to_string(), &image_description)
                     .unwrap();
 
                 let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
@@ -2300,14 +2309,14 @@ mod test {
             /* Now resize the image */
             {
                 let mut f = FitsFile::edit(filename).unwrap();
-                let mut hdu = f.hdu("foo").unwrap();
+                let hdu = f.hdu("foo").unwrap();
                 hdu.resize(&mut f, &vec![1024, 1024]).unwrap();
             }
 
             /* Images are only resized when flushed to disk, so close the file and
              * open it again */
             {
-                let f = FitsFile::edit(filename).unwrap();
+                let mut f = FitsFile::edit(filename).unwrap();
                 let hdu = f.hdu("foo").unwrap();
                 match hdu.info {
                     HduInfo::ImageInfo { shape, .. } => {
@@ -2333,7 +2342,7 @@ mod test {
                     .create()
                     .unwrap(),
             ];
-            let mut hdu = f.create_table("foo".to_string(), table_description)
+            let hdu = f.create_table("foo".to_string(), table_description)
                 .unwrap();
             if let Err(Error::Message(msg)) = hdu.write_section(&mut f, 0, 100, &data_to_write) {
                 assert_eq!(msg, "cannot write image data to a table hdu");
@@ -2357,7 +2366,7 @@ mod test {
                     .create()
                     .unwrap(),
             ];
-            let mut hdu = f.create_table("foo".to_string(), table_description)
+            let hdu = f.create_table("foo".to_string(), table_description)
                 .unwrap();
 
             if let Err(Error::Message(msg)) =

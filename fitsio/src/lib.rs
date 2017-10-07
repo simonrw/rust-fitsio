@@ -71,7 +71,7 @@
 //! #
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
-//! # let fptr = FitsFile::open(filename).unwrap();
+//! # let mut fptr = FitsFile::open(filename).unwrap();
 //! let hdu = fptr.hdu(0).unwrap();
 //! // image HDU
 //! if let HduInfo::ImageInfo { shape, .. } = hdu.info {
@@ -111,7 +111,7 @@
 //!     data_type: ImageType::FLOAT_IMG,
 //!     dimensions: &[100, 100],
 //! };
-//! let mut hdu = fptr.create_image("EXTNAME".to_string(), &image_description).unwrap();
+//! let hdu = fptr.create_image("EXTNAME".to_string(), &image_description).unwrap();
 //! # }
 //! ```
 //!
@@ -325,8 +325,8 @@
 //! #
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
-//! # let fptr = fitsio::FitsFile::open(filename).unwrap();
-//! let mut hdu = fptr.hdu(1);
+//! # let mut fptr = fitsio::FitsFile::open(filename).unwrap();
+//! let hdu = fptr.hdu(1);
 //! # }
 //! ```
 //!
@@ -355,7 +355,7 @@
 //! #    data_type: ImageType::FLOAT_IMG,
 //! #    dimensions: &[100, 100],
 //! # };
-//! # let mut hdu = fptr.create_image("".to_string(), &desc).unwrap();
+//! # let hdu = fptr.create_image("".to_string(), &desc).unwrap();
 //! let data_to_write: Vec<f64> = vec![1.0, 2.0, 3.0];
 //! hdu.write_section(&mut fptr, 0, data_to_write.len(), &data_to_write).unwrap();
 //! # }
@@ -379,7 +379,7 @@
 //! #    data_type: ImageType::FLOAT_IMG,
 //! #    dimensions: &[100, 100],
 //! # };
-//! # let mut hdu = fptr.create_image("".to_string(), &desc).unwrap();
+//! # let hdu = fptr.create_image("".to_string(), &desc).unwrap();
 //! let data_to_write: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];
 //! let ranges = [&(0..1), &(0..1)];
 //! hdu.write_region(&mut fptr, &ranges, &data_to_write).unwrap();
