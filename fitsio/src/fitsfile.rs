@@ -220,6 +220,7 @@ impl FitsFile {
 
                 let image_type = match bitpix {
                     8 => ImageType::BYTE_IMG,
+                    10 => ImageType::SBYTE_IMG,
                     16 => ImageType::SHORT_IMG,
                     20 => ImageType::USHORT_IMG,
                     32 => ImageType::LONG_IMG,
