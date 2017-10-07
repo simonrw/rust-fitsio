@@ -63,9 +63,9 @@
 //!
 //! ```rust
 //! # extern crate fitsio;
-//! #[cfg(feature = "default")]
+//! # #[cfg(feature = "default")]
 //! # extern crate fitsio_sys as sys;
-//! #[cfg(feature = "bindgen")]
+//! # #[cfg(feature = "bindgen")]
 //! # extern crate fitsio_sys_bindgen as sys;
 //! # use fitsio::{FitsFile, HduInfo};
 //! #
