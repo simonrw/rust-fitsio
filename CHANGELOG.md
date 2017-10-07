@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Added
 
-* (`fitsio`) add `insert_column`, `append_column`, and `delete_column` methods to `FitsHdu`
+* (`fitsio`) add `insert_column`, `append_column`, and `delete_column` methods to `FitsHdu` [#43][pull-43]
 * add contribution guide
 * cfitsio license
 
@@ -46,6 +46,7 @@ Nothing
 [pull-34]: https://github.com/mindriot101/rust-fitsio/pull/34
 [pull-32]: https://github.com/mindriot101/rust-fitsio/pull/32
 [pull-31]: https://github.com/mindriot101/rust-fitsio/pull/31
+[pull-43]: https://github.com/mindriot101/rust-fitsio/pull/43
 
 ---
 
