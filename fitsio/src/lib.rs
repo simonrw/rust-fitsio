@@ -424,7 +424,50 @@
 //!
 //! #### Deleting columns
 //!
-//! The HDU object has the method [`delete_column`][delete-column] which removes a column.
+//! The HDU object has the method [`delete_column`][delete-column] which removes a column. The
+//! column can either be accessed by integer or name
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # extern crate tempdir;
+//! # use fitsio::fitsfile::ImageDescription;
+//! # use fitsio::types::ImageType;
+//! # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+//! #
+//! # fn main() {
+//! # {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let table_description = &[
+//! #     ColumnDescription::new("bar")
+//! #         .with_type(ColumnDataType::Int)
+//! #         .create()
+//! #         .unwrap(),
+//! # ];
+//! # let hdu = fptr.create_table("foo".to_string(), table_description)
+//! #     .unwrap();
+//! let newhdu = hdu.delete_column(&mut fptr, "bar").unwrap();
+//! # }
+//! # {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let table_description = &[
+//! #     ColumnDescription::new("bar")
+//! #         .with_type(ColumnDataType::Int)
+//! #         .create()
+//! #         .unwrap(),
+//! # ];
+//! # let hdu = fptr.create_table("foo".to_string(), table_description)
+//! #     .unwrap();
+//! // or
+//! let newhdu = hdu.delete_column(&mut fptr, 0).unwrap();
+//! # }
+//! # }
+//! ```
 //!
 //! ## Raw fits file access
 //!
