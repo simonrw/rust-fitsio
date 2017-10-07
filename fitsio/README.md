@@ -1,5 +1,7 @@
 # fitsio
 
-See the [main documentation][1]
+* [Main documentation][1]
+* [CHANGELOG][2]
 
 [1]: https://docs.rs/fitsio
+[2]: https://github.com/mindriot101/rust-fitsio/blob/master/fitsio/CHANGELOG.md
