@@ -422,6 +422,10 @@
 //!
 //! ```
 //!
+//! #### Deleting columns
+//!
+//! The HDU object has the method [`delete_column`][delete-column] which removes a column.
+//!
 //! ## Raw fits file access
 //!
 //! If this library does not support the particular use case that is needed, the raw `fitsfile`
@@ -459,6 +463,7 @@
 //! [1]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
 //! [2]: https://crates.io/crates/fitsio-sys
 //! [append-column]: fitsfile/struct.FitsHdu.html#method.append_column
+//! [delete-column]: fitsfile/struct.FitsHdu.html#method.delete_column
 
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]

@@ -485,6 +485,26 @@ impl<'a> DescribesHdu for &'a str {
     }
 }
 
+/// Way of describing a column location
+pub trait DescribesColumnLocation {
+    fn get_column_no(&self, hdu: &FitsHdu, fptr: &mut FitsFile) -> Result<i32>;
+}
+
+impl DescribesColumnLocation for usize {
+    fn get_column_no(&self, _: &FitsHdu, _: &mut FitsFile) -> Result<i32> {
+        Ok(*self as i32)
+    }
+}
+
+impl<'a> DescribesColumnLocation for &'a str {
+    fn get_column_no(&self, hdu: &FitsHdu, fits_file: &mut FitsFile) -> Result<i32> {
+        match hdu.get_column_no(fits_file, *self) {
+            Ok(value) => Ok(value as _),
+            Err(e) => Err(e),
+        }
+    }
+}
+
 /// Trait for reading a fits column
 pub trait ReadsCol {
     fn read_col_range<T: Into<String>>(
@@ -1456,15 +1476,15 @@ impl FitsHdu {
         }
     }
 
-    pub fn delete_column<T: Into<String>>(
+    pub fn delete_column<T: DescribesColumnLocation>(
         self,
         fits_file: &mut FitsFile,
-        col_name: T,
+        col_identifier: T,
     ) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
-        let colno = self.get_column_no(fits_file, col_name)?;
+        let colno = T::get_column_no(&col_identifier, &self, fits_file)?;
         let mut status = 0;
 
         unsafe {
@@ -2555,11 +2575,29 @@ mod test {
     }
 
     #[test]
-    fn deleting_columns() {
+    fn deleting_columns_by_name() {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::edit(filename).unwrap();
             let hdu = f.hdu("TESTEXT").unwrap();
             let newhdu = hdu.delete_column(&mut f, "intcol").unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo { column_descriptions, .. } => {
+                    for col in column_descriptions {
+                        assert!(col.name != "intcol");
+                    }
+                }
+                _ => panic!("ERROR"),
+            }
+        });
+    }
+
+    #[test]
+    fn deleting_columns_by_number() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+            let newhdu = hdu.delete_column(&mut f, 0).unwrap();
 
             match newhdu.info {
                 HduInfo::TableInfo { column_descriptions, .. } => {
