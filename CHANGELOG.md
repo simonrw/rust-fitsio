@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Added
 
-* (`fitsio`) add `insert_column` and `append_column` methods to `FitsHdu`
+* (`fitsio`) add `insert_column`, `append_column`, and `delete_column` methods to `FitsHdu`
 * add contribution guide
 * cfitsio license
 
