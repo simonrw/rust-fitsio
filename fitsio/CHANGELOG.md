@@ -13,9 +13,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+* **BREAKING CHANGE**: most methods require passing a mutable `FitsFile` to perform work
 * Include `SBYTE_IMG`, `USHORT_IMG` and `ULONG_IMG` data types
 
 ### Removed
+
+Nothing
 
 ## [0.9.0] - 2017-07-15
 
