@@ -179,8 +179,15 @@ impl FitsFile {
     }
 
     /// Return the list of HDU names
-    pub fn hdu_names(&mut self) -> &[&str] {
-        &[]
+    pub fn hdu_names(&mut self) -> Result<Vec<String>> {
+        let num_hdus = self.num_hdus()?;
+        let mut result = Vec::with_capacity(num_hdus);
+        for i in 0..num_hdus {
+            let hdu = self.hdu(i)?;
+            let name = hdu.name(self)?;
+            result.push(name);
+        }
+        Ok(result)
     }
 
     /// Function to make the HDU the current hdu
@@ -1322,6 +1329,14 @@ impl FitsHdu {
         }
     }
 
+    /// Read the HDU name
+    pub fn name(&self, fits_file: &mut FitsFile) -> Result<String> {
+        let extname = self.read_key(fits_file, "EXTNAME").unwrap_or(
+            "".to_string(),
+        );
+        Ok(extname)
+    }
+
     /// Read header key
     pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
         fits_file.make_current(&self)?;
@@ -1926,6 +1941,16 @@ mod test {
         });
     }
 
+    #[test]
+    fn fetch_hdu_names() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu_names = f.hdu_names().unwrap();
+            assert_eq!(hdu_names.as_slice(), &["", "TESTEXT"]);
+        });
+    }
+
+    #[test]
     fn creating_new_image_returns_hdu_object() {
         with_temp_file(|filename| {
             let mut f = FitsFile::create(filename).unwrap();
@@ -2581,6 +2606,15 @@ mod test {
                 }
                 _ => panic!("ERROR!"),
             }
+        });
+    }
+
+    #[test]
+    fn fetch_hdu_name() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+            assert_eq!(hdu.name(&mut f).unwrap(), "TESTEXT".to_string());
         });
     }
 
