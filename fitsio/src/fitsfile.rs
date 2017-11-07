@@ -168,6 +168,28 @@ impl FitsFile {
         FitsHdu::new(self, hdu_description)
     }
 
+    pub fn num_hdus(&mut self) -> Result<usize> {
+        let mut status = 0;
+        let mut num_hdus = 0;
+        unsafe {
+            sys::ffthdu(self.fptr as *mut _, &mut num_hdus, &mut status);
+        }
+
+        check_status(status).map(|_| num_hdus as _)
+    }
+
+    /// Return the list of HDU names
+    pub fn hdu_names(&mut self) -> Result<Vec<String>> {
+        let num_hdus = self.num_hdus()?;
+        let mut result = Vec::with_capacity(num_hdus);
+        for i in 0..num_hdus {
+            let hdu = self.hdu(i)?;
+            let name = hdu.name(self)?;
+            result.push(name);
+        }
+        Ok(result)
+    }
+
     /// Function to make the HDU the current hdu
     fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
         self.change_hdu(hdu.hdu_num)
@@ -1307,6 +1329,14 @@ impl FitsHdu {
         }
     }
 
+    /// Read the HDU name
+    pub fn name(&self, fits_file: &mut FitsFile) -> Result<String> {
+        let extname = self.read_key(fits_file, "EXTNAME").unwrap_or(
+            "".to_string(),
+        );
+        Ok(extname)
+    }
+
     /// Read header key
     pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
         fits_file.make_current(&self)?;
@@ -1439,7 +1469,7 @@ impl FitsHdu {
             );
         }
 
-        check_status(status).and_then(|_| Ok(()))
+        check_status(status).map(|_| ())
     }
 
     pub fn insert_column(
@@ -1583,6 +1613,17 @@ impl FitsHdu {
             "Cannot make hdu current",
         );
         ColumnIterator::new(fits_file)
+    }
+
+    pub fn delete(self, fits_file: &mut FitsFile) -> Result<()> {
+        fits_file.make_current(&self)?;
+
+        let mut status = 0;
+        let mut curhdu = 0;
+        unsafe {
+            sys::ffdhdu(fits_file.fptr as *mut _, &mut curhdu, &mut status);
+        }
+        check_status(status).map(|_| ())
     }
 }
 
@@ -1900,6 +1941,24 @@ mod test {
             hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
             "TESTEXT".to_string()
         );
+    }
+
+    #[test]
+    fn fetch_number_of_hdus() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::open(filename).unwrap();
+            let num_hdus = f.num_hdus().unwrap();
+            assert_eq!(num_hdus, 2);
+        });
+    }
+
+    #[test]
+    fn fetch_hdu_names() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu_names = f.hdu_names().unwrap();
+            assert_eq!(hdu_names.as_slice(), &["", "TESTEXT"]);
+        });
     }
 
     #[test]
@@ -2562,6 +2621,15 @@ mod test {
     }
 
     #[test]
+    fn fetch_hdu_name() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+            assert_eq!(hdu.name(&mut f).unwrap(), "TESTEXT".to_string());
+        });
+    }
+
+    #[test]
     fn inserting_columns() {
         duplicate_test_file(|filename| {
             use columndescription::{ColumnDataType, ColumnDescription};
@@ -2627,6 +2695,21 @@ mod test {
                 }
                 _ => panic!("ERROR"),
             }
+        });
+    }
+
+    #[test]
+    fn delete_hdu() {
+        duplicate_test_file(|filename| {
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("TESTEXT").unwrap();
+                hdu.delete(&mut f).unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu_names = f.hdu_names().unwrap();
+            assert!(!hdu_names.contains(&"TESTEXT".to_string()));
         });
     }
 
