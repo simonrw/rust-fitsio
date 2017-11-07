@@ -441,6 +441,14 @@ impl FitsFile {
         }
     }
 
+    pub fn iter(&mut self) -> FitsHduIterator {
+        FitsHduIterator {
+            current: 0,
+            max: self.num_hdus().unwrap(),
+            fits_file: self,
+        }
+    }
+
     /// Return a pointer to the underlying C `fitsfile` object representing the current file.
     ///
     /// This is marked as `unsafe` as it is definitely something that is not required by most
@@ -459,6 +467,26 @@ impl Drop for FitsFile {
         unsafe {
             sys::ffclos(self.fptr as *mut _, &mut status);
         }
+    }
+}
+
+pub struct FitsHduIterator<'a> {
+    current: usize,
+    max: usize,
+    fits_file: &'a mut FitsFile,
+}
+
+impl<'a> Iterator for FitsHduIterator<'a> {
+    type Item = FitsHdu;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current >= self.max {
+            return None;
+        }
+
+        let hdu = self.fits_file.hdu(self.current).unwrap();
+        self.current += 1;
+        Some(hdu)
     }
 }
 
@@ -2728,6 +2756,20 @@ mod test {
                 }
                 _ => panic!("ERROR"),
             }
+        });
+    }
+
+    #[test]
+    fn hdu_iterator() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::open(filename).unwrap();
+            let mut counter = 0;
+
+            for _ in f.iter() {
+                counter += 1;
+            }
+
+            assert_eq!(counter, 2);
         });
     }
 }
