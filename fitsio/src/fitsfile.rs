@@ -168,6 +168,21 @@ impl FitsFile {
         FitsHdu::new(self, hdu_description)
     }
 
+    pub fn num_hdus(&mut self) -> Result<usize> {
+        let mut status = 0;
+        let mut num_hdus = 0;
+        unsafe {
+            sys::ffthdu(self.fptr as *mut _, &mut num_hdus, &mut status);
+        }
+
+        check_status(status).map(|_| num_hdus as _)
+    }
+
+    /// Return the list of HDU names
+    pub fn hdu_names(&mut self) -> &[&str] {
+        &[]
+    }
+
     /// Function to make the HDU the current hdu
     fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
         self.change_hdu(hdu.hdu_num)
@@ -1903,6 +1918,14 @@ mod test {
     }
 
     #[test]
+    fn fetch_number_of_hdus() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::open(filename).unwrap();
+            let num_hdus = f.num_hdus().unwrap();
+            assert_eq!(num_hdus, 2);
+        });
+    }
+
     fn creating_new_image_returns_hdu_object() {
         with_temp_file(|filename| {
             let mut f = FitsFile::create(filename).unwrap();
