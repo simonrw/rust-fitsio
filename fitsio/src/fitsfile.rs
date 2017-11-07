@@ -1469,7 +1469,7 @@ impl FitsHdu {
             );
         }
 
-        check_status(status).and_then(|_| Ok(()))
+        check_status(status).map(|_| ())
     }
 
     pub fn insert_column(
@@ -1613,6 +1613,17 @@ impl FitsHdu {
             "Cannot make hdu current",
         );
         ColumnIterator::new(fits_file)
+    }
+
+    pub fn delete(self, fits_file: &mut FitsFile) -> Result<()> {
+        fits_file.make_current(&self)?;
+
+        let mut status = 0;
+        let mut curhdu = 0;
+        unsafe {
+            sys::ffdhdu(fits_file.fptr as *mut _, &mut curhdu, &mut status);
+        }
+        check_status(status).map(|_| ())
     }
 }
 
@@ -2684,6 +2695,21 @@ mod test {
                 }
                 _ => panic!("ERROR"),
             }
+        });
+    }
+
+    #[test]
+    fn delete_hdu() {
+        duplicate_test_file(|filename| {
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("TESTEXT").unwrap();
+                hdu.delete(&mut f).unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu_names = f.hdu_names().unwrap();
+            assert!(!hdu_names.contains(&"TESTEXT".to_string()));
         });
     }
 
