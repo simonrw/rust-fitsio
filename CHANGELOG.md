@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Added
 
+* (`fitsio`) add `iter` [#46][pull-46]
+* (`fitsio`) add `hdu_name`, `hdu_names`, `num_hdus`, and `delete` [#45][pull-45]
+* (`fitsio`) add `copy_to` [#44][pull-44]
 * (`fitsio`) add `insert_column`, `append_column`, and `delete_column` methods to `FitsHdu` [#43][pull-43]
 * add contribution guide
 * cfitsio license
@@ -47,6 +50,9 @@ Nothing
 [pull-32]: https://github.com/mindriot101/rust-fitsio/pull/32
 [pull-31]: https://github.com/mindriot101/rust-fitsio/pull/31
 [pull-43]: https://github.com/mindriot101/rust-fitsio/pull/43
+[pull-44]: https://github.com/mindriot101/rust-fitsio/pull/44
+[pull-45]: https://github.com/mindriot101/rust-fitsio/pull/45
+[pull-46]: https://github.com/mindriot101/rust-fitsio/pull/46
 
 ---
 
