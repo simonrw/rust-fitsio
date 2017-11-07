@@ -1424,6 +1424,24 @@ impl FitsHdu {
 
     }
 
+    pub fn copy_to(
+        &self,
+        src_fits_file: &mut FitsFile,
+        dest_fits_file: &mut FitsFile,
+    ) -> Result<()> {
+        let mut status = 0;
+        unsafe {
+            sys::ffcopy(
+                src_fits_file.fptr as *mut _,
+                dest_fits_file.fptr as *mut _,
+                0,
+                &mut status,
+            );
+        }
+
+        check_status(status).and_then(|_| Ok(()))
+    }
+
     pub fn insert_column(
         self,
         fits_file: &mut FitsFile,
@@ -2505,6 +2523,26 @@ mod test {
             Ok(HduInfo::ImageInfo { .. }) => panic!("Should be binary table"),
             _ => panic!("ERROR!"),
         }
+    }
+
+    #[test]
+    fn copy_hdu() {
+        duplicate_test_file(|src_filename| {
+            with_temp_file(|dest_filename| {
+                let mut src = FitsFile::open(src_filename).unwrap();
+                let src_hdu = src.hdu("TESTEXT").unwrap();
+
+                {
+                    let mut dest = FitsFile::create(dest_filename).unwrap();
+                    src_hdu.copy_to(&mut src, &mut dest).unwrap();
+                }
+
+                let mut dest = FitsFile::open(dest_filename).unwrap();
+                let _dest_hdu = dest.hdu("TESTEXT").unwrap();
+
+                /* If we do not error then the hdu has been copied */
+            });
+        });
     }
 
     #[test]
