@@ -426,7 +426,7 @@ impl FitsFile {
 
         // Current HDU should be at the new HDU
         let current_hdu = try!(self.current_hdu());
-        try!(current_hdu.write_key(self, "EXTNAME".into(), extname));
+        current_hdu.write_key(self, "EXTNAME", extname)?;
 
         if status != 0 {
             Err(
@@ -1345,7 +1345,7 @@ pub struct FitsHdu {
 
 impl FitsHdu {
     pub fn new<T: DescribesHdu>(fits_file: &mut FitsFile, hdu_description: T) -> Result<Self> {
-        try!(fits_file.change_hdu(hdu_description));
+        fits_file.change_hdu(hdu_description)?;
         match fits_file.fetch_hdu_info() {
             Ok(hdu_info) => {
                 Ok(FitsHdu {
@@ -1359,15 +1359,15 @@ impl FitsHdu {
 
     /// Read the HDU name
     pub fn name(&self, fits_file: &mut FitsFile) -> Result<String> {
-        let extname = self.read_key(fits_file, "EXTNAME").unwrap_or(
-            "".to_string(),
+        let extname = self.read_key(fits_file, "EXTNAME").unwrap_or_else(
+            |_| "".to_string(),
         );
         Ok(extname)
     }
 
     /// Read header key
     pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         T::read_key(fits_file, name)
     }
 
@@ -1378,7 +1378,7 @@ impl FitsHdu {
         name: &str,
         value: T,
     ) -> Result<()> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
         T::write_key(fits_file, name, value)
     }
@@ -1390,7 +1390,7 @@ impl FitsHdu {
         start: usize,
         end: usize,
     ) -> Result<Vec<T>> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         T::read_section(fits_file, start, end)
     }
 
@@ -1401,7 +1401,7 @@ impl FitsHdu {
         start_row: usize,
         num_rows: usize,
     ) -> Result<Vec<T>> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         T::read_rows(fits_file, start_row, num_rows)
     }
 
@@ -1411,13 +1411,13 @@ impl FitsHdu {
         fits_file: &mut FitsFile,
         row: usize,
     ) -> Result<Vec<T>> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         T::read_row(fits_file, row)
     }
 
     /// Read a whole fits image into a vector
     pub fn read_image<T: ReadWriteImage>(&self, fits_file: &mut FitsFile) -> Result<Vec<T>> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         T::read_image(fits_file)
     }
 
@@ -1454,7 +1454,7 @@ impl FitsHdu {
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
     ) -> Result<Vec<T>> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         T::read_region(fits_file, ranges)
     }
 
@@ -1538,10 +1538,10 @@ impl FitsHdu {
 
         /* We have to split up the fetching of the number of columns from the inserting of the
          * new column, as otherwise we're trying move out of self */
-        let result = match &self.info {
-            &HduInfo::TableInfo { ref column_descriptions, .. } => Ok(column_descriptions.len()),
-            &HduInfo::ImageInfo { .. } => Err("Cannot add columns to FITS image".into()),
-            &HduInfo::AnyInfo { .. } => {
+        let result = match self.info {
+            HduInfo::TableInfo { ref column_descriptions, .. } => Ok(column_descriptions.len()),
+            HduInfo::ImageInfo { .. } => Err("Cannot add columns to FITS image".into()),
+            HduInfo::AnyInfo { .. } => {
                 Err("Cannot determine HDU type, so cannot add columns".into())
             }
         };
@@ -1575,7 +1575,7 @@ impl FitsHdu {
         fits_file: &mut FitsFile,
         col_name: T,
     ) -> Result<usize> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
 
         let mut status = 0;
         let mut colno = 0;
@@ -1599,7 +1599,7 @@ impl FitsHdu {
 
     /// Read a binary table column
     pub fn read_col<T: ReadsCol>(&self, fits_file: &mut FitsFile, name: &str) -> Result<Vec<T>> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         T::read_col(fits_file, name)
     }
 
@@ -1609,7 +1609,7 @@ impl FitsHdu {
         name: &str,
         range: &Range<usize>,
     ) -> Result<Vec<T>> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         T::read_col_range(fits_file, name, range)
     }
 
@@ -1637,7 +1637,7 @@ impl FitsHdu {
     }
 
     pub fn columns<'a>(&self, fits_file: &'a mut FitsFile) -> ColumnIterator<'a> {
-        fits_file.make_current(&self).expect(
+        fits_file.make_current(self).expect(
             "Cannot make hdu current",
         );
         ColumnIterator::new(fits_file)
