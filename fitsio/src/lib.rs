@@ -508,6 +508,7 @@
 //! [append-column]: fitsfile/struct.FitsHdu.html#method.append_column
 //! [delete-column]: fitsfile/struct.FitsHdu.html#method.delete_column
 
+#![warn(missing_docs)]
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 

@@ -1,3 +1,5 @@
+//! [`FitsFile`](struct.FitsFile.html) and [`FitsHdu`](struct.FitsHdu.html)
+
 /* Depending on the architecture, different functions have to be called. For example arm systems
  * define `int` as 4 bytes, and `long` as 4 bytes, unlike x86_64 systems which define `long` types
  * as 8 bytes.
@@ -17,7 +19,7 @@ use std::ffi;
 use std::ptr;
 use std::ops::Range;
 
-pub static MAX_VALUE_LENGTH: usize = 71;
+static MAX_VALUE_LENGTH: usize = 71;
 
 /// Macro to return a fits error if the fits file is not open in readwrite mode
 macro_rules! fits_check_readwrite {
@@ -33,7 +35,10 @@ macro_rules! fits_check_readwrite {
 
 /// Description of a new image
 pub struct ImageDescription<'a> {
+    /// Data type of the new image
     pub data_type: ImageType,
+
+    /// Shape of the image
     pub dimensions: &'a [usize],
 }
 
@@ -41,6 +46,7 @@ pub struct ImageDescription<'a> {
 ///
 ///
 pub struct FitsFile {
+    /// Name of the file
     pub filename: String,
     fptr: *const sys::fitsfile,
 }
@@ -163,6 +169,7 @@ impl FitsFile {
         FitsHdu::new(self, hdu_description)
     }
 
+    /// Return the number of HDU objects in the file
     pub fn num_hdus(&mut self) -> Result<usize> {
         let mut status = 0;
         let mut num_hdus = 0;
@@ -436,6 +443,7 @@ impl FitsFile {
         }
     }
 
+    /// Iterate over the HDUs in the file
     pub fn iter(&mut self) -> FitsHduIterator {
         FitsHduIterator {
             current: 0,
@@ -465,6 +473,7 @@ impl Drop for FitsFile {
     }
 }
 
+/// Iterator over fits HDUs
 pub struct FitsHduIterator<'a> {
     current: usize,
     max: usize,
@@ -490,6 +499,7 @@ impl<'a> Iterator for FitsHduIterator<'a> {
 /// Any way of describing a HDU - number or string which either
 /// changes the hdu by absolute number, or by name.
 pub trait DescribesHdu {
+    /// Method by which the current HDU of a file can be changed
     fn change_hdu(&self, fptr: &mut FitsFile) -> Result<()>;
 }
 
@@ -532,6 +542,7 @@ impl<'a> DescribesHdu for &'a str {
 
 /// Way of describing a column location
 pub trait DescribesColumnLocation {
+    /// Method by which the column number can be computed
     fn get_column_no(&self, hdu: &FitsHdu, fptr: &mut FitsFile) -> Result<i32>;
 }
 

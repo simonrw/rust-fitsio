@@ -1,5 +1,8 @@
+//! Data types used within `fitsio`
 use columndescription::*;
 
+/// Enumeration of different data types used for column and key types
+#[allow(missing_docs)]
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DataType {
@@ -54,7 +57,8 @@ datatype_into_impl!(u32);
 datatype_into_impl!(i64);
 datatype_into_impl!(u64);
 
-#[allow(non_camel_case_types)]
+/// Data types used for defining images
+#[allow(non_camel_case_types, missing_docs)]
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ImageType {
@@ -98,6 +102,7 @@ imagetype_into_impl!(i64);
 /// If the current HDU is an image, then
 /// [`fetch_hdu_info`](struct.FitsFile.html#method.fetch_hdu_info) returns `HduInfo::ImageInfo`.
 /// Otherwise the variant is `HduInfo::TableInfo`.
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub enum HduInfo {
     ImageInfo {
@@ -129,6 +134,8 @@ hduinfo_into_impl!(i8);
 hduinfo_into_impl!(i32);
 hduinfo_into_impl!(i64);
 
+/// Enumeration of file open modes
+#[allow(missing_docs)]
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum FileOpenMode {
@@ -156,6 +163,8 @@ fileopenmode_into_impl!(i8);
 fileopenmode_into_impl!(i32);
 fileopenmode_into_impl!(i64);
 
+/// Enumeration of options for case sensitivity
+#[allow(missing_docs)]
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum CaseSensitivity {
