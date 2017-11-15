@@ -22,18 +22,22 @@ pub fn check_status(status: i32) -> Result<()> {
     }
 }
 
-/// Macro for returning a FITS error type
-macro_rules! fits_try {
-    ($status: ident, $e: expr) => {
-        match $status {
-            0 => Ok($e),
-            _ => {
-                Err(Error::Fits(FitsError {
-                    status: $status,
-                    // unwrap guaranteed to work as we know $status > 0
-                    message: stringutils::status_to_string($status).unwrap().unwrap(),
-                }))
-            }
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_check_status_ok() {
+        assert_eq!(check_status(0), Ok(()));
+    }
+
+    #[test]
+    fn test_check_status_ok_with_value() {
+        assert_eq!(check_status(0).map(|_| 10i32), Ok(10i32));
+    }
+
+    #[test]
+    fn test_check_status_with_err() {
+        assert!(check_status(105).map(|_| 10i32).is_err());
     }
 }

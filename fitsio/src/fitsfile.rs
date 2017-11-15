@@ -72,13 +72,12 @@ impl FitsFile {
             );
         }
 
-        fits_try!(
-            status,
+        check_status(status).map(|_| {
             FitsFile {
                 fptr: fptr,
                 filename: filename.clone(),
             }
-        )
+        })
     }
 
     /// Open a fits file in read/write mode
@@ -97,13 +96,12 @@ impl FitsFile {
             );
         }
 
-        fits_try!(
-            status,
+        check_status(status).map(|_| {
             FitsFile {
                 fptr: fptr,
                 filename: filename.clone(),
             }
-        )
+        })
     }
 
     /// Create a new fits file on disk
@@ -121,13 +119,13 @@ impl FitsFile {
             );
         }
 
-        fits_try!(status, {
+        check_status(status).and_then(|_| {
             let f = FitsFile {
                 fptr: fptr,
                 filename: path.clone(),
             };
-            try!(f.add_empty_primary());
-            f
+            f.add_empty_primary()?;
+            Ok(f)
         })
     }
 
@@ -139,14 +137,11 @@ impl FitsFile {
             sys::ffflmd(self.fptr as *mut _, &mut iomode, &mut status);
         }
 
-        fits_try!(
-            status,
-            match iomode {
-                0 => FileOpenMode::READONLY,
-                1 => FileOpenMode::READWRITE,
-                _ => unreachable!(),
-            }
-        )
+        check_status(status).map(|_| match iomode {
+            0 => FileOpenMode::READONLY,
+            1 => FileOpenMode::READWRITE,
+            _ => unreachable!(),
+        })
     }
 
     fn add_empty_primary(&self) -> Result<()> {
@@ -155,7 +150,7 @@ impl FitsFile {
             sys::ffphps(self.fptr as *mut _, 8, 0, ptr::null_mut(), &mut status);
         }
 
-        fits_try!(status, ())
+        check_status(status)
     }
 
     /// Change the current HDU
@@ -310,7 +305,7 @@ impl FitsFile {
             _ => panic!("Invalid hdu type found"),
         };
 
-        fits_try!(status, hdu_type)
+        check_status(status).map(|_| hdu_type)
     }
 
     /// Create a new fits table
@@ -511,7 +506,7 @@ impl DescribesHdu for usize {
             );
         }
 
-        fits_try!(status, ())
+        check_status(status)
     }
 }
 
@@ -531,7 +526,7 @@ impl<'a> DescribesHdu for &'a str {
             );
         }
 
-        fits_try!(status, ())
+        check_status(status)
     }
 }
 
@@ -610,7 +605,7 @@ macro_rules! reads_col_impl {
                                        &mut status);
 
                         }
-                        fits_try!(status, out)
+                        check_status(status).map(|_| out)
                     },
                     Err(e) => Err(e),
                     _ => panic!("Unknown error occurred"),
@@ -643,7 +638,7 @@ fn column_display_width(fits_file: &FitsFile, column_number: usize) -> Result<us
             &mut status,
         );
     }
-    fits_try!(status, width as usize)
+    check_status(status).map(|_| width as usize)
 }
 
 impl ReadsCol for String {
@@ -877,7 +872,7 @@ macro_rules! reads_key_impl {
                            &mut status);
                 }
 
-                fits_try!(status, value)
+                check_status(status).map(|_| value)
             }
         }
     )
@@ -907,9 +902,9 @@ impl ReadsKey for String {
             );
         }
 
-        fits_try!(status, {
+        check_status(status).and_then(|_| {
             let value: Vec<u8> = value.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
-            String::from_utf8(value)?
+            Ok(String::from_utf8(value)?)
         })
     }
 }
@@ -934,7 +929,7 @@ macro_rules! writes_key_impl_flt {
                                 ptr::null_mut(),
                                 &mut status);
                 }
-                fits_try!(status, ())
+                check_status(status)
             }
         }
     )
@@ -954,7 +949,7 @@ impl WritesKey for i64 {
                 &mut status,
             );
         }
-        fits_try!(status, ())
+        check_status(status)
     }
 }
 
@@ -976,7 +971,7 @@ impl WritesKey for String {
             );
         }
 
-        fits_try!(status, ())
+        check_status(status)
     }
 }
 
@@ -1057,8 +1052,7 @@ macro_rules! read_write_image_impl {
                                        &mut status);
                         }
 
-                        fits_try!(status, out)
-
+                        check_status(status).map(|_| out)
                     },
                     Ok(HduInfo::TableInfo { .. }) =>
                         Err("cannot read image data from a table hdu".into()),
@@ -1134,7 +1128,7 @@ macro_rules! read_write_image_impl {
 
                             }
 
-                            fits_try!(status, out)
+                            check_status(status).map(|_| out)
                         }
                         Ok(HduInfo::TableInfo { .. }) =>
                             Err("cannot read image data from a table hdu".into()),
@@ -1594,7 +1588,7 @@ impl FitsHdu {
                 &mut status,
             );
         }
-        fits_try!(status, (colno - 1) as usize)
+        check_status(status).map(|_| (colno - 1) as usize)
     }
 
     /// Read a binary table column
@@ -1844,25 +1838,6 @@ mod test {
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
         }
-    }
-
-    #[test]
-    fn test_fits_try() {
-        use stringutils;
-        use errors::Error;
-        use fitserror::FitsError;
-
-        let status = 0;
-        assert_eq!(fits_try!(status, 10), Ok(10));
-
-        let status = 105;
-        assert_eq!(
-            fits_try!(status, 10),
-            Err(Error::Fits(FitsError {
-                status: status,
-                message: stringutils::status_to_string(status).unwrap().unwrap(),
-            }))
-        );
     }
 
     #[test]
