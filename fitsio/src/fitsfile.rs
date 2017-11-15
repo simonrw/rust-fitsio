@@ -563,6 +563,7 @@ impl<'a> DescribesColumnLocation for &'a str {
 
 /// Trait for reading a fits column
 pub trait ReadsCol {
+    /// Read a subset of a fits column
     fn read_col_range<T: Into<String>>(
         fits_file: &FitsFile,
         name: T,
@@ -717,7 +718,9 @@ impl ReadsCol for String {
     }
 }
 
+/// Trait representing the ability to write column data
 pub trait WritesCol {
+    /// Write data to part of a column
     fn write_col_range<T: Into<String>>(
         fits_file: &mut FitsFile,
         hdu: &FitsHdu,
@@ -728,6 +731,7 @@ pub trait WritesCol {
     where
         Self: Sized;
 
+    /// Write data to an entire column
     fn write_col<T: Into<String>>(
         fits_file: &mut FitsFile,
         hdu: &FitsHdu,
