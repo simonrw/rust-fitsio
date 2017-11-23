@@ -205,11 +205,50 @@
 //! A HDU can be copied to another open file with the [`copy_to`][fits-hdu-copy-to] method. This
 //! requires another open [`FitsFile`][fits-file] object to copy to:
 //!
-//! TODO(example)
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! # let mut src_fptr = fitsio::FitsFile::open(filename).unwrap();
+//! #
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut dest_fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! #
+//! # let hdu = src_fptr.hdu(1).unwrap();
+//! hdu.copy_to(&mut src_fptr, &mut dest_fptr).unwrap();
+//! # }
+//! ```
 //!
 //! ## Deleting the current HDU
 //!
-//! TODO(delete)
+//! The current HDU can be deleted using the [`delete`][fits-hdu-delete] method. Note: this method
+//! takes ownership of `self`, and as such the [`FitsHdu`][fits-hdu] object cannot be used after
+//! this is called.
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # use fitsio::fitsfile::ImageDescription;
+//! # use fitsio::types::ImageType;
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let image_description = ImageDescription {
+//! #     data_type: ImageType::FLOAT_IMG,
+//! #     dimensions: &[100, 100],
+//! # };
+//! # let hdu = fptr.create_image("EXTNAME".to_string(), &image_description).unwrap();
+//! // let fptr = FitsFile::open(...).unwrap();
+//! // let hdu = fptr.hdu(0).unwrap();
+//! hdu.delete(&mut fptr).unwrap();
+//! // Cannot use hdu after this
+//! # }
+//! ```
 //!
 //! ## Iterating over the HDUs in a file
 //!
@@ -558,6 +597,7 @@
 //! [fits-hdu-write-region]: fitsfile/struct.FitsHdu.html#method.write_region
 //! [fits-hdu-write-section]: fitsfile/struct.FitsHdu.html#method.write_section
 //! [fits-hdu-copy-to]: fitsfile/struct.FitsHdu.html#method.copy_to
+//! [fits-hdu-delete]: fitsfile/struct.FitsHdu.html#method.copy_to
 //! [fits-hdu]: fitsfile/struct.FitsHdu.html
 //! [image-description]: fitsfile/struct.ImageDescription.html
 //! [reads-col]: fitsfile/trait.ReadsCol.html
