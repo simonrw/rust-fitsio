@@ -200,6 +200,21 @@
 //! # }
 //! ```
 //!
+//! ## Copying HDUs to another file
+//!
+//! A HDU can be copied to another open file with the [`copy_to`][fits-hdu-copy-to] method. This
+//! requires another open [`FitsFile`][fits-file] object to copy to:
+//!
+//! TODO(example)
+//!
+//! ## Deleting the current HDU
+//!
+//! TODO(delete)
+//!
+//! ## Iterating over the HDUs in a file
+//!
+//! TODO(iter)
+//!
 //! ## General calling behaviour
 //!
 //! All subsequent data acess is performed through the [`FitsHdu`][fits-hdu] object. Most methods take the
@@ -329,20 +344,11 @@
 //! The [`columns`][fits-hdu-columns] method returns an iterator over all of the
 //! columns in a table.
 //!
+//! ## Iterating over columns
+//!
+//! TODO(columns)
+//!
 //! # Writing file data
-//!
-//! When writing to the file, all methods are attached to the `FitsHdu` object to which data is to
-//! be written.
-//!
-//! ```rust
-//! # extern crate fitsio;
-//! #
-//! # fn main() {
-//! # let filename = "../testdata/full_example.fits";
-//! # let mut fptr = fitsio::FitsFile::open(filename).unwrap();
-//! let hdu = fptr.hdu(1);
-//! # }
-//! ```
 //!
 //! ## Images
 //!
@@ -400,13 +406,25 @@
 //! # }
 //! ```
 //!
+//! ### Resizing an image
+//!
+//! TODO(resize)
+//!
 //! ## Tables
+//!
+//! ### Writing data
+//!
+//! Table data can either be written
+//!
+//! TODO(write_col)
+//! TODO(write_col_range)
 //!
 //! ### Inserting columns
 //!
-//! Two methods on the HDU object allow for adding new columns: [`append_column`][append-column]
+//! Two methods on the HDU object allow for adding new columns:
+//! [`append_column`][fits-hdu-append-column]
 //! and [`insert_column`][fits-hdu-insert-column].
-//! [`append_column`][append-column] adds a new column as the last column member, and is generally
+//! [`append_column`][fits-hdu-append-column] adds a new column as the last column member, and is generally
 //! preferred as it does not require shifting of data within the file.
 //!
 //! ```rust
@@ -439,7 +457,7 @@
 //!
 //! ### Deleting columns
 //!
-//! The HDU object has the method [`delete_column`][delete-column] which removes a column. The
+//! The HDU object has the method [`delete_column`][fits-hdu-delete-column] which removes a column. The
 //! column can either be accessed by integer or name
 //!
 //! ```rust
@@ -520,30 +538,30 @@
 //!
 //! [1]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
 //! [2]: https://crates.io/crates/fitsio-sys
-//! [append-column]: fitsfile/struct.FitsHdu.html#method.append_column
-//! [delete-column]: fitsfile/struct.FitsHdu.html#method.delete_column
-//! [fits-file]: fitsfile/struct.FitsFile.html
-//! [fits-file-create]: fitsfile/struct.FitsFile.html#method.create
-//! [fits-file-edit]: fitsfile/struct.FitsFile.html#method.edit
-//! [fits-file-create-image]: fitsfile/struct.FitsFile.html#method.create_image
-//! [fits-file-create-table]: fitsfile/struct.FitsFile.html#method.create_table
-//! [image-description]: fitsfile/struct.ImageDescription.html
-//! [column-description]: columndescription/struct.ColumnDescription.html
 //! [column-data-description]: columndescription/struct.ColumnDataDescription.html
 //! [column-data-type]: columndescription/struct.ColumnDataType.html
-//! [fits-hdu]: fitsfile/struct.FitsHdu.html
-//! [fits-hdu-read-key]: fitsfile/struct.FitsHdu.html#method.read_key
-//! [fits-hdu-write-key]: fitsfile/struct.FitsHdu.html#method.write_key
-//! [fits-hdu-read-section]: fitsfile/struct.FitsHdu.html#method.read_section
-//! [fits-hdu-read-region]: fitsfile/struct.FitsHdu.html#method.read_region
-//! [fits-hdu-write-section]: fitsfile/struct.FitsHdu.html#method.write_section
-//! [fits-hdu-write-region]: fitsfile/struct.FitsHdu.html#method.write_region
-//! [fits-hdu-read-col]: fitsfile/struct.FitsHdu.html#method.read_col
+//! [column-description]: columndescription/struct.ColumnDescription.html
+//! [fits-file-create-image]: fitsfile/struct.FitsFile.html#method.create_image
+//! [fits-file-create-table]: fitsfile/struct.FitsFile.html#method.create_table
+//! [fits-file-create]: fitsfile/struct.FitsFile.html#method.create
+//! [fits-file-edit]: fitsfile/struct.FitsFile.html#method.edit
+//! [fits-file]: fitsfile/struct.FitsFile.html
+//! [fits-hdu-append-column]: fitsfile/struct.FitsHdu.html#method.append_column
 //! [fits-hdu-columns]: fitsfile/struct.FitsHdu.html#method.columns
+//! [fits-hdu-delete-column]: fitsfile/struct.FitsHdu.html#method.delete_column
 //! [fits-hdu-insert-column]: fitsfile/struct.FitsHdu.html#method.insert_column
-//! [reads-key]: fitsfile/trait.ReadsKey.html
+//! [fits-hdu-read-col]: fitsfile/struct.FitsHdu.html#method.read_col
+//! [fits-hdu-read-key]: fitsfile/struct.FitsHdu.html#method.read_key
+//! [fits-hdu-read-region]: fitsfile/struct.FitsHdu.html#method.read_region
+//! [fits-hdu-read-section]: fitsfile/struct.FitsHdu.html#method.read_section
+//! [fits-hdu-write-key]: fitsfile/struct.FitsHdu.html#method.write_key
+//! [fits-hdu-write-region]: fitsfile/struct.FitsHdu.html#method.write_region
+//! [fits-hdu-write-section]: fitsfile/struct.FitsHdu.html#method.write_section
+//! [fits-hdu-copy-to]: fitsfile/struct.FitsHdu.html#method.copy_to
+//! [fits-hdu]: fitsfile/struct.FitsHdu.html
+//! [image-description]: fitsfile/struct.ImageDescription.html
 //! [reads-col]: fitsfile/trait.ReadsCol.html
-//! [writes-key]: fitsfile/trait.ReadsKey.html
+//! [reads-key]: fitsfile/trait.ReadsKey.html
 //! [writes-key]: fitsfile/trait.ReadsKey.html
 
 #![warn(missing_docs)]

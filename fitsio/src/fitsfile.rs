@@ -1610,8 +1610,8 @@ impl FitsHdu {
 
     /// Return the index for a given column.
     ///
-    /// The column can be identified by name, or by index which is sort of pointless...
-    pub fn get_column_no<T: Into<String>>(
+    /// Internal method, not exposed.
+    fn get_column_no<T: Into<String>>(
         &self,
         fits_file: &mut FitsFile,
         col_name: T,
