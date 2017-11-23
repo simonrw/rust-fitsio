@@ -447,7 +447,38 @@
 //!
 //! ### Resizing an image
 //!
-//! TODO(resize)
+//! Images can be resized to a new shape using the [`resize`][fits-hdu-resize] method.
+//!
+//! The method takes the open [`FitsFile`][fits-file], and an slice of `usize` values. Note:
+//! currently `fitsio` only supports slices with length 2, i.e. a 2D image.
+//! [`resize`][fits-hdu-resize] takes ownership `self` to force the user to fetch the HDU object
+//! again. This ensures the image changes are reflected in the hew HDU object.
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # use std::fs::copy;
+//! # use fitsio::HduInfo;
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # copy("../testdata/full_example.fits", &filename).unwrap();
+//! # let filename = filename.to_str().unwrap();
+//! # let mut fptr = fitsio::FitsFile::edit(filename).unwrap();
+//! # let hdu = fptr.hdu(0).unwrap();
+//! hdu.resize(&mut fptr, &[1024, 1024]).unwrap();
+//! #
+//! // Have to get the HDU again, to reflect the latest changes
+//! let hdu = fptr.hdu(0).unwrap();
+//! match hdu.info {
+//!     HduInfo::ImageInfo { shape, .. } => {
+//!         assert_eq!(shape, [1024, 1024]);
+//!     }
+//!     _ => panic!("Unexpected hdu type"),
+//! }
+//! # }
+//! ```
 //!
 //! ## Tables
 //!
@@ -598,6 +629,7 @@
 //! [fits-hdu-write-section]: fitsfile/struct.FitsHdu.html#method.write_section
 //! [fits-hdu-copy-to]: fitsfile/struct.FitsHdu.html#method.copy_to
 //! [fits-hdu-delete]: fitsfile/struct.FitsHdu.html#method.copy_to
+//! [fits-hdu-resize]: fitsfile/struct.FitsHdu.html#method.copy_to
 //! [fits-hdu]: fitsfile/struct.FitsHdu.html
 //! [image-description]: fitsfile/struct.ImageDescription.html
 //! [reads-col]: fitsfile/trait.ReadsCol.html

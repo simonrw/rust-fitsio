@@ -2537,7 +2537,7 @@ mod test {
             {
                 let mut f = FitsFile::edit(filename).unwrap();
                 let hdu = f.hdu("foo").unwrap();
-                hdu.resize(&mut f, &vec![1024, 1024]).unwrap();
+                hdu.resize(&mut f, &[1024, 1024]).unwrap();
             }
 
             /* Images are only resized when flushed to disk, so close the file and
@@ -2547,7 +2547,7 @@ mod test {
                 let hdu = f.hdu("foo").unwrap();
                 match hdu.info {
                     HduInfo::ImageInfo { shape, .. } => {
-                        assert_eq!(shape, vec![1024, 1024]);
+                        assert_eq!(shape, [1024, 1024]);
                     }
                     _ => panic!("Unexpected hdu type"),
                 }
