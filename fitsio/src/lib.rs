@@ -14,7 +14,7 @@
 //! This library wraps the low level `cfitsio` bindings: [`fitsio-sys`][2] and provides a more
 //! native experience for rust users.
 //!
-//! The main interface to a fits file is [`FitsFile`](struct.FitsFile.html). All file manipulation
+//! The main interface to a fits file is [`FitsFile`][fits-file]. All file manipulation
 //! and reading starts with this class.
 //!
 //! Opening a file:
@@ -30,7 +30,7 @@
 //! ```
 //!
 //! Alternatively a new file can be created on disk with the companion method
-//! [`create`](struct.FitsFile.html#method.create):
+//! [`create`][fits-file-create]:
 //!
 //! ```rust
 //! # extern crate tempdir;
@@ -52,12 +52,22 @@
 //! or file contents can be read.
 //!
 //! To open a fits file in read/write mode (to allow changes to the file), the
-//! [`edit`](struct.FitsFile.html#method.edit) must be used. This opens a file which already exists
+//! [`edit`][fits-file-edit] must be used. This opens a file which already exists
 //! on disk for editing.
 //!
-//! ## HDU access
+//! ```rust
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! use fitsio::FitsFile;
 //!
-//! HDU information belongs to the [`FitsHdu`](struct.FitsHdu.html) object. HDUs can be fetched by
+//! // let filename = ...;
+//! let fptr = FitsFile::edit(filename).unwrap();
+//! # }
+//! ```
+//!
+//! # HDU access
+//!
+//! HDU information belongs to the [`FitsHdu`][fits-hdu] object. HDUs can be fetched by
 //! `String`/`str` or integer (0-indexed).
 //! The `HduInfo` object contains information about the current HDU:
 //!
@@ -88,13 +98,13 @@
 //! # }
 //! ```
 //!
-//! ## Creating new HDUs
+//! # Creating new HDUs
 //!
-//! ### Images
+//! ## Images
 //!
-//! New fits images are created with the [`create_image`](struct.FitsFile.html#method.create_image)
+//! New fits images are created with the [`create_image`][fits-file-create-image]
 //! method. This method requires the extension name, and an
-//! [`ImageDescription`](struct.ImageDescription.html) object, which defines the shape and type of
+//! [`ImageDescription`][image-description] object, which defines the shape and type of
 //! the desired image:
 //!
 //! ```rust
@@ -115,11 +125,11 @@
 //! # }
 //! ```
 //!
-//! ### Tables
+//! ## Tables
 //!
 //! Similar to creating new images, new tables are created with the
-//! [`create_table`](struct.FitsFile.html#method.create_table) method. This requires an extension
-//! name, and a slice of [`ColumnDescription`](columndescription/struct.ColumnDescription.html)s:
+//! [`create_table`][fits-file-create-table] method. This requires an extension
+//! name, and a slice of [`ColumnDescription`][column-description]s:
 //!
 //! ```rust
 //! # extern crate tempdir;
@@ -141,17 +151,17 @@
 //! # }
 //! ```
 //!
-//! #### Column descriptions
+//! ### Column descriptions
 //!
 //! Columns are described with the
-//! [`ColumnDescription`](columndescription/struct.ColumnDescription.html) struct. This
+//! [`ColumnDescription`][column-description] struct. This
 //! encapsulates: the name of the column, and the data format.
 //!
 //! The fits specification allows scalar or vector columns, and the data format is described the
-//! [`ColumnDataDescription`](columndescription/struct.ColumnDataDescription.html) struct, which in
+//! [`ColumnDataDescription`][column-data-description] struct, which in
 //! turn encapsulates the number of elements per row element (typically 1), the width of the
 //! column (for strings), and the data type, which is one of the
-//! [`ColumnDataType`](columndescription/enum.ColumnDataType.html) members
+//! [`ColumnDataType`][column-data-type] members
 //!
 //! For the common case of a scalar column, a `ColumnDataDescription` object can be constructed
 //! with the `scalar` method:
@@ -190,10 +200,15 @@
 //! # }
 //! ```
 //!
-//! ## Header keys
+//! ## General calling behaviour
 //!
-//! Header keys are read through the [`read_key`](struct.FitsFile.html#method.read_key) function,
-//! and is generic over types that implement the [`ReadsKey`](trait.ReadsKey.html) trait:
+//! All subsequent data acess is performed through the [`FitsHdu`][fits-hdu] object. Most methods take the
+//! currently open [`FitsFile`][fits-file] as the first parameter.
+//!
+//! # Header keys
+//!
+//! Header keys are read through the [`read_key`][fits-hdu-read-key] function,
+//! and is generic over types that implement the [`ReadsKey`][reads-key] trait:
 //!
 //! ```rust
 //! # extern crate fitsio;
@@ -215,8 +230,8 @@
 //! ```
 //!
 //! Header cards can be written through the method
-//! [`write_key`](struct.FitsFile.html#method.write_key). It takes a key name and value. See [the
-//! `WritesKey`](trait.WritesKey.html) trait for supported data types.
+//! [`write_key`][fits-hdu-write-key]. It takes a key name and value. See [the
+//! `WritesKey`][writes-key] trait for supported data types.
 //!
 //! ```rust
 //! # extern crate tempdir;
@@ -231,14 +246,14 @@
 //! # }
 //! ```
 //!
-//! ## Reading file data
+//! # Reading file data
 //!
-//! ### Images
+//! ## Images
 //!
 //! Image data can be read through either
-//! [`read_section`](struct.FitsHdu.html#method.read_section) which reads contiguous pixels
+//! [`read_section`][fits-hdu-read-section] which reads contiguous pixels
 //! between a start index and end index, or
-//! [`read_region`](struct.FitsHdu.html#method.read_region) which reads rectangular chunks from
+//! [`read_region`][fits-hdu-read-region] which reads rectangular chunks from
 //! the image.
 //!
 //! ```rust
@@ -294,10 +309,10 @@
 //! # }
 //! ```
 //!
-//! ### Tables
+//! ## Tables
 //!
-//! Columns can be read using the [`read_col`](struct.FitsFile.html#method.read_col) function,
-//! which can convert data types on the fly. See the [`ReadsCol`](trait.ReadsCol.html) trait for
+//! Columns can be read using the [`read_col`][fits-hdu-read-col] function,
+//! which can convert data types on the fly. See the [`ReadsCol`][reads-col] trait for
 //! supported data types.
 //!
 //! ```rust
@@ -311,10 +326,10 @@
 //! # }
 //! ```
 //!
-//! The [`columns`](struct.FitsFile.html#method.columns) method returns an iterator over all of the
+//! The [`columns`][fits-hdu-columns] method returns an iterator over all of the
 //! columns in a table.
 //!
-//! ## Writing file data
+//! # Writing file data
 //!
 //! When writing to the file, all methods are attached to the `FitsHdu` object to which data is to
 //! be written.
@@ -329,13 +344,13 @@
 //! # }
 //! ```
 //!
-//! ### Images
+//! ## Images
 //!
 //! Image data is written through two methods on the HDU object:
-//! [`write_section`](struct.FitsHdu.html#method.write_section) and
-//! [`write_region`](struct.FitsHdu.html#method.write_region).
+//! [`write_section`][fits-hdu-write-section] and
+//! [`write_region`][fits-hdu-write-region].
 //!
-//! [`write_section`](struct.FitsHdu.html#method.write_section) requires a start index and
+//! [`write_section`][fits-hdu-write-section] requires a start index and
 //! end index and data to write. The data parameter needs to be a slice, meaning any contiguous
 //! memory storage method (e.g. `Vec`) can be passed.
 //!
@@ -360,7 +375,7 @@
 //! # }
 //! ```
 //!
-//! [`write_region`](struct.FitsHdu.html#method.write_region) takes a slice of ranges with which
+//! [`write_region`][fits-hdu-write-region] takes a slice of ranges with which
 //! the data is to be written, and the data to write.
 //!
 //! ```rust
@@ -385,12 +400,12 @@
 //! # }
 //! ```
 //!
-//! ### Tables
+//! ## Tables
 //!
-//! #### Inserting columns
+//! ### Inserting columns
 //!
 //! Two methods on the HDU object allow for adding new columns: [`append_column`][append-column]
-//! and [`insert_column`](struct.FitsHdu.html#method.insert_column).
+//! and [`insert_column`][fits-hdu-insert-column].
 //! [`append_column`][append-column] adds a new column as the last column member, and is generally
 //! preferred as it does not require shifting of data within the file.
 //!
@@ -422,7 +437,7 @@
 //!
 //! ```
 //!
-//! #### Deleting columns
+//! ### Deleting columns
 //!
 //! The HDU object has the method [`delete_column`][delete-column] which removes a column. The
 //! column can either be accessed by integer or name
@@ -469,7 +484,7 @@
 //! # }
 //! ```
 //!
-//! ## Raw fits file access
+//! # Raw fits file access
 //!
 //! If this library does not support the particular use case that is needed, the raw `fitsfile`
 //! pointer can be accessed:
@@ -507,6 +522,29 @@
 //! [2]: https://crates.io/crates/fitsio-sys
 //! [append-column]: fitsfile/struct.FitsHdu.html#method.append_column
 //! [delete-column]: fitsfile/struct.FitsHdu.html#method.delete_column
+//! [fits-file]: fitsfile/struct.FitsFile.html
+//! [fits-file-create]: fitsfile/struct.FitsFile.html#method.create
+//! [fits-file-edit]: fitsfile/struct.FitsFile.html#method.edit
+//! [fits-file-create-image]: fitsfile/struct.FitsFile.html#method.create_image
+//! [fits-file-create-table]: fitsfile/struct.FitsFile.html#method.create_table
+//! [image-description]: fitsfile/struct.ImageDescription.html
+//! [column-description]: columndescription/struct.ColumnDescription.html
+//! [column-data-description]: columndescription/struct.ColumnDataDescription.html
+//! [column-data-type]: columndescription/struct.ColumnDataType.html
+//! [fits-hdu]: fitsfile/struct.FitsHdu.html
+//! [fits-hdu-read-key]: fitsfile/struct.FitsHdu.html#method.read_key
+//! [fits-hdu-write-key]: fitsfile/struct.FitsHdu.html#method.write_key
+//! [fits-hdu-read-section]: fitsfile/struct.FitsHdu.html#method.read_section
+//! [fits-hdu-read-region]: fitsfile/struct.FitsHdu.html#method.read_region
+//! [fits-hdu-write-section]: fitsfile/struct.FitsHdu.html#method.write_section
+//! [fits-hdu-write-region]: fitsfile/struct.FitsHdu.html#method.write_region
+//! [fits-hdu-read-col]: fitsfile/struct.FitsHdu.html#method.read_col
+//! [fits-hdu-columns]: fitsfile/struct.FitsHdu.html#method.columns
+//! [fits-hdu-insert-column]: fitsfile/struct.FitsHdu.html#method.insert_column
+//! [reads-key]: fitsfile/trait.ReadsKey.html
+//! [reads-col]: fitsfile/trait.ReadsCol.html
+//! [writes-key]: fitsfile/trait.ReadsKey.html
+//! [writes-key]: fitsfile/trait.ReadsKey.html
 
 #![warn(missing_docs)]
 #![cfg_attr(feature="clippy", feature(plugin))]
