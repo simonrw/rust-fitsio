@@ -795,19 +795,12 @@ impl WritesCol for String {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { .. }) => {
                 let colno = hdu.get_column_no(fits_file, col_name.into())?;
-                let width = column_display_width(fits_file, colno)?;
                 let mut status = 0;
 
-                // TODO: try to find a way to not dupliicate every string somehow!
-                let padded_strings: Vec<String> = col_data
-                    .iter()
-                    .map(|s| format!("{0:>1$}", s, width))
-                    .collect();
-
-                let mut ptr_array: Vec<*mut i8> = Vec::with_capacity(rows.end - rows.start);
-                for s in padded_strings {
-                    let ptr = s.as_bytes().as_ptr();
-                    ptr_array.push(ptr as *mut _);
+                let mut ptr_array = Vec::with_capacity(rows.end - rows.start);
+                for text in col_data {
+                    let s = ffi::CString::new(text.clone())?;
+                    ptr_array.push(s.into_raw());
                 }
 
                 unsafe {
@@ -2326,7 +2319,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn write_string_col() {
         use columndescription::*;
 
@@ -2355,7 +2347,7 @@ mod test {
             let hdu = f.hdu("foo").unwrap();
             let data: Vec<String> = hdu.read_col(&mut f, "bar").unwrap();
             assert_eq!(data.len(), data_to_write.len());
-            assert_eq!(data[0], " value0");
+            assert_eq!(data[0], "value0");
             assert_eq!(data[49], "value49");
         });
     }
