@@ -1,3 +1,5 @@
+//! [`FitsFile`](struct.FitsFile.html) and [`FitsHdu`](struct.FitsHdu.html)
+
 /* Depending on the architecture, different functions have to be called. For example arm systems
  * define `int` as 4 bytes, and `long` as 4 bytes, unlike x86_64 systems which define `long` types
  * as 8 bytes.
@@ -17,7 +19,7 @@ use std::ffi;
 use std::ptr;
 use std::ops::Range;
 
-pub static MAX_VALUE_LENGTH: usize = 71;
+static MAX_VALUE_LENGTH: usize = 71;
 
 /// Macro to return a fits error if the fits file is not open in readwrite mode
 macro_rules! fits_check_readwrite {
@@ -33,7 +35,10 @@ macro_rules! fits_check_readwrite {
 
 /// Description of a new image
 pub struct ImageDescription<'a> {
+    /// Data type of the new image
     pub data_type: ImageType,
+
+    /// Shape of the image
     pub dimensions: &'a [usize],
 }
 
@@ -41,6 +46,7 @@ pub struct ImageDescription<'a> {
 ///
 ///
 pub struct FitsFile {
+    /// Name of the file
     pub filename: String,
     fptr: *const sys::fitsfile,
 }
@@ -163,6 +169,7 @@ impl FitsFile {
         FitsHdu::new(self, hdu_description)
     }
 
+    /// Return the number of HDU objects in the file
     pub fn num_hdus(&mut self) -> Result<usize> {
         let mut status = 0;
         let mut num_hdus = 0;
@@ -311,11 +318,6 @@ impl FitsFile {
     /// Create a new fits table
     ///
     /// Create a new fits table, with columns as detailed in the `ColumnDescription` object.
-    ///
-    ///
-    ///
-    ///
-    ///
     pub fn create_table(
         &mut self,
         extname: String,
@@ -363,18 +365,7 @@ impl FitsFile {
             );
         }
 
-        if status != 0 {
-            Err(
-                FitsError {
-                    status: status,
-                    // unwrap guaranteed to succesed as status > 0
-                    message: status_to_string(status)?.unwrap(),
-                }.into(),
-            )
-        } else {
-            self.current_hdu()
-        }
-
+        check_status(status).and_then(|_| self.current_hdu())
     }
 
     /// Create a new fits image, and return the [`FitsHdu`](struct.FitsHdu.html) object
@@ -423,19 +414,10 @@ impl FitsFile {
         let current_hdu = try!(self.current_hdu());
         current_hdu.write_key(self, "EXTNAME", extname)?;
 
-        if status != 0 {
-            Err(
-                FitsError {
-                    status: status,
-                    // unwrap guaranteed to succesed as status > 0
-                    message: status_to_string(status)?.unwrap(),
-                }.into(),
-            )
-        } else {
-            self.current_hdu()
-        }
+        check_status(status).and_then(|_| self.current_hdu())
     }
 
+    /// Iterate over the HDUs in the file
     pub fn iter(&mut self) -> FitsHduIterator {
         FitsHduIterator {
             current: 0,
@@ -465,6 +447,7 @@ impl Drop for FitsFile {
     }
 }
 
+/// Iterator over fits HDUs
 pub struct FitsHduIterator<'a> {
     current: usize,
     max: usize,
@@ -490,6 +473,7 @@ impl<'a> Iterator for FitsHduIterator<'a> {
 /// Any way of describing a HDU - number or string which either
 /// changes the hdu by absolute number, or by name.
 pub trait DescribesHdu {
+    /// Method by which the current HDU of a file can be changed
     fn change_hdu(&self, fptr: &mut FitsFile) -> Result<()>;
 }
 
@@ -532,6 +516,7 @@ impl<'a> DescribesHdu for &'a str {
 
 /// Way of describing a column location
 pub trait DescribesColumnLocation {
+    /// Method by which the column number can be computed
     fn get_column_no(&self, hdu: &FitsHdu, fptr: &mut FitsFile) -> Result<i32>;
 }
 
@@ -552,6 +537,7 @@ impl<'a> DescribesColumnLocation for &'a str {
 
 /// Trait for reading a fits column
 pub trait ReadsCol {
+    /// Read a subset of a fits column
     fn read_col_range<T: Into<String>>(
         fits_file: &FitsFile,
         name: T,
@@ -706,7 +692,9 @@ impl ReadsCol for String {
     }
 }
 
+/// Trait representing the ability to write column data
 pub trait WritesCol {
+    /// Write data to part of a column
     fn write_col_range<T: Into<String>>(
         fits_file: &mut FitsFile,
         hdu: &FitsHdu,
@@ -717,6 +705,11 @@ pub trait WritesCol {
     where
         Self: Sized;
 
+    /// Write data to an entire column
+    ///
+    /// This default implementation does not check the length of the column first, but if the
+    /// length of the data array is longer than the length of the table, the table will be extended
+    /// with extra rows. This is as per the fitsio definition.
     fn write_col<T: Into<String>>(
         fits_file: &mut FitsFile,
         hdu: &FitsHdu,
@@ -851,6 +844,7 @@ impl WritesCol for String {
 /// * f64
 /// * String
 pub trait ReadsKey {
+    /// Read a key from the Fits header.
     fn read_key(f: &FitsFile, name: &str) -> Result<Self>
     where
         Self: Sized;
@@ -911,6 +905,7 @@ impl ReadsKey for String {
 
 /// Writing a fits keyword
 pub trait WritesKey {
+    /// Write a fits key to the current header
     fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()>;
 }
 
@@ -1014,6 +1009,10 @@ pub trait ReadWriteImage: Sized {
         }
     }
 
+    /// Write raw pixel values to a FITS image
+    ///
+    /// If the length of the dataset exceeds the number of columns,
+    /// the data wraps around to the next row.
     fn write_section(
         fits_file: &mut FitsFile,
         start: usize,
@@ -1021,6 +1020,12 @@ pub trait ReadWriteImage: Sized {
         data: &[Self],
     ) -> Result<FitsHdu>;
 
+    /// Write a rectangular region to the fits image
+    ///
+    /// The ranges must have length of 2, and they represent the limits of each axis. The limits
+    /// are inclusive of the lower and upper bounds.
+    ///
+    /// For example, writing with ranges 0..10 and 0..10 wries an 11x11 sized image.
     fn write_region(
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
@@ -1219,6 +1224,8 @@ read_write_image_impl!(u64, DataType::TULONG);
 read_write_image_impl!(f32, DataType::TFLOAT);
 read_write_image_impl!(f64, DataType::TDOUBLE);
 
+/// Columns of different types
+#[allow(missing_docs)]
 pub enum Column {
     Int32 { name: String, data: Vec<i32> },
     Int64 { name: String, data: Vec<i64> },
@@ -1227,6 +1234,7 @@ pub enum Column {
     String { name: String, data: Vec<String> },
 }
 
+/// Iterator type for columns
 pub struct ColumnIterator<'a> {
     current: usize,
     column_descriptions: Vec<ConcreteColumnDescription>,
@@ -1338,7 +1346,7 @@ pub struct FitsHdu {
 }
 
 impl FitsHdu {
-    pub fn new<T: DescribesHdu>(fits_file: &mut FitsFile, hdu_description: T) -> Result<Self> {
+    fn new<T: DescribesHdu>(fits_file: &mut FitsFile, hdu_description: T) -> Result<Self> {
         fits_file.change_hdu(hdu_description)?;
         match fits_file.fetch_hdu_info() {
             Ok(hdu_info) => {
@@ -1452,10 +1460,15 @@ impl FitsHdu {
         T::read_region(fits_file, ranges)
     }
 
+    /// Resize a HDU image
+    ///
+    /// The `new_size` parameter defines the new size of the image. This can be any length, but
+    /// only 2D images are supported at the moment.
     pub fn resize(self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
+        assert_eq!(new_size.len(), 2);
         match self.info {
             HduInfo::ImageInfo { image_type, .. } => {
                 let mut status = 0;
@@ -1476,6 +1489,7 @@ impl FitsHdu {
 
     }
 
+    /// Copy an HDU to another open fits file
     pub fn copy_to(
         &self,
         src_fits_file: &mut FitsFile,
@@ -1494,6 +1508,10 @@ impl FitsHdu {
         check_status(status).map(|_| ())
     }
 
+    /// Insert a column into a fits table
+    ///
+    /// The column location is 0-indexed. It is inserted _at_ that position, and the following
+    /// columns are shifted back.
     pub fn insert_column(
         self,
         fits_file: &mut FitsFile,
@@ -1522,6 +1540,7 @@ impl FitsHdu {
     }
 
 
+    /// Add a new column to the end of the table
     pub fn append_column(
         self,
         fits_file: &mut FitsFile,
@@ -1546,6 +1565,9 @@ impl FitsHdu {
         }
     }
 
+    /// Remove a column from the fits file
+    ///
+    /// The column can be identified by id or name.
     pub fn delete_column<T: DescribesColumnLocation>(
         self,
         fits_file: &mut FitsFile,
@@ -1564,7 +1586,10 @@ impl FitsHdu {
         check_status(status).and_then(|_| fits_file.current_hdu())
     }
 
-    pub fn get_column_no<T: Into<String>>(
+    /// Return the index for a given column.
+    ///
+    /// Internal method, not exposed.
+    fn get_column_no<T: Into<String>>(
         &self,
         fits_file: &mut FitsFile,
         col_name: T,
@@ -1597,6 +1622,7 @@ impl FitsHdu {
         T::read_col(fits_file, name)
     }
 
+    /// Read part of a column, within a range
     pub fn read_col_range<T: ReadsCol>(
         &self,
         fits_file: &mut FitsFile,
@@ -1607,8 +1633,9 @@ impl FitsHdu {
         T::read_col_range(fits_file, name, range)
     }
 
+    /// Write a binary table column
     pub fn write_col<T: WritesCol, N: Into<String>>(
-        self,
+        &self,
         fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
@@ -1618,8 +1645,9 @@ impl FitsHdu {
         T::write_col(fits_file, &self, name, col_data)
     }
 
+    /// Write part of a column, within a range
     pub fn write_col_range<T: WritesCol, N: Into<String>>(
-        self,
+        &self,
         fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
@@ -1630,6 +1658,7 @@ impl FitsHdu {
         T::write_col_range(fits_file, &self, name, col_data, rows)
     }
 
+    /// Iterate over the columns in a fits file
     pub fn columns<'a>(&self, fits_file: &'a mut FitsFile) -> ColumnIterator<'a> {
         fits_file.make_current(self).expect(
             "Cannot make hdu current",
@@ -1637,6 +1666,10 @@ impl FitsHdu {
         ColumnIterator::new(fits_file)
     }
 
+    /// Delete the current HDU from the fits file.
+    ///
+    /// Note this method takes `self` by value, and as such the hdu cannot be used after this
+    /// method is called.
     pub fn delete(self, fits_file: &mut FitsFile) -> Result<()> {
         fits_file.make_current(&self)?;
 
@@ -2482,7 +2515,7 @@ mod test {
             {
                 let mut f = FitsFile::edit(filename).unwrap();
                 let hdu = f.hdu("foo").unwrap();
-                hdu.resize(&mut f, &vec![1024, 1024]).unwrap();
+                hdu.resize(&mut f, &[1024, 1024]).unwrap();
             }
 
             /* Images are only resized when flushed to disk, so close the file and
@@ -2492,7 +2525,7 @@ mod test {
                 let hdu = f.hdu("foo").unwrap();
                 match hdu.info {
                     HduInfo::ImageInfo { shape, .. } => {
-                        assert_eq!(shape, vec![1024, 1024]);
+                        assert_eq!(shape, [1024, 1024]);
                     }
                     _ => panic!("Unexpected hdu type"),
                 }
@@ -2541,9 +2574,8 @@ mod test {
             let hdu = f.create_table("foo".to_string(), table_description)
                 .unwrap();
 
-            if let Err(Error::Message(msg)) =
-                hdu.write_region(&mut f, &vec![&(0..10), &(0..10)], &data_to_write)
-            {
+            let ranges = vec![&(0..10), &(0..10)];
+            if let Err(Error::Message(msg)) = hdu.write_region(&mut f, &ranges, &data_to_write) {
                 assert_eq!(msg, "cannot write image data to a table hdu");
             } else {
                 panic!("Should have thrown an error");

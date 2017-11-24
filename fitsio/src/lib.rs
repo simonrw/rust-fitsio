@@ -2,19 +2,31 @@
 //!
 //! * [HDU access](#hdu-access)
 //! * [Creating new HDUs](#creating-new-hdus)
+//!     * [Creating a new image](#creating-a-new-image)
+//!     * [Creating a new table](#creating-a-new-table)
+//!         * [Column descriptions](#column-descriptions)
+//!     * [Copying HDUs to another file](#copying-hdus-to-another-file)
+//!     * [Deleting a HDU](#deleting-a-hdu)
+//!     * [Iterating over the HDUs in a file](#iterating-over-the-hdus-in-a-file)
+//!     * [General calling behaviour](#general-calling-behaviour)
 //! * [Header keys](#header-keys)
 //! * [Reading file data](#reading-file-data)
-//!     * [Images](#images)
-//!     * [Tables](#tables)
+//!     * [Reading images](#reading-images)
+//!     * [Reading tables](#reading-tables)
+//!     * [Iterating over columns](#iterating-over-columns)
 //! * [Writing file data](#writing-file-data)
-//!     * [Images](#images)
-//!     * [Tables](#tables)
+//!     * [Writing images](#writing-images)
+//!         * [Resizing an image](#resizing-an-image)
+//!     * [Writing tables](#writing-tables)
+//!         * [Writing table data](#writing-table-data)
+//!         * [Inserting columns](#inserting-columns)
+//!         * [Deleting columns](#deleting-columns)
 //! * [Raw fits file access](#raw-fits-file-access)
 //!
 //! This library wraps the low level `cfitsio` bindings: [`fitsio-sys`][2] and provides a more
 //! native experience for rust users.
 //!
-//! The main interface to a fits file is [`FitsFile`](struct.FitsFile.html). All file manipulation
+//! The main interface to a fits file is [`FitsFile`][fits-file]. All file manipulation
 //! and reading starts with this class.
 //!
 //! Opening a file:
@@ -30,7 +42,7 @@
 //! ```
 //!
 //! Alternatively a new file can be created on disk with the companion method
-//! [`create`](struct.FitsFile.html#method.create):
+//! [`create`][fits-file-create]:
 //!
 //! ```rust
 //! # extern crate tempdir;
@@ -52,12 +64,22 @@
 //! or file contents can be read.
 //!
 //! To open a fits file in read/write mode (to allow changes to the file), the
-//! [`edit`](struct.FitsFile.html#method.edit) must be used. This opens a file which already exists
+//! [`edit`][fits-file-edit] must be used. This opens a file which already exists
 //! on disk for editing.
 //!
-//! ## HDU access
+//! ```rust
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! use fitsio::FitsFile;
 //!
-//! HDU information belongs to the [`FitsHdu`](struct.FitsHdu.html) object. HDUs can be fetched by
+//! // let filename = ...;
+//! let fptr = FitsFile::edit(filename).unwrap();
+//! # }
+//! ```
+//!
+//! # HDU access
+//!
+//! HDU information belongs to the [`FitsHdu`][fits-hdu] object. HDUs can be fetched by
 //! `String`/`str` or integer (0-indexed).
 //! The `HduInfo` object contains information about the current HDU:
 //!
@@ -88,13 +110,13 @@
 //! # }
 //! ```
 //!
-//! ## Creating new HDUs
+//! # Creating new HDUs
 //!
-//! ### Images
+//! ## Creating a new image
 //!
-//! New fits images are created with the [`create_image`](struct.FitsFile.html#method.create_image)
+//! New fits images are created with the [`create_image`][fits-file-create-image]
 //! method. This method requires the extension name, and an
-//! [`ImageDescription`](struct.ImageDescription.html) object, which defines the shape and type of
+//! [`ImageDescription`][image-description] object, which defines the shape and type of
 //! the desired image:
 //!
 //! ```rust
@@ -115,11 +137,11 @@
 //! # }
 //! ```
 //!
-//! ### Tables
+//! ## Creating a new table
 //!
 //! Similar to creating new images, new tables are created with the
-//! [`create_table`](struct.FitsFile.html#method.create_table) method. This requires an extension
-//! name, and a slice of [`ColumnDescription`](columndescription/struct.ColumnDescription.html)s:
+//! [`create_table`][fits-file-create-table] method. This requires an extension
+//! name, and a slice of [`ColumnDescription`][column-description]s:
 //!
 //! ```rust
 //! # extern crate tempdir;
@@ -141,17 +163,17 @@
 //! # }
 //! ```
 //!
-//! #### Column descriptions
+//! ### Column descriptions
 //!
 //! Columns are described with the
-//! [`ColumnDescription`](columndescription/struct.ColumnDescription.html) struct. This
+//! [`ColumnDescription`][column-description] struct. This
 //! encapsulates: the name of the column, and the data format.
 //!
 //! The fits specification allows scalar or vector columns, and the data format is described the
-//! [`ColumnDataDescription`](columndescription/struct.ColumnDataDescription.html) struct, which in
+//! [`ColumnDataDescription`][column-data-description] struct, which in
 //! turn encapsulates the number of elements per row element (typically 1), the width of the
 //! column (for strings), and the data type, which is one of the
-//! [`ColumnDataType`](columndescription/enum.ColumnDataType.html) members
+//! [`ColumnDataType`][column-data-type] members
 //!
 //! For the common case of a scalar column, a `ColumnDataDescription` object can be constructed
 //! with the `scalar` method:
@@ -190,10 +212,79 @@
 //! # }
 //! ```
 //!
-//! ## Header keys
+//! ## Copying HDUs to another file
 //!
-//! Header keys are read through the [`read_key`](struct.FitsFile.html#method.read_key) function,
-//! and is generic over types that implement the [`ReadsKey`](trait.ReadsKey.html) trait:
+//! A HDU can be copied to another open file with the [`copy_to`][fits-hdu-copy-to] method. This
+//! requires another open [`FitsFile`][fits-file] object to copy to:
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits";
+//! # let mut src_fptr = fitsio::FitsFile::open(filename).unwrap();
+//! #
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut dest_fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! #
+//! # let hdu = src_fptr.hdu(1).unwrap();
+//! hdu.copy_to(&mut src_fptr, &mut dest_fptr).unwrap();
+//! # }
+//! ```
+//!
+//! ## Deleting a HDU
+//!
+//! The current HDU can be deleted using the [`delete`][fits-hdu-delete] method. Note: this method
+//! takes ownership of `self`, and as such the [`FitsHdu`][fits-hdu] object cannot be used after
+//! this is called.
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # use fitsio::fitsfile::ImageDescription;
+//! # use fitsio::types::ImageType;
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let image_description = ImageDescription {
+//! #     data_type: ImageType::FLOAT_IMG,
+//! #     dimensions: &[100, 100],
+//! # };
+//! # let hdu = fptr.create_image("EXTNAME".to_string(), &image_description).unwrap();
+//! // let fptr = FitsFile::open(...).unwrap();
+//! // let hdu = fptr.hdu(0).unwrap();
+//! hdu.delete(&mut fptr).unwrap();
+//! // Cannot use hdu after this
+//! # }
+//! ```
+//!
+//! ## Iterating over the HDUs in a file
+//!
+//! The [`iter`][fits-hdu-iter] method allows for iteration over the HDUs of a fits file.
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # fn main() {
+//! #     let mut fptr = fitsio::FitsFile::open("../testdata/full_example.fits").unwrap();
+//! for hdu in fptr.iter() {
+//!     // Do something with hdu
+//! }
+//! # }
+//! ```
+//!
+//! ## General calling behaviour
+//!
+//! All subsequent data acess is performed through the [`FitsHdu`][fits-hdu] object. Most methods
+//! take the currently open [`FitsFile`][fits-file] as the first parameter.
+//!
+//! # Header keys
+//!
+//! Header keys are read through the [`read_key`][fits-hdu-read-key] function,
+//! and is generic over types that implement the [`ReadsKey`][reads-key] trait:
 //!
 //! ```rust
 //! # extern crate fitsio;
@@ -215,8 +306,8 @@
 //! ```
 //!
 //! Header cards can be written through the method
-//! [`write_key`](struct.FitsFile.html#method.write_key). It takes a key name and value. See [the
-//! `WritesKey`](trait.WritesKey.html) trait for supported data types.
+//! [`write_key`][fits-hdu-write-key]. It takes a key name and value. See [the
+//! `WritesKey`][writes-key] trait for supported data types.
 //!
 //! ```rust
 //! # extern crate tempdir;
@@ -231,14 +322,14 @@
 //! # }
 //! ```
 //!
-//! ## Reading file data
+//! # Reading file data
 //!
-//! ### Images
+//! ## Reading images
 //!
 //! Image data can be read through either
-//! [`read_section`](struct.FitsHdu.html#method.read_section) which reads contiguous pixels
+//! [`read_section`][fits-hdu-read-section] which reads contiguous pixels
 //! between a start index and end index, or
-//! [`read_region`](struct.FitsHdu.html#method.read_region) which reads rectangular chunks from
+//! [`read_region`][fits-hdu-read-region] which reads rectangular chunks from
 //! the image.
 //!
 //! ```rust
@@ -294,10 +385,10 @@
 //! # }
 //! ```
 //!
-//! ### Tables
+//! ## Reading tables
 //!
-//! Columns can be read using the [`read_col`](struct.FitsFile.html#method.read_col) function,
-//! which can convert data types on the fly. See the [`ReadsCol`](trait.ReadsCol.html) trait for
+//! Columns can be read using the [`read_col`][fits-hdu-read-col] function,
+//! which can convert data types on the fly. See the [`ReadsCol`][reads-col] trait for
 //! supported data types.
 //!
 //! ```rust
@@ -311,13 +402,9 @@
 //! # }
 //! ```
 //!
-//! The [`columns`](struct.FitsFile.html#method.columns) method returns an iterator over all of the
-//! columns in a table.
+//! ## Iterating over columns
 //!
-//! ## Writing file data
-//!
-//! When writing to the file, all methods are attached to the `FitsHdu` object to which data is to
-//! be written.
+//! Iterate over the columns with [`columns`][fits-hdu-columns].
 //!
 //! ```rust
 //! # extern crate fitsio;
@@ -325,17 +412,22 @@
 //! # fn main() {
 //! # let filename = "../testdata/full_example.fits";
 //! # let mut fptr = fitsio::FitsFile::open(filename).unwrap();
-//! let hdu = fptr.hdu(1);
+//! # let hdu = fptr.hdu("TESTEXT").unwrap();
+//! for column in hdu.columns(&mut fptr) {
+//!     // Do something with column
+//! }
 //! # }
 //! ```
 //!
-//! ### Images
+//! # Writing file data
+//!
+//! ## Writing images
 //!
 //! Image data is written through two methods on the HDU object:
-//! [`write_section`](struct.FitsHdu.html#method.write_section) and
-//! [`write_region`](struct.FitsHdu.html#method.write_region).
+//! [`write_section`][fits-hdu-write-section] and
+//! [`write_region`][fits-hdu-write-region].
 //!
-//! [`write_section`](struct.FitsHdu.html#method.write_section) requires a start index and
+//! [`write_section`][fits-hdu-write-section] requires a start index and
 //! end index and data to write. The data parameter needs to be a slice, meaning any contiguous
 //! memory storage method (e.g. `Vec`) can be passed.
 //!
@@ -360,7 +452,7 @@
 //! # }
 //! ```
 //!
-//! [`write_region`](struct.FitsHdu.html#method.write_region) takes a slice of ranges with which
+//! [`write_region`][fits-hdu-write-region] takes a slice of ranges with which
 //! the data is to be written, and the data to write.
 //!
 //! ```rust
@@ -385,13 +477,114 @@
 //! # }
 //! ```
 //!
-//! ### Tables
+//! ### Resizing an image
 //!
-//! #### Inserting columns
+//! Images can be resized to a new shape using the [`resize`][fits-hdu-resize] method.
 //!
-//! Two methods on the HDU object allow for adding new columns: [`append_column`][append-column]
-//! and [`insert_column`](struct.FitsHdu.html#method.insert_column).
-//! [`append_column`][append-column] adds a new column as the last column member, and is generally
+//! The method takes the open [`FitsFile`][fits-file], and an slice of `usize` values. Note:
+//! currently `fitsio` only supports slices with length 2, i.e. a 2D image.
+//! [`resize`][fits-hdu-resize] takes ownership `self` to force the user to fetch the HDU object
+//! again. This ensures the image changes are reflected in the hew HDU object.
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # use std::fs::copy;
+//! # use fitsio::HduInfo;
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # copy("../testdata/full_example.fits", &filename).unwrap();
+//! # let filename = filename.to_str().unwrap();
+//! # let mut fptr = fitsio::FitsFile::edit(filename).unwrap();
+//! # let hdu = fptr.hdu(0).unwrap();
+//! hdu.resize(&mut fptr, &[1024, 1024]).unwrap();
+//! #
+//! // Have to get the HDU again, to reflect the latest changes
+//! let hdu = fptr.hdu(0).unwrap();
+//! match hdu.info {
+//!     HduInfo::ImageInfo { shape, .. } => {
+//!         assert_eq!(shape, [1024, 1024]);
+//!     }
+//!     _ => panic!("Unexpected hdu type"),
+//! }
+//! # }
+//! ```
+//!
+//! ## Writing tables
+//!
+//! ### Writing table data
+//!
+//! Tablular data can either be written with [`write_col`][fits-hdu-write-col] or
+//! [`write_col_range`][fits-hdu-write-col-range].
+//!
+//! [`write_col`][fits-hdu-write-col] writes an entire column's worth of data to the file. It does
+//! not check how many rows are in the file, but extends the table if the length of data is longer
+//! than the table length.
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # use std::fs::copy;
+//! # use fitsio::HduInfo;
+//! # use fitsio::columndescription::*;
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let table_description = vec![
+//! #     ColumnDescription::new("bar")
+//! #         .with_type(ColumnDataType::Int)
+//! #         .create()
+//! #         .unwrap(),
+//! # ];
+//! # let hdu = fptr.create_table("foo".to_string(), &table_description)
+//! #     .unwrap();
+//! let data_to_write: Vec<i32> = vec![10101; 5];
+//! hdu.write_col(&mut fptr, "bar", &data_to_write).unwrap();
+//! let data: Vec<i32> = hdu.read_col(&mut fptr, "bar").unwrap();
+//! assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
+//! # }
+//! ```
+//!
+//! [`write_col_range`][fits-hdu-write-col-range] writes data to a range of rows in a table. The
+//! range is inclusive of both the upper and lower bounds, so `0..4` writes 5 elements.
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # use std::fs::copy;
+//! # use fitsio::HduInfo;
+//! # use fitsio::columndescription::*;
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let table_description = vec![
+//! #     ColumnDescription::new("bar")
+//! #         .with_type(ColumnDataType::Int)
+//! #         .create()
+//! #         .unwrap(),
+//! # ];
+//! # let hdu = fptr.create_table("foo".to_string(), &table_description)
+//! #     .unwrap();
+//! let data_to_write: Vec<i32> = vec![10101; 10];
+//! hdu.write_col_range(&mut fptr, "bar", &data_to_write, &(0..4)).unwrap();
+//! let data: Vec<i32> = hdu.read_col(&mut fptr, "bar").unwrap();
+//! assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
+//! # }
+//! ```
+//!
+//! ### Inserting columns
+//!
+//! Two methods on the HDU object allow for adding new columns:
+//! [`append_column`][fits-hdu-append-column]
+//! and [`insert_column`][fits-hdu-insert-column].
+//! [`append_column`][fits-hdu-append-column] adds a new column as the last column member, and is
+//! generally
 //! preferred as it does not require shifting of data within the file.
 //!
 //! ```rust
@@ -422,10 +615,10 @@
 //!
 //! ```
 //!
-//! #### Deleting columns
+//! ### Deleting columns
 //!
-//! The HDU object has the method [`delete_column`][delete-column] which removes a column. The
-//! column can either be accessed by integer or name
+//! The HDU object has the method [`delete_column`][fits-hdu-delete-column] which removes a column.
+//! The column can either be accessed by integer or name
 //!
 //! ```rust
 //! # extern crate fitsio;
@@ -469,7 +662,7 @@
 //! # }
 //! ```
 //!
-//! ## Raw fits file access
+//! # Raw fits file access
 //!
 //! If this library does not support the particular use case that is needed, the raw `fitsfile`
 //! pointer can be accessed:
@@ -505,9 +698,38 @@
 //!
 //! [1]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
 //! [2]: https://crates.io/crates/fitsio-sys
-//! [append-column]: fitsfile/struct.FitsHdu.html#method.append_column
-//! [delete-column]: fitsfile/struct.FitsHdu.html#method.delete_column
+//! [column-data-description]: columndescription/struct.ColumnDataDescription.html
+//! [column-data-type]: columndescription/struct.ColumnDataType.html
+//! [column-description]: columndescription/struct.ColumnDescription.html
+//! [fits-file-create-image]: fitsfile/struct.FitsFile.html#method.create_image
+//! [fits-file-create-table]: fitsfile/struct.FitsFile.html#method.create_table
+//! [fits-file-create]: fitsfile/struct.FitsFile.html#method.create
+//! [fits-file-edit]: fitsfile/struct.FitsFile.html#method.edit
+//! [fits-file]: fitsfile/struct.FitsFile.html
+//! [fits-hdu-append-column]: fitsfile/struct.FitsHdu.html#method.append_column
+//! [fits-hdu-columns]: fitsfile/struct.FitsHdu.html#method.columns
+//! [fits-hdu-delete-column]: fitsfile/struct.FitsHdu.html#method.delete_column
+//! [fits-hdu-insert-column]: fitsfile/struct.FitsHdu.html#method.insert_column
+//! [fits-hdu-read-col]: fitsfile/struct.FitsHdu.html#method.read_col
+//! [fits-hdu-read-key]: fitsfile/struct.FitsHdu.html#method.read_key
+//! [fits-hdu-read-region]: fitsfile/struct.FitsHdu.html#method.read_region
+//! [fits-hdu-read-section]: fitsfile/struct.FitsHdu.html#method.read_section
+//! [fits-hdu-write-key]: fitsfile/struct.FitsHdu.html#method.write_key
+//! [fits-hdu-write-col]: fitsfile/struct.FitsHdu.html#method.write_col
+//! [fits-hdu-write-col-range]: fitsfile/struct.FitsHdu.html#method.write_col_range
+//! [fits-hdu-write-region]: fitsfile/struct.FitsHdu.html#method.write_region
+//! [fits-hdu-write-section]: fitsfile/struct.FitsHdu.html#method.write_section
+//! [fits-hdu-iter]: fitsfile/struct.FitsHdu.html#method.iter
+//! [fits-hdu-copy-to]: fitsfile/struct.FitsHdu.html#method.copy_to
+//! [fits-hdu-delete]: fitsfile/struct.FitsHdu.html#method.copy_to
+//! [fits-hdu-resize]: fitsfile/struct.FitsHdu.html#method.copy_to
+//! [fits-hdu]: fitsfile/struct.FitsHdu.html
+//! [image-description]: fitsfile/struct.ImageDescription.html
+//! [reads-col]: fitsfile/trait.ReadsCol.html
+//! [reads-key]: fitsfile/trait.ReadsKey.html
+//! [writes-key]: fitsfile/trait.ReadsKey.html
 
+#![warn(missing_docs)]
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 

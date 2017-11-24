@@ -1,16 +1,30 @@
+//! Errors and error handling
+//!
+//! This mostly concerns converting to and from the main error type defined
+//! in this crate: [`Error`](enum.Error.html)
+
 use std::ffi::NulError;
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 use fitserror::FitsError;
 
+/// Enumeration of all error types
 #[derive(Debug, PartialEq)]
 pub enum Error {
+    /// Internal Fits errors
     Fits(FitsError),
+
+    /// Generic errors from simple strings
     Message(String),
+
+    /// String conversion errors
     Null(NulError),
+
+    /// UTF-8 conversion errors
     Utf8(Utf8Error),
 }
 
+/// Handy error type for use internally
 pub type Result<T> = ::std::result::Result<T, Error>;
 
 impl ::std::convert::From<FitsError> for Error {

@@ -1,22 +1,34 @@
+//! Handling column descriptions
+//!
+//! Columns are represented as
+//! [`ConcreteColumnDescription`](struct.ConcreteColumnDescription.html). This is constructed
+//! through the builder pattern, by creating a [`ColumnDescription`](struct.ColumnDescription.html)
+//! and calling [`create`](struct.ColumnDescription.html#method.create)
 use errors::Result;
 use std::str::FromStr;
 
 /// Description for new columns
 #[derive(Debug, Clone)]
 pub struct ColumnDescription {
+    /// Name of the column
     pub name: String,
 
     /// Type of the data, see the cfitsio documentation
     pub data_type: Option<ColumnDataDescription>,
 }
 
+/// Concrete representation of the description of a column
 #[derive(Debug, Clone)]
 pub struct ConcreteColumnDescription {
+    /// Name of the column
     pub name: String,
+
+    /// Type of the data, see the cfitsio documentation
     pub data_type: ColumnDataDescription,
 }
 
 impl ColumnDescription {
+    /// Create a new [`ColumnDescription`](struct.ColumnDescription.html) from a name
     pub fn new<T: Into<String>>(name: T) -> Self {
         ColumnDescription {
             name: name.into(),
@@ -24,11 +36,13 @@ impl ColumnDescription {
         }
     }
 
+    /// Add a data type to the column description
     pub fn with_type(&mut self, typ: ColumnDataType) -> &mut ColumnDescription {
         self.data_type = Some(ColumnDataDescription::scalar(typ));
         self
     }
 
+    /// Make the column repeat
     pub fn that_repeats(&mut self, repeat: usize) -> &mut ColumnDescription {
         if let Some(ref mut desc) = self.data_type {
             desc.repeat = repeat;
@@ -36,6 +50,7 @@ impl ColumnDescription {
         self
     }
 
+    /// Define the column width
     pub fn with_width(&mut self, width: usize) -> &mut ColumnDescription {
         if let Some(ref mut desc) = self.data_type {
             desc.width = width;
@@ -43,6 +58,8 @@ impl ColumnDescription {
         self
     }
 
+    /// Render the [`ColumnDescription`](struct.ColumnDescription.html) into a
+    /// [`ConcreteColumnDescription`](struct.ConcreteColumnDescription.html)
     pub fn create(&self) -> Result<ConcreteColumnDescription> {
         match self.data_type {
             Some(ref d) => {
@@ -63,12 +80,18 @@ impl ColumnDescription {
 /// Description of the column data
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ColumnDataDescription {
+    /// Does the column contain multiple values?
     pub repeat: usize,
+
+    /// How wide is the column?
     pub width: usize,
+
+    /// What data type does the column store?
     pub typ: ColumnDataType,
 }
 
 impl ColumnDataDescription {
+    /// Create a new column data description
     pub fn new(typ: ColumnDataType, repeat: usize, width: usize) -> Self {
         ColumnDataDescription {
             repeat: repeat,
@@ -82,10 +105,12 @@ impl ColumnDataDescription {
         ColumnDataDescription::new(typ, 1, 1)
     }
 
+    /// Shortcut for creating a vector column
     pub fn vector(typ: ColumnDataType, repeat: usize) -> Self {
         ColumnDataDescription::new(typ, repeat, 1)
     }
 
+    /// Set the repeat count
     /* XXX These two methods force a call to clone which is wasteful of memory. I do not know if
      * this means that memory is leaked, or that destructors are needlessly called (I suspect the
      * latter) but it is fairly wasteful. On the other hand, it's unlikely this sort of thing will
@@ -98,6 +123,7 @@ impl ColumnDataDescription {
         self.clone()
     }
 
+    /// Set the width of the column
     pub fn width(&mut self, width: usize) -> Self {
         // TODO check that width >= 1
         self.width = width;
@@ -135,6 +161,8 @@ impl From<ColumnDataDescription> for String {
     }
 }
 
+/// Types a column can represent
+#[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColumnDataType {
     Int,
