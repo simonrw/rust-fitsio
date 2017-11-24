@@ -10,6 +10,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 ### Removed
 
+## [0.11.0] - 2017-11-24
+
+### Addded
+### Changed
+
+* (`fitsio`) Updated the documentation to be feature complete as of this version
+
+### Removed
+
 ## [0.10.0] - 2017-11-07
 
 ### Added
@@ -50,7 +59,7 @@ Nothing
 
 Nothing
 
-[Unreleased]: https://github.com/mindriot101/rust-fitsio/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/mindriot101/rust-fitsio/compare/v0.11.0...HEAD
 [0.9.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.8.0...v0.9.0
 [pull-34]: https://github.com/mindriot101/rust-fitsio/pull/34
 [pull-32]: https://github.com/mindriot101/rust-fitsio/pull/32
@@ -59,7 +68,8 @@ Nothing
 [pull-44]: https://github.com/mindriot101/rust-fitsio/pull/44
 [pull-45]: https://github.com/mindriot101/rust-fitsio/pull/45
 [pull-46]: https://github.com/mindriot101/rust-fitsio/pull/46
-[0.9.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.9.0...v0.10.0
+[0.10.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.9.0...v0.10.0
+[0.11.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.10.0...v0.11.0
 
 ---
 
