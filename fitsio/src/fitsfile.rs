@@ -318,11 +318,6 @@ impl FitsFile {
     /// Create a new fits table
     ///
     /// Create a new fits table, with columns as detailed in the `ColumnDescription` object.
-    ///
-    ///
-    ///
-    ///
-    ///
     pub fn create_table(
         &mut self,
         extname: String,
@@ -370,18 +365,7 @@ impl FitsFile {
             );
         }
 
-        if status != 0 {
-            Err(
-                FitsError {
-                    status: status,
-                    // unwrap guaranteed to succesed as status > 0
-                    message: status_to_string(status)?.unwrap(),
-                }.into(),
-            )
-        } else {
-            self.current_hdu()
-        }
-
+        check_status(status).and_then(|_| self.current_hdu())
     }
 
     /// Create a new fits image, and return the [`FitsHdu`](struct.FitsHdu.html) object
@@ -430,17 +414,7 @@ impl FitsFile {
         let current_hdu = try!(self.current_hdu());
         current_hdu.write_key(self, "EXTNAME", extname)?;
 
-        if status != 0 {
-            Err(
-                FitsError {
-                    status: status,
-                    // unwrap guaranteed to succesed as status > 0
-                    message: status_to_string(status)?.unwrap(),
-                }.into(),
-            )
-        } else {
-            self.current_hdu()
-        }
+        check_status(status).and_then(|_| self.current_hdu())
     }
 
     /// Iterate over the HDUs in the file
@@ -732,6 +706,10 @@ pub trait WritesCol {
         Self: Sized;
 
     /// Write data to an entire column
+    ///
+    /// This default implementation does not check the length of the column first, but if the
+    /// length of the data array is longer than the length of the table, the table will be extended
+    /// with extra rows. This is as per the fitsio definition.
     fn write_col<T: Into<String>>(
         fits_file: &mut FitsFile,
         hdu: &FitsHdu,
@@ -1657,7 +1635,7 @@ impl FitsHdu {
 
     /// Write a binary table column
     pub fn write_col<T: WritesCol, N: Into<String>>(
-        self,
+        &self,
         fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
@@ -1669,7 +1647,7 @@ impl FitsHdu {
 
     /// Write part of a column, within a range
     pub fn write_col_range<T: WritesCol, N: Into<String>>(
-        self,
+        &self,
         fits_file: &mut FitsFile,
         name: N,
         col_data: &[T],
