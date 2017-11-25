@@ -1063,6 +1063,7 @@ macro_rules! read_write_image_impl {
                 -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::ImageInfo { shape, .. }) => {
+                        // TODO(srw) handle images with dimensions != 2
                         if shape.len() != 2 {
                             unimplemented!();
                         }
@@ -1088,6 +1089,7 @@ macro_rules! read_write_image_impl {
                 -> Result<Vec<Self>> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { shape, .. }) => {
+                            // TODO(srw) handle images with dimensions != 2
                             if shape.len() != 2 {
                                 unimplemented!();
                             }
@@ -1461,6 +1463,7 @@ impl FitsHdu {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
+        // TODO(srw) handle images with dimensions != 2
         assert_eq!(new_size.len(), 2);
         match self.info {
             HduInfo::ImageInfo { image_type, .. } => {
@@ -1469,7 +1472,7 @@ impl FitsHdu {
                     sys::ffrsim(
                         fits_file.fptr as *mut _,
                         image_type.into(),
-                        2,
+                        new_size.len() as _,
                         new_size.as_ptr() as *mut _,
                         &mut status,
                     );
