@@ -1949,6 +1949,34 @@ mod test {
     }
 
     #[test]
+    fn multidimensional_images() {
+        with_temp_file(|filename| {
+            {
+                let mut f = FitsFile::create(filename).unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::LONG_IMG,
+                    dimensions: &[100, 20, 15],
+                };
+                f.create_image("foo".to_string(), &image_description)
+                    .unwrap();
+            }
+
+            FitsFile::open(filename)
+                .map(|mut f| {
+                    f.change_hdu("foo").unwrap();
+                    match f.fetch_hdu_info() {
+                        Ok(HduInfo::ImageInfo { shape, .. }) => {
+                            assert_eq!(shape, vec![100, 20, 15]);
+                        }
+                        thing => panic!("{:?}", thing),
+                    }
+                })
+                .unwrap();
+
+        });
+    }
+
+    #[test]
     fn fetching_hdu_object_hdu_info() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let testext = f.hdu("TESTEXT").unwrap();
