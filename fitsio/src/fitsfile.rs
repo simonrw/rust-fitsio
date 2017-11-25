@@ -1063,7 +1063,6 @@ macro_rules! read_write_image_impl {
                 -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::ImageInfo { shape, .. }) => {
-                        // TODO(srw) handle images with dimensions != 2
                         if shape.len() != 2 {
                             unimplemented!();
                         }
@@ -1167,14 +1166,18 @@ macro_rules! read_write_image_impl {
                 -> Result<FitsHdu> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { .. }) => {
-                            let mut fpixel = [
-                                (ranges[0].start + 1) as _,
-                                (ranges[1].start + 1) as _
-                            ];
-                            let mut lpixel = [
-                                (ranges[1].end + 1) as _,
-                                (ranges[1].end + 1) as _
-                            ];
+                            let n_ranges = ranges.len();
+
+                            let mut fpixel = Vec::with_capacity(n_ranges);
+                            let mut lpixel = Vec::with_capacity(n_ranges);
+
+                            for i in 0..n_ranges {
+                                let start = ranges[i].start + 1;
+                                let end = ranges[i].end + 1;
+                                fpixel.push(start as _);
+                                lpixel.push(end as _);
+                            }
+
                             let mut status = 0;
 
                             unsafe {
@@ -1959,8 +1962,13 @@ mod test {
                 let image_hdu = f.create_image("foo".to_string(), &image_description)
                     .unwrap();
                 let data_to_write: Vec<i64> = (0..3000).collect();
+
+                let xcoord = 0..dimensions[0] - 1;
+                let ycoord = 0..dimensions[1] - 1;
+                let zcoord = 0..dimensions[2] - 1;
+
                 image_hdu
-                    .write_section(&mut f, 0, 3000, &data_to_write)
+                    .write_region(&mut f, &[&xcoord, &ycoord, &zcoord], &data_to_write)
                     .unwrap();
             }
 
