@@ -230,7 +230,7 @@
 //! # let mut dest_fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
 //! #
 //! # let hdu = src_fptr.hdu(1).unwrap();
-//! hdu.copy_to(&mut src_fptr, &mut dest_fptr).unwrap();
+//! src_fptr.copy(hdu).to(&mut dest_fptr).unwrap();
 //! # }
 //! ```
 //!

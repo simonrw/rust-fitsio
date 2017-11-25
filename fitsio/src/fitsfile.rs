@@ -724,6 +724,17 @@ impl FitsFile {
         }
         check_status(status).map(|_| ())
     }
+
+    /// Copy a HDU object to a new file.
+    ///
+    /// This returns a [`CopyHdu`](struct.CopyHdu.html) object, which in turn has a `to` method
+    /// where the destination `FitsFile` is supplied.
+    pub fn copy<'a>(&'a mut self, hdu: FitsHdu) -> CopyHdu<'a> {
+        CopyHdu {
+            fits_file: self,
+            hdu: hdu,
+        }
+    }
 }
 
 impl Drop for FitsFile {
@@ -732,6 +743,30 @@ impl Drop for FitsFile {
         unsafe {
             sys::ffclos(self.fptr as *mut _, &mut status);
         }
+    }
+}
+
+/// Struct representing an HDU copy operation
+pub struct CopyHdu<'a> {
+    fits_file: &'a mut FitsFile,
+    hdu: FitsHdu,
+}
+
+impl<'a> CopyHdu<'a> {
+    /// Actually copy the HDU across to a new fits file
+    pub fn to(&mut self, dest: &mut FitsFile) -> Result<()> {
+        self.fits_file.make_current(&self.hdu)?;
+        let mut status = 0;
+        unsafe {
+            sys::ffcopy(
+                self.fits_file.fptr as *mut _,
+                dest.fptr as *mut _,
+                0,
+                &mut status,
+            );
+        }
+
+        check_status(status)
     }
 }
 
@@ -1646,26 +1681,6 @@ impl FitsHdu {
             |_| "".to_string(),
         );
         Ok(extname)
-    }
-
-
-    /// Copy an HDU to another open fits file
-    pub fn copy_to(
-        &self,
-        src_fits_file: &mut FitsFile,
-        dest_fits_file: &mut FitsFile,
-    ) -> Result<()> {
-        let mut status = 0;
-        unsafe {
-            sys::ffcopy(
-                src_fits_file.fptr as *mut _,
-                dest_fits_file.fptr as *mut _,
-                0,
-                &mut status,
-            );
-        }
-
-        check_status(status).map(|_| ())
     }
 }
 
@@ -2610,7 +2625,7 @@ mod test {
 
                 {
                     let mut dest = FitsFile::create(dest_filename).unwrap();
-                    src_hdu.copy_to(&mut src, &mut dest).unwrap();
+                    src.copy(src_hdu).to(&mut dest).unwrap();
                 }
 
                 let mut dest = FitsFile::open(dest_filename).unwrap();
