@@ -969,7 +969,7 @@ pub trait ReadWriteImage: Sized {
     ///
     /// Start and end are read inclusively, so start = 0, end = 10 will read 11 pixels
     /// in a row.
-    fn read_section(fits_file: &mut FitsFile, start: usize, end: usize) -> Result<Vec<Self>>;
+    fn read_section(fits_file: &mut FitsFile, range: Range<usize>) -> Result<Vec<Self>>;
 
     /// Read a row of pixels from a fits image
     fn read_rows(fits_file: &mut FitsFile, start_row: usize, num_rows: usize) -> Result<Vec<Self>>;
@@ -994,7 +994,7 @@ pub trait ReadWriteImage: Sized {
                 for dimension in &shape {
                     npixels *= *dimension;
                 }
-                Self::read_section(fits_file, 0, npixels)
+                Self::read_section(fits_file, (0..npixels))
             }
             Ok(HduInfo::TableInfo { .. }) => Err("cannot read image data from a table hdu".into()),
             Ok(HduInfo::AnyInfo) => unreachable!(),
@@ -1006,12 +1006,7 @@ pub trait ReadWriteImage: Sized {
     ///
     /// If the length of the dataset exceeds the number of columns,
     /// the data wraps around to the next row.
-    fn write_section(
-        fits_file: &mut FitsFile,
-        start: usize,
-        end: usize,
-        data: &[Self],
-    ) -> Result<()>;
+    fn write_section(fits_file: &mut FitsFile, range: Range<usize>, data: &[Self]) -> Result<()>;
 
     /// Write a rectangular region to the fits image
     ///
@@ -1034,7 +1029,7 @@ pub trait ReadWriteImage: Sized {
                         data.len(), shape).as_str().into());
                 }
 
-                Self::write_section(fits_file, 0, data.len(), data)
+                Self::write_section(fits_file, 0..data.len(), data)
             }
             Ok(HduInfo::TableInfo { .. }) => Err("cannot write image data to a table hdu".into()),
             Ok(HduInfo::AnyInfo) => unreachable!(),
@@ -1048,18 +1043,17 @@ macro_rules! read_write_image_impl {
         impl ReadWriteImage for $t {
             fn read_section(
                 fits_file: &mut FitsFile,
-                start: usize,
-                end: usize) -> Result<Vec<Self>> {
+                range: Range<usize>) -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::ImageInfo { shape: _shape, .. }) => {
-                        let nelements = end - start;
+                        let nelements = range.end - range.start;
                         let mut out = vec![0 as $t; nelements];
                         let mut status = 0;
 
                         unsafe {
                             sys::ffgpv(fits_file.fptr as *mut _,
                                        $data_type.into(),
-                                       (start + 1) as i64,
+                                       (range.start + 1) as i64,
                                        nelements as i64,
                                        ptr::null_mut(),
                                        out.as_mut_ptr() as *mut _,
@@ -1088,7 +1082,7 @@ macro_rules! read_write_image_impl {
                         let start = start_row * num_cols;
                         let end = (start_row + num_rows) * num_cols;
 
-                        Self::read_section(fits_file, start, end)
+                        Self::read_section(fits_file, start..end)
                     },
                     Ok(HduInfo::TableInfo { .. }) =>
                         Err("cannot read image data from a table hdu".into()),
@@ -1149,19 +1143,18 @@ macro_rules! read_write_image_impl {
 
             fn write_section(
                 fits_file: &mut FitsFile,
-                start: usize,
-                end: usize,
+                range: Range<usize>,
                 data: &[Self])
                 -> Result<()> {
                     match fits_file.fetch_hdu_info() {
                         Ok(HduInfo::ImageInfo { .. }) => {
-                            let nelements = end - start;
+                            let nelements = range.end - range.start;
                             assert!(data.len() >= nelements);
                             let mut status = 0;
                             unsafe {
                                 sys::ffppr(fits_file.fptr as *mut _,
                                            $data_type.into(),
-                                           (start + 1) as i64,
+                                           (range.start + 1) as i64,
                                            nelements as i64,
                                            data.as_ptr() as *mut _,
                                            &mut status);
@@ -1402,7 +1395,7 @@ impl FitsHdu {
         end: usize,
     ) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
-        T::read_section(fits_file, start, end)
+        T::read_section(fits_file, start..end)
     }
 
     /// Read multiple rows from a fits image
@@ -1455,7 +1448,7 @@ impl FitsHdu {
     ) -> Result<()> {
         fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
-        T::write_section(fits_file, start, end, data)
+        T::write_section(fits_file, start..end, data)
     }
 
     /// Write a rectangular region to a fits image
