@@ -278,8 +278,8 @@
 //!
 //! ## General calling behaviour
 //!
-//! All subsequent data acess is performed through the [`FitsHdu`][fits-hdu] object. Most methods
-//! take the currently open [`FitsFile`][fits-file] as the first parameter.
+//! All subsequent data acess is performed through the [`FitsFile`][fits-file] object. Most methods
+//! take an [`FitsHdu`][fits-hdu] object as the first parameter.
 //!
 //! # Header keys
 //!
