@@ -1088,29 +1088,23 @@ macro_rules! read_write_image_impl {
             fn read_region(fits_file: &FitsFile, ranges: &[&Range<usize>])
                 -> Result<Vec<Self>> {
                     match fits_file.fetch_hdu_info() {
-                        Ok(HduInfo::ImageInfo { shape, .. }) => {
-                            // TODO(srw) handle images with dimensions != 2
-                            if shape.len() != 2 {
-                                unimplemented!();
+                        Ok(HduInfo::ImageInfo { .. }) => {
+                            let n_ranges = ranges.len();
+
+                            let mut fpixel = Vec::with_capacity(n_ranges);
+                            let mut lpixel = Vec::with_capacity(n_ranges);
+
+                            let mut nelements = 1;
+                            for i in 0..n_ranges {
+                                let start = ranges[i].start + 1;
+                                let end = ranges[i].end + 1;
+                                fpixel.push(start as _);
+                                lpixel.push(end as _);
+
+                                nelements *= (end - start) + 1;
                             }
 
-                            if ranges.len() != 2 {
-                                unimplemented!();
-                            }
-
-                            // These have to be mutable because of the C-api
-                            let mut fpixel = [
-                                (ranges[0].start + 1) as _,
-                                (ranges[1].start + 1) as _
-                            ];
-                            let mut lpixel = [
-                                (ranges[0].end + 1) as _,
-                                (ranges[1].end + 1) as _
-                            ];
-
-                            let mut inc = [ 1, 1 ];
-                            let nelements =
-                                ((lpixel[0] - fpixel[0]) + 1) * ((lpixel[1] - fpixel[1]) + 1);
+                            let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
                             let mut out = vec![0 as $t; nelements as usize];
                             let mut status = 0;
 
@@ -1954,28 +1948,35 @@ mod test {
     #[test]
     fn multidimensional_images() {
         with_temp_file(|filename| {
+            let dimensions = [10, 20, 15];
+
             {
                 let mut f = FitsFile::create(filename).unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
-                    dimensions: &[100, 20, 15],
+                    dimensions: &dimensions,
                 };
-                f.create_image("foo".to_string(), &image_description)
+                let image_hdu = f.create_image("foo".to_string(), &image_description)
+                    .unwrap();
+                let data_to_write: Vec<i64> = (0..3000).collect();
+                image_hdu
+                    .write_section(&mut f, 0, 3000, &data_to_write)
                     .unwrap();
             }
 
-            FitsFile::open(filename)
-                .map(|mut f| {
-                    f.change_hdu("foo").unwrap();
-                    match f.fetch_hdu_info() {
-                        Ok(HduInfo::ImageInfo { shape, .. }) => {
-                            assert_eq!(shape, vec![100, 20, 15]);
-                        }
-                        thing => panic!("{:?}", thing),
-                    }
-                })
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+
+            let xcoord = 2..5;
+            let ycoord = 11..16;
+            let zcoord = 3..6;
+
+            let read_data: Vec<i64> = hdu.read_region(&mut f, &vec![&xcoord, &ycoord, &zcoord])
                 .unwrap();
 
+            assert_eq!(read_data.len(), 96);
+            assert_eq!(read_data[0], 712);
+            assert_eq!(read_data[50], 1114);
         });
     }
 
