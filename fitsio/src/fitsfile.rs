@@ -1105,9 +1105,9 @@ macro_rules! read_write_image_impl {
                             let mut lpixel = Vec::with_capacity(n_ranges);
 
                             let mut nelements = 1;
-                            for i in 0..n_ranges {
-                                let start = ranges[i].start + 1;
-                                let end = ranges[i].end + 1;
+                            for range in ranges {
+                                let start = range.start + 1;
+                                let end = range.end + 1;
                                 fpixel.push(start as _);
                                 lpixel.push(end as _);
 
@@ -1181,9 +1181,9 @@ macro_rules! read_write_image_impl {
                             let mut fpixel = Vec::with_capacity(n_ranges);
                             let mut lpixel = Vec::with_capacity(n_ranges);
 
-                            for i in 0..n_ranges {
-                                let start = ranges[i].start + 1;
-                                let end = ranges[i].end + 1;
+                            for range in ranges {
+                                let start = range.start + 1;
+                                let end = range.end + 1;
                                 fpixel.push(start as _);
                                 lpixel.push(end as _);
                             }
@@ -1654,9 +1654,9 @@ impl FitsHdu {
         name: N,
         col_data: &[T],
     ) -> Result<FitsHdu> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
-        T::write_col(fits_file, &self, name, col_data)
+        T::write_col(fits_file, self, name, col_data)
     }
 
     /// Write part of a column, within a range
@@ -1667,9 +1667,9 @@ impl FitsHdu {
         col_data: &[T],
         rows: &Range<usize>,
     ) -> Result<FitsHdu> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
-        T::write_col_range(fits_file, &self, name, col_data, rows)
+        T::write_col_range(fits_file, self, name, col_data, rows)
     }
 
     /// Iterate over the columns in a fits file
