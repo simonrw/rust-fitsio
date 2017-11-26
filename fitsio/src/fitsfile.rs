@@ -1020,6 +1020,10 @@ pub trait ReadWriteImage: Sized {
         data: &[Self],
     ) -> Result<()>;
 
+    /// Write an entire image to the HDU passed in
+    ///
+    /// Firstly a check is performed, making sure that the amount of data will fit in the image.
+    /// After this, all of the data is written to the image.
     fn write_image(fits_file: &mut FitsFile, data: &[Self]) -> Result<()> {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::ImageInfo { shape, .. }) => {
@@ -1463,6 +1467,7 @@ impl FitsHdu {
         T::write_region(fits_file, ranges, data)
     }
 
+    /// Write the dataset to the current image
     pub fn write_image<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
