@@ -1029,8 +1029,10 @@ pub trait ReadWriteImage: Sized {
             Ok(HduInfo::ImageInfo { shape, .. }) => {
                 let image_npixels = shape.iter().fold(1, |acc, &x| acc * x);
                 if data.len() > image_npixels {
-                    return Err(format!("cannot write more data ({} elements) to the current image (shape: {:?})",
-                        data.len(), shape).as_str().into());
+                    return Err(
+                        format!(
+                    "cannot write more data ({} elements) to the current image (shape: {:?})",
+                            data.len(), shape).as_str().into());
                 }
 
                 Self::write_section(fits_file, 0..data.len(), data)
