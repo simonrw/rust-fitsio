@@ -7,7 +7,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 
 ### Addded
+
+* (`fitsio`) add support for images which are not 2d
+
 ### Changed
+
+* (`fitsio`) change function arguments that were previously `start` and `end` to a `range` `Range<usize>`
+
 ### Removed
 
 ## [0.11.1] - 2017-11-24
