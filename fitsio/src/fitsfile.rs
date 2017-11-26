@@ -327,19 +327,19 @@ impl FitsFile {
         fits_check_readwrite!(self);
 
         let tfields = {
-            let stringlist = table_description
+            let stringlist: Vec<_> = table_description
                 .iter()
                 .map(|desc| desc.name.clone())
                 .collect();
-            stringutils::StringList::from_vec(stringlist)?
+            stringutils::StringList::from_slice(stringlist.as_slice())?
         };
 
         let ttype = {
-            let stringlist = table_description
+            let stringlist: Vec<_> = table_description
                 .iter()
                 .map(|desc| String::from(desc.clone().data_type))
                 .collect();
-            stringutils::StringList::from_vec(stringlist)?
+            stringutils::StringList::from_slice(stringlist.as_slice())?
         };
 
         let c_extname = ffi::CString::new(extname)?;
@@ -1020,6 +1020,10 @@ pub trait ReadWriteImage: Sized {
         data: &[Self],
     ) -> Result<()>;
 
+    /// Write an entire image to the HDU passed in
+    ///
+    /// Firstly a check is performed, making sure that the amount of data will fit in the image.
+    /// After this, all of the data is written to the image.
     fn write_image(fits_file: &mut FitsFile, data: &[Self]) -> Result<()> {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::ImageInfo { shape, .. }) => {
@@ -1039,7 +1043,7 @@ pub trait ReadWriteImage: Sized {
 }
 
 macro_rules! read_write_image_impl {
-    ($t: ty, $data_type: expr) => (
+    ($t: ty, $default_value: expr, $data_type: expr) => (
         impl ReadWriteImage for $t {
             fn read_section(
                 fits_file: &mut FitsFile,
@@ -1047,7 +1051,7 @@ macro_rules! read_write_image_impl {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::ImageInfo { shape: _shape, .. }) => {
                         let nelements = range.end - range.start;
-                        let mut out = vec![0 as $t; nelements];
+                        let mut out = vec![$default_value; nelements];
                         let mut status = 0;
 
                         unsafe {
@@ -1105,9 +1109,9 @@ macro_rules! read_write_image_impl {
                             let mut lpixel = Vec::with_capacity(n_ranges);
 
                             let mut nelements = 1;
-                            for i in 0..n_ranges {
-                                let start = ranges[i].start + 1;
-                                let end = ranges[i].end + 1;
+                            for range in ranges {
+                                let start = range.start + 1;
+                                let end = range.end + 1;
                                 fpixel.push(start as _);
                                 lpixel.push(end as _);
 
@@ -1115,7 +1119,7 @@ macro_rules! read_write_image_impl {
                             }
 
                             let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
-                            let mut out = vec![0 as $t; nelements as usize];
+                            let mut out = vec![$default_value; nelements as usize];
                             let mut status = 0;
 
                             unsafe {
@@ -1181,9 +1185,9 @@ macro_rules! read_write_image_impl {
                             let mut fpixel = Vec::with_capacity(n_ranges);
                             let mut lpixel = Vec::with_capacity(n_ranges);
 
-                            for i in 0..n_ranges {
-                                let start = ranges[i].start + 1;
-                                let end = ranges[i].end + 1;
+                            for range in ranges {
+                                let start = range.start + 1;
+                                let end = range.end + 1;
                                 fpixel.push(start as _);
                                 lpixel.push(end as _);
                             }
@@ -1213,18 +1217,18 @@ macro_rules! read_write_image_impl {
 }
 
 
-read_write_image_impl!(i8, DataType::TSHORT);
-read_write_image_impl!(i32, DataType::TINT);
+read_write_image_impl!(i8, i8::default(), DataType::TSHORT);
+read_write_image_impl!(i32, i32::default(), DataType::TINT);
 #[cfg(target_pointer_width = "64")]
-read_write_image_impl!(i64, DataType::TLONG);
+read_write_image_impl!(i64, i64::default(), DataType::TLONG);
 #[cfg(target_pointer_width = "32")]
-read_write_image_impl!(i64, DataType::TLONGLONG);
-read_write_image_impl!(u8, DataType::TUSHORT);
-read_write_image_impl!(u32, DataType::TUINT);
+read_write_image_impl!(i64, i64::default() DataType::TLONGLONG);
+read_write_image_impl!(u8, u8::default(), DataType::TUSHORT);
+read_write_image_impl!(u32, u32::default(), DataType::TUINT);
 #[cfg(target_pointer_width = "64")]
-read_write_image_impl!(u64, DataType::TULONG);
-read_write_image_impl!(f32, DataType::TFLOAT);
-read_write_image_impl!(f64, DataType::TDOUBLE);
+read_write_image_impl!(u64, u64::default(), DataType::TULONG);
+read_write_image_impl!(f32, f32::default(), DataType::TFLOAT);
+read_write_image_impl!(f64, f64::default(), DataType::TDOUBLE);
 
 /// Columns of different types
 #[allow(missing_docs)]
@@ -1463,6 +1467,7 @@ impl FitsHdu {
         T::write_region(fits_file, ranges, data)
     }
 
+    /// Write the dataset to the current image
     pub fn write_image<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1654,9 +1659,9 @@ impl FitsHdu {
         name: N,
         col_data: &[T],
     ) -> Result<FitsHdu> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
-        T::write_col(fits_file, &self, name, col_data)
+        T::write_col(fits_file, self, name, col_data)
     }
 
     /// Write part of a column, within a range
@@ -1667,9 +1672,9 @@ impl FitsHdu {
         col_data: &[T],
         rows: &Range<usize>,
     ) -> Result<FitsHdu> {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
-        T::write_col_range(fits_file, &self, name, col_data, rows)
+        T::write_col_range(fits_file, self, name, col_data, rows)
     }
 
     /// Iterate over the columns in a fits file
