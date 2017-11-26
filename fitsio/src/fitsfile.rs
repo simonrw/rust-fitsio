@@ -1039,7 +1039,7 @@ pub trait ReadWriteImage: Sized {
 }
 
 macro_rules! read_write_image_impl {
-    ($t: ty, $data_type: expr) => (
+    ($t: ty, $default_value: expr, $data_type: expr) => (
         impl ReadWriteImage for $t {
             fn read_section(
                 fits_file: &mut FitsFile,
@@ -1047,7 +1047,7 @@ macro_rules! read_write_image_impl {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::ImageInfo { shape: _shape, .. }) => {
                         let nelements = range.end - range.start;
-                        let mut out = vec![0 as $t; nelements];
+                        let mut out = vec![$default_value; nelements];
                         let mut status = 0;
 
                         unsafe {
@@ -1115,7 +1115,7 @@ macro_rules! read_write_image_impl {
                             }
 
                             let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
-                            let mut out = vec![0 as $t; nelements as usize];
+                            let mut out = vec![$default_value; nelements as usize];
                             let mut status = 0;
 
                             unsafe {
@@ -1213,18 +1213,18 @@ macro_rules! read_write_image_impl {
 }
 
 
-read_write_image_impl!(i8, DataType::TSHORT);
-read_write_image_impl!(i32, DataType::TINT);
+read_write_image_impl!(i8, i8::default(), DataType::TSHORT);
+read_write_image_impl!(i32, i32::default(), DataType::TINT);
 #[cfg(target_pointer_width = "64")]
-read_write_image_impl!(i64, DataType::TLONG);
+read_write_image_impl!(i64, i64::default(), DataType::TLONG);
 #[cfg(target_pointer_width = "32")]
-read_write_image_impl!(i64, DataType::TLONGLONG);
-read_write_image_impl!(u8, DataType::TUSHORT);
-read_write_image_impl!(u32, DataType::TUINT);
+read_write_image_impl!(i64, i64::default() DataType::TLONGLONG);
+read_write_image_impl!(u8, u8::default(), DataType::TUSHORT);
+read_write_image_impl!(u32, u32::default(), DataType::TUINT);
 #[cfg(target_pointer_width = "64")]
-read_write_image_impl!(u64, DataType::TULONG);
-read_write_image_impl!(f32, DataType::TFLOAT);
-read_write_image_impl!(f64, DataType::TDOUBLE);
+read_write_image_impl!(u64, u64::default(), DataType::TULONG);
+read_write_image_impl!(f32, f32::default(), DataType::TFLOAT);
+read_write_image_impl!(f64, f64::default(), DataType::TDOUBLE);
 
 /// Columns of different types
 #[allow(missing_docs)]
