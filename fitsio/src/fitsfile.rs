@@ -327,19 +327,19 @@ impl FitsFile {
         fits_check_readwrite!(self);
 
         let tfields = {
-            let stringlist = table_description
+            let stringlist: Vec<_> = table_description
                 .iter()
                 .map(|desc| desc.name.clone())
                 .collect();
-            stringutils::StringList::from_vec(stringlist)?
+            stringutils::StringList::from_slice(stringlist.as_slice())?
         };
 
         let ttype = {
-            let stringlist = table_description
+            let stringlist: Vec<_> = table_description
                 .iter()
                 .map(|desc| String::from(desc.clone().data_type))
                 .collect();
-            stringutils::StringList::from_vec(stringlist)?
+            stringutils::StringList::from_slice(stringlist.as_slice())?
         };
 
         let c_extname = ffi::CString::new(extname)?;

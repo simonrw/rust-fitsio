@@ -17,7 +17,7 @@ pub struct StringList {
 }
 
 impl StringList {
-    pub fn from_vec(stringvec: Vec<String>) -> Result<Self> {
+    pub fn from_slice(stringvec: &[String]) -> Result<Self> {
         let converted: Vec<*mut c_char> = stringvec
             .iter()
             .map(|x| CString::new(x.clone()).unwrap().into_raw())
