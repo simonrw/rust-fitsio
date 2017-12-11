@@ -34,6 +34,7 @@ macro_rules! fits_check_readwrite {
 }
 
 /// Description of a new image
+#[derive(Clone)]
 pub struct ImageDescription<'a> {
     /// Data type of the new image
     pub data_type: ImageType,
@@ -111,11 +112,10 @@ impl FitsFile {
     }
 
     /// Create a new fits file on disk
-    pub fn create<T: Into<String>>(path: T) -> NewFitsFile {
+    pub fn create<'a, T: Into<String>>(path: T) -> NewFitsFile<'a> {
         NewFitsFile {
             path: path.into(),
-            dimensions: None,
-            data_type: None,
+            image_description: None,
             requires_custom_primary: false,
         }
     }
@@ -451,6 +451,7 @@ impl Drop for FitsFile {
 /// # extern crate fitsio;
 /// # use fitsio::FitsFile;
 /// # use fitsio::types::ImageType;
+/// # use fitsio::fitsfile::ImageDescription;
 /// # fn main() {
 /// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 /// # let tdir_path = tdir.path();
@@ -459,10 +460,12 @@ impl Drop for FitsFile {
 /// use fitsio::FitsFile;
 ///
 /// // let filename = ...;
-/// let image_type = ImageType::DOUBLE_IMG;
-/// let dimensions = vec![52, 103];
+/// let description = ImageDescription {
+///     data_type: ImageType::DOUBLE_IMG,
+///     dimensions: &[52, 103],
+/// };
 /// let fptr = FitsFile::create(filename)
-///     .with_custom_primary(image_type, dimensions.as_slice())
+///     .with_custom_primary(&description)
 ///     .open()
 ///     .unwrap();
 /// # }
@@ -489,14 +492,13 @@ impl Drop for FitsFile {
 /// [new-fits-file]: struct.NewFitsFile.html
 /// [new-fits-file-open]: struct.NewFitsFile.html#method.open
 /// [new-fits-file-with-custom-primary]: struct.NewFitsFile.html#method.with_custom_primary
-pub struct NewFitsFile {
+pub struct NewFitsFile<'a> {
     path: String,
-    dimensions: Option<Vec<usize>>,
-    data_type: Option<ImageType>,
+    image_description: Option<ImageDescription<'a>>,
     requires_custom_primary: bool,
 }
 
-impl NewFitsFile {
+impl<'a> NewFitsFile<'a> {
     /// Create a `Result<FitsFile>` from a temporary [`NewFitsFile`][new-fits-file] representation.
     ///
     /// [new-fits-file]: struct.NewFitsFile.html
@@ -515,8 +517,7 @@ impl NewFitsFile {
         }
 
         let requires_custom_primary = self.requires_custom_primary;
-        let dimensions = self.dimensions.clone();
-        let data_type = self.data_type.clone();
+        let description = self.image_description;
 
         check_status(status).and_then(|_| {
             let mut f = FitsFile {
@@ -526,10 +527,7 @@ impl NewFitsFile {
             if requires_custom_primary {
                 f.create_image(
                     "_PRIMARY".to_string(),
-                    &ImageDescription {
-                        data_type: data_type.unwrap(),
-                        dimensions: &dimensions.unwrap(),
-                    },
+                    &description.unwrap(),
                 )?;
             } else {
                 f.add_empty_primary()?;
@@ -540,9 +538,8 @@ impl NewFitsFile {
 
     /// When creating a new file, add a custom primary HDU description before creating the
     /// `FitsFile` object.
-    pub fn with_custom_primary(mut self, image_type: ImageType, dimensions: &[usize]) -> Self {
-        self.dimensions = Some(dimensions.to_vec());
-        self.data_type = Some(image_type);
+    pub fn with_custom_primary(mut self, description: &ImageDescription<'a>) -> Self {
+        self.image_description = Some(description.clone());
         self.requires_custom_primary = true;
         self
     }
@@ -1876,8 +1873,12 @@ mod test {
     fn test_create_custom_primary_hdu() {
         with_temp_file(|filename| {
             {
+                let description = ImageDescription {
+                    data_type: ImageType::DOUBLE_IMG,
+                    dimensions: &[100, 103],
+                };
                 FitsFile::create(filename)
-                    .with_custom_primary(ImageType::DOUBLE_IMG, &[100, 103])
+                    .with_custom_primary(&description)
                     .open()
                     .unwrap();
             }

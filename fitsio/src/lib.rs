@@ -76,6 +76,7 @@
 //! # extern crate fitsio;
 //! # use fitsio::FitsFile;
 //! # use fitsio::types::ImageType;
+//! # use fitsio::fitsfile::ImageDescription;
 //! # fn main() {
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
@@ -84,10 +85,12 @@
 //! use fitsio::FitsFile;
 //!
 //! // let filename = ...;
-//! let image_type = ImageType::DOUBLE_IMG;
-//! let dimensions = vec![52, 103];
+//! let description = ImageDescription {
+//!     data_type: ImageType::DOUBLE_IMG,
+//!     dimensions: &[52, 103],
+//! };
 //! let fptr = FitsFile::create(filename)
-//!     .with_custom_primary(image_type, dimensions.as_slice())
+//!     .with_custom_primary(&description)
 //!     .open()
 //!     .unwrap();
 //! # }
