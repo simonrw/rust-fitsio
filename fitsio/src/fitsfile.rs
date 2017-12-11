@@ -34,6 +34,7 @@ macro_rules! fits_check_readwrite {
 }
 
 /// Description of a new image
+#[derive(Clone)]
 pub struct ImageDescription<'a> {
     /// Data type of the new image
     pub data_type: ImageType,
@@ -111,28 +112,12 @@ impl FitsFile {
     }
 
     /// Create a new fits file on disk
-    pub fn create<T: Into<String>>(path: T) -> Result<Self> {
-        let mut fptr = ptr::null_mut();
-        let mut status = 0;
-        let path = path.into();
-        let c_filename = ffi::CString::new(path.as_str())?;
-
-        unsafe {
-            sys::ffinit(
-                &mut fptr as *mut *mut sys::fitsfile,
-                c_filename.as_ptr(),
-                &mut status,
-            );
+    pub fn create<'a, T: Into<String>>(path: T) -> NewFitsFile<'a> {
+        NewFitsFile {
+            path: path.into(),
+            image_description: None,
+            requires_custom_primary: false,
         }
-
-        check_status(status).and_then(|_| {
-            let f = FitsFile {
-                fptr: fptr,
-                filename: path.clone(),
-            };
-            f.add_empty_primary()?;
-            Ok(f)
-        })
     }
 
     /// Method to extract what open mode the file is in
@@ -153,7 +138,13 @@ impl FitsFile {
     fn add_empty_primary(&self) -> Result<()> {
         let mut status = 0;
         unsafe {
-            sys::ffphps(self.fptr as *mut _, 8, 0, ptr::null_mut(), &mut status);
+            sys::ffphps(
+                self.fptr as *mut _,
+                ImageType::BYTE_IMG.into(),
+                0,
+                ptr::null_mut(),
+                &mut status,
+            );
         }
 
         check_status(status)
@@ -444,6 +435,113 @@ impl Drop for FitsFile {
         unsafe {
             sys::ffclos(self.fptr as *mut _, &mut status);
         }
+    }
+}
+
+/// New fits file representation
+///
+/// This is a temporary struct, which describes how the primary HDU of a new file should be
+/// created. It uses the builder pattern.
+///
+/// The [`with_custom_primary`][new-fits-file-with-custom-primary] method allows for creation of a
+/// custom primary HDU.
+///
+/// ```rust
+/// # extern crate tempdir;
+/// # extern crate fitsio;
+/// # use fitsio::FitsFile;
+/// # use fitsio::types::ImageType;
+/// # use fitsio::fitsfile::ImageDescription;
+/// # fn main() {
+/// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+/// # let tdir_path = tdir.path();
+/// # let _filename = tdir_path.join("test.fits");
+/// # let filename = _filename.to_str().unwrap();
+/// use fitsio::FitsFile;
+///
+/// // let filename = ...;
+/// let description = ImageDescription {
+///     data_type: ImageType::DOUBLE_IMG,
+///     dimensions: &[52, 103],
+/// };
+/// let fptr = FitsFile::create(filename)
+///     .with_custom_primary(&description)
+///     .open()
+///     .unwrap();
+/// # }
+/// ```
+///
+/// The [`open`][new-fits-file-open] method actually creates a `Result<FitsFile>` from this
+/// temporary representation.
+///
+/// ```rust
+/// # extern crate tempdir;
+/// # extern crate fitsio;
+/// # use fitsio::FitsFile;
+/// # fn main() {
+/// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+/// # let tdir_path = tdir.path();
+/// # let _filename = tdir_path.join("test.fits");
+/// # let filename = _filename.to_str().unwrap();
+/// use fitsio::FitsFile;
+///
+/// // let filename = ...;
+/// let fptr = FitsFile::create(filename).open().unwrap();
+/// # }
+/// ```
+/// [new-fits-file]: struct.NewFitsFile.html
+/// [new-fits-file-open]: struct.NewFitsFile.html#method.open
+/// [new-fits-file-with-custom-primary]: struct.NewFitsFile.html#method.with_custom_primary
+pub struct NewFitsFile<'a> {
+    path: String,
+    image_description: Option<ImageDescription<'a>>,
+    requires_custom_primary: bool,
+}
+
+impl<'a> NewFitsFile<'a> {
+    /// Create a `Result<FitsFile>` from a temporary [`NewFitsFile`][new-fits-file] representation.
+    ///
+    /// [new-fits-file]: struct.NewFitsFile.html
+    pub fn open(self) -> Result<FitsFile> {
+        let mut fptr = ptr::null_mut();
+        let mut status = 0;
+        let path = self.path;
+        let c_filename = ffi::CString::new(path.as_str())?;
+
+        unsafe {
+            sys::ffinit(
+                &mut fptr as *mut *mut sys::fitsfile,
+                c_filename.as_ptr(),
+                &mut status,
+            );
+        }
+
+        let requires_custom_primary = self.requires_custom_primary;
+        let description = self.image_description;
+
+        check_status(status).and_then(|_| {
+            let mut f = FitsFile {
+                fptr: fptr,
+                filename: path.clone(),
+            };
+            if requires_custom_primary {
+                f.create_image(
+                    "_PRIMARY".to_string(),
+                    &description.unwrap(),
+                )?;
+            } else {
+                f.add_empty_primary()?;
+            }
+            Ok(f)
+        })
+    }
+
+    /// When creating a new file, add a custom primary HDU description before creating the
+    /// `FitsFile` object.
+    pub fn with_custom_primary(mut self, description: &ImageDescription<'a>) -> Self {
+        self.image_description = Some(description.clone());
+        self.requires_custom_primary = true;
+        self
     }
 }
 
@@ -1758,6 +1856,7 @@ mod test {
     fn creating_a_new_file() {
         with_temp_file(|filename| {
             FitsFile::create(filename)
+                .open()
                 .map(|mut f| {
                     assert!(Path::new(filename).exists());
 
@@ -1767,6 +1866,31 @@ mod test {
                     assert_eq!(naxis, 0);
                 })
                 .unwrap();
+        });
+    }
+
+    #[test]
+    fn test_create_custom_primary_hdu() {
+        with_temp_file(|filename| {
+            {
+                let description = ImageDescription {
+                    data_type: ImageType::DOUBLE_IMG,
+                    dimensions: &[100, 103],
+                };
+                FitsFile::create(filename)
+                    .with_custom_primary(&description)
+                    .open()
+                    .unwrap();
+            }
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu(0).unwrap();
+            match hdu.info {
+                HduInfo::ImageInfo { shape, image_type } => {
+                    assert_eq!(shape, vec![100, 103]);
+                    assert_eq!(image_type, ImageType::DOUBLE_IMG);
+                }
+                _ => panic!("INVALID"),
+            }
         });
     }
 
@@ -1914,7 +2038,7 @@ mod test {
         with_temp_file(|filename| {
 
             {
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::Int)
@@ -1952,7 +2076,7 @@ mod test {
     fn adding_new_image() {
         with_temp_file(|filename| {
             {
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
@@ -1982,7 +2106,7 @@ mod test {
             let dimensions = [10, 20, 15];
 
             {
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &dimensions,
@@ -2061,7 +2185,7 @@ mod test {
     #[test]
     fn creating_new_image_returns_hdu_object() {
         with_temp_file(|filename| {
-            let mut f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).open().unwrap();
             let image_description = ImageDescription {
                 data_type: ImageType::LONG_IMG,
                 dimensions: &[100, 20],
@@ -2080,7 +2204,7 @@ mod test {
         use columndescription::*;
 
         with_temp_file(|filename| {
-            let mut f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).open().unwrap();
             let table_description = vec![
                 ColumnDescription::new("bar")
                     .with_type(ColumnDataType::Int)
@@ -2152,7 +2276,7 @@ mod test {
         with_temp_file(|filename| {
             // Scope ensures file is closed properly
             {
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 f.hdu(0).unwrap().write_key(&mut f, "FOO", 1i64).unwrap();
                 f.hdu(0)
                     .unwrap()
@@ -2314,7 +2438,7 @@ mod test {
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
             {
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::Int)
@@ -2339,7 +2463,7 @@ mod test {
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
 
-            let mut f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).open().unwrap();
 
             let image_description = ImageDescription {
                 data_type: ImageType::LONG_IMG,
@@ -2364,7 +2488,7 @@ mod test {
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
             {
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::Int)
@@ -2397,7 +2521,7 @@ mod test {
             }
 
             {
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let table_description = vec![
                     ColumnDescription::new("bar")
                         .with_type(ColumnDataType::String)
@@ -2507,7 +2631,7 @@ mod test {
             {
                 use fitsfile::ImageDescription;
 
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
@@ -2532,7 +2656,7 @@ mod test {
             {
                 use fitsfile::ImageDescription;
 
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
@@ -2563,7 +2687,7 @@ mod test {
             {
                 use fitsfile::ImageDescription;
 
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
@@ -2589,7 +2713,7 @@ mod test {
             {
                 use fitsfile::ImageDescription;
 
-                let mut f = FitsFile::create(filename).unwrap();
+                let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
                     dimensions: &[100, 20],
@@ -2627,7 +2751,7 @@ mod test {
 
             use columndescription::*;
 
-            let mut f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).open().unwrap();
             let table_description = &[
                 ColumnDescription::new("bar")
                     .with_type(ColumnDataType::Int)
@@ -2651,7 +2775,7 @@ mod test {
         with_temp_file(|filename| {
             let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
-            let mut f = FitsFile::create(filename).unwrap();
+            let mut f = FitsFile::create(filename).open().unwrap();
             let table_description = &[
                 ColumnDescription::new("bar")
                     .with_type(ColumnDataType::Int)
@@ -2714,7 +2838,7 @@ mod test {
                 let src_hdu = src.hdu("TESTEXT").unwrap();
 
                 {
-                    let mut dest = FitsFile::create(dest_filename).unwrap();
+                    let mut dest = FitsFile::create(dest_filename).open().unwrap();
                     src_hdu.copy_to(&mut src, &mut dest).unwrap();
                 }
 

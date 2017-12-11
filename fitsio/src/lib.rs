@@ -56,7 +56,43 @@
 //! use fitsio::FitsFile;
 //!
 //! // let filename = ...;
-//! let fptr = FitsFile::create(filename).unwrap();
+//! let fptr = FitsFile::create(filename).open().unwrap();
+//! # }
+//! ```
+//!
+//! The [`create`][fits-file-create] method returns a [`NewFitsFile`][new-fits-file], which is an
+//! internal representation of a temporary fits file on disk, before the file is fully created.
+//!
+//! This representation has two methods: [`open`][new-fits-file-open] and
+//! [`with_custom_primary`][new-fits-file-with-custom-primary]. The [`open`][new-fits-file-open]
+//! method actually creates the file on disk, but before calling this method, the
+//! [`with_custom_primary`][new-fits-file-with-custom-primary] method can be used to add a custom
+//! primary HDU. This is mostly useful for images. Otherwise, a default primary HDU is created.  An
+//! example of not adding a custom primary HDU is shown above. Below we see an example of
+//! [`with_custom_primary`][new-fits-file-with-custom-primary]:
+//!
+//! ```rust
+//! # extern crate tempdir;
+//! # extern crate fitsio;
+//! # use fitsio::FitsFile;
+//! # use fitsio::types::ImageType;
+//! # use fitsio::fitsfile::ImageDescription;
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let _filename = tdir_path.join("test.fits");
+//! # let filename = _filename.to_str().unwrap();
+//! use fitsio::FitsFile;
+//!
+//! // let filename = ...;
+//! let description = ImageDescription {
+//!     data_type: ImageType::DOUBLE_IMG,
+//!     dimensions: &[52, 103],
+//! };
+//! let fptr = FitsFile::create(filename)
+//!     .with_custom_primary(&description)
+//!     .open()
+//!     .unwrap();
 //! # }
 //! ```
 //!
@@ -128,7 +164,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! let image_description = ImageDescription {
 //!     data_type: ImageType::FLOAT_IMG,
 //!     dimensions: &[100, 100],
@@ -151,7 +187,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! let first_description = ColumnDescription::new("A")
 //!     .with_type(ColumnDataType::Int)
 //!     .create().unwrap();
@@ -227,7 +263,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut dest_fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut dest_fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! #
 //! # let hdu = src_fptr.hdu(1).unwrap();
 //! hdu.copy_to(&mut src_fptr, &mut dest_fptr).unwrap();
@@ -249,7 +285,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! # let image_description = ImageDescription {
 //! #     data_type: ImageType::FLOAT_IMG,
 //! #     dimensions: &[100, 100],
@@ -316,7 +352,7 @@
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
 //! # {
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! fptr.hdu(0).unwrap().write_key(&mut fptr, "foo", 1i64).unwrap();
 //! assert_eq!(fptr.hdu(0).unwrap().read_key::<i64>(&mut fptr, "foo").unwrap(), 1i64);
 //! # }
@@ -441,7 +477,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! # let desc = ImageDescription {
 //! #    data_type: ImageType::FLOAT_IMG,
 //! #    dimensions: &[100, 100],
@@ -465,7 +501,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! # let desc = ImageDescription {
 //! #    data_type: ImageType::FLOAT_IMG,
 //! #    dimensions: &[100, 100],
@@ -533,7 +569,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! # let table_description = vec![
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
@@ -562,7 +598,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! # let table_description = vec![
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
@@ -598,7 +634,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! # let table_description = &[
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
@@ -632,7 +668,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! # let table_description = &[
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
@@ -647,7 +683,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
 //! # let table_description = &[
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
@@ -728,6 +764,9 @@
 //! [reads-col]: fitsfile/trait.ReadsCol.html
 //! [reads-key]: fitsfile/trait.ReadsKey.html
 //! [writes-key]: fitsfile/trait.ReadsKey.html
+//! [new-fits-file]: fitsfile/struct.NewFitsFile.html
+//! [new-fits-file-open]: fitsfile/struct.NewFitsFile.html#method.open
+//! [new-fits-file-with-custom-primary]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
 
 #![warn(missing_docs)]
 #![cfg_attr(feature="clippy", feature(plugin))]
