@@ -1586,8 +1586,6 @@ impl FitsHdu {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
-        // TODO(srw) handle images with dimensions != 2
-        assert_eq!(new_size.len(), 2);
         match self.info {
             HduInfo::ImageInfo { image_type, .. } => {
                 let mut status = 0;
@@ -2737,6 +2735,45 @@ mod test {
                 match hdu.info {
                     HduInfo::ImageInfo { shape, .. } => {
                         assert_eq!(shape, [1024, 1024]);
+                    }
+                    _ => panic!("Unexpected hdu type"),
+                }
+            }
+        });
+    }
+
+    #[test]
+    fn resize_3d() {
+        with_temp_file(|filename| {
+
+            // Scope ensures file is closed properly
+            {
+                use fitsfile::ImageDescription;
+
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::LONG_IMG,
+                    dimensions: &[100, 20],
+                };
+                f.create_image("foo".to_string(), &image_description)
+                    .unwrap();
+            }
+
+            /* Now resize the image */
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                hdu.resize(&mut f, &[1024, 1024, 5]).unwrap();
+            }
+
+            /* Images are only resized when flushed to disk, so close the file and
+             * open it again */
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                match hdu.info {
+                    HduInfo::ImageInfo { shape, .. } => {
+                        assert_eq!(shape, [1024, 1024, 5]);
                     }
                     _ => panic!("Unexpected hdu type"),
                 }
