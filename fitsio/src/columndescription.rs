@@ -117,17 +117,23 @@ impl ColumnDataDescription {
      * be called in performance-critical code, and is more likely a one-time definition. I will
      * leave it for now - SRW 2017-03-07
      * */
-    pub fn repeats(&mut self, repeat: usize) -> Self {
-        // TODO check that repeat >= 1
-        self.repeat = repeat;
-        self.clone()
+    pub fn repeats(&mut self, repeat: usize) -> Result<Self> {
+        if repeat == 0 {
+            return Err("repeat parameter must be > 0".into());
+        } else {
+            self.repeat = repeat;
+            Ok(self.clone())
+        }
     }
 
     /// Set the width of the column
-    pub fn width(&mut self, width: usize) -> Self {
-        // TODO check that width >= 1
-        self.width = width;
-        self.clone()
+    pub fn width(&mut self, width: usize) -> Result<Self> {
+        if width == 0 {
+            return Err("width parameter must be > 0".into())
+        } else {
+            self.width = width;
+            Ok(self.clone())
+        }
     }
 }
 
@@ -270,7 +276,18 @@ mod test {
     fn test_column_data_descriptions_builder_pattern() {
         let desc = ColumnDataDescription::scalar(ColumnDataType::Int)
             .width(100)
-            .repeats(5);
+            .and_then(|mut d| d.repeats(5))
+            .unwrap();
+        assert_eq!(desc.repeat, 5);
+        assert_eq!(desc.width, 100);
+    }
+
+    #[test]
+    fn width_after_repeates() {
+        let desc = ColumnDataDescription::scalar(ColumnDataType::Int)
+            .repeats(5)
+            .and_then(|mut d| d.width(100))
+            .unwrap();
         assert_eq!(desc.repeat, 5);
         assert_eq!(desc.width, 100);
     }
@@ -278,7 +295,7 @@ mod test {
     #[test]
     fn from_impls() {
         {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Int).repeats(5);
+            let desc = ColumnDataDescription::scalar(ColumnDataType::Int).repeats(5).unwrap();
             assert_eq!(String::from(desc), "5J");
         }
 
@@ -288,7 +305,7 @@ mod test {
         }
 
         {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Text).width(100);
+            let desc = ColumnDataDescription::scalar(ColumnDataType::Text).width(100).unwrap();
             assert_eq!(String::from(desc), "1A100");
         }
     }
