@@ -770,8 +770,8 @@ impl ReadsCol for String {
                         &mut status,
                     );
                 }
-                // TODO: check the status code
-                assert_eq!(status, 0, "Status code is not 0: {}", status);
+
+                check_status(status)?;
 
                 let mut out = Vec::with_capacity(num_output_rows);
                 for val in &vecs {
