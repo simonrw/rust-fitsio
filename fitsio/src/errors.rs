@@ -6,6 +6,7 @@
 use std::ffi::NulError;
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
+use std::ops::Range;
 use fitserror::FitsError;
 
 /// Enumeration of all error types
@@ -13,6 +14,9 @@ use fitserror::FitsError;
 pub enum Error {
     /// Internal Fits errors
     Fits(FitsError),
+
+    /// Invalid index error
+    Index(IndexError),
 
     /// Generic errors from simple strings
     Message(String),
@@ -24,12 +28,24 @@ pub enum Error {
     Utf8(Utf8Error),
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct IndexError {
+    pub message: String,
+    pub given: Range<usize>,
+}
+
 /// Handy error type for use internally
 pub type Result<T> = ::std::result::Result<T, Error>;
 
 impl ::std::convert::From<FitsError> for Error {
     fn from(error: FitsError) -> Self {
         Error::Fits(error)
+    }
+}
+
+impl ::std::convert::From<IndexError> for Error {
+    fn from(error: IndexError) -> Self {
+        Error::Index(error)
     }
 }
 
@@ -75,6 +91,7 @@ impl ::std::fmt::Display for Error {
             Error::Message(ref s) => write!(f, "Error: {}", s),
             Error::Null(ref e) => write!(f, "Error: {}", e),
             Error::Utf8(ref e) => write!(f, "Error: {}", e),
+            Error::Index(ref e) => write!(f, "Error: {:?}", e),
         }
     }
 }
