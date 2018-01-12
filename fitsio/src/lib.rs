@@ -769,8 +769,8 @@
 //! [new-fits-file-with-custom-primary]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
 
 #![warn(missing_docs)]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
 
 #[cfg(feature = "default")]
 extern crate fitsio_sys as sys;

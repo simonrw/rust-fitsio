@@ -192,7 +192,6 @@ casesensitivity_into_impl!(i8);
 casesensitivity_into_impl!(i32);
 casesensitivity_into_impl!(i64);
 
-
 #[cfg(test)]
 mod test {
     use super::*;

@@ -62,16 +62,12 @@ impl ColumnDescription {
     /// [`ConcreteColumnDescription`](struct.ConcreteColumnDescription.html)
     pub fn create(&self) -> Result<ConcreteColumnDescription> {
         match self.data_type {
-            Some(ref d) => {
-                Ok(ConcreteColumnDescription {
-                    name: self.name.clone(),
-                    data_type: d.clone(),
-                })
-            }
+            Some(ref d) => Ok(ConcreteColumnDescription {
+                name: self.name.clone(),
+                data_type: d.clone(),
+            }),
             None => {
-                Err(
-                    "No data type given. Ensure the `with_type` method has been called.".into(),
-                )
+                Err("No data type given. Ensure the `with_type` method has been called.".into())
             }
         }
     }
@@ -129,7 +125,7 @@ impl ColumnDataDescription {
     /// Set the width of the column
     pub fn width(&mut self, width: usize) -> Result<Self> {
         if width == 0 {
-            return Err("width parameter must be > 0".into())
+            return Err("width parameter must be > 0".into());
         } else {
             self.width = width;
             Ok(self.clone())
@@ -156,13 +152,11 @@ impl From<ColumnDataDescription> for String {
                     )
                 }
             }
-            _ => {
-                format!(
-                    "{repeat}{data_type}",
-                    data_type = String::from(orig.typ),
-                    repeat = orig.repeat
-                )
-            }
+            _ => format!(
+                "{repeat}{data_type}",
+                data_type = String::from(orig.typ),
+                repeat = orig.repeat
+            ),
         }
     }
 }
@@ -219,7 +213,6 @@ impl FromStr for ColumnDataDescription {
             repeat_str.parse::<usize>()?
         };
 
-
         let data_type_char = chars[last_position];
         last_position += 1;
 
@@ -231,8 +224,6 @@ impl FromStr for ColumnDataDescription {
                 break;
             }
         }
-
-        /* TODO: validate that the whole string has been used up */
 
         let width = if width_str.is_empty() {
             1
@@ -248,12 +239,10 @@ impl FromStr for ColumnDataDescription {
             'I' => ColumnDataType::Short,
             'K' => ColumnDataType::Long,
             'A' => ColumnDataType::String,
-            _ => {
-                panic!(
-                    "Have not implemented str -> ColumnDataType for {}",
-                    data_type_char
-                )
-            }
+            _ => panic!(
+                "Have not implemented str -> ColumnDataType for {}",
+                data_type_char
+            ),
         };
 
         Ok(ColumnDataDescription {
@@ -291,7 +280,9 @@ mod test {
     #[test]
     fn from_impls() {
         {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Int).repeats(5).unwrap();
+            let desc = ColumnDataDescription::scalar(ColumnDataType::Int)
+                .repeats(5)
+                .unwrap();
             assert_eq!(String::from(desc), "5J");
         }
 
@@ -301,7 +292,9 @@ mod test {
         }
 
         {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Text).width(100).unwrap();
+            let desc = ColumnDataDescription::scalar(ColumnDataType::Text)
+                .width(100)
+                .unwrap();
             assert_eq!(String::from(desc), "1A100");
         }
     }
