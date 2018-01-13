@@ -2341,7 +2341,6 @@ mod test {
 
     #[test]
     fn read_invalid_column_range() {
-        use fitserror::FitsError;
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         match hdu.read_col_range::<i32>(&mut f, "intcol", &(0..1024)) {

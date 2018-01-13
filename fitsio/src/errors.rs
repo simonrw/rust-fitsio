@@ -28,9 +28,13 @@ pub enum Error {
     Utf8(Utf8Error),
 }
 
+/// Error raised when the user requests invalid indexes for data
 #[derive(Debug, PartialEq, Eq)]
 pub struct IndexError {
+    /// Error message
     pub message: String,
+
+    /// The range requested by the user
     pub given: Range<usize>,
 }
 
