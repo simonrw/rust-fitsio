@@ -410,8 +410,6 @@ impl FitsFile {
     /// This is marked as `unsafe` as it is definitely something that is not required by most
     /// users, and hence the unsafe-ness marks it as an advanced feature. I have also not
     /// considered possible concurrency or data race issues as yet.
-    // XXX This may have to be wrapped in some form of access control structure, such as an
-    // `std::rc::Rc`.
     pub unsafe fn as_raw(&self) -> *mut sys::fitsfile {
         self.fptr as *mut _
     }
@@ -423,6 +421,7 @@ impl Drop for FitsFile {
         unsafe {
             sys::ffclos(self.fptr as *mut _, &mut status);
         }
+        self.fptr = ptr::null_mut();
     }
 }
 
