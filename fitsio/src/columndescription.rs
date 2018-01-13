@@ -105,32 +105,6 @@ impl ColumnDataDescription {
     pub fn vector(typ: ColumnDataType, repeat: usize) -> Self {
         ColumnDataDescription::new(typ, repeat, 1)
     }
-
-    /// Set the repeat count
-    /* XXX These two methods force a call to clone which is wasteful of memory. I do not know if
-     * this means that memory is leaked, or that destructors are needlessly called (I suspect the
-     * latter) but it is fairly wasteful. On the other hand, it's unlikely this sort of thing will
-     * be called in performance-critical code, and is more likely a one-time definition. I will
-     * leave it for now - SRW 2017-03-07
-     * */
-    pub fn repeats(&mut self, repeat: usize) -> Result<Self> {
-        if repeat == 0 {
-            return Err("repeat parameter must be > 0".into());
-        } else {
-            self.repeat = repeat;
-            Ok(self.clone())
-        }
-    }
-
-    /// Set the width of the column
-    pub fn width(&mut self, width: usize) -> Result<Self> {
-        if width == 0 {
-            return Err("width parameter must be > 0".into());
-        } else {
-            self.width = width;
-            Ok(self.clone())
-        }
-    }
 }
 
 impl From<ColumnDataDescription> for String {
@@ -256,49 +230,6 @@ impl FromStr for ColumnDataDescription {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn test_column_data_descriptions_builder_pattern() {
-        let desc = ColumnDataDescription::scalar(ColumnDataType::Int)
-            .width(100)
-            .and_then(|mut d| d.repeats(5))
-            .unwrap();
-        assert_eq!(desc.repeat, 5);
-        assert_eq!(desc.width, 100);
-    }
-
-    #[test]
-    fn width_after_repeates() {
-        let desc = ColumnDataDescription::scalar(ColumnDataType::Int)
-            .repeats(5)
-            .and_then(|mut d| d.width(100))
-            .unwrap();
-        assert_eq!(desc.repeat, 5);
-        assert_eq!(desc.width, 100);
-    }
-
-    #[test]
-    fn from_impls() {
-        {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Int)
-                .repeats(5)
-                .unwrap();
-            assert_eq!(String::from(desc), "5J");
-        }
-
-        {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Float);
-            assert_eq!(String::from(desc), "1E");
-        }
-
-        {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Text)
-                .width(100)
-                .unwrap();
-            assert_eq!(String::from(desc), "1A100");
-        }
-    }
-
     #[test]
     fn parsing() {
         let s = "1E";
