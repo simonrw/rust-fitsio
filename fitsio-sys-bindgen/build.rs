@@ -7,7 +7,6 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-
     let package_name = "cfitsio";
     match pkg_config::probe_library(package_name) {
         Ok(_) => {
@@ -30,8 +29,7 @@ fn main() {
                     "{} was not found in the pkg-config search path",
                     package_name
                 ).as_ref(),
-            )
-            {
+            ) {
                 let err_msg = format!(
                     "
 Cannot find {} on the pkg-config search path.  Consider installing the library for your

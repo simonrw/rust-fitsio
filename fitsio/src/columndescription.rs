@@ -62,16 +62,12 @@ impl ColumnDescription {
     /// [`ConcreteColumnDescription`](struct.ConcreteColumnDescription.html)
     pub fn create(&self) -> Result<ConcreteColumnDescription> {
         match self.data_type {
-            Some(ref d) => {
-                Ok(ConcreteColumnDescription {
-                    name: self.name.clone(),
-                    data_type: d.clone(),
-                })
-            }
+            Some(ref d) => Ok(ConcreteColumnDescription {
+                name: self.name.clone(),
+                data_type: d.clone(),
+            }),
             None => {
-                Err(
-                    "No data type given. Ensure the `with_type` method has been called.".into(),
-                )
+                Err("No data type given. Ensure the `with_type` method has been called.".into())
             }
         }
     }
@@ -109,26 +105,6 @@ impl ColumnDataDescription {
     pub fn vector(typ: ColumnDataType, repeat: usize) -> Self {
         ColumnDataDescription::new(typ, repeat, 1)
     }
-
-    /// Set the repeat count
-    /* XXX These two methods force a call to clone which is wasteful of memory. I do not know if
-     * this means that memory is leaked, or that destructors are needlessly called (I suspect the
-     * latter) but it is fairly wasteful. On the other hand, it's unlikely this sort of thing will
-     * be called in performance-critical code, and is more likely a one-time definition. I will
-     * leave it for now - SRW 2017-03-07
-     * */
-    pub fn repeats(&mut self, repeat: usize) -> Self {
-        // TODO check that repeat >= 1
-        self.repeat = repeat;
-        self.clone()
-    }
-
-    /// Set the width of the column
-    pub fn width(&mut self, width: usize) -> Self {
-        // TODO check that width >= 1
-        self.width = width;
-        self.clone()
-    }
 }
 
 impl From<ColumnDataDescription> for String {
@@ -150,13 +126,11 @@ impl From<ColumnDataDescription> for String {
                     )
                 }
             }
-            _ => {
-                format!(
-                    "{repeat}{data_type}",
-                    data_type = String::from(orig.typ),
-                    repeat = orig.repeat
-                )
-            }
+            _ => format!(
+                "{repeat}{data_type}",
+                data_type = String::from(orig.typ),
+                repeat = orig.repeat
+            ),
         }
     }
 }
@@ -209,12 +183,9 @@ impl FromStr for ColumnDataDescription {
         let repeat = if repeat_str.is_empty() {
             1
         } else {
-            /* TODO: in nightly the following line works
-            let repeat_str: String = repeat_str.into_iter().collect(); */
-            let repeat_str: String = repeat_str.into_iter().cloned().collect();
+            let repeat_str: String = repeat_str.into_iter().collect();
             repeat_str.parse::<usize>()?
         };
-
 
         let data_type_char = chars[last_position];
         last_position += 1;
@@ -228,14 +199,10 @@ impl FromStr for ColumnDataDescription {
             }
         }
 
-        /* TODO: validate that the whole string has been used up */
-
         let width = if width_str.is_empty() {
             1
         } else {
-            /* TODO: in nightly the following line works
-            let width_str: String = width_str.into_iter().collect(); */
-            let width_str: String = width_str.into_iter().cloned().collect();
+            let width_str: String = width_str.into_iter().collect();
             width_str.parse::<usize>()?
         };
 
@@ -246,12 +213,10 @@ impl FromStr for ColumnDataDescription {
             'I' => ColumnDataType::Short,
             'K' => ColumnDataType::Long,
             'A' => ColumnDataType::String,
-            _ => {
-                panic!(
-                    "Have not implemented str -> ColumnDataType for {}",
-                    data_type_char
-                )
-            }
+            _ => panic!(
+                "Have not implemented str -> ColumnDataType for {}",
+                data_type_char
+            ),
         };
 
         Ok(ColumnDataDescription {
@@ -265,34 +230,6 @@ impl FromStr for ColumnDataDescription {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn test_column_data_descriptions_builder_pattern() {
-        let desc = ColumnDataDescription::scalar(ColumnDataType::Int)
-            .width(100)
-            .repeats(5);
-        assert_eq!(desc.repeat, 5);
-        assert_eq!(desc.width, 100);
-    }
-
-    #[test]
-    fn from_impls() {
-        {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Int).repeats(5);
-            assert_eq!(String::from(desc), "5J");
-        }
-
-        {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Float);
-            assert_eq!(String::from(desc), "1E");
-        }
-
-        {
-            let desc = ColumnDataDescription::scalar(ColumnDataType::Text).width(100);
-            assert_eq!(String::from(desc), "1A100");
-        }
-    }
-
     #[test]
     fn parsing() {
         let s = "1E";

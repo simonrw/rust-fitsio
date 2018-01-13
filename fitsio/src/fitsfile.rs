@@ -10,11 +10,11 @@
 
 use sys;
 use stringutils::{self, status_to_string};
-use errors::{Error, Result};
+use errors::{Error, IndexError, Result};
 use fitserror::{check_status, FitsError};
 use columndescription::*;
 use libc;
-use types::{DataType, CaseSensitivity, HduInfo, FileOpenMode, ImageType};
+use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
 use std::ffi;
 use std::ptr;
 use std::ops::Range;
@@ -79,11 +79,9 @@ impl FitsFile {
             );
         }
 
-        check_status(status).map(|_| {
-            FitsFile {
-                fptr: fptr,
-                filename: filename.clone(),
-            }
+        check_status(status).map(|_| FitsFile {
+            fptr: fptr,
+            filename: filename.clone(),
         })
     }
 
@@ -103,11 +101,9 @@ impl FitsFile {
             );
         }
 
-        check_status(status).map(|_| {
-            FitsFile {
-                fptr: fptr,
-                filename: filename.clone(),
-            }
+        check_status(status).map(|_| FitsFile {
+            fptr: fptr,
+            filename: filename.clone(),
         })
     }
 
@@ -187,7 +183,6 @@ impl FitsFile {
     fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
         self.change_hdu(hdu.hdu_num)
     }
-
 
     fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
@@ -314,7 +309,6 @@ impl FitsFile {
         extname: String,
         table_description: &[ConcreteColumnDescription],
     ) -> Result<FitsHdu> {
-
         fits_check_readwrite!(self);
 
         let tfields = {
@@ -334,7 +328,6 @@ impl FitsFile {
         };
 
         let c_extname = ffi::CString::new(extname)?;
-
 
         let hdu_info = HduInfo::TableInfo {
             column_descriptions: table_description.to_vec(),
@@ -365,20 +358,17 @@ impl FitsFile {
         extname: String,
         image_description: &ImageDescription,
     ) -> Result<FitsHdu> {
-
         fits_check_readwrite!(self);
 
         let naxis = image_description.dimensions.len();
         let mut status = 0;
 
         if status != 0 {
-            return Err(
-                FitsError {
-                    status: status,
-                    // unwrap guaranteed to succesed as status > 0
-                    message: status_to_string(status)?.unwrap(),
-                }.into(),
-            );
+            return Err(FitsError {
+                status: status,
+                // unwrap guaranteed to succesed as status > 0
+                message: status_to_string(status)?.unwrap(),
+            }.into());
         }
 
         unsafe {
@@ -392,13 +382,11 @@ impl FitsFile {
         }
 
         if status != 0 {
-            return Err(
-                FitsError {
-                    status: status,
-                    // unwrap guaranteed to succesed as status > 0
-                    message: status_to_string(status)?.unwrap(),
-                }.into(),
-            );
+            return Err(FitsError {
+                status: status,
+                // unwrap guaranteed to succesed as status > 0
+                message: status_to_string(status)?.unwrap(),
+            }.into());
         }
 
         // Current HDU should be at the new HDU
@@ -422,8 +410,6 @@ impl FitsFile {
     /// This is marked as `unsafe` as it is definitely something that is not required by most
     /// users, and hence the unsafe-ness marks it as an advanced feature. I have also not
     /// considered possible concurrency or data race issues as yet.
-    // XXX This may have to be wrapped in some form of access control structure, such as an
-    // `std::rc::Rc`.
     pub unsafe fn as_raw(&self) -> *mut sys::fitsfile {
         self.fptr as *mut _
     }
@@ -435,6 +421,7 @@ impl Drop for FitsFile {
         unsafe {
             sys::ffclos(self.fptr as *mut _, &mut status);
         }
+        self.fptr = ptr::null_mut();
     }
 }
 
@@ -525,10 +512,7 @@ impl<'a> NewFitsFile<'a> {
                 filename: path.clone(),
             };
             if requires_custom_primary {
-                f.create_image(
-                    "_PRIMARY".to_string(),
-                    &description.unwrap(),
-                )?;
+                f.create_image("_PRIMARY".to_string(), &description.unwrap())?;
             } else {
                 f.add_empty_primary()?;
             }
@@ -663,8 +647,6 @@ pub trait ReadsCol {
 macro_rules! reads_col_impl {
     ($t: ty, $func: ident, $nullval: expr) => (
         impl ReadsCol for $t {
-            // TODO: should we check the bounds? cfitsio will raise an error, but we
-            // could be more friendly and raise our own?
             fn read_col_range<T: Into<String>>(fits_file: &FitsFile, name: T, range: &Range<usize>)
                 -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
@@ -689,7 +671,18 @@ macro_rules! reads_col_impl {
                                        &mut status);
 
                         }
-                        check_status(status).map(|_| out)
+                        // check_status(status).map(|_| out)
+                        match status {
+                            0 => Ok(out),
+                            307 => Err(IndexError {
+                                message: "given indices out of range".to_string(),
+                                given: range.clone(),
+                            }.into()),
+                            e => Err(FitsError {
+                                status: e,
+                                message: status_to_string(e).unwrap().unwrap(),
+                            }.into()),
+                        }
                     },
                     Err(e) => Err(e),
                     _ => panic!("Unknown error occurred"),
@@ -732,15 +725,16 @@ impl ReadsCol for String {
         range: &Range<usize>,
     ) -> Result<Vec<Self>> {
         match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
+            Ok(HduInfo::TableInfo {
+                column_descriptions,
+                ..
+            }) => {
                 let num_output_rows = range.end - range.start + 1;
                 let test_name = name.into();
                 let column_number = column_descriptions
                     .iter()
                     .position(|desc| desc.name == test_name)
-                    .ok_or_else(|| {
-                        Error::Message(format!("Cannot find column {:?}", test_name))
-                    })?;
+                    .ok_or_else(|| Error::Message(format!("Cannot find column {:?}", test_name)))?;
 
                 /* Set up the storage arrays for the column string values */
                 let mut raw_char_data: Vec<*mut libc::c_char> =
@@ -770,8 +764,8 @@ impl ReadsCol for String {
                         &mut status,
                     );
                 }
-                // TODO: check the status code
-                assert_eq!(status, 0, "Status code is not 0: {}", status);
+
+                check_status(status)?;
 
                 let mut out = Vec::with_capacity(num_output_rows);
                 for val in &vecs {
@@ -824,9 +818,7 @@ pub trait WritesCol {
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
             Ok(HduInfo::AnyInfo { .. }) => {
-                Err(
-                    "Cannot determine HDU type, so cannot write column data".into(),
-                )
+                Err("Cannot determine HDU type, so cannot write column data".into())
             }
             Err(e) => Err(e),
         }
@@ -916,9 +908,7 @@ impl WritesCol for String {
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
             Ok(HduInfo::AnyInfo { .. }) => {
-                Err(
-                    "Cannot determine HDU type, so cannot write column data".into(),
-                )
+                Err("Cannot determine HDU type, so cannot write column data".into())
             }
             Err(e) => Err(e),
         }
@@ -1127,10 +1117,12 @@ pub trait ReadWriteImage: Sized {
             Ok(HduInfo::ImageInfo { shape, .. }) => {
                 let image_npixels = shape.iter().fold(1, |acc, &x| acc * x);
                 if data.len() > image_npixels {
-                    return Err(
-                        format!(
-                    "cannot write more data ({} elements) to the current image (shape: {:?})",
-                            data.len(), shape).as_str().into());
+                    return Err(format!(
+                        "cannot write more data ({} elements) to the current image (shape: {:?})",
+                        data.len(),
+                        shape
+                    ).as_str()
+                        .into());
                 }
 
                 Self::write_section(fits_file, 0..data.len(), data)
@@ -1316,7 +1308,6 @@ macro_rules! read_write_image_impl {
     )
 }
 
-
 read_write_image_impl!(i8, i8::default(), DataType::TSHORT);
 read_write_image_impl!(i32, i32::default(), DataType::TINT);
 #[cfg(target_pointer_width = "64")]
@@ -1351,15 +1342,13 @@ impl<'a> ColumnIterator<'a> {
     fn new(fits_file: &'a FitsFile) -> Self {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo {
-                   column_descriptions,
-                   num_rows: _num_rows,
-               }) => {
-                ColumnIterator {
-                    current: 0,
-                    column_descriptions: column_descriptions,
-                    fits_file: fits_file,
-                }
-            }
+                column_descriptions,
+                num_rows: _num_rows,
+            }) => ColumnIterator {
+                current: 0,
+                column_descriptions: column_descriptions,
+                fits_file: fits_file,
+            },
             Err(e) => panic!("{:?}", e),
             _ => panic!("Unknown error occurred"),
         }
@@ -1379,63 +1368,42 @@ impl<'a> Iterator for ColumnIterator<'a> {
             let current_type = description.data_type.typ;
 
             let retval = match current_type {
-                ColumnDataType::Int => {
-                    i32::read_col(self.fits_file, current_name)
-                        .map(|data| {
-                            Column::Int32 {
-                                name: current_name.to_string(),
-                                data: data,
-                            }
-                        })
-                        .ok()
-                }
-                ColumnDataType::Long => {
-                    i64::read_col(self.fits_file, current_name)
-                        .map(|data| {
-                            Column::Int64 {
-                                name: current_name.to_string(),
-                                data: data,
-                            }
-                        })
-                        .ok()
-                }
-                ColumnDataType::Float => {
-                    f32::read_col(self.fits_file, current_name)
-                        .map(|data| {
-                            Column::Float {
-                                name: current_name.to_string(),
-                                data: data,
-                            }
-                        })
-                        .ok()
-                }
-                ColumnDataType::Double => {
-                    f64::read_col(self.fits_file, current_name)
-                        .map(|data| {
-                            Column::Double {
-                                name: current_name.to_string(),
-                                data: data,
-                            }
-                        })
-                        .ok()
-                }
-                ColumnDataType::String => {
-                    String::read_col(self.fits_file, current_name)
-                        .map(|data| {
-                            Column::String {
-                                name: current_name.to_string(),
-                                data: data,
-                            }
-                        })
-                        .ok()
-                }
+                ColumnDataType::Int => i32::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Int32 {
+                        name: current_name.to_string(),
+                        data: data,
+                    })
+                    .ok(),
+                ColumnDataType::Long => i64::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Int64 {
+                        name: current_name.to_string(),
+                        data: data,
+                    })
+                    .ok(),
+                ColumnDataType::Float => f32::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Float {
+                        name: current_name.to_string(),
+                        data: data,
+                    })
+                    .ok(),
+                ColumnDataType::Double => f64::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Double {
+                        name: current_name.to_string(),
+                        data: data,
+                    })
+                    .ok(),
+                ColumnDataType::String => String::read_col(self.fits_file, current_name)
+                    .map(|data| Column::String {
+                        name: current_name.to_string(),
+                        data: data,
+                    })
+                    .ok(),
                 _ => unimplemented!(),
             };
 
             self.current += 1;
 
             retval
-
         } else {
             None
         }
@@ -1455,21 +1423,18 @@ impl FitsHdu {
     fn new<T: DescribesHdu>(fits_file: &mut FitsFile, hdu_description: T) -> Result<Self> {
         fits_file.change_hdu(hdu_description)?;
         match fits_file.fetch_hdu_info() {
-            Ok(hdu_info) => {
-                Ok(FitsHdu {
-                    info: hdu_info,
-                    hdu_num: fits_file.hdu_number(),
-                })
-            }
+            Ok(hdu_info) => Ok(FitsHdu {
+                info: hdu_info,
+                hdu_num: fits_file.hdu_number(),
+            }),
             Err(e) => Err(e),
         }
     }
 
     /// Read the HDU name
     pub fn name(&self, fits_file: &mut FitsFile) -> Result<String> {
-        let extname = self.read_key(fits_file, "EXTNAME").unwrap_or_else(
-            |_| "".to_string(),
-        );
+        let extname = self.read_key(fits_file, "EXTNAME")
+            .unwrap_or_else(|_| "".to_string());
         Ok(extname)
     }
 
@@ -1533,7 +1498,6 @@ impl FitsHdu {
         T::read_region(fits_file, ranges)
     }
 
-
     /// Read a whole fits image into a vector
     pub fn read_image<T: ReadWriteImage>(&self, fits_file: &mut FitsFile) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
@@ -1586,8 +1550,6 @@ impl FitsHdu {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
-        // TODO(srw) handle images with dimensions != 2
-        assert_eq!(new_size.len(), 2);
         match self.info {
             HduInfo::ImageInfo { image_type, .. } => {
                 let mut status = 0;
@@ -1605,7 +1567,6 @@ impl FitsHdu {
             HduInfo::TableInfo { .. } => Err("cannot resize binary table".into()),
             HduInfo::AnyInfo => unreachable!(),
         }
-
     }
 
     /// Copy an HDU to another open fits file
@@ -1658,7 +1619,6 @@ impl FitsHdu {
         check_status(status).and_then(|_| fits_file.current_hdu())
     }
 
-
     /// Add a new column to the end of the table
     pub fn append_column(
         self,
@@ -1671,7 +1631,10 @@ impl FitsHdu {
         /* We have to split up the fetching of the number of columns from the inserting of the
          * new column, as otherwise we're trying move out of self */
         let result = match self.info {
-            HduInfo::TableInfo { ref column_descriptions, .. } => Ok(column_descriptions.len()),
+            HduInfo::TableInfo {
+                ref column_descriptions,
+                ..
+            } => Ok(column_descriptions.len()),
             HduInfo::ImageInfo { .. } => Err("Cannot add columns to FITS image".into()),
             HduInfo::AnyInfo { .. } => {
                 Err("Cannot determine HDU type, so cannot add columns".into())
@@ -1779,9 +1742,9 @@ impl FitsHdu {
 
     /// Iterate over the columns in a fits file
     pub fn columns<'a>(&self, fits_file: &'a mut FitsFile) -> ColumnIterator<'a> {
-        fits_file.make_current(self).expect(
-            "Cannot make hdu current",
-        );
+        fits_file
+            .make_current(self)
+            .expect("Cannot make hdu current");
         ColumnIterator::new(fits_file)
     }
 
@@ -1801,7 +1764,6 @@ impl FitsHdu {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     #[cfg(feature = "default")]
@@ -1815,7 +1777,7 @@ mod test {
     use fitsfile::FitsFile;
     use types::*;
     use fitsfile::ImageDescription;
-    use errors::{Result, Error};
+    use errors::{Error, IndexError, Result};
     use std::path::Path;
     use std::{f32, f64};
 
@@ -1984,9 +1946,9 @@ mod test {
         f.change_hdu(1).unwrap();
         match f.fetch_hdu_info() {
             Ok(HduInfo::TableInfo {
-                   column_descriptions,
-                   num_rows,
-               }) => {
+                column_descriptions,
+                num_rows,
+            }) => {
                 assert_eq!(num_rows, 50);
                 assert_eq!(
                     column_descriptions
@@ -2036,7 +1998,6 @@ mod test {
         use columndescription::*;
 
         with_temp_file(|filename| {
-
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
                 let table_description = vec![
@@ -2053,7 +2014,10 @@ mod test {
                 .map(|mut f| {
                     f.change_hdu("foo").unwrap();
                     match f.fetch_hdu_info() {
-                        Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
+                        Ok(HduInfo::TableInfo {
+                            column_descriptions,
+                            ..
+                        }) => {
                             let column_names = column_descriptions
                                 .iter()
                                 .map(|desc| desc.name.clone())
@@ -2096,7 +2060,6 @@ mod test {
                     }
                 })
                 .unwrap();
-
         });
     }
 
@@ -2253,14 +2216,12 @@ mod test {
         }
 
         match hdu.read_key::<f64>(&mut f, "DBLTEST") {
-            Ok(value) => {
-                assert!(
-                    floats_close_f64(value, 0.09375),
-                    "{:?} != {:?}",
-                    value,
-                    0.09375
-                )
-            }
+            Ok(value) => assert!(
+                floats_close_f64(value, 0.09375),
+                "{:?} != {:?}",
+                value,
+                0.09375
+            ),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
@@ -2375,6 +2336,22 @@ mod test {
         assert_eq!(intcol_data.len(), 3);
         assert_eq!(intcol_data[0], 18);
         assert_eq!(intcol_data[1], 13);
+    }
+
+    #[test]
+    fn read_invalid_column_range() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        match hdu.read_col_range::<i32>(&mut f, "intcol", &(0..1024)) {
+            Err(e) => assert_eq!(
+                e,
+                Error::Index(IndexError {
+                    message: "given indices out of range".to_string(),
+                    given: (0..1024),
+                })
+            ),
+            _ => panic!("Should be error"),
+        }
     }
 
     #[test]
@@ -2645,7 +2622,6 @@ mod test {
             let hdu = f.hdu("foo").unwrap();
             let first_row: Vec<i64> = hdu.read_section(&mut f, 0, 100).unwrap();
             assert_eq!(first_row, data_to_write);
-
         });
     }
 
@@ -2708,7 +2684,6 @@ mod test {
     #[test]
     fn resizing_images() {
         with_temp_file(|filename| {
-
             // Scope ensures file is closed properly
             {
                 use fitsfile::ImageDescription;
@@ -2737,6 +2712,44 @@ mod test {
                 match hdu.info {
                     HduInfo::ImageInfo { shape, .. } => {
                         assert_eq!(shape, [1024, 1024]);
+                    }
+                    _ => panic!("Unexpected hdu type"),
+                }
+            }
+        });
+    }
+
+    #[test]
+    fn resize_3d() {
+        with_temp_file(|filename| {
+            // Scope ensures file is closed properly
+            {
+                use fitsfile::ImageDescription;
+
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::LONG_IMG,
+                    dimensions: &[100, 20],
+                };
+                f.create_image("foo".to_string(), &image_description)
+                    .unwrap();
+            }
+
+            /* Now resize the image */
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                hdu.resize(&mut f, &[1024, 1024, 5]).unwrap();
+            }
+
+            /* Images are only resized when flushed to disk, so close the file and
+             * open it again */
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                match hdu.info {
+                    HduInfo::ImageInfo { shape, .. } => {
+                        assert_eq!(shape, [1024, 1024, 5]);
                     }
                     _ => panic!("Unexpected hdu type"),
                 }
@@ -2891,7 +2904,10 @@ mod test {
             let newhdu = hdu.insert_column(&mut f, 0, &coldesc).unwrap();
 
             match newhdu.info {
-                HduInfo::TableInfo { column_descriptions, .. } => {
+                HduInfo::TableInfo {
+                    column_descriptions,
+                    ..
+                } => {
                     assert_eq!(column_descriptions[0].name, "abcdefg");
                 }
                 _ => panic!("ERROR"),
@@ -2915,7 +2931,10 @@ mod test {
             let newhdu = hdu.append_column(&mut f, &coldesc).unwrap();
 
             match newhdu.info {
-                HduInfo::TableInfo { column_descriptions, .. } => {
+                HduInfo::TableInfo {
+                    column_descriptions,
+                    ..
+                } => {
                     assert_eq!(
                         column_descriptions[column_descriptions.len() - 1].name,
                         "abcdefg"
@@ -2934,11 +2953,12 @@ mod test {
             let newhdu = hdu.delete_column(&mut f, "intcol").unwrap();
 
             match newhdu.info {
-                HduInfo::TableInfo { column_descriptions, .. } => {
-                    for col in column_descriptions {
-                        assert!(col.name != "intcol");
-                    }
-                }
+                HduInfo::TableInfo {
+                    column_descriptions,
+                    ..
+                } => for col in column_descriptions {
+                    assert!(col.name != "intcol");
+                },
                 _ => panic!("ERROR"),
             }
         });
@@ -2967,11 +2987,12 @@ mod test {
             let newhdu = hdu.delete_column(&mut f, 0).unwrap();
 
             match newhdu.info {
-                HduInfo::TableInfo { column_descriptions, .. } => {
-                    for col in column_descriptions {
-                        assert!(col.name != "intcol");
-                    }
-                }
+                HduInfo::TableInfo {
+                    column_descriptions,
+                    ..
+                } => for col in column_descriptions {
+                    assert!(col.name != "intcol");
+                },
                 _ => panic!("ERROR"),
             }
         });
