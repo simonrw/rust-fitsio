@@ -1,9 +1,10 @@
 TAG := srwalker101/rustfitsioversion
 VERSION := 3420
 FULLTAG := $(TAG):$(VERSION)
+DOCKERFILE := Dockerfile
 
 build:
-	docker build -t $(FULLTAG) .
+	docker build -t $(FULLTAG) -f $(DOCKERFILE) .
 
 shell:
 	docker run --rm -it \
