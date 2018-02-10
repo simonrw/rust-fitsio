@@ -2,6 +2,7 @@
 
 
 import subprocess as sp
+import json
 
 
 VERSIONS = [
@@ -50,3 +51,16 @@ for version in VERSIONS:
 
     cmd = ['make', f'VERSION={version}', f'DOCKERFILE={out_filename}']
     sp.check_call(cmd)
+
+results = {}
+for version in VERSIONS:
+    cmd = ['make', f'VERSION={version}', 'run']
+    try:
+        sp.check_call(cmd)
+    except sp.CalledProcessError as e:
+        results[version] = False
+    else:
+        results[version] = True
+
+with open('results.json', 'w') as outfile:
+    json.dump(results, outfile, indent=2)
