@@ -561,13 +561,13 @@ pub trait DescribesHdu {
 
 impl DescribesHdu for usize {
     fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
-        let mut _hdu_type = 0;
+        let mut hdu_type = 0;
         let mut status = 0;
         unsafe {
             sys::ffmahd(
                 f.fptr as *mut _,
                 (*self + 1) as i32,
-                &mut _hdu_type,
+                &mut hdu_type,
                 &mut status,
             );
         }
@@ -578,7 +578,6 @@ impl DescribesHdu for usize {
 
 impl<'a> DescribesHdu for &'a str {
     fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
-        let mut _hdu_type = 0;
         let mut status = 0;
         let c_hdu_name = ffi::CString::new(*self)?;
 
