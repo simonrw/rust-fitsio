@@ -1082,7 +1082,7 @@ pub trait ReadWriteImage: Sized {
                 for dimension in &shape {
                     npixels *= *dimension;
                 }
-                Self::read_section(fits_file, (0..npixels))
+                Self::read_section(fits_file, 0..npixels)
             }
             Ok(HduInfo::TableInfo { .. }) => Err("cannot read image data from a table hdu".into()),
             Ok(HduInfo::AnyInfo) => unreachable!(),
