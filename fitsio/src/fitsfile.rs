@@ -1115,7 +1115,7 @@ pub trait ReadWriteImage: Sized {
     fn write_image(fits_file: &mut FitsFile, data: &[Self]) -> Result<()> {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::ImageInfo { shape, .. }) => {
-                let image_npixels = shape.iter().fold(1, |acc, &x| acc * x);
+                let image_npixels = shape.iter().product();
                 if data.len() > image_npixels {
                     return Err(format!(
                         "cannot write more data ({} elements) to the current image (shape: {:?})",
@@ -1653,12 +1653,12 @@ impl FitsHdu {
     pub fn delete_column<T: DescribesColumnLocation>(
         self,
         fits_file: &mut FitsFile,
-        col_identifier: T,
+        col_identifier: &T,
     ) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
-        let colno = T::get_column_no(&col_identifier, &self, fits_file)?;
+        let colno = T::get_column_no(col_identifier, &self, fits_file)?;
         let mut status = 0;
 
         unsafe {
