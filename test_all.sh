@@ -16,3 +16,6 @@ esac
 for toml in $(find . -maxdepth 2 -name "Cargo.toml"); do
     cargo test --manifest-path $toml ${__TESTEXTRA}
 done
+
+# Test the bindgen feature
+cargo test --manifest-path fitsio/Cargo.toml --features bindgen --no-default-features
