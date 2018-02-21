@@ -8,12 +8,13 @@ FFI wrapper around cfitsio in Rust
 
 ## Installation
 
-_There is a problem with `cfitsio` version 3.410. Please ensure version
-3.420+ is installed._
+`fitsio` supports versions of `cfitsio >= 3.08`.  _There is a problem
+with `cfitsio` version 3.410. Please ensure version 3.420+ is
+installed._
 
-For the time being, it's best to stick to the development version from github.
-The code is tested before being pushed and is relatively stable. Add this to
-your `Cargo.toml` file:
+For the time being, it's best to stick to the development version from
+github.  The code is tested before being pushed and is relatively
+stable. Add this to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
