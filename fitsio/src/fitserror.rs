@@ -17,7 +17,7 @@ pub fn check_status(status: i32) -> Result<()> {
         0 => Ok(()),
         _ => Err(Error::Fits(FitsError {
             status: status,
-            message: status_to_string(status).unwrap().unwrap(),
+            message: status_to_string(status)?.expect("guaranteed to be Some"),
         })),
     }
 }
