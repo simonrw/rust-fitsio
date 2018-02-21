@@ -79,9 +79,11 @@ impl FitsFile {
             );
         }
 
-        check_status(status).map(|_| FitsFile {
-            fptr: fptr,
-            filename: filename.clone(),
+        check_status(status).map(|_| {
+            FitsFile {
+                fptr: fptr,
+                filename: filename.clone(),
+            }
         })
     }
 
@@ -101,9 +103,11 @@ impl FitsFile {
             );
         }
 
-        check_status(status).map(|_| FitsFile {
-            fptr: fptr,
-            filename: filename.clone(),
+        check_status(status).map(|_| {
+            FitsFile {
+                fptr: fptr,
+                filename: filename.clone(),
+            }
         })
     }
 
@@ -364,11 +368,13 @@ impl FitsFile {
         let mut status = 0;
 
         if status != 0 {
-            return Err(FitsError {
-                status: status,
-                // unwrap guaranteed to succesed as status > 0
-                message: status_to_string(status)?.unwrap(),
-            }.into());
+            return Err(
+                FitsError {
+                    status: status,
+                    // unwrap guaranteed to succesed as status > 0
+                    message: status_to_string(status)?.unwrap(),
+                }.into(),
+            );
         }
 
         unsafe {
@@ -382,11 +388,13 @@ impl FitsFile {
         }
 
         if status != 0 {
-            return Err(FitsError {
-                status: status,
-                // unwrap guaranteed to succesed as status > 0
-                message: status_to_string(status)?.unwrap(),
-            }.into());
+            return Err(
+                FitsError {
+                    status: status,
+                    // unwrap guaranteed to succesed as status > 0
+                    message: status_to_string(status)?.unwrap(),
+                }.into(),
+            );
         }
 
         // Current HDU should be at the new HDU
@@ -512,7 +520,10 @@ impl<'a> NewFitsFile<'a> {
                 filename: path.clone(),
             };
             if requires_custom_primary {
-                f.create_image("_PRIMARY".to_string(), &description.unwrap())?;
+                f.create_image(
+                    "_PRIMARY".to_string(),
+                    &description.unwrap(),
+                )?;
             } else {
                 f.add_empty_primary()?;
             }
@@ -724,16 +735,15 @@ impl ReadsCol for String {
         range: &Range<usize>,
     ) -> Result<Vec<Self>> {
         match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo {
-                column_descriptions,
-                ..
-            }) => {
+            Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
                 let num_output_rows = range.end - range.start + 1;
                 let test_name = name.into();
                 let column_number = column_descriptions
                     .iter()
                     .position(|desc| desc.name == test_name)
-                    .ok_or_else(|| Error::Message(format!("Cannot find column {:?}", test_name)))?;
+                    .ok_or_else(|| {
+                        Error::Message(format!("Cannot find column {:?}", test_name))
+                    })?;
 
                 /* Set up the storage arrays for the column string values */
                 let mut raw_char_data: Vec<*mut libc::c_char> =
@@ -817,7 +827,9 @@ pub trait WritesCol {
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
             Ok(HduInfo::AnyInfo { .. }) => {
-                Err("Cannot determine HDU type, so cannot write column data".into())
+                Err(
+                    "Cannot determine HDU type, so cannot write column data".into(),
+                )
             }
             Err(e) => Err(e),
         }
@@ -907,7 +919,9 @@ impl WritesCol for String {
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
             Ok(HduInfo::AnyInfo { .. }) => {
-                Err("Cannot determine HDU type, so cannot write column data".into())
+                Err(
+                    "Cannot determine HDU type, so cannot write column data".into(),
+                )
             }
             Err(e) => Err(e),
         }
@@ -1341,9 +1355,9 @@ impl<'a> ColumnIterator<'a> {
     fn new(fits_file: &'a FitsFile) -> Self {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo {
-                column_descriptions,
-                num_rows: _num_rows,
-            }) => ColumnIterator {
+                   column_descriptions,
+                   num_rows: _num_rows,
+               }) => ColumnIterator {
                 current: 0,
                 column_descriptions: column_descriptions,
                 fits_file: fits_file,
@@ -1367,36 +1381,56 @@ impl<'a> Iterator for ColumnIterator<'a> {
             let current_type = description.data_type.typ;
 
             let retval = match current_type {
-                ColumnDataType::Int => i32::read_col(self.fits_file, current_name)
-                    .map(|data| Column::Int32 {
-                        name: current_name.to_string(),
-                        data: data,
-                    })
-                    .ok(),
-                ColumnDataType::Long => i64::read_col(self.fits_file, current_name)
-                    .map(|data| Column::Int64 {
-                        name: current_name.to_string(),
-                        data: data,
-                    })
-                    .ok(),
-                ColumnDataType::Float => f32::read_col(self.fits_file, current_name)
-                    .map(|data| Column::Float {
-                        name: current_name.to_string(),
-                        data: data,
-                    })
-                    .ok(),
-                ColumnDataType::Double => f64::read_col(self.fits_file, current_name)
-                    .map(|data| Column::Double {
-                        name: current_name.to_string(),
-                        data: data,
-                    })
-                    .ok(),
-                ColumnDataType::String => String::read_col(self.fits_file, current_name)
-                    .map(|data| Column::String {
-                        name: current_name.to_string(),
-                        data: data,
-                    })
-                    .ok(),
+                ColumnDataType::Int => {
+                    i32::read_col(self.fits_file, current_name)
+                        .map(|data| {
+                            Column::Int32 {
+                                name: current_name.to_string(),
+                                data: data,
+                            }
+                        })
+                        .ok()
+                }
+                ColumnDataType::Long => {
+                    i64::read_col(self.fits_file, current_name)
+                        .map(|data| {
+                            Column::Int64 {
+                                name: current_name.to_string(),
+                                data: data,
+                            }
+                        })
+                        .ok()
+                }
+                ColumnDataType::Float => {
+                    f32::read_col(self.fits_file, current_name)
+                        .map(|data| {
+                            Column::Float {
+                                name: current_name.to_string(),
+                                data: data,
+                            }
+                        })
+                        .ok()
+                }
+                ColumnDataType::Double => {
+                    f64::read_col(self.fits_file, current_name)
+                        .map(|data| {
+                            Column::Double {
+                                name: current_name.to_string(),
+                                data: data,
+                            }
+                        })
+                        .ok()
+                }
+                ColumnDataType::String => {
+                    String::read_col(self.fits_file, current_name)
+                        .map(|data| {
+                            Column::String {
+                                name: current_name.to_string(),
+                                data: data,
+                            }
+                        })
+                        .ok()
+                }
                 _ => unimplemented!(),
             };
 
@@ -1432,8 +1466,9 @@ impl FitsHdu {
 
     /// Read the HDU name
     pub fn name(&self, fits_file: &mut FitsFile) -> Result<String> {
-        let extname = self.read_key(fits_file, "EXTNAME")
-            .unwrap_or_else(|_| "".to_string());
+        let extname = self.read_key(fits_file, "EXTNAME").unwrap_or_else(
+            |_| "".to_string(),
+        );
         Ok(extname)
     }
 
@@ -1630,10 +1665,7 @@ impl FitsHdu {
         /* We have to split up the fetching of the number of columns from the inserting of the
          * new column, as otherwise we're trying move out of self */
         let result = match self.info {
-            HduInfo::TableInfo {
-                ref column_descriptions,
-                ..
-            } => Ok(column_descriptions.len()),
+            HduInfo::TableInfo { ref column_descriptions, .. } => Ok(column_descriptions.len()),
             HduInfo::ImageInfo { .. } => Err("Cannot add columns to FITS image".into()),
             HduInfo::AnyInfo { .. } => {
                 Err("Cannot determine HDU type, so cannot add columns".into())
@@ -1741,9 +1773,9 @@ impl FitsHdu {
 
     /// Iterate over the columns in a fits file
     pub fn columns<'a>(&self, fits_file: &'a mut FitsFile) -> ColumnIterator<'a> {
-        fits_file
-            .make_current(self)
-            .expect("Cannot make hdu current");
+        fits_file.make_current(self).expect(
+            "Cannot make hdu current",
+        );
         ColumnIterator::new(fits_file)
     }
 
@@ -1945,9 +1977,9 @@ mod test {
         f.change_hdu(1).unwrap();
         match f.fetch_hdu_info() {
             Ok(HduInfo::TableInfo {
-                column_descriptions,
-                num_rows,
-            }) => {
+                   column_descriptions,
+                   num_rows,
+               }) => {
                 assert_eq!(num_rows, 50);
                 assert_eq!(
                     column_descriptions
@@ -2013,10 +2045,7 @@ mod test {
                 .map(|mut f| {
                     f.change_hdu("foo").unwrap();
                     match f.fetch_hdu_info() {
-                        Ok(HduInfo::TableInfo {
-                            column_descriptions,
-                            ..
-                        }) => {
+                        Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
                             let column_names = column_descriptions
                                 .iter()
                                 .map(|desc| desc.name.clone())
@@ -2215,12 +2244,14 @@ mod test {
         }
 
         match hdu.read_key::<f64>(&mut f, "DBLTEST") {
-            Ok(value) => assert!(
-                floats_close_f64(value, 0.09375),
-                "{:?} != {:?}",
-                value,
-                0.09375
-            ),
+            Ok(value) => {
+                assert!(
+                    floats_close_f64(value, 0.09375),
+                    "{:?} != {:?}",
+                    value,
+                    0.09375
+                )
+            }
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
@@ -2342,13 +2373,15 @@ mod test {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         match hdu.read_col_range::<i32>(&mut f, "intcol", &(0..1024)) {
-            Err(e) => assert_eq!(
-                e,
-                Error::Index(IndexError {
-                    message: "given indices out of range".to_string(),
-                    given: (0..1024),
-                })
-            ),
+            Err(e) => {
+                assert_eq!(
+                    e,
+                    Error::Index(IndexError {
+                        message: "given indices out of range".to_string(),
+                        given: (0..1024),
+                    })
+                )
+            }
             _ => panic!("Should be error"),
         }
     }
@@ -2903,10 +2936,7 @@ mod test {
             let newhdu = hdu.insert_column(&mut f, 0, &coldesc).unwrap();
 
             match newhdu.info {
-                HduInfo::TableInfo {
-                    column_descriptions,
-                    ..
-                } => {
+                HduInfo::TableInfo { column_descriptions, .. } => {
                     assert_eq!(column_descriptions[0].name, "abcdefg");
                 }
                 _ => panic!("ERROR"),
@@ -2930,10 +2960,7 @@ mod test {
             let newhdu = hdu.append_column(&mut f, &coldesc).unwrap();
 
             match newhdu.info {
-                HduInfo::TableInfo {
-                    column_descriptions,
-                    ..
-                } => {
+                HduInfo::TableInfo { column_descriptions, .. } => {
                     assert_eq!(
                         column_descriptions[column_descriptions.len() - 1].name,
                         "abcdefg"
@@ -2952,12 +2979,11 @@ mod test {
             let newhdu = hdu.delete_column(&mut f, "intcol").unwrap();
 
             match newhdu.info {
-                HduInfo::TableInfo {
-                    column_descriptions,
-                    ..
-                } => for col in column_descriptions {
-                    assert!(col.name != "intcol");
-                },
+                HduInfo::TableInfo { column_descriptions, .. } => {
+                    for col in column_descriptions {
+                        assert!(col.name != "intcol");
+                    }
+                }
                 _ => panic!("ERROR"),
             }
         });
@@ -2986,12 +3012,11 @@ mod test {
             let newhdu = hdu.delete_column(&mut f, 0).unwrap();
 
             match newhdu.info {
-                HduInfo::TableInfo {
-                    column_descriptions,
-                    ..
-                } => for col in column_descriptions {
-                    assert!(col.name != "intcol");
-                },
+                HduInfo::TableInfo { column_descriptions, .. } => {
+                    for col in column_descriptions {
+                        assert!(col.name != "intcol");
+                    }
+                }
                 _ => panic!("ERROR"),
             }
         });

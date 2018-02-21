@@ -416,7 +416,8 @@ extern "C" {
         buffsize: *mut size_t,
         deltasize: size_t,
         mem_realloc: ::std::option::Option<
-            unsafe extern "C" fn(p: *mut c_void, newsize: size_t) -> *mut c_void,
+            unsafe extern "C" fn(p: *mut c_void, newsize: size_t)
+                                 -> *mut c_void,
         >,
         status: *mut c_int,
     ) -> c_int;
@@ -471,7 +472,8 @@ extern "C" {
         buffsize: *mut size_t,
         deltasize: size_t,
         mem_realloc: ::std::option::Option<
-            unsafe extern "C" fn(p: *mut c_void, newsize: size_t) -> *mut c_void,
+            unsafe extern "C" fn(p: *mut c_void, newsize: size_t)
+                                 -> *mut c_void,
         >,
         status: *mut c_int,
     ) -> c_int;
@@ -4043,15 +4045,14 @@ extern "C" {
         offset: c_long,
         nPerLoop: c_long,
         workFn: ::std::option::Option<
-            unsafe extern "C" fn(
-                totaln: c_long,
-                offset: c_long,
-                firstn: c_long,
-                nvalues: c_long,
-                narrays: c_int,
-                data: *mut iteratorCol,
-                userPointer: *mut c_void,
-            ) -> c_int,
+            unsafe extern "C" fn(totaln: c_long,
+                                 offset: c_long,
+                                 firstn: c_long,
+                                 nvalues: c_long,
+                                 narrays: c_int,
+                                 data: *mut iteratorCol,
+                                 userPointer: *mut c_void)
+                                 -> c_int,
         >,
         userPointer: *mut c_void,
         status: *mut c_int,

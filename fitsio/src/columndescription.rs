@@ -67,7 +67,9 @@ impl ColumnDescription {
                 data_type: d.clone(),
             }),
             None => {
-                Err("No data type given. Ensure the `with_type` method has been called.".into())
+                Err(
+                    "No data type given. Ensure the `with_type` method has been called.".into(),
+                )
             }
         }
     }
@@ -126,11 +128,13 @@ impl From<ColumnDataDescription> for String {
                     )
                 }
             }
-            _ => format!(
-                "{repeat}{data_type}",
-                data_type = String::from(orig.typ),
-                repeat = orig.repeat
-            ),
+            _ => {
+                format!(
+                    "{repeat}{data_type}",
+                    data_type = String::from(orig.typ),
+                    repeat = orig.repeat
+                )
+            }
         }
     }
 }
@@ -213,10 +217,12 @@ impl FromStr for ColumnDataDescription {
             'I' => ColumnDataType::Short,
             'K' => ColumnDataType::Long,
             'A' => ColumnDataType::String,
-            _ => panic!(
-                "Have not implemented str -> ColumnDataType for {}",
-                data_type_char
-            ),
+            _ => {
+                panic!(
+                    "Have not implemented str -> ColumnDataType for {}",
+                    data_type_char
+                )
+            }
         };
 
         Ok(ColumnDataDescription {
