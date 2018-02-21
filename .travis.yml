@@ -1,5 +1,5 @@
 language: rust
-script: bash ./test_all.sh
+script: bash ./bin/test
 sudo: false
 
 rust:
