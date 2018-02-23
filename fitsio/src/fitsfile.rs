@@ -116,7 +116,6 @@ impl FitsFile {
         NewFitsFile {
             path: path.into(),
             image_description: None,
-            requires_custom_primary: false,
         }
     }
 
@@ -490,7 +489,6 @@ impl Drop for FitsFile {
 pub struct NewFitsFile<'a> {
     path: String,
     image_description: Option<ImageDescription<'a>>,
-    requires_custom_primary: bool,
 }
 
 impl<'a> NewFitsFile<'a> {
@@ -500,7 +498,7 @@ impl<'a> NewFitsFile<'a> {
     pub fn open(self) -> Result<FitsFile> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
-        let path = self.path;
+        let path = &self.path;
         let c_filename = ffi::CString::new(path.as_str())?;
 
         unsafe {
@@ -511,21 +509,18 @@ impl<'a> NewFitsFile<'a> {
             );
         }
 
-        let requires_custom_primary = self.requires_custom_primary;
-        let description = self.image_description;
-
         check_status(status).and_then(|_| {
+
             let mut f = FitsFile {
                 fptr: fptr,
                 filename: path.clone(),
             };
-            if requires_custom_primary {
-                f.create_image(
-                    "_PRIMARY".to_string(),
-                    &description.unwrap(),
-                )?;
-            } else {
-                f.add_empty_primary()?;
+
+            match &self.image_description {
+                &Some(ref description) => {
+                    let _ = f.create_image("_PRIMARY".to_string(), description)?;
+                }
+                &None => f.add_empty_primary()?,
             }
             Ok(f)
         })
@@ -535,7 +530,6 @@ impl<'a> NewFitsFile<'a> {
     /// `FitsFile` object.
     pub fn with_custom_primary(mut self, description: &ImageDescription<'a>) -> Self {
         self.image_description = Some(description.clone());
-        self.requires_custom_primary = true;
         self
     }
 }
