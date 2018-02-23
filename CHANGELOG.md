@@ -9,6 +9,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 ### Removed
 
+## [0.12.1] - 2018-02-23
+
+_Fix issue with uploading crate_
+
+### Addded
+### Changed
+### Removed
+
 ## [0.12.0] - 2018-02-23
 
 ### Addded
@@ -96,6 +104,8 @@ Nothing
 [0.10.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.9.0...v0.10.0
 [0.11.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.10.0...v0.11.0
 [0.11.1]: https://github.com/mindriot101/rust-fitsio/compare/v0.10.0...v0.11.1
+[0.12.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.11.1...v0.12.0
+[0.12.1]: https://github.com/mindriot101/rust-fitsio/compare/v0.12.0...v0.12.1
 
 ---
 
