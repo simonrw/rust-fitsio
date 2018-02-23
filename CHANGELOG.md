@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Addded
 
 * (`fitsio`) add support for images which are not 2d
-* (`fitsio`) add support for customising the primary HDU when a file is created
+* (`fitsio`) add support for customising the primary HDU when a file is created (Thanks [@astrojhgu](https://users.rust-lang.org/u/astrojhgu) from the users discourse, for the suggestion)
 * (`fitsio`) add support for non-2d images
 * (`fitsio`) more friendly errors when image data is requested outside of the range of the image
 
