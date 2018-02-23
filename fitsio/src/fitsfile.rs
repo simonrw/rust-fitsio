@@ -516,11 +516,11 @@ impl<'a> NewFitsFile<'a> {
                 filename: path.clone(),
             };
 
-            match &self.image_description {
-                &Some(ref description) => {
+            match self.image_description {
+                Some(ref description) => {
                     let _ = f.create_image("_PRIMARY".to_string(), description)?;
                 }
-                &None => f.add_empty_primary()?,
+                None => f.add_empty_primary()?,
             }
             Ok(f)
         })
