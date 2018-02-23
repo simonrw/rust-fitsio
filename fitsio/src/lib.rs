@@ -1,5 +1,6 @@
 //! `fitsio` - a thin wrapper around the [`cfitsio`][1] C library.
 //!
+//! * [File access](#file-access)
 //! * [HDU access](#hdu-access)
 //! * [Creating new HDUs](#creating-new-hdus)
 //!     * [Creating a new image](#creating-a-new-image)
@@ -28,6 +29,8 @@
 //!
 //! The main interface to a fits file is [`FitsFile`][fits-file]. All file manipulation
 //! and reading starts with this class.
+//!
+//! # File access
 //!
 //! Opening a file:
 //!
