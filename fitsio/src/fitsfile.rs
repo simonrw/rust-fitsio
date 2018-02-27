@@ -81,7 +81,7 @@ impl FitsFile {
 
         check_status(status).map(|_| {
             FitsFile {
-                fptr: fptr,
+                fptr,
                 filename: filename.clone(),
             }
         })
@@ -105,7 +105,7 @@ impl FitsFile {
 
         check_status(status).map(|_| {
             FitsFile {
-                fptr: fptr,
+                fptr,
                 filename: filename.clone(),
             }
         })
@@ -252,7 +252,7 @@ impl FitsFile {
 
                 HduInfo::ImageInfo {
                     shape: shape.iter().map(|v| *v as usize).collect(),
-                    image_type: image_type,
+                    image_type,
                 }
             }
             1 | 2 => {
@@ -294,7 +294,7 @@ impl FitsFile {
                 }
 
                 HduInfo::TableInfo {
-                    column_descriptions: column_descriptions,
+                    column_descriptions,
                     num_rows: num_rows as usize,
                 }
             }
@@ -369,7 +369,7 @@ impl FitsFile {
         if status != 0 {
             return Err(
                 FitsError {
-                    status: status,
+                    status,
                     // unwrap guaranteed to succesed as status > 0
                     message: status_to_string(status)?.unwrap(),
                 }.into(),
@@ -389,7 +389,7 @@ impl FitsFile {
         if status != 0 {
             return Err(
                 FitsError {
-                    status: status,
+                    status,
                     // unwrap guaranteed to succesed as status > 0
                     message: status_to_string(status)?.unwrap(),
                 }.into(),
@@ -512,7 +512,7 @@ impl<'a> NewFitsFile<'a> {
         check_status(status).and_then(|_| {
 
             let mut f = FitsFile {
-                fptr: fptr,
+                fptr,
                 filename: path.clone(),
             };
 

@@ -92,9 +92,9 @@ impl ColumnDataDescription {
     /// Create a new column data description
     pub fn new(typ: ColumnDataType, repeat: usize, width: usize) -> Self {
         ColumnDataDescription {
-            repeat: repeat,
-            width: width,
-            typ: typ,
+            repeat,
+            width,
+            typ,
         }
     }
 
@@ -226,9 +226,9 @@ impl FromStr for ColumnDataDescription {
         };
 
         Ok(ColumnDataDescription {
-            repeat: repeat,
+            repeat,
             typ: data_type,
-            width: width,
+            width,
         })
     }
 }
