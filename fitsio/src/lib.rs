@@ -771,7 +771,7 @@
 //! [new-fits-file-open]: fitsfile/struct.NewFitsFile.html#method.open
 //! [new-fits-file-with-custom-primary]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
 
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
