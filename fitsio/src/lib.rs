@@ -176,6 +176,9 @@
 //! # }
 //! ```
 //!
+//! _Unlike cfitsio, the order of the dimensions of `new_size follows the C convention, i.e.
+//! [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)._
+//!
 //! ## Creating a new table
 //!
 //! Similar to creating new images, new tables are created with the
@@ -771,7 +774,7 @@
 //! [new-fits-file-open]: fitsfile/struct.NewFitsFile.html#method.open
 //! [new-fits-file-with-custom-primary]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
 
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 

@@ -16,8 +16,7 @@ fn main() {
                     "{} was not found in the pkg-config search path",
                     package_name
                 ).as_ref(),
-            )
-            {
+            ) {
                 let err_msg = format!(
                     "
 Cannot find {} on the pkg-config search path.  Consider installing the library for your
