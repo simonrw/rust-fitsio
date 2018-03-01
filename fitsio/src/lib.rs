@@ -176,6 +176,9 @@
 //! # }
 //! ```
 //!
+//! _Unlike cfitsio, the order of the dimensions of `new_size follows the C convention, i.e.
+//! [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)._
+//!
 //! ## Creating a new table
 //!
 //! Similar to creating new images, new tables are created with the
