@@ -226,6 +226,9 @@ impl FitsFile {
                     );
                 }
 
+                /* Reverse the image dimensions to be more like the C convention */
+                shape.reverse();
+
                 let mut bitpix = 0;
                 unsafe {
                     /* Use equiv type as this is more useful
@@ -373,12 +376,15 @@ impl FitsFile {
             }.into());
         }
 
+        let mut dimensions: Vec<_> = image_description.dimensions.clone().to_vec();
+        dimensions.reverse();
+
         unsafe {
             sys::ffcrim(
                 self.fptr as *mut _,
                 image_description.data_type.into(),
                 naxis as i32,
-                image_description.dimensions.as_ptr() as *mut libc::c_long,
+                dimensions.as_ptr() as *mut libc::c_long,
                 &mut status,
             );
         }
@@ -1542,11 +1548,15 @@ impl FitsHdu {
 
     /// Resize a HDU image
     ///
-    /// The `new_size` parameter defines the new size of the image. This can be any length, but
-    /// only 2D images are supported at the moment.
+    /// The `new_size` parameter defines the new size of the image. Unlike cfitsio, the order
+    /// of the dimensions of `new_size follows the C convention, i.e. [row-major
+    /// order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
     pub fn resize(self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
+
+        let mut new_size = new_size.clone().to_vec();
+        new_size.reverse();
 
         match self.info {
             HduInfo::ImageInfo { image_type, .. } => {
