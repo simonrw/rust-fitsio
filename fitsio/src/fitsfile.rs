@@ -2643,20 +2643,20 @@ mod test {
                 let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
                     data_type: ImageType::LONG_IMG,
-                    dimensions: &[100, 20],
+                    dimensions: &[100, 5],
                 };
                 let hdu = f.create_image("foo".to_string(), &image_description)
                     .unwrap();
 
-                let data: Vec<i64> = (0..121).map(|v| v + 50).collect();
-                hdu.write_region(&mut f, &[&(0..10), &(0..10)], &data)
+                let data: Vec<i64> = (0..66).map(|v| v + 50).collect();
+                hdu.write_region(&mut f, &[&(0..10), &(0..5)], &data)
                     .unwrap();
             }
 
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
-            let chunk: Vec<i64> = hdu.read_region(&mut f, &[&(0..10), &(0..10)]).unwrap();
-            assert_eq!(chunk.len(), 11 * 11);
+            let chunk: Vec<i64> = hdu.read_region(&mut f, &[&(0..10), &(0..5)]).unwrap();
+            assert_eq!(chunk.len(), 11 * 6);
             assert_eq!(chunk[0], 50);
             assert_eq!(chunk[25], 75);
         });
