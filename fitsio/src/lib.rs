@@ -176,7 +176,7 @@
 //! # }
 //! ```
 //!
-//! _Unlike cfitsio, the order of the dimensions of `new_size follows the C convention, i.e.
+//! _Unlike cfitsio, the order of the dimensions of `new_size` follows the C convention, i.e.
 //! [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)._
 //!
 //! ## Creating a new table
@@ -385,12 +385,14 @@
 //! let first_row: Vec<i32> = hdu.read_section(&mut fptr, 0, 100).unwrap();
 //!
 //! // Read a square section of the image
-//!
 //! let xcoord = 0..10;
 //! let ycoord = 0..10;
 //! let chunk: Vec<i32> = hdu.read_region(&mut fptr, &[&ycoord, &xcoord]).unwrap();
 //! # }
 //! ```
+//!
+//! _Unlike cfitsio, the order of the the section ranges follows the C convention, i.e.
+//! [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)._
 //!
 //! Some convenience methods are available for reading rows of the image. This is
 //! typically useful as it's an efficient access method:
@@ -519,6 +521,9 @@
 //! # }
 //! ```
 //!
+//! _Unlike cfitsio, the order of the ranges follows the C convention, i.e.
+//! [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)._
+//!
 //! ### Resizing an image
 //!
 //! Images can be resized to a new shape using the [`resize`][fits-hdu-resize] method.
@@ -553,6 +558,9 @@
 //! }
 //! # }
 //! ```
+//!
+//! _Unlike cfitsio, the order of the dimensions of `new_size` follows the C convention, i.e.
+//! [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)._
 //!
 //! ## Writing tables
 //!
@@ -764,7 +772,7 @@
 //! [fits-hdu-iter]: fitsfile/struct.FitsHdu.html#method.iter
 //! [fits-hdu-copy-to]: fitsfile/struct.FitsHdu.html#method.copy_to
 //! [fits-hdu-delete]: fitsfile/struct.FitsHdu.html#method.copy_to
-//! [fits-hdu-resize]: fitsfile/struct.FitsHdu.html#method.copy_to
+//! [fits-hdu-resize]: fitsfile/struct.FitsHdu.html#method.resize
 //! [fits-hdu]: fitsfile/struct.FitsHdu.html
 //! [image-description]: fitsfile/struct.ImageDescription.html
 //! [reads-col]: fitsfile/trait.ReadsCol.html

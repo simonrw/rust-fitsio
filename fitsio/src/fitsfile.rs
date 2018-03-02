@@ -1549,7 +1549,7 @@ impl FitsHdu {
     /// Resize a HDU image
     ///
     /// The `new_size` parameter defines the new size of the image. Unlike cfitsio, the order
-    /// of the dimensions of `new_size follows the C convention, i.e. [row-major
+    /// of the dimensions of `new_size` follows the C convention, i.e. [row-major
     /// order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
     pub fn resize(self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
