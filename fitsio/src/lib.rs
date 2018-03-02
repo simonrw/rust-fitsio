@@ -366,6 +366,9 @@
 //!
 //! # Reading file data
 //!
+//! Methods taking ranges are exclusive of the upper range value, reflecting the nature of Rust's
+//! range type.
+//!
 //! ## Reading images
 //!
 //! Image data can be read through either
@@ -464,6 +467,9 @@
 //! ```
 //!
 //! # Writing file data
+//!
+//! Methods taking ranges are exclusive of the upper range value, reflecting the nature of Rust's
+//! range type.
 //!
 //! ## Writing images
 //!
