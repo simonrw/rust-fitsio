@@ -639,7 +639,7 @@ pub trait ReadsCol {
     {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { num_rows, .. }) => {
-                let range = 0..num_rows - 1;
+                let range = 0..num_rows;
                 Self::read_col_range(fits_file, name, &range)
             }
             Err(e) => Err(e),
@@ -655,7 +655,7 @@ macro_rules! reads_col_impl {
                 -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
-                        let num_output_rows = range.end - range.start + 1;
+                        let num_output_rows = range.end - range.start;
                         let mut out = vec![$nullval; num_output_rows];
                         let test_name = name.into();
                         let column_number = column_descriptions
@@ -733,7 +733,7 @@ impl ReadsCol for String {
                 column_descriptions,
                 ..
             }) => {
-                let num_output_rows = range.end - range.start + 1;
+                let num_output_rows = range.end - range.start;
                 let test_name = name.into();
                 let column_number = column_descriptions
                     .iter()
@@ -2341,7 +2341,7 @@ mod test {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let intcol_data: Vec<i32> = hdu.read_col_range(&mut f, "intcol", &(0..2)).unwrap();
-        assert_eq!(intcol_data.len(), 3);
+        assert_eq!(intcol_data.len(), 2);
         assert_eq!(intcol_data[0], 18);
         assert_eq!(intcol_data[1], 13);
     }
@@ -2367,7 +2367,7 @@ mod test {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let intcol_data: Vec<String> = hdu.read_col_range(&mut f, "strcol", &(0..2)).unwrap();
-        assert_eq!(intcol_data.len(), 3);
+        assert_eq!(intcol_data.len(), 2);
         assert_eq!(intcol_data[0], "value0");
         assert_eq!(intcol_data[1], "value1");
     }
