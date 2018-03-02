@@ -1218,7 +1218,7 @@ macro_rules! read_write_image_impl {
                                 fpixel.push(start as _);
                                 lpixel.push(end as _);
 
-                                nelements *= (end - start) + 1;
+                                nelements *= end - start;
                             }
 
                             let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
@@ -2105,16 +2105,16 @@ mod test {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
 
-            let xcoord = 2..5;
-            let ycoord = 11..16;
-            let zcoord = 3..6;
+            let xcoord = 2..6;
+            let ycoord = 11..17;
+            let zcoord = 3..7;
 
             let read_data: Vec<i64> = hdu.read_region(&mut f, &vec![&xcoord, &ycoord, &zcoord])
                 .unwrap();
 
             assert_eq!(read_data.len(), 96);
             assert_eq!(read_data[0], 712);
-            assert_eq!(read_data[50], 1114);
+            assert_eq!(read_data[50], 942);
         });
     }
 
@@ -2622,9 +2622,9 @@ mod test {
         let ycoord = 2..3;
 
         let chunk: Vec<i32> = hdu.read_region(&mut f, &vec![&ycoord, &xcoord]).unwrap();
-        assert_eq!(chunk.len(), 2 * 3);
+        assert_eq!(chunk.len(), 2);
         assert_eq!(chunk[0], 168);
-        assert_eq!(chunk[chunk.len() - 1], 132);
+        assert_eq!(chunk[chunk.len() - 1], 193);
     }
 
     #[test]
@@ -2699,7 +2699,7 @@ mod test {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
             let chunk: Vec<i64> = hdu.read_region(&mut f, &[&(0..10), &(0..5)]).unwrap();
-            assert_eq!(chunk.len(), 11 * 6);
+            assert_eq!(chunk.len(), 10 * 5);
             assert_eq!(chunk[0], 50);
             assert_eq!(chunk[25], 75);
         });
