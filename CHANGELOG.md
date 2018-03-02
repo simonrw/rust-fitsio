@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 
 * (`fitsio`) _breaking change_: inverted the order of image/region axes to match the C row-major convention
+* (`fitsio`) _breaking change_: all ranges are now exclusive of the upper value, matching Rust's default behaviour
 
 ### Removed
 

@@ -624,6 +624,8 @@ impl<'a> DescribesColumnLocation for &'a str {
 /// Trait for reading a fits column
 pub trait ReadsCol {
     /// Read a subset of a fits column
+    ///
+    /// The range is exclusive of the upper value
     fn read_col_range<T: Into<String>>(
         fits_file: &FitsFile,
         name: T,
@@ -639,7 +641,7 @@ pub trait ReadsCol {
     {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { num_rows, .. }) => {
-                let range = 0..num_rows - 1;
+                let range = 0..num_rows;
                 Self::read_col_range(fits_file, name, &range)
             }
             Err(e) => Err(e),
@@ -655,7 +657,7 @@ macro_rules! reads_col_impl {
                 -> Result<Vec<Self>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
-                        let num_output_rows = range.end - range.start + 1;
+                        let num_output_rows = range.end - range.start;
                         let mut out = vec![$nullval; num_output_rows];
                         let test_name = name.into();
                         let column_number = column_descriptions
@@ -733,7 +735,7 @@ impl ReadsCol for String {
                 column_descriptions,
                 ..
             }) => {
-                let num_output_rows = range.end - range.start + 1;
+                let num_output_rows = range.end - range.start;
                 let test_name = name.into();
                 let column_number = column_descriptions
                     .iter()
@@ -791,6 +793,8 @@ impl ReadsCol for String {
 /// Trait representing the ability to write column data
 pub trait WritesCol {
     /// Write data to part of a column
+    ///
+    /// The range is exclusive of the upper value
     fn write_col_range<T: Into<String>>(
         fits_file: &mut FitsFile,
         hdu: &FitsHdu,
@@ -817,7 +821,7 @@ pub trait WritesCol {
     {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { .. }) => {
-                let row_range = 0..col_data.len() - 1;
+                let row_range = 0..col_data.len();
                 Self::write_col_range(fits_file, hdu, col_name, col_data, &row_range)
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
@@ -841,7 +845,9 @@ macro_rules! writes_col_impl {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { .. }) => {
                         let colno = hdu.get_column_no(fits_file, col_name.into())?;
+                        // TODO: check that the column exists in the file
                         let mut status = 0;
+                        let n_elements = rows.end - rows.start;
                         unsafe {
                             sys::ffpcl(
                                 fits_file.fptr as *mut _,
@@ -849,7 +855,7 @@ macro_rules! writes_col_impl {
                                 (colno + 1) as _,
                                 (rows.start + 1) as _,
                                 1,
-                                (rows.end + 1) as _,
+                                n_elements as _,
                                 col_data.as_ptr() as *mut _,
                                 &mut status
                             );
@@ -891,9 +897,14 @@ impl WritesCol for String {
                 let colno = hdu.get_column_no(fits_file, col_name.into())?;
                 let mut status = 0;
 
-                let mut ptr_array = Vec::with_capacity(rows.end - rows.start);
-                for text in col_data {
-                    let s = ffi::CString::new(text.clone())?;
+                let start = rows.start;
+                let end = rows.end;
+                let n_elements = end - start;
+                let mut ptr_array = Vec::with_capacity(n_elements);
+
+                let rows = rows.clone();
+                for i in rows {
+                    let s = ffi::CString::new(col_data[i].clone())?;
                     ptr_array.push(s.into_raw());
                 }
 
@@ -901,9 +912,9 @@ impl WritesCol for String {
                     sys::ffpcls(
                         fits_file.fptr as *mut _,
                         (colno + 1) as _,
+                        (start + 1) as _,
                         1,
-                        1,
-                        col_data.len() as _,
+                        n_elements as _,
                         ptr_array.as_mut_ptr() as _,
                         &mut status,
                     );
@@ -1059,11 +1070,10 @@ impl WritesKey for String {
 pub trait ReadWriteImage: Sized {
     /// Read pixels from an image between a start index and end index
     ///
-    /// Start and end are read inclusively, so start = 0, end = 10 will read 11 pixels
-    /// in a row.
+    /// The range is exclusive of the upper value
     fn read_section(fits_file: &mut FitsFile, range: Range<usize>) -> Result<Vec<Self>>;
 
-    /// Read a row of pixels from a fits image
+    /// Read multiple rows from a fits image
     fn read_rows(fits_file: &mut FitsFile, start_row: usize, num_rows: usize) -> Result<Vec<Self>>;
 
     /// Read a single row from the image HDU
@@ -1098,14 +1108,16 @@ pub trait ReadWriteImage: Sized {
     ///
     /// If the length of the dataset exceeds the number of columns,
     /// the data wraps around to the next row.
+    ///
+    /// The range is exclusive of the upper value.
     fn write_section(fits_file: &mut FitsFile, range: Range<usize>, data: &[Self]) -> Result<()>;
 
     /// Write a rectangular region to the fits image
     ///
     /// The ranges must have length of 2, and they represent the limits of each axis. The limits
-    /// are inclusive of the lower and upper bounds.
+    /// are inclusive of the lower bounds, and *exclusive* of the and upper bounds.
     ///
-    /// For example, writing with ranges 0..10 and 0..10 wries an 11x11 sized image.
+    /// For example, writing with ranges 0..10 and 0..10 wries an 10x10 sized image.
     fn write_region(
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
@@ -1211,7 +1223,7 @@ macro_rules! read_write_image_impl {
                                 fpixel.push(start as _);
                                 lpixel.push(end as _);
 
-                                nelements *= (end - start) + 1;
+                                nelements *= end - start;
                             }
 
                             let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
@@ -1448,7 +1460,7 @@ impl FitsHdu {
         T::read_key(fits_file, name)
     }
 
-    /// Write header key
+    /// Write a fits key to the current header
     pub fn write_key<T: WritesKey>(
         &self,
         fits_file: &mut FitsFile,
@@ -1460,7 +1472,9 @@ impl FitsHdu {
         T::write_key(fits_file, name, value)
     }
 
-    /// Read an image between pixel a and pixel b into a `Vec`
+    /// Read pixels from an image between a start index and end index
+    ///
+    /// The range is exclusive of the upper value
     pub fn read_section<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1492,7 +1506,11 @@ impl FitsHdu {
         T::read_row(fits_file, row)
     }
 
-    /// Read a square region into a `Vec`
+    /// Read a square region from the chip.
+    ///
+    /// Lower left indicates the starting point of the square, and the upper
+    /// right defines the pixel _beyond_ the end. The range of pixels included
+    /// is inclusive of the lower end, and *exclusive* of the upper end.
     pub fn read_region<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1502,15 +1520,20 @@ impl FitsHdu {
         T::read_region(fits_file, ranges)
     }
 
-    /// Read a whole fits image into a vector
+    /// Read a whole image into a new `Vec`
+    ///
+    /// This reads an entire image into a one-dimensional vector
     pub fn read_image<T: ReadWriteImage>(&self, fits_file: &mut FitsFile) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
         T::read_image(fits_file)
     }
 
-    /// Write contiguous data to a fits image
+    /// Write raw pixel values to a FITS image
     ///
-    /// Returns the new HDU object
+    /// If the length of the dataset exceeds the number of columns,
+    /// the data wraps around to the next row.
+    ///
+    /// The range is exclusive of the upper value.
     pub fn write_section<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1523,7 +1546,12 @@ impl FitsHdu {
         T::write_section(fits_file, start..end, data)
     }
 
-    /// Write a rectangular region to a fits image
+    /// Write a rectangular region to the fits image
+    ///
+    /// The ranges must have length of 2, and they represent the limits of each axis. The limits
+    /// are inclusive of the lower bounds, and *exclusive* of the and upper bounds.
+    ///
+    /// For example, writing with ranges 0..10 and 0..10 wries an 10x10 sized image.
     pub fn write_region<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1535,7 +1563,10 @@ impl FitsHdu {
         T::write_region(fits_file, ranges, data)
     }
 
-    /// Write the dataset to the current image
+    /// Write an entire image to the HDU passed in
+    ///
+    /// Firstly a check is performed, making sure that the amount of data will fit in the image.
+    /// After this, all of the data is written to the image.
     pub fn write_image<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1706,13 +1737,17 @@ impl FitsHdu {
         check_status(status).map(|_| (colno - 1) as usize)
     }
 
-    /// Read a binary table column
+    /// Read a subset of a fits column
+    ///
+    /// The range is exclusive of the upper value
     pub fn read_col<T: ReadsCol>(&self, fits_file: &mut FitsFile, name: &str) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
         T::read_col(fits_file, name)
     }
 
-    /// Read part of a column, within a range
+    /// Read a subset of a fits column
+    ///
+    /// The range is exclusive of the upper value
     pub fn read_col_range<T: ReadsCol>(
         &self,
         fits_file: &mut FitsFile,
@@ -1723,19 +1758,9 @@ impl FitsHdu {
         T::read_col_range(fits_file, name, range)
     }
 
-    /// Write a binary table column
-    pub fn write_col<T: WritesCol, N: Into<String>>(
-        &self,
-        fits_file: &mut FitsFile,
-        name: N,
-        col_data: &[T],
-    ) -> Result<FitsHdu> {
-        fits_file.make_current(self)?;
-        fits_check_readwrite!(fits_file);
-        T::write_col(fits_file, self, name, col_data)
-    }
-
-    /// Write part of a column, within a range
+    /// Write data to part of a column
+    ///
+    /// The range is exclusive of the upper value
     pub fn write_col_range<T: WritesCol, N: Into<String>>(
         &self,
         fits_file: &mut FitsFile,
@@ -1746,6 +1771,22 @@ impl FitsHdu {
         fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
         T::write_col_range(fits_file, self, name, col_data, rows)
+    }
+
+    /// Write data to an entire column
+    ///
+    /// This default implementation does not check the length of the column first, but if the
+    /// length of the data array is longer than the length of the table, the table will be extended
+    /// with extra rows. This is as per the fitsio definition.
+    pub fn write_col<T: WritesCol, N: Into<String>>(
+        &self,
+        fits_file: &mut FitsFile,
+        name: N,
+        col_data: &[T],
+    ) -> Result<FitsHdu> {
+        fits_file.make_current(self)?;
+        fits_check_readwrite!(fits_file);
+        T::write_col(fits_file, self, name, col_data)
     }
 
     /// Iterate over the columns in a fits file
@@ -2098,16 +2139,16 @@ mod test {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
 
-            let xcoord = 2..5;
-            let ycoord = 11..16;
-            let zcoord = 3..6;
+            let xcoord = 2..6;
+            let ycoord = 11..17;
+            let zcoord = 3..7;
 
             let read_data: Vec<i64> = hdu.read_region(&mut f, &vec![&xcoord, &ycoord, &zcoord])
                 .unwrap();
 
             assert_eq!(read_data.len(), 96);
             assert_eq!(read_data[0], 712);
-            assert_eq!(read_data[50], 1114);
+            assert_eq!(read_data[50], 942);
         });
     }
 
@@ -2341,7 +2382,7 @@ mod test {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let intcol_data: Vec<i32> = hdu.read_col_range(&mut f, "intcol", &(0..2)).unwrap();
-        assert_eq!(intcol_data.len(), 3);
+        assert_eq!(intcol_data.len(), 2);
         assert_eq!(intcol_data[0], 18);
         assert_eq!(intcol_data[1], 13);
     }
@@ -2367,7 +2408,7 @@ mod test {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let intcol_data: Vec<String> = hdu.read_col_range(&mut f, "strcol", &(0..2)).unwrap();
-        assert_eq!(intcol_data.len(), 3);
+        assert_eq!(intcol_data.len(), 2);
         assert_eq!(intcol_data[0], "value0");
         assert_eq!(intcol_data[1], "value1");
     }
@@ -2490,8 +2531,8 @@ mod test {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
             let data: Vec<i32> = hdu.read_col(&mut f, "bar").unwrap();
-            assert_eq!(data.len(), 6);
-            assert_eq!(data[..], data_to_write[0..6]);
+            assert_eq!(data.len(), 5);
+            assert_eq!(data[..], data_to_write[0..5]);
         });
     }
 
@@ -2526,6 +2567,42 @@ mod test {
             assert_eq!(data.len(), data_to_write.len());
             assert_eq!(data[0], "value0");
             assert_eq!(data[49], "value49");
+        });
+    }
+
+    #[test]
+    fn write_string_col_range() {
+        use columndescription::*;
+
+        with_temp_file(|filename| {
+            let mut data_to_write: Vec<String> = Vec::new();
+            for i in 0..50 {
+                data_to_write.push(format!("value{}", i));
+            }
+
+            let range = 0..20;
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let table_description = vec![
+                    ColumnDescription::new("bar")
+                        .with_type(ColumnDataType::String)
+                        .that_repeats(7)
+                        .create()
+                        .unwrap(),
+                ];
+                let hdu = f.create_table("foo".to_string(), &table_description)
+                    .unwrap();
+
+                hdu.write_col_range(&mut f, "bar", &data_to_write, &range)
+                    .unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let data: Vec<String> = hdu.read_col(&mut f, "bar").unwrap();
+            assert_eq!(data.len(), range.end - range.start);
+            assert_eq!(data[0], "value0");
+            assert_eq!(data[19], "value19");
         });
     }
 
@@ -2579,9 +2656,9 @@ mod test {
         let ycoord = 2..3;
 
         let chunk: Vec<i32> = hdu.read_region(&mut f, &vec![&ycoord, &xcoord]).unwrap();
-        assert_eq!(chunk.len(), 2 * 3);
+        assert_eq!(chunk.len(), 2);
         assert_eq!(chunk[0], 168);
-        assert_eq!(chunk[chunk.len() - 1], 132);
+        assert_eq!(chunk[chunk.len() - 1], 193);
     }
 
     #[test]
@@ -2656,7 +2733,7 @@ mod test {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
             let chunk: Vec<i64> = hdu.read_region(&mut f, &[&(0..10), &(0..5)]).unwrap();
-            assert_eq!(chunk.len(), 11 * 6);
+            assert_eq!(chunk.len(), 10 * 5);
             assert_eq!(chunk[0], 50);
             assert_eq!(chunk[25], 75);
         });
