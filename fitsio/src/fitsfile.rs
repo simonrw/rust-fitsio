@@ -817,7 +817,7 @@ pub trait WritesCol {
     {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { .. }) => {
-                let row_range = 0..col_data.len() - 1;
+                let row_range = 0..col_data.len();
                 Self::write_col_range(fits_file, hdu, col_name, col_data, &row_range)
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
@@ -841,7 +841,9 @@ macro_rules! writes_col_impl {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { .. }) => {
                         let colno = hdu.get_column_no(fits_file, col_name.into())?;
+                        // TODO: check that the column exists in the file
                         let mut status = 0;
+                        let n_elements = rows.end - rows.start;
                         unsafe {
                             sys::ffpcl(
                                 fits_file.fptr as *mut _,
@@ -849,7 +851,7 @@ macro_rules! writes_col_impl {
                                 (colno + 1) as _,
                                 (rows.start + 1) as _,
                                 1,
-                                (rows.end + 1) as _,
+                                n_elements as _,
                                 col_data.as_ptr() as *mut _,
                                 &mut status
                             );
@@ -891,9 +893,14 @@ impl WritesCol for String {
                 let colno = hdu.get_column_no(fits_file, col_name.into())?;
                 let mut status = 0;
 
-                let mut ptr_array = Vec::with_capacity(rows.end - rows.start);
-                for text in col_data {
-                    let s = ffi::CString::new(text.clone())?;
+                let start = rows.start;
+                let end = rows.end;
+                let n_elements = end - start;
+                let mut ptr_array = Vec::with_capacity(n_elements);
+
+                let rows = rows.clone();
+                for i in rows {
+                    let s = ffi::CString::new(col_data[i].clone())?;
                     ptr_array.push(s.into_raw());
                 }
 
@@ -901,9 +908,9 @@ impl WritesCol for String {
                     sys::ffpcls(
                         fits_file.fptr as *mut _,
                         (colno + 1) as _,
+                        (start + 1) as _,
                         1,
-                        1,
-                        col_data.len() as _,
+                        n_elements as _,
                         ptr_array.as_mut_ptr() as _,
                         &mut status,
                     );
@@ -2490,8 +2497,8 @@ mod test {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
             let data: Vec<i32> = hdu.read_col(&mut f, "bar").unwrap();
-            assert_eq!(data.len(), 6);
-            assert_eq!(data[..], data_to_write[0..6]);
+            assert_eq!(data.len(), 5);
+            assert_eq!(data[..], data_to_write[0..5]);
         });
     }
 
@@ -2526,6 +2533,42 @@ mod test {
             assert_eq!(data.len(), data_to_write.len());
             assert_eq!(data[0], "value0");
             assert_eq!(data[49], "value49");
+        });
+    }
+
+    #[test]
+    fn write_string_col_range() {
+        use columndescription::*;
+
+        with_temp_file(|filename| {
+            let mut data_to_write: Vec<String> = Vec::new();
+            for i in 0..50 {
+                data_to_write.push(format!("value{}", i));
+            }
+
+            let range = 0..20;
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let table_description = vec![
+                    ColumnDescription::new("bar")
+                        .with_type(ColumnDataType::String)
+                        .that_repeats(7)
+                        .create()
+                        .unwrap(),
+                ];
+                let hdu = f.create_table("foo".to_string(), &table_description)
+                    .unwrap();
+
+                hdu.write_col_range(&mut f, "bar", &data_to_write, &range)
+                    .unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let data: Vec<String> = hdu.read_col(&mut f, "bar").unwrap();
+            assert_eq!(data.len(), range.end - range.start);
+            assert_eq!(data[0], "value0");
+            assert_eq!(data[19], "value19");
         });
     }
 

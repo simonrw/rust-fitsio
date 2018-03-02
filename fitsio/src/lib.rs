@@ -622,7 +622,7 @@
 //! # let hdu = fptr.create_table("foo".to_string(), &table_description)
 //! #     .unwrap();
 //! let data_to_write: Vec<i32> = vec![10101; 10];
-//! hdu.write_col_range(&mut fptr, "bar", &data_to_write, &(0..4)).unwrap();
+//! hdu.write_col_range(&mut fptr, "bar", &data_to_write, &(0..5)).unwrap();
 //! let data: Vec<i32> = hdu.read_col(&mut fptr, "bar").unwrap();
 //! assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
 //! # }
