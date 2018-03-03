@@ -2161,7 +2161,7 @@ mod test {
     #[test]
     fn test_fetch_primary_hdu() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let hdu = f.primary_hdu().unwrap();
+        let _hdu = f.primary_hdu().unwrap();
         assert_eq!(f.hdu_number(), 0);
     }
 
