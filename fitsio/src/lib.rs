@@ -149,6 +149,8 @@
 //! # }
 //! ```
 //!
+//! The primary HDU can always be accessed with the `FitsFile::primary_hdu` method.
+//!
 //! # Creating new HDUs
 //!
 //! ## Creating a new image
