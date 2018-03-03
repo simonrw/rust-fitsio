@@ -1046,6 +1046,12 @@ writes_key_impl_flt!(f64, ffpkyd);
 
 impl WritesKey for String {
     fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+        WritesKey::write_key(f, name, value.as_str())
+    }
+}
+
+impl<'a> WritesKey for &'a str {
+    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
         let c_name = ffi::CString::new(name)?;
         let mut status = 0;
 
