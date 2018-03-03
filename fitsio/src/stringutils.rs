@@ -59,7 +59,7 @@ mod test {
     use super::status_to_string;
 
     #[test]
-    fn returning_error_messages() {
+    fn test_returning_error_messages() {
         assert_eq!(
             status_to_string(105).unwrap().unwrap(),
             "couldn't create the named file"

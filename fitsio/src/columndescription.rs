@@ -227,7 +227,7 @@ impl FromStr for ColumnDataDescription {
 mod test {
     use super::*;
     #[test]
-    fn parsing() {
+    fn test_parsing() {
         let s = "1E";
         assert_eq!(
             s.parse::<ColumnDataDescription>().unwrap(),
@@ -240,7 +240,7 @@ mod test {
     }
 
     #[test]
-    fn parse_many_repeats() {
+    fn test_parse_many_repeats() {
         let s = "100E";
         assert_eq!(
             s.parse::<ColumnDataDescription>().unwrap(),
@@ -253,7 +253,7 @@ mod test {
     }
 
     #[test]
-    fn parse_with_width() {
+    fn test_parse_with_width() {
         let s = "1E26";
         assert_eq!(
             s.parse::<ColumnDataDescription>().unwrap(),
@@ -266,7 +266,7 @@ mod test {
     }
 
     #[test]
-    fn creating_data_description() {
+    fn test_creating_data_description() {
         let concrete_desc = ColumnDescription::new("FOO")
             .with_type(ColumnDataType::Int)
             .that_repeats(10)
