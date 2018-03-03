@@ -809,4 +809,3 @@ pub mod fitsfile;
 
 pub use self::fitsfile::{FitsFile, FitsHdu};
 pub use self::types::HduInfo;
-pub use self::errors::{Error, Result};
