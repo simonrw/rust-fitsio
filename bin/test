@@ -10,3 +10,6 @@ done
 
 # Test the bindgen feature
 cargo test --manifest-path fitsio/Cargo.toml --features bindgen --no-default-features
+
+# Test the full example
+cargo run --manifest-path fitsio/Cargo.toml --example full_example
