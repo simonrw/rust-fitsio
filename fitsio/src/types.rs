@@ -197,7 +197,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn image_types() {
+    fn test_image_types() {
         assert_eq!(i8::from(ImageType::BYTE_IMG), 8);
         assert_eq!(i8::from(ImageType::SBYTE_IMG), 10);
         assert_eq!(i8::from(ImageType::SHORT_IMG), 16);
@@ -209,7 +209,7 @@ mod test {
     }
 
     #[test]
-    fn hdu_types() {
+    fn test_hdu_types() {
         let image_info = HduInfo::ImageInfo {
             shape: Vec::new(),
             image_type: ImageType::LONGLONG_IMG,
@@ -226,19 +226,19 @@ mod test {
     }
 
     #[test]
-    fn file_open_modes() {
+    fn test_file_open_modes() {
         assert_eq!(u8::from(FileOpenMode::READONLY), 0);
         assert_eq!(u8::from(FileOpenMode::READWRITE), 1);
     }
 
     #[test]
-    fn case_sensitivity() {
+    fn test_case_sensitivity() {
         assert_eq!(u8::from(CaseSensitivity::CASESEN), 1);
         assert_eq!(u8::from(CaseSensitivity::CASEINSEN), 0);
     }
 
     #[test]
-    fn converting_from_data_type() {
+    fn test_converting_from_data_type() {
         assert_eq!(u8::from(DataType::TBIT), 1);
         assert_eq!(u8::from(DataType::TBYTE), 11);
         assert_eq!(u8::from(DataType::TLOGICAL), 14);

@@ -1861,7 +1861,7 @@ mod test {
     }
 
     #[test]
-    fn opening_an_existing_file() {
+    fn test_opening_an_existing_file() {
         match FitsFile::open("../testdata/full_example.fits") {
             Ok(_) => {}
             Err(e) => panic!("{:?}", e),
@@ -1869,7 +1869,7 @@ mod test {
     }
 
     #[test]
-    fn creating_a_new_file() {
+    fn test_creating_a_new_file() {
         with_temp_file(|filename| {
             FitsFile::create(filename)
                 .open()
@@ -1911,7 +1911,7 @@ mod test {
     }
 
     #[test]
-    fn cannot_write_to_readonly_file() {
+    fn test_cannot_write_to_readonly_file() {
         use columndescription::*;
 
         duplicate_test_file(|filename| {
@@ -1944,7 +1944,7 @@ mod test {
     }
 
     #[test]
-    fn editing_a_current_file() {
+    fn test_editing_a_current_file() {
         duplicate_test_file(|filename| {
             {
                 let mut f = FitsFile::edit(filename).unwrap();
@@ -1966,7 +1966,7 @@ mod test {
     }
 
     #[test]
-    fn fetching_a_hdu() {
+    fn test_fetching_a_hdu() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         for i in 0..2 {
             f.change_hdu(i).unwrap();
@@ -1983,7 +1983,7 @@ mod test {
     }
 
     #[test]
-    fn fetching_hdu_info() {
+    fn test_fetching_hdu_info() {
         use columndescription::*;
 
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -2035,7 +2035,7 @@ mod test {
     }
 
     #[test]
-    fn getting_file_open_mode() {
+    fn test_getting_file_open_mode() {
         duplicate_test_file(|filename| {
             let f = FitsFile::open(filename).unwrap();
             assert_eq!(f.open_mode().unwrap(), FileOpenMode::READONLY);
@@ -2048,7 +2048,7 @@ mod test {
     }
 
     #[test]
-    fn adding_new_table() {
+    fn test_adding_new_table() {
         use columndescription::*;
 
         with_temp_file(|filename| {
@@ -2091,7 +2091,7 @@ mod test {
     }
 
     #[test]
-    fn adding_new_image() {
+    fn test_adding_new_image() {
         with_temp_file(|filename| {
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
@@ -2118,7 +2118,7 @@ mod test {
     }
 
     #[test]
-    fn multidimensional_images() {
+    fn test_multidimensional_images() {
         with_temp_file(|filename| {
             let dimensions = [10, 20, 15];
 
@@ -2158,7 +2158,7 @@ mod test {
     }
 
     #[test]
-    fn fetching_hdu_object_hdu_info() {
+    fn test_fetching_hdu_object_hdu_info() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let testext = f.hdu("TESTEXT").unwrap();
         match testext.info {
@@ -2170,7 +2170,7 @@ mod test {
     }
 
     #[test]
-    fn fetch_current_hdu() {
+    fn test_fetch_current_hdu() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.change_hdu("TESTEXT").unwrap();
         let hdu = f.current_hdu().unwrap();
@@ -2182,14 +2182,14 @@ mod test {
     }
 
     #[test]
-    fn fetch_primary_hdu() {
+    fn test_fetch_primary_hdu() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let hdu = f.primary_hdu().unwrap();
+        let _hdu = f.primary_hdu().unwrap();
         assert_eq!(f.hdu_number(), 0);
     }
 
     #[test]
-    fn fetch_number_of_hdus() {
+    fn test_fetch_number_of_hdus() {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::open(filename).unwrap();
             let num_hdus = f.num_hdus().unwrap();
@@ -2198,7 +2198,7 @@ mod test {
     }
 
     #[test]
-    fn fetch_hdu_names() {
+    fn test_fetch_hdu_names() {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu_names = f.hdu_names().unwrap();
@@ -2207,7 +2207,7 @@ mod test {
     }
 
     #[test]
-    fn creating_new_image_returns_hdu_object() {
+    fn test_creating_new_image_returns_hdu_object() {
         with_temp_file(|filename| {
             let mut f = FitsFile::create(filename).open().unwrap();
             let image_description = ImageDescription {
@@ -2224,7 +2224,7 @@ mod test {
     }
 
     #[test]
-    fn creating_new_table_returns_hdu_object() {
+    fn test_creating_new_table_returns_hdu_object() {
         use columndescription::*;
 
         with_temp_file(|filename| {
@@ -2268,7 +2268,7 @@ mod test {
     }
 
     #[test]
-    fn reading_header_keys() {
+    fn test_reading_header_keys() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
         match hdu.read_key::<i64>(&mut f, "INTTEST") {
@@ -2294,7 +2294,7 @@ mod test {
 
     // Writing data
     #[test]
-    fn writing_header_keywords() {
+    fn test_writing_header_keywords() {
         with_temp_file(|filename| {
             // Scope ensures file is closed properly
             {
@@ -2319,7 +2319,7 @@ mod test {
     }
 
     #[test]
-    fn fetching_column_width() {
+    fn test_fetching_column_width() {
         use super::column_display_width;
 
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -2329,7 +2329,7 @@ mod test {
     }
 
     #[test]
-    fn read_columns() {
+    fn test_read_columns() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let intcol_data: Vec<i32> = hdu.read_col(&mut f, "intcol").unwrap();
@@ -2379,7 +2379,7 @@ mod test {
     }
 
     #[test]
-    fn read_string_col() {
+    fn test_read_string_col() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let strcol: Vec<String> = hdu.read_col(&mut f, "strcol").unwrap();
@@ -2390,7 +2390,7 @@ mod test {
     }
 
     #[test]
-    fn read_column_regions() {
+    fn test_read_column_regions() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let intcol_data: Vec<i32> = hdu.read_col_range(&mut f, "intcol", &(0..2)).unwrap();
@@ -2400,7 +2400,7 @@ mod test {
     }
 
     #[test]
-    fn read_invalid_column_range() {
+    fn test_read_invalid_column_range() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         match hdu.read_col_range::<i32>(&mut f, "intcol", &(0..1024)) {
@@ -2416,7 +2416,7 @@ mod test {
     }
 
     #[test]
-    fn read_string_column_regions() {
+    fn test_read_string_column_regions() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let intcol_data: Vec<String> = hdu.read_col_range(&mut f, "strcol", &(0..2)).unwrap();
@@ -2426,7 +2426,7 @@ mod test {
     }
 
     #[test]
-    fn read_column_region_check_ranges() {
+    fn test_read_column_region_check_ranges() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let result_data: Result<Vec<i32>> = hdu.read_col_range(&mut f, "intcol", &(0..2_000_000));
@@ -2434,7 +2434,7 @@ mod test {
     }
 
     #[test]
-    fn column_iterator() {
+    fn test_column_iterator() {
         use super::Column;
 
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -2461,7 +2461,7 @@ mod test {
     }
 
     #[test]
-    fn column_number() {
+    fn test_column_number() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("testext").unwrap();
         assert_eq!(hdu.get_column_no(&mut f, "intcol").unwrap(), 0);
@@ -2470,7 +2470,7 @@ mod test {
     }
 
     #[test]
-    fn write_column_data() {
+    fn test_write_column_data() {
         use columndescription::*;
 
         with_temp_file(|filename| {
@@ -2497,7 +2497,7 @@ mod test {
     }
 
     #[test]
-    fn cannot_write_column_to_image_hdu() {
+    fn test_cannot_write_column_to_image_hdu() {
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
 
@@ -2520,7 +2520,7 @@ mod test {
     }
 
     #[test]
-    fn write_column_subset() {
+    fn test_write_column_subset() {
         use columndescription::*;
 
         with_temp_file(|filename| {
@@ -2549,7 +2549,7 @@ mod test {
     }
 
     #[test]
-    fn write_string_col() {
+    fn test_write_string_col() {
         use columndescription::*;
 
         with_temp_file(|filename| {
@@ -2583,7 +2583,7 @@ mod test {
     }
 
     #[test]
-    fn write_string_col_range() {
+    fn test_write_string_col_range() {
         use columndescription::*;
 
         with_temp_file(|filename| {
@@ -2619,7 +2619,7 @@ mod test {
     }
 
     #[test]
-    fn read_image_data() {
+    fn test_read_image_data() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
         let first_row: Vec<i32> = hdu.read_section(&mut f, 0, 100).unwrap();
@@ -2634,7 +2634,7 @@ mod test {
     }
 
     #[test]
-    fn read_whole_image() {
+    fn test_read_whole_image() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
         let image: Vec<i32> = hdu.read_image(&mut f).unwrap();
@@ -2642,7 +2642,7 @@ mod test {
     }
 
     #[test]
-    fn read_image_rows() {
+    fn test_read_image_rows() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
         let row: Vec<i32> = hdu.read_rows(&mut f, 0, 2).unwrap();
@@ -2651,7 +2651,7 @@ mod test {
     }
 
     #[test]
-    fn read_image_row() {
+    fn test_read_image_row() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
         let row: Vec<i32> = hdu.read_row(&mut f, 0).unwrap();
@@ -2660,7 +2660,7 @@ mod test {
     }
 
     #[test]
-    fn read_image_slice() {
+    fn test_read_image_slice() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
 
@@ -2674,7 +2674,7 @@ mod test {
     }
 
     #[test]
-    fn read_image_region_from_table() {
+    fn test_read_image_region_from_table() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("TESTEXT").unwrap();
         match hdu.read_region::<i32>(&mut f, &vec![&(0..10), &(0..10)]) {
@@ -2686,7 +2686,7 @@ mod test {
     }
 
     #[test]
-    fn read_image_section_from_table() {
+    fn test_read_image_section_from_table() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("TESTEXT").unwrap();
         if let Err(Error::Message(msg)) = hdu.read_section::<i32>(&mut f, 0, 100) {
@@ -2779,7 +2779,7 @@ mod test {
     }
 
     #[test]
-    fn resizing_images() {
+    fn test_resizing_images() {
         with_temp_file(|filename| {
             // Scope ensures file is closed properly
             {
@@ -2817,7 +2817,7 @@ mod test {
     }
 
     #[test]
-    fn resize_3d() {
+    fn test_resize_3d() {
         with_temp_file(|filename| {
             // Scope ensures file is closed properly
             {
@@ -2855,7 +2855,7 @@ mod test {
     }
 
     #[test]
-    fn write_image_section_to_table() {
+    fn test_write_image_section_to_table() {
         with_temp_file(|filename| {
             let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
@@ -2879,7 +2879,7 @@ mod test {
     }
 
     #[test]
-    fn write_image_region_to_table() {
+    fn test_write_image_region_to_table() {
         use columndescription::*;
 
         with_temp_file(|filename| {
@@ -2905,7 +2905,7 @@ mod test {
     }
 
     #[test]
-    fn multi_hdu_workflow() {
+    fn test_multi_hdu_workflow() {
         /* Check that hdu objects change the current HDU on every file access method */
 
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -2923,14 +2923,14 @@ mod test {
     }
 
     #[test]
-    fn access_fptr_unsafe() {
+    fn test_access_fptr_unsafe() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let fptr: *const sys::fitsfile = unsafe { f.as_raw() };
         assert!(!fptr.is_null());
     }
 
     #[test]
-    fn extended_filename_syntax() {
+    fn test_extended_filename_syntax() {
         let filename = "../testdata/full_example.fits[TESTEXT]";
         let f = FitsFile::open(filename).unwrap();
         match f.fetch_hdu_info() {
@@ -2941,7 +2941,7 @@ mod test {
     }
 
     #[test]
-    fn copy_hdu() {
+    fn test_copy_hdu() {
         duplicate_test_file(|src_filename| {
             with_temp_file(|dest_filename| {
                 let mut src = FitsFile::open(src_filename).unwrap();
@@ -2961,7 +2961,7 @@ mod test {
     }
 
     #[test]
-    fn changing_image_returns_new_hdu() {
+    fn test_changing_image_returns_new_hdu() {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::edit(filename).unwrap();
             let hdu = f.hdu(0).unwrap();
@@ -2977,7 +2977,7 @@ mod test {
     }
 
     #[test]
-    fn fetch_hdu_name() {
+    fn test_fetch_hdu_name() {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("TESTEXT").unwrap();
@@ -2986,7 +2986,7 @@ mod test {
     }
 
     #[test]
-    fn inserting_columns() {
+    fn test_inserting_columns() {
         duplicate_test_file(|filename| {
             use columndescription::{ColumnDataType, ColumnDescription};
 
@@ -3013,7 +3013,7 @@ mod test {
     }
 
     #[test]
-    fn appending_columns() {
+    fn test_appending_columns() {
         duplicate_test_file(|filename| {
             use columndescription::{ColumnDataType, ColumnDescription};
 
@@ -3043,7 +3043,7 @@ mod test {
     }
 
     #[test]
-    fn deleting_columns_by_name() {
+    fn test_deleting_columns_by_name() {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::edit(filename).unwrap();
             let hdu = f.hdu("TESTEXT").unwrap();
@@ -3062,7 +3062,7 @@ mod test {
     }
 
     #[test]
-    fn delete_hdu() {
+    fn test_delete_hdu() {
         duplicate_test_file(|filename| {
             {
                 let mut f = FitsFile::edit(filename).unwrap();
@@ -3077,7 +3077,7 @@ mod test {
     }
 
     #[test]
-    fn deleting_columns_by_number() {
+    fn test_deleting_columns_by_number() {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::edit(filename).unwrap();
             let hdu = f.hdu("TESTEXT").unwrap();
@@ -3096,7 +3096,7 @@ mod test {
     }
 
     #[test]
-    fn hdu_iterator() {
+    fn test_hdu_iterator() {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::open(filename).unwrap();
             let mut counter = 0;
