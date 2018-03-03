@@ -158,7 +158,7 @@ impl FitsFile {
         FitsHdu::new(self, hdu_description)
     }
 
-    /// Return the primary hdu
+    /// Return the primary hdu (HDU 0)
     pub fn primary_hdu(&mut self) -> Result<FitsHdu> {
         self.hdu(0)
     }
