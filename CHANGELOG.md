@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Addded
 
+* (`fitsio`) add `primary_hdu` method
+
 ### Changed
 
 * (`fitsio`) _breaking change_: inverted the order of image/region axes to match the C row-major convention
