@@ -11,6 +11,7 @@ Before submitting a completed PR, make sure the following items have been addres
 * **update the changelog** - try to keep with the existing format, and add any additions, changes or removals to the `upstream` section.
 * **format the code** - make sure the code has been formatted by `rustfmt` before submitting. I have a [git `pre-push` hook](https://gist.github.com/zofrex/4a5084c49e4aadd0a3fa0edda14b1fa8) which handles this for me.
 * **update the features tracking issue** - if relevant, update the [features tracking issue][features-tracking-issue]
+* **update the full example** - if new features have been added, or changes made, update the `full_example.rs` example
 
 [features-tracking-issue]: https://github.com/mindriot101/rust-fitsio/issues/15
 

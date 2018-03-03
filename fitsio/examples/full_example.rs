@@ -44,7 +44,7 @@ fn run() -> Result<(), Box<Error>> {
          */
 
         /* First we get the primary HDU */
-        let hdu = fitsfile.hdu(0)?;
+        let hdu = fitsfile.primary_hdu()?;
 
         /* Now we add the header keys */
         hdu.write_key(
@@ -114,7 +114,7 @@ fn run() -> Result<(), Box<Error>> {
 
     /* Get the primary HDU and read a section of the image data */
 
-    let phdu = fitsfile.hdu(0)?;
+    let phdu = fitsfile.primary_hdu()?;
 
     /* Let's say we have a region around a star that we want to extract. The star is at (25, 25,
      * 1-indexed) and we want to extract a 5x5 box around it. This means we want to read rows 19 to

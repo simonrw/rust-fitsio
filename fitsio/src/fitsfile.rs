@@ -158,6 +158,11 @@ impl FitsFile {
         FitsHdu::new(self, hdu_description)
     }
 
+    /// Return the primary hdu (HDU 0)
+    pub fn primary_hdu(&mut self) -> Result<FitsHdu> {
+        self.hdu(0)
+    }
+
     /// Return the number of HDU objects in the file
     pub fn num_hdus(&mut self) -> Result<usize> {
         let mut status = 0;
@@ -2174,6 +2179,13 @@ mod test {
             hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
             "TESTEXT".to_string()
         );
+    }
+
+    #[test]
+    fn fetch_primary_hdu() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.primary_hdu().unwrap();
+        assert_eq!(f.hdu_number(), 0);
     }
 
     #[test]
