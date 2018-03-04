@@ -58,19 +58,18 @@ datatype_into_impl!(i64);
 datatype_into_impl!(u64);
 
 /// Data types used for defining images
-#[allow(non_camel_case_types, missing_docs)]
-#[repr(C)]
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ImageType {
-    BYTE_IMG,
-    SBYTE_IMG,
-    SHORT_IMG,
-    USHORT_IMG,
-    LONG_IMG,
-    ULONG_IMG,
-    LONGLONG_IMG,
-    FLOAT_IMG,
-    DOUBLE_IMG,
+    UnsignedByte,
+    Byte,
+    Short,
+    UnsignedShort,
+    Long,
+    UnsignedLong,
+    LongLong,
+    Float,
+    Double,
 }
 
 macro_rules! imagetype_into_impl {
@@ -78,15 +77,15 @@ macro_rules! imagetype_into_impl {
         impl From<ImageType> for $t {
             fn from(original: ImageType) -> $t {
                 match original {
-                    ImageType::BYTE_IMG => 8,
-                    ImageType::SBYTE_IMG => 10,
-                    ImageType::SHORT_IMG => 16,
-                    ImageType::USHORT_IMG => 20,
-                    ImageType::LONG_IMG => 32,
-                    ImageType::ULONG_IMG => 40,
-                    ImageType::LONGLONG_IMG => 64,
-                    ImageType::FLOAT_IMG => -32,
-                    ImageType::DOUBLE_IMG => -64,
+                    ImageType::UnsignedByte => 8,
+                    ImageType::Byte => 10,
+                    ImageType::Short => 16,
+                    ImageType::UnsignedShort => 20,
+                    ImageType::Long => 32,
+                    ImageType::UnsignedLong => 40,
+                    ImageType::LongLong => 64,
+                    ImageType::Float => -32,
+                    ImageType::Double => -64,
                 }
             }
         }
@@ -198,21 +197,21 @@ mod test {
 
     #[test]
     fn test_image_types() {
-        assert_eq!(i8::from(ImageType::BYTE_IMG), 8);
-        assert_eq!(i8::from(ImageType::SBYTE_IMG), 10);
-        assert_eq!(i8::from(ImageType::SHORT_IMG), 16);
-        assert_eq!(i8::from(ImageType::USHORT_IMG), 20);
-        assert_eq!(i8::from(ImageType::LONG_IMG), 32);
-        assert_eq!(i8::from(ImageType::LONGLONG_IMG), 64);
-        assert_eq!(i8::from(ImageType::FLOAT_IMG), -32);
-        assert_eq!(i8::from(ImageType::DOUBLE_IMG), -64);
+        assert_eq!(i8::from(ImageType::UnsignedByte), 8);
+        assert_eq!(i8::from(ImageType::Byte), 10);
+        assert_eq!(i8::from(ImageType::Short), 16);
+        assert_eq!(i8::from(ImageType::UnsignedShort), 20);
+        assert_eq!(i8::from(ImageType::Long), 32);
+        assert_eq!(i8::from(ImageType::LongLong), 64);
+        assert_eq!(i8::from(ImageType::Float), -32);
+        assert_eq!(i8::from(ImageType::Double), -64);
     }
 
     #[test]
     fn test_hdu_types() {
         let image_info = HduInfo::ImageInfo {
             shape: Vec::new(),
-            image_type: ImageType::LONGLONG_IMG,
+            image_type: ImageType::LongLong,
         };
 
         let table_info = HduInfo::TableInfo {

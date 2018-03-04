@@ -14,7 +14,7 @@ fn test_ushort_reading() {
     let mut f = FitsFile::open(filename).unwrap();
     let hdu = f.hdu(0).unwrap();
     match hdu.info {
-        HduInfo::ImageInfo { image_type, .. } => assert_eq!(image_type, ImageType::USHORT_IMG),
+        HduInfo::ImageInfo { image_type, .. } => assert_eq!(image_type, ImageType::UnsignedShort),
         _ => panic!("Invalid hdu type, should be image with short integers"),
     }
 }

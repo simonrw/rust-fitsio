@@ -88,7 +88,7 @@
 //!
 //! // let filename = ...;
 //! let description = ImageDescription {
-//!     data_type: ImageType::DOUBLE_IMG,
+//!     data_type: ImageType::Double,
 //!     dimensions: &[52, 103],
 //! };
 //! let fptr = FitsFile::create(filename)
@@ -140,7 +140,7 @@
 //!   file: ../testdata/full_example.fits
 //!   mode: READONLY
 //!   extnum hdutype      hduname    details
-//!   0      IMAGE_HDU               dimensions: [100, 100], type: LONG_IMG
+//!   0      IMAGE_HDU               dimensions: [100, 100], type: Long
 //!   1      BINARY_TBL   TESTEXT    num_cols: 4, num_rows: 50
 //! ```
 //!
@@ -199,7 +199,7 @@
 //! # let filename = tdir_path.join("test.fits");
 //! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! let image_description = ImageDescription {
-//!     data_type: ImageType::FLOAT_IMG,
+//!     data_type: ImageType::Float,
 //!     dimensions: &[100, 100],
 //! };
 //! let hdu = fptr.create_image("EXTNAME".to_string(), &image_description).unwrap();
@@ -323,7 +323,7 @@
 //! # let filename = tdir_path.join("test.fits");
 //! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let image_description = ImageDescription {
-//! #     data_type: ImageType::FLOAT_IMG,
+//! #     data_type: ImageType::Float,
 //! #     dimensions: &[100, 100],
 //! # };
 //! # let hdu = fptr.create_image("EXTNAME".to_string(), &image_description).unwrap();
@@ -523,7 +523,7 @@
 //! # let filename = tdir_path.join("test.fits");
 //! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let desc = ImageDescription {
-//! #    data_type: ImageType::FLOAT_IMG,
+//! #    data_type: ImageType::Float,
 //! #    dimensions: &[100, 100],
 //! # };
 //! # let hdu = fptr.create_image("".to_string(), &desc).unwrap();
@@ -547,7 +547,7 @@
 //! # let filename = tdir_path.join("test.fits");
 //! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let desc = ImageDescription {
-//! #    data_type: ImageType::FLOAT_IMG,
+//! #    data_type: ImageType::Float,
 //! #    dimensions: &[100, 100],
 //! # };
 //! # let hdu = fptr.create_image("".to_string(), &desc).unwrap();
