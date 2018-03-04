@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 * (`fitsio`) _breaking change_: all ranges are now exclusive of the upper value, matching Rust's default behaviour
 * (`fitsio`) `WritesKey::write_key` now accepts &str's as well as `String`s
 * (`fitsio`) `create_image` and `create_table` take `Into<String>`
+* (`fitsio`) _breaking change_: changed ImageType variants to be more rusty
 
 ### Removed
 
