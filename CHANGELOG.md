@@ -13,11 +13,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Changed
 
-* (`fitsio`) _breaking change_: inverted the order of image/region axes to match the C row-major convention
-* (`fitsio`) _breaking change_: all ranges are now exclusive of the upper value, matching Rust's default behaviour
+* (`fitsio`) **BREAKING CHANGE**: inverted the order of image/region axes to match the C row-major convention
+* (`fitsio`) **BREAKING CHANGE**: all ranges are now exclusive of the upper value, matching Rust's default behaviour
 * (`fitsio`) `WritesKey::write_key` now accepts &str's as well as `String`s
 * (`fitsio`) `create_image` and `create_table` take `Into<String>`
-* (`fitsio`) _breaking change_: changed ImageType variants to be more rusty
+* (`fitsio`) **BREAKING CHANGE**: changed ImageType variants to be more rusty
 
 ### Removed
 
