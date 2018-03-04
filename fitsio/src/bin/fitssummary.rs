@@ -6,13 +6,13 @@ use std::process;
 fn main() {
     let mut nfiles = 0;
     env::args().skip(1).for_each(|arg| {
-        let mut f = fitsio::FitsFile::open(arg).expect("opening file");
-        f.pretty_print().expect("printing summary");
-        nfiles += 1;
+        if let Ok(_) = fitsio::FitsFile::open(arg).map(|mut f| f.pretty_print()) {
+            nfiles += 1;
+        }
     });
 
     if nfiles == 0 {
-        eprintln!("No files supplied");
+        eprintln!("No valid fits files supplied");
         process::exit(1);
     }
 }
