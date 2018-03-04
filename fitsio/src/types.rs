@@ -58,8 +58,7 @@ datatype_into_impl!(i64);
 datatype_into_impl!(u64);
 
 /// Data types used for defining images
-#[allow(non_camel_case_types, missing_docs)]
-#[repr(C)]
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ImageType {
     UnsignedByte,
