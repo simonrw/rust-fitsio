@@ -103,8 +103,8 @@ impl ::std::fmt::Display for Error {
         match *self {
             Error::Fits(ref e) => write!(f, "Fits error: {:?}", e),
             Error::Message(ref s) => write!(f, "Error: {}", s),
-            Error::Null(ref e) => write!(f, "Error: {}", e),
-            Error::Utf8(ref e) => write!(f, "Error: {}", e),
+            Error::Null(ref e) => e.fmt(f),
+            Error::Utf8(ref e) => e.fmt(f),
             Error::Index(ref e) => write!(f, "Error: {:?}", e),
             Error::Io(ref e) => e.fmt(f),
         }
