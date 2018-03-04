@@ -314,11 +314,14 @@ impl FitsFile {
     /// Create a new fits table
     ///
     /// Create a new fits table, with columns as detailed in the `ColumnDescription` object.
-    pub fn create_table(
+    pub fn create_table<T>(
         &mut self,
-        extname: String,
+        extname: T,
         table_description: &[ConcreteColumnDescription],
-    ) -> Result<FitsHdu> {
+    ) -> Result<FitsHdu>
+    where
+        T: Into<String>,
+    {
         fits_check_readwrite!(self);
 
         let tfields = {
@@ -337,7 +340,7 @@ impl FitsFile {
             stringutils::StringList::from_slice(stringlist.as_slice())?
         };
 
-        let c_extname = ffi::CString::new(extname)?;
+        let c_extname = ffi::CString::new(extname.into())?;
 
         let hdu_info = HduInfo::TableInfo {
             column_descriptions: table_description.to_vec(),
@@ -363,11 +366,14 @@ impl FitsFile {
     }
 
     /// Create a new fits image, and return the [`FitsHdu`](struct.FitsHdu.html) object
-    pub fn create_image(
+    pub fn create_image<T>(
         &mut self,
-        extname: String,
+        extname: T,
         image_description: &ImageDescription,
-    ) -> Result<FitsHdu> {
+    ) -> Result<FitsHdu>
+    where
+        T: Into<String>,
+    {
         fits_check_readwrite!(self);
 
         let naxis = image_description.dimensions.len();
@@ -404,7 +410,7 @@ impl FitsFile {
 
         // Current HDU should be at the new HDU
         let current_hdu = try!(self.current_hdu());
-        current_hdu.write_key(self, "EXTNAME", extname)?;
+        current_hdu.write_key(self, "EXTNAME", extname.into())?;
 
         check_status(status).and_then(|_| self.current_hdu())
     }

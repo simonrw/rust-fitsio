@@ -69,7 +69,7 @@ fn run() -> Result<(), Box<Error>> {
             data_type: ImageType::LONG_IMG,
             dimensions: &[256, 256],
         };
-        fitsfile.create_image("IMG".to_string(), &image_description)?;
+        fitsfile.create_image("IMG", &image_description)?;
 
         /* Now we add a new table HDU called "DATA"
          *
@@ -90,7 +90,7 @@ fn run() -> Result<(), Box<Error>> {
             .with_type(ColumnDataType::Float)
             .create()?;
         let columns = &[col1, col2, col3];
-        let table_hdu = fitsfile.create_table("DATA".to_string(), columns)?;
+        let table_hdu = fitsfile.create_table("DATA", columns)?;
 
         /* Add some data to the columns */
         let n_rows = 10;
