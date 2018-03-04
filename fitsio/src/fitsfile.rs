@@ -53,6 +53,7 @@ pub struct ImageDescription<'a> {
 pub struct FitsFile {
     /// Name of the file
     pub filename: String,
+    open_mode: FileOpenMode,
     fptr: *const sys::fitsfile,
 }
 
@@ -85,6 +86,7 @@ impl FitsFile {
 
         check_status(status).map(|_| FitsFile {
             fptr,
+            open_mode: FileOpenMode::READONLY,
             filename: filename.to_string(),
         })
     }
@@ -107,6 +109,7 @@ impl FitsFile {
 
         check_status(status).map(|_| FitsFile {
             fptr,
+            open_mode: FileOpenMode::READWRITE,
             filename: filename.to_string(),
         })
     }
@@ -531,6 +534,7 @@ where
         check_status(status).and_then(|_| {
             let mut f = FitsFile {
                 fptr,
+                open_mode: FileOpenMode::READWRITE,
                 filename: path.to_string(),
             };
 
