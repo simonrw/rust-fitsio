@@ -28,12 +28,12 @@ mod tests {
 
     #[test]
     fn test_check_status_ok() {
-        assert_eq!(check_status(0), Ok(()));
+        assert!(check_status(0).is_ok());
     }
 
     #[test]
     fn test_check_status_ok_with_value() {
-        assert_eq!(check_status(0).map(|_| 10i32), Ok(10i32));
+        assert_eq!(check_status(0).map(|_| 10i32).unwrap(), 10i32);
     }
 
     #[test]

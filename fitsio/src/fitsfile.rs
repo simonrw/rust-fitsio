@@ -2394,13 +2394,10 @@ mod test {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         match hdu.read_col_range::<i32>(&mut f, "intcol", &(0..1024)) {
-            Err(e) => assert_eq!(
-                e,
-                Error::Index(IndexError {
-                    message: "given indices out of range".to_string(),
-                    given: (0..1024),
-                })
-            ),
+            Err(Error::Index(IndexError { message, given })) => {
+                assert_eq!(message, "given indices out of range".to_string());
+                assert_eq!(given, (0..1024));
+            }
             _ => panic!("Should be error"),
         }
     }

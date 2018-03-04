@@ -7,10 +7,11 @@ use std::ffi::NulError;
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 use std::ops::Range;
+use std::io;
 use fitserror::FitsError;
 
 /// Enumeration of all error types
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum Error {
     /// Internal Fits errors
     Fits(FitsError),
@@ -26,6 +27,9 @@ pub enum Error {
 
     /// UTF-8 conversion errors
     Utf8(Utf8Error),
+
+    /// IO errors
+    Io(io::Error),
 }
 
 /// Error raised when the user requests invalid indexes for data
@@ -88,6 +92,12 @@ impl ::std::convert::From<Box<::std::error::Error>> for Error {
     }
 }
 
+impl ::std::convert::From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        Error::Io(e)
+    }
+}
+
 impl ::std::fmt::Display for Error {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::result::Result<(), ::std::fmt::Error> {
         match *self {
@@ -96,6 +106,7 @@ impl ::std::fmt::Display for Error {
             Error::Null(ref e) => write!(f, "Error: {}", e),
             Error::Utf8(ref e) => write!(f, "Error: {}", e),
             Error::Index(ref e) => write!(f, "Error: {:?}", e),
+            Error::Io(ref e) => e.fmt(f),
         }
     }
 }
