@@ -1,6 +1,7 @@
 //! `fitsio` - a thin wrapper around the [`cfitsio`][1] C library.
 //!
 //! * [File access](#file-access)
+//!     * [Pretty printing](#pretty-printing)
 //! * [HDU access](#hdu-access)
 //! * [Creating new HDUs](#creating-new-hdus)
 //!     * [Creating a new image](#creating-a-new-image)
@@ -112,6 +113,35 @@
 //! // let filename = ...;
 //! let fptr = FitsFile::edit(filename).unwrap();
 //! # }
+//! ```
+//!
+//! ## Pretty printing
+//!
+//! Fits files can be pretty-printed with [`pretty_print`][pretty-print], or its more powerful
+//! cousin [`pretty_write`][pretty-write].
+//!
+//! ```rust
+//! # use fitsio::FitsFile;
+//! # let filename = "../testdata/full_example.fits";
+//! # use std::io;
+//! let mut fptr = FitsFile::open(filename).unwrap();
+//! fptr.pretty_print().unwrap();
+//! // or
+//! fptr.pretty_write(&mut io::stdout()).unwrap();
+//! ```
+//!
+//! In the continuing tradition of releasing fits summary programs with each fits library, this
+//! create contains a binary program `fitssummary` which can be installed with `cargo install`. This
+//! takes fits files on the command line and prints their summaries to stdout.
+//!
+//! ```sh
+//! $ fitssummary ../testdata/full_example.fits
+//!
+//!   file: ../testdata/full_example.fits
+//!   mode: READONLY
+//!   extnum hdutype      hduname    details
+//!   0      IMAGE_HDU               dimensions: [100, 100], type: LONG_IMG
+//!   1      BINARY_TBL   TESTEXT    num_cols: 4, num_rows: 50
 //! ```
 //!
 //! # HDU access
@@ -787,6 +817,8 @@
 //! [new-fits-file]: fitsfile/struct.NewFitsFile.html
 //! [new-fits-file-open]: fitsfile/struct.NewFitsFile.html#method.open
 //! [new-fits-file-with-custom-primary]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
+//! [pretty-print]: fitsfile/struct.FitsFile.html#method.pretty_print
+//! [pretty-write]: fitsfile/struct.FitsFile.html#method.pretty_write
 
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
