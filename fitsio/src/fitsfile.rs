@@ -16,6 +16,7 @@ use columndescription::*;
 use libc;
 use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
 use std::ffi;
+use std::io::{self, Write};
 use std::ptr;
 use std::path::Path;
 use std::ops::Range;
@@ -426,6 +427,68 @@ impl FitsFile {
             max: self.num_hdus().unwrap(),
             fits_file: self,
         }
+    }
+
+    /// Pretty-print file to stdout
+    pub fn pretty_print(&mut self) -> Result<()> {
+        let stdout = io::stdout();
+        let mut handle = stdout.lock();
+
+        self.pretty_write(&mut handle)
+    }
+
+    /// Pretty-print the fits file structure to any `Write` implementor
+    pub fn pretty_write<W>(&mut self, w: &mut W) -> Result<()>
+    where
+        W: Write,
+    {
+        writeln!(w, "\n  file: {}", self.filename)?;
+        match self.open_mode {
+            FileOpenMode::READONLY => writeln!(w, "  mode: READONLY")?,
+            FileOpenMode::READWRITE => writeln!(w, "  mode: READWRITE")?,
+        };
+
+        /* Header line for HDUs */
+        writeln!(w, "  extnum hdutype      hduname    details")?;
+
+        let hdu_names = self.hdu_names().expect("fetching hdu names");
+
+        for (i, hdu) in self.iter().enumerate() {
+            let hdu_name = &hdu_names[i];
+
+            match hdu.info {
+                HduInfo::ImageInfo { shape, image_type } => {
+                    let hdu_type = "IMAGE_HDU";
+                    writeln!(
+                        w,
+                        "  {extnum:<6} {hdu_type:12} {hdu_name:10} dimensions: {dimensions:?}, type: {image_type:?}",
+                        extnum = i,
+                        hdu_type = hdu_type,
+                        hdu_name = hdu_name,
+                        dimensions = shape,
+                        image_type = image_type,
+                    )?;
+                }
+                HduInfo::TableInfo {
+                    column_descriptions,
+                    num_rows,
+                } => {
+                    let hdu_type = "BINARY_TBL";
+                    writeln!(
+                        w,
+                        "  {extnum:<6} {hdu_type:12} {hdu_name:10} num_cols: {num_cols}, num_rows: {num_rows}",
+                        extnum = i,
+                        hdu_type = hdu_type,
+                        hdu_name = hdu_name,
+                        num_cols = column_descriptions.len(),
+                        num_rows = num_rows,
+                    )?;
+                }
+                HduInfo::AnyInfo => unreachable!(),
+            }
+        }
+
+        Ok(())
     }
 
     /// Return a pointer to the underlying C `fitsfile` object representing the current file.
