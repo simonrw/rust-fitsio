@@ -503,9 +503,9 @@
 //!
 //! ## Writing images
 //!
-//! Image data is written through two methods on the HDU object:
-//! [`write_section`][fits-hdu-write-section] and
-//! [`write_region`][fits-hdu-write-region].
+//! Image data is written through three methods on the HDU object:
+//! [`write_section`][fits-hdu-write-section], [`write_region`][fits-hdu-write-region], and
+//! [`write_image`](fits-hdu-write-image).
 //!
 //! [`write_section`][fits-hdu-write-section] requires a start index and
 //! end index and data to write. The data parameter needs to be a slice, meaning any contiguous
@@ -559,6 +559,31 @@
 //!
 //! _Unlike cfitsio, the order of the ranges follows the C convention, i.e.
 //! [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)._
+//!
+//! [`write_image`][fits-hdu-write-image] writes all of the data passed (if possible) into the
+//! image. If more data is passed than pixels in the image, the method returns with an error.
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # extern crate tempdir;
+//! # use fitsio::fitsfile::ImageDescription;
+//! # use fitsio::types::ImageType;
+//! #
+//! # fn main() {
+//! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+//! # let tdir_path = tdir.path();
+//! # let filename = tdir_path.join("test.fits");
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
+//! # let desc = ImageDescription {
+//! #    data_type: ImageType::Float,
+//! #    dimensions: &[3, 1],
+//! # };
+//! # let hdu = fptr.create_image("".to_string(), &desc).unwrap();
+//! // Image is 3x1
+//! assert!(hdu.write_image(&mut fptr, &[1.0, 2.0, 3.0]).is_ok());
+//! assert!(hdu.write_image(&mut fptr, &[1.0, 2.0, 3.0, 4.0]).is_err());
+//! # }
+//! ```
 //!
 //! ### Resizing an image
 //!
@@ -804,6 +829,7 @@
 //! [fits-hdu-write-col]: fitsfile/struct.FitsHdu.html#method.write_col
 //! [fits-hdu-write-col-range]: fitsfile/struct.FitsHdu.html#method.write_col_range
 //! [fits-hdu-write-region]: fitsfile/struct.FitsHdu.html#method.write_region
+//! [fits-hdu-write-image]: fitsfile/struct.FitsHdu.html#method.write_image
 //! [fits-hdu-write-section]: fitsfile/struct.FitsHdu.html#method.write_section
 //! [fits-hdu-iter]: fitsfile/struct.FitsHdu.html#method.iter
 //! [fits-hdu-copy-to]: fitsfile/struct.FitsHdu.html#method.copy_to
