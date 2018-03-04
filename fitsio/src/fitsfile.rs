@@ -17,6 +17,7 @@ use libc;
 use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
 use std::ffi;
 use std::ptr;
+use std::path::Path;
 use std::ops::Range;
 
 static MAX_VALUE_LENGTH: usize = 71;
@@ -67,11 +68,11 @@ impl FitsFile {
     ///
     /// // Continue to use `f` afterwards
     /// ```
-    pub fn open<T: Into<String>>(filename: T) -> Result<Self> {
+    pub fn open<T: AsRef<Path>>(filename: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
-        let filename = filename.into();
-        let c_filename = ffi::CString::new(filename.as_str())?;
+        let filename = filename.as_ref().to_str().expect("converting filename");
+        let c_filename = ffi::CString::new(filename)?;
 
         unsafe {
             sys::ffopen(
@@ -84,16 +85,16 @@ impl FitsFile {
 
         check_status(status).map(|_| FitsFile {
             fptr,
-            filename: filename.clone(),
+            filename: filename.to_string(),
         })
     }
 
     /// Open a fits file in read/write mode
-    pub fn edit<T: Into<String>>(filename: T) -> Result<Self> {
+    pub fn edit<T: AsRef<Path>>(filename: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
-        let filename = filename.into();
-        let c_filename = ffi::CString::new(filename.as_str())?;
+        let filename = filename.as_ref().to_str().expect("converting filename");
+        let c_filename = ffi::CString::new(filename)?;
 
         unsafe {
             sys::ffopen(
@@ -106,14 +107,14 @@ impl FitsFile {
 
         check_status(status).map(|_| FitsFile {
             fptr,
-            filename: filename.clone(),
+            filename: filename.to_string(),
         })
     }
 
     /// Create a new fits file on disk
-    pub fn create<'a, T: Into<String>>(path: T) -> NewFitsFile<'a> {
+    pub fn create<'a, T: AsRef<Path>>(path: T) -> NewFitsFile<'a, T> {
         NewFitsFile {
-            path: path.into(),
+            path,
             image_description: None,
         }
     }
@@ -498,20 +499,26 @@ impl Drop for FitsFile {
 /// [new-fits-file]: struct.NewFitsFile.html
 /// [new-fits-file-open]: struct.NewFitsFile.html#method.open
 /// [new-fits-file-with-custom-primary]: struct.NewFitsFile.html#method.with_custom_primary
-pub struct NewFitsFile<'a> {
-    path: String,
+pub struct NewFitsFile<'a, T>
+where
+    T: AsRef<Path>,
+{
+    path: T,
     image_description: Option<ImageDescription<'a>>,
 }
 
-impl<'a> NewFitsFile<'a> {
+impl<'a, T> NewFitsFile<'a, T>
+where
+    T: AsRef<Path>,
+{
     /// Create a `Result<FitsFile>` from a temporary [`NewFitsFile`][new-fits-file] representation.
     ///
     /// [new-fits-file]: struct.NewFitsFile.html
     pub fn open(self) -> Result<FitsFile> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
-        let path = &self.path;
-        let c_filename = ffi::CString::new(path.as_str())?;
+        let path = self.path.as_ref().to_str().expect("converting filename");
+        let c_filename = ffi::CString::new(path)?;
 
         unsafe {
             sys::ffinit(
@@ -524,7 +531,7 @@ impl<'a> NewFitsFile<'a> {
         check_status(status).and_then(|_| {
             let mut f = FitsFile {
                 fptr,
-                filename: path.clone(),
+                filename: path.to_string(),
             };
 
             match self.image_description {

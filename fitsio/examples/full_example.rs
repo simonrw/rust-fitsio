@@ -33,7 +33,7 @@ fn run() -> Result<(), Box<Error>> {
     };
 
     {
-        let mut fitsfile = FitsFile::create(file_path.to_str().unwrap())
+        let mut fitsfile = FitsFile::create(&file_path)
             .with_custom_primary(&primary_hdu_description)
             .open()?;
 
@@ -106,7 +106,7 @@ fn run() -> Result<(), Box<Error>> {
     }
 
     /* Here we re-open the file. We want to adjust things, so we use the `edit` method */
-    let mut fitsfile = FitsFile::edit(file_path.to_str().unwrap())?;
+    let mut fitsfile = FitsFile::edit(&file_path)?;
 
     /* Get the primary HDU and read a section of the image data */
 
