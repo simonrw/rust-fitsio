@@ -108,8 +108,10 @@ fn run() -> Result<(), Box<Error>> {
     /* Here we re-open the file. We want to adjust things, so we use the `edit` method */
     let mut fitsfile = FitsFile::edit(&file_path)?;
 
-    /* Get the primary HDU and read a section of the image data */
+    /* Print the fits file contents to stdout */
+    fitsfile.pretty_print().expect("printing fits file");
 
+    /* Get the primary HDU and read a section of the image data */
     let phdu = fitsfile.primary_hdu()?;
 
     /* Let's say we have a region around a star that we want to extract. The star is at (25, 25,
