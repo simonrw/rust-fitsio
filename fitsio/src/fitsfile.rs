@@ -143,7 +143,7 @@ impl FitsFile {
         unsafe {
             sys::ffphps(
                 self.fptr as *mut _,
-                ImageType::BYTE_IMG.into(),
+                ImageType::UnsignedByte.into(),
                 0,
                 ptr::null_mut(),
                 &mut status,
@@ -250,15 +250,15 @@ impl FitsFile {
                 }
 
                 let image_type = match bitpix {
-                    8 => ImageType::BYTE_IMG,
-                    10 => ImageType::SBYTE_IMG,
-                    16 => ImageType::SHORT_IMG,
-                    20 => ImageType::USHORT_IMG,
-                    32 => ImageType::LONG_IMG,
-                    40 => ImageType::ULONG_IMG,
-                    64 => ImageType::LONGLONG_IMG,
-                    -32 => ImageType::FLOAT_IMG,
-                    -64 => ImageType::DOUBLE_IMG,
+                    8 => ImageType::UnsignedByte,
+                    10 => ImageType::Byte,
+                    16 => ImageType::Short,
+                    20 => ImageType::UnsignedShort,
+                    32 => ImageType::Long,
+                    40 => ImageType::UnsignedLong,
+                    64 => ImageType::LongLong,
+                    -32 => ImageType::Float,
+                    -64 => ImageType::Double,
                     _ => unreachable!(&format!("Unhandled image bitpix type: {}", bitpix)),
                 };
 
@@ -534,7 +534,7 @@ impl Drop for FitsFile {
 ///
 /// // let filename = ...;
 /// let description = ImageDescription {
-///     data_type: ImageType::DOUBLE_IMG,
+///     data_type: ImageType::Double,
 ///     dimensions: &[52, 103],
 /// };
 /// let fptr = FitsFile::create(filename)
@@ -1947,7 +1947,7 @@ mod test {
         with_temp_file(|filename| {
             {
                 let description = ImageDescription {
-                    data_type: ImageType::DOUBLE_IMG,
+                    data_type: ImageType::Double,
                     dimensions: &[100, 103],
                 };
                 FitsFile::create(filename)
@@ -1960,7 +1960,7 @@ mod test {
             match hdu.info {
                 HduInfo::ImageInfo { shape, image_type } => {
                     assert_eq!(shape, vec![100, 103]);
-                    assert_eq!(image_type, ImageType::DOUBLE_IMG);
+                    assert_eq!(image_type, ImageType::Double);
                 }
                 _ => panic!("INVALID"),
             }
@@ -1977,7 +1977,7 @@ mod test {
             match f.create_image(
                 "FOO".to_string(),
                 &ImageDescription {
-                    data_type: ImageType::LONG_IMG,
+                    data_type: ImageType::Long,
                     dimensions: &[100, 100],
                 },
             ) {
@@ -2048,7 +2048,7 @@ mod test {
             Ok(HduInfo::ImageInfo { shape, image_type }) => {
                 assert_eq!(shape.len(), 2);
                 assert_eq!(shape, vec![100, 100]);
-                assert_eq!(image_type, ImageType::LONG_IMG);
+                assert_eq!(image_type, ImageType::Long);
             }
             Err(e) => panic!("Error fetching hdu info {:?}", e),
             _ => panic!("Unknown error"),
@@ -2153,7 +2153,7 @@ mod test {
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
-                    data_type: ImageType::LONG_IMG,
+                    data_type: ImageType::Long,
                     dimensions: &[100, 20],
                 };
                 f.create_image("foo".to_string(), &image_description)
@@ -2182,7 +2182,7 @@ mod test {
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
-                    data_type: ImageType::LONG_IMG,
+                    data_type: ImageType::Long,
                     dimensions: &dimensions,
                 };
                 let image_hdu = f.create_image("foo".to_string(), &image_description)
@@ -2268,7 +2268,7 @@ mod test {
         with_temp_file(|filename| {
             let mut f = FitsFile::create(filename).open().unwrap();
             let image_description = ImageDescription {
-                data_type: ImageType::LONG_IMG,
+                data_type: ImageType::Long,
                 dimensions: &[100, 20],
             };
             let hdu: FitsHdu = f.create_image("foo".to_string(), &image_description)
@@ -2558,7 +2558,7 @@ mod test {
             let mut f = FitsFile::create(filename).open().unwrap();
 
             let image_description = ImageDescription {
-                data_type: ImageType::LONG_IMG,
+                data_type: ImageType::Long,
                 dimensions: &[100, 20],
             };
             let hdu = f.create_image("foo".to_string(), &image_description)
@@ -2761,7 +2761,7 @@ mod test {
 
                 let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
-                    data_type: ImageType::LONG_IMG,
+                    data_type: ImageType::Long,
                     dimensions: &[100, 20],
                 };
                 let hdu = f.create_image("foo".to_string(), &image_description)
@@ -2785,7 +2785,7 @@ mod test {
 
                 let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
-                    data_type: ImageType::LONG_IMG,
+                    data_type: ImageType::Long,
                     dimensions: &[100, 5],
                 };
                 let hdu = f.create_image("foo".to_string(), &image_description)
@@ -2816,7 +2816,7 @@ mod test {
 
                 let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
-                    data_type: ImageType::LONG_IMG,
+                    data_type: ImageType::Long,
                     dimensions: &[100, 20],
                 };
                 let hdu = f.create_image("foo".to_string(), &image_description)
@@ -2841,7 +2841,7 @@ mod test {
 
                 let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
-                    data_type: ImageType::LONG_IMG,
+                    data_type: ImageType::Long,
                     dimensions: &[100, 20],
                 };
                 f.create_image("foo".to_string(), &image_description)
@@ -2879,7 +2879,7 @@ mod test {
 
                 let mut f = FitsFile::create(filename).open().unwrap();
                 let image_description = ImageDescription {
-                    data_type: ImageType::LONG_IMG,
+                    data_type: ImageType::Long,
                     dimensions: &[100, 20],
                 };
                 f.create_image("foo".to_string(), &image_description)

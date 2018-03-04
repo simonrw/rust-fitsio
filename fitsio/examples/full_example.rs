@@ -28,7 +28,7 @@ fn run() -> Result<(), Box<Error>> {
 
     // creating a new file with 512 rows and 1024 columns
     let primary_hdu_description = ImageDescription {
-        data_type: ImageType::DOUBLE_IMG,
+        data_type: ImageType::Double,
         dimensions: &[512, 1024],
     };
 
@@ -66,7 +66,7 @@ fn run() -> Result<(), Box<Error>> {
 
         /* We can create a new image with the following */
         let image_description = ImageDescription {
-            data_type: ImageType::LONG_IMG,
+            data_type: ImageType::Long,
             dimensions: &[256, 256],
         };
         fitsfile.create_image("IMG", &image_description)?;
