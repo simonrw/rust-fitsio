@@ -54,8 +54,7 @@
 //! # fn main() {
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
-//! # let _filename = tdir_path.join("test.fits");
-//! # let filename = _filename.to_str().unwrap();
+//! # let filename = tdir_path.join("test.fits");
 //! use fitsio::FitsFile;
 //!
 //! // let filename = ...;
@@ -83,8 +82,7 @@
 //! # fn main() {
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
-//! # let _filename = tdir_path.join("test.fits");
-//! # let filename = _filename.to_str().unwrap();
+//! # let filename = tdir_path.join("test.fits");
 //! use fitsio::FitsFile;
 //!
 //! // let filename = ...;
@@ -169,7 +167,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! let image_description = ImageDescription {
 //!     data_type: ImageType::FLOAT_IMG,
 //!     dimensions: &[100, 100],
@@ -195,7 +193,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! let first_description = ColumnDescription::new("A")
 //!     .with_type(ColumnDataType::Int)
 //!     .create().unwrap();
@@ -271,7 +269,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut dest_fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut dest_fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! #
 //! # let hdu = src_fptr.hdu(1).unwrap();
 //! hdu.copy_to(&mut src_fptr, &mut dest_fptr).unwrap();
@@ -293,7 +291,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let image_description = ImageDescription {
 //! #     data_type: ImageType::FLOAT_IMG,
 //! #     dimensions: &[100, 100],
@@ -360,7 +358,7 @@
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
 //! # {
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! fptr.hdu(0).unwrap().write_key(&mut fptr, "foo", 1i64).unwrap();
 //! assert_eq!(fptr.hdu(0).unwrap().read_key::<i64>(&mut fptr, "foo").unwrap(), 1i64);
 //! # }
@@ -493,7 +491,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let desc = ImageDescription {
 //! #    data_type: ImageType::FLOAT_IMG,
 //! #    dimensions: &[100, 100],
@@ -517,7 +515,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let desc = ImageDescription {
 //! #    data_type: ImageType::FLOAT_IMG,
 //! #    dimensions: &[100, 100],
@@ -591,7 +589,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let table_description = vec![
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
@@ -620,7 +618,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let table_description = vec![
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
@@ -656,7 +654,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let table_description = &[
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
@@ -690,7 +688,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let table_description = &[
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
@@ -705,7 +703,7 @@
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
-//! # let mut fptr = fitsio::FitsFile::create(filename.to_str().unwrap()).open().unwrap();
+//! # let mut fptr = fitsio::FitsFile::create(filename).open().unwrap();
 //! # let table_description = &[
 //! #     ColumnDescription::new("bar")
 //! #         .with_type(ColumnDataType::Int)
