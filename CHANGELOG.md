@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 * (`fitsio`) add `primary_hdu` method [#77](https://github.com/mindriot101/rust-fitsio/pull/77)
 * (`fitsio`) add pretty-printing support [#83](https://github.com/mindriot101/rust-fitsio/pull/83)
+* (`fitsio`) add `row` method to read single row. Not the best API but it's a start
 
 ### Changed
 
