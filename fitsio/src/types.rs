@@ -191,6 +191,15 @@ casesensitivity_into_impl!(i8);
 casesensitivity_into_impl!(i32);
 casesensitivity_into_impl!(i64);
 
+/// Table value type
+#[allow(missing_docs)]
+#[derive(Debug)]
+pub enum TableValue {
+    Int(i64),
+    Str(String),
+    Double(f64),
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

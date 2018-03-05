@@ -14,12 +14,13 @@ use errors::{Error, IndexError, Result};
 use fitserror::{check_status, FitsError};
 use columndescription::*;
 use libc;
-use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
+use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType, TableValue};
 use std::ffi;
 use std::io::{self, Write};
 use std::ptr;
 use std::path::Path;
 use std::ops::Range;
+use std::collections::HashMap;
 
 static MAX_VALUE_LENGTH: usize = 71;
 
@@ -1873,6 +1874,40 @@ impl FitsHdu {
         }
         check_status(status).map(|_| ())
     }
+
+    /// Method to return a single row from a fits table
+    pub fn row(&self, fits_file: &mut FitsFile, idx: usize) -> Result<HashMap<String, TableValue>> {
+        // Check that we are in a table hdu
+        match self.info {
+            HduInfo::TableInfo { .. } => {}
+            _ => return Err("cannot get table row from an image".into()),
+        }
+
+        let mut out = HashMap::new();
+
+        use self::Column::*;
+        for col in self.columns(fits_file) {
+            match col {
+                Int32 { name, data } => {
+                    out.insert(name.clone(), TableValue::Int(data[idx] as _));
+                }
+                Int64 { name, data } => {
+                    out.insert(name.clone(), TableValue::Int(data[idx]));
+                }
+                Float { name, data } => {
+                    out.insert(name.clone(), TableValue::Double(data[idx] as _));
+                }
+                Double { name, data } => {
+                    out.insert(name.clone(), TableValue::Double(data[idx]));
+                }
+                String { name, data } => {
+                    out.insert(name.clone(), TableValue::Str(data[idx].clone()));
+                }
+            }
+        }
+
+        Ok(out)
+    }
 }
 
 #[cfg(test)]
@@ -3161,5 +3196,23 @@ mod test {
 
             assert_eq!(counter, 2);
         });
+    }
+
+    #[test]
+    fn test_read_row_as_struct() {
+        let filename = "../testdata/full_example.fits[TESTEXT]";
+        let mut f = FitsFile::open(filename).unwrap();
+        let tbl_hdu = f.hdu("TESTEXT").unwrap();
+        let row = tbl_hdu.row(&mut f, 4).unwrap();
+
+        match row["intcol"] {
+            TableValue::Int(ref val) => assert_eq!(*val, 16),
+            _ => panic!("should be int value"),
+        }
+
+        match row["strcol"] {
+            TableValue::Str(ref val) => assert_eq!(*val, "value4".to_string()),
+            _ => panic!("should be str value"),
+        }
     }
 }
