@@ -15,6 +15,7 @@
 //! * [Reading file data](#reading-file-data)
 //!     * [Reading images](#reading-images)
 //!     * [Reading tables](#reading-tables)
+//!         * [Reading rows](#reading-rows)
 //!     * [Iterating over columns](#iterating-over-columns)
 //! * [Writing file data](#writing-file-data)
 //!     * [Writing images](#writing-images)
@@ -479,6 +480,33 @@
 //! # }
 //! ```
 //!
+//! ### Reading rows
+//!
+//! Single rows can be read from a fits table with the [`row`][fits-hdu-row] method.
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # fn main() {
+//! use fitsio::types::TableValue;
+//! # let filename = "../testdata/full_example.fits[TESTEXT]";
+//! # let mut f = fitsio::FitsFile::open(filename).unwrap();
+//! # let hdu = f.hdu("TESTEXT").unwrap();
+//!
+//! // Pick the 4th row
+//! let row = hdu.row(&mut f, 4).unwrap();
+//!
+//! match row["intcol"] {
+//!     TableValue::Int(ref val) => assert_eq!(*val, 16),
+//!     _ => panic!("should be int value"),
+//! }
+//!
+//! match row["strcol"] {
+//!     TableValue::Str(ref val) => assert_eq!(*val, "value4".to_string()),
+//!     _ => panic!("should be str value"),
+//! }
+//! # }
+//! ```
+//!
 //! ## Iterating over columns
 //!
 //! Iterate over the columns with [`columns`][fits-hdu-columns].
@@ -835,6 +863,7 @@
 //! [fits-hdu-copy-to]: fitsfile/struct.FitsHdu.html#method.copy_to
 //! [fits-hdu-delete]: fitsfile/struct.FitsHdu.html#method.copy_to
 //! [fits-hdu-resize]: fitsfile/struct.FitsHdu.html#method.resize
+//! [fits-hdu-row]: fitsfile/struct.FitsHdu.html#method.row
 //! [fits-hdu]: fitsfile/struct.FitsHdu.html
 //! [image-description]: fitsfile/struct.ImageDescription.html
 //! [reads-col]: fitsfile/trait.ReadsCol.html
