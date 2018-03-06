@@ -15,6 +15,7 @@
 //! * [Reading file data](#reading-file-data)
 //!     * [Reading images](#reading-images)
 //!     * [Reading tables](#reading-tables)
+//!         * [Reading cell values](#reading-cell-values)
 //!         * [Reading rows](#reading-rows)
 //!     * [Iterating over columns](#iterating-over-columns)
 //! * [Writing file data](#writing-file-data)
@@ -477,6 +478,24 @@
 //! # let mut fptr = fitsio::FitsFile::open(filename).unwrap();
 //! # let hdu = fptr.hdu(1);
 //! let integer_data: Vec<i32> = hdu.and_then(|hdu| hdu.read_col(&mut fptr, "intcol")).unwrap();
+//! # }
+//! ```
+//!
+//! ### Reading cell values
+//!
+//! Individual cell values can be read from FITS tables:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits[TESTEXT]";
+//! # let mut f = fitsio::FitsFile::open(filename).unwrap();
+//! # let tbl_hdu = f.hdu("TESTEXT").unwrap();
+//! let result: i64 = tbl_hdu.read_col_value(&mut f, "intcol", 4).unwrap();
+//! assert_eq!(result, 16);
+//!
+//! let result: String = tbl_hdu.read_col_value(&mut f, "strcol", 4).unwrap();
+//! assert_eq!(result, "value4".to_string());
 //! # }
 //! ```
 //!
