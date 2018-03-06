@@ -1928,34 +1928,35 @@ impl FitsHdu {
     pub fn row(&self, fits_file: &mut FitsFile, idx: usize) -> Result<HashMap<String, TableValue>> {
         // Check that we are in a table hdu
         match self.info {
-            HduInfo::TableInfo { .. } => {}
-            _ => return Err("cannot get table row from an image".into()),
-        }
+            HduInfo::TableInfo {
+                ref column_descriptions,
+                ..
+            } => {
+                let mut out = HashMap::new();
 
-        let mut out = HashMap::new();
+                use self::ColumnDataType::*;
+                for desc in column_descriptions.iter() {
+                    let name = desc.name.clone();
 
-        use self::Column::*;
-        for col in self.columns(fits_file) {
-            match col {
-                Int32 { name, data } => {
-                    out.insert(name.clone(), TableValue::Int(data[idx] as _));
+                    match desc.data_type.typ {
+                        Short | Int | Long => {
+                            let value = self.read_cell_value(fits_file, &name, idx)?;
+                            out.insert(name, TableValue::Int(value));
+                        }
+                        Float | Double => {
+                            let value = self.read_cell_value(fits_file, &name, idx)?;
+                            out.insert(name, TableValue::Double(value));
+                        }
+                        Text | String => {
+                            let value = self.read_cell_value(fits_file, &name, idx)?;
+                            out.insert(name, TableValue::Str(value));
+                        }
+                    }
                 }
-                Int64 { name, data } => {
-                    out.insert(name.clone(), TableValue::Int(data[idx]));
-                }
-                Float { name, data } => {
-                    out.insert(name.clone(), TableValue::Double(data[idx] as _));
-                }
-                Double { name, data } => {
-                    out.insert(name.clone(), TableValue::Double(data[idx]));
-                }
-                String { name, data } => {
-                    out.insert(name.clone(), TableValue::Str(data[idx].clone()));
-                }
+                Ok(out)
             }
+            _ => Err("cannot get table row from an image".into()),
         }
-
-        Ok(out)
     }
 
     /// Read a single value from a fits table
@@ -3272,7 +3273,7 @@ mod test {
     }
 
     #[test]
-    fn test_read_row_as_struct() {
+    fn test_read_row_as_hash() {
         let filename = "../testdata/full_example.fits[TESTEXT]";
         let mut f = FitsFile::open(filename).unwrap();
         let tbl_hdu = f.hdu("TESTEXT").unwrap();
