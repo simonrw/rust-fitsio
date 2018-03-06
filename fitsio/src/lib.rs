@@ -491,10 +491,10 @@
 //! # let filename = "../testdata/full_example.fits[TESTEXT]";
 //! # let mut f = fitsio::FitsFile::open(filename).unwrap();
 //! # let tbl_hdu = f.hdu("TESTEXT").unwrap();
-//! let result: i64 = tbl_hdu.read_col_value(&mut f, "intcol", 4).unwrap();
+//! let result: i64 = tbl_hdu.read_cell_value(&mut f, "intcol", 4).unwrap();
 //! assert_eq!(result, 16);
 //!
-//! let result: String = tbl_hdu.read_col_value(&mut f, "strcol", 4).unwrap();
+//! let result: String = tbl_hdu.read_cell_value(&mut f, "strcol", 4).unwrap();
 //! assert_eq!(result, "value4".to_string());
 //! # }
 //! ```

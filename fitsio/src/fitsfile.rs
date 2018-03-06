@@ -719,7 +719,7 @@ pub trait ReadsCol {
         Self: Sized;
 
     #[doc(hidden)]
-    fn read_col_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
+    fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
     where
         T: Into<String>,
         Self: Sized;
@@ -786,7 +786,7 @@ macro_rules! reads_col_impl {
                 }
 
             #[doc(hidden)]
-            fn read_col_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
+            fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
                 where T: Into<String>,
                       Self: Sized {
                           match fits_file.fetch_hdu_info() {
@@ -913,7 +913,7 @@ impl ReadsCol for String {
     }
 
     #[doc(hidden)]
-    fn read_col_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
+    fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
     where
         T: Into<String>,
         Self: Sized,
@@ -1961,12 +1961,12 @@ impl FitsHdu {
     /// Read a single value from a fits table
     ///
     /// This will be inefficient if lots of individual values are wanted.
-    pub fn read_col_value<T>(&self, fits_file: &mut FitsFile, name: &str, idx: usize) -> Result<T>
+    pub fn read_cell_value<T>(&self, fits_file: &mut FitsFile, name: &str, idx: usize) -> Result<T>
     where
         T: ReadsCol,
     {
         fits_file.make_current(&self)?;
-        T::read_col_value(fits_file, name, idx)
+        T::read_cell_value(fits_file, name, idx)
     }
 }
 
@@ -3264,10 +3264,10 @@ mod test {
         let mut f = FitsFile::open(filename).unwrap();
         let tbl_hdu = f.hdu("TESTEXT").unwrap();
 
-        let result: i64 = tbl_hdu.read_col_value(&mut f, "intcol", 4).unwrap();
+        let result: i64 = tbl_hdu.read_cell_value(&mut f, "intcol", 4).unwrap();
         assert_eq!(result, 16);
 
-        let result: String = tbl_hdu.read_col_value(&mut f, "strcol", 4).unwrap();
+        let result: String = tbl_hdu.read_cell_value(&mut f, "strcol", 4).unwrap();
         assert_eq!(result, "value4".to_string());
     }
 
