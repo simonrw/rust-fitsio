@@ -1974,10 +1974,17 @@ impl FitsHdu {
         fits_file.make_current(&self)?;
         T::read_cell_value(fits_file, name, idx)
     }
+
+    /// TODO: DOCS
+    ///
+    pub fn read_row_into_struct<F>(&self, fits_file: &mut FitsFile, idx: usize) -> Result<F> where F: FitsRow {
+        F::from_table(self, fits_file, idx)
+    }
 }
 
 /// Trait derivable with custom derive
-trait FitsRow {
+pub trait FitsRow {
+    #[doc(hidden)]
     fn from_table(tbl: &FitsHdu, fits_file: &mut FitsFile, idx: usize) -> Result<Self>
     where
         Self: Sized;
@@ -3317,7 +3324,7 @@ mod test {
         let tbl_hdu = f.hdu("TESTEXT").unwrap();
 
         // let result: Row = tbl_hdu.read_row(&mut f, 4).unwrap();
-        let result = Row::from_table(&tbl_hdu, &mut f, 4).unwrap();
+        let result: Row = tbl_hdu.read_row_into_struct(&mut f, 4).unwrap();
         assert_eq!(result.intcol, 16);
     }
 }
