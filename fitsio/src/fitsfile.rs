@@ -753,7 +753,8 @@ macro_rules! reads_col_impl {
                             let column_number = column_descriptions
                                 .iter()
                                 .position(|ref desc| { desc.name == test_name })
-                                .ok_or(Error::Message(format!("Cannot find column {:?}", test_name)))?;
+                                .ok_or(Error::Message(
+                                        format!("Cannot find column {:?}", test_name)))?;
                             let mut status = 0;
                             unsafe {
                                 sys::$func(fits_file.fptr as *mut _,
@@ -796,7 +797,8 @@ macro_rules! reads_col_impl {
                                   let column_number = column_descriptions
                                       .iter()
                                       .position(|ref desc| { desc.name == test_name })
-                                      .ok_or(Error::Message(format!("Cannot find column {:?}", test_name)))?;
+                                      .ok_or(Error::Message(
+                                              format!("Cannot find column {:?}", test_name)))?;
                                   let mut status = 0;
 
                                   unsafe {
@@ -1618,6 +1620,9 @@ impl FitsHdu {
         T::read_row(fits_file, row)
     }
 
+    // /// TEMPORARY FUNCTION NAME
+    // pub fn deserialize_row(&self, fits_file: &mut FitsFile, row: usize) -> Box<FitsRow> {}
+
     /// Read a square region from the chip.
     ///
     /// Lower left indicates the starting point of the square, and the upper
@@ -1971,6 +1976,13 @@ impl FitsHdu {
     }
 }
 
+/// Trait derivable with custom derive
+trait FitsRow {
+    fn from_table(tbl: &FitsHdu, fits_file: &mut FitsFile, idx: usize) -> Result<Self>
+    where
+        Self: Sized;
+}
+
 #[cfg(test)]
 mod test {
     #[cfg(feature = "default")]
@@ -1980,6 +1992,7 @@ mod test {
 
     extern crate tempdir;
 
+    use super::*;
     use FitsHdu;
     use fitsfile::FitsFile;
     use types::*;
@@ -3288,5 +3301,23 @@ mod test {
             TableValue::Str(ref val) => assert_eq!(*val, "value4".to_string()),
             _ => panic!("should be str value"),
         }
+    }
+
+    #[test]
+    fn read_row_as_struct() {
+        #[derive(Default, FitsRow)]
+        struct Row {
+            intcol: i32,
+            floatcol: f32,
+            strcol: String,
+        }
+
+        let filename = "../testdata/full_example.fits[TESTEXT]";
+        let mut f = FitsFile::open(filename).unwrap();
+        let tbl_hdu = f.hdu("TESTEXT").unwrap();
+
+        // let result: Row = tbl_hdu.read_row(&mut f, 4).unwrap();
+        let result = Row::from_table(&tbl_hdu, &mut f, 4).unwrap();
+        assert_eq!(result.intcol, 16);
     }
 }
