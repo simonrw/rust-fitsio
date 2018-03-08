@@ -898,9 +898,6 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
-#[macro_use]
-extern crate fitsio_derive;
-
 #[cfg(feature = "default")]
 extern crate fitsio_sys as sys;
 #[cfg(feature = "bindgen")]

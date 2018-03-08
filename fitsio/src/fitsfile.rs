@@ -1977,7 +1977,10 @@ impl FitsHdu {
 
     /// TODO: DOCS
     ///
-    pub fn read_row_into_struct<F>(&self, fits_file: &mut FitsFile, idx: usize) -> Result<F> where F: FitsRow {
+    pub fn read_row_into_struct<F>(&self, fits_file: &mut FitsFile, idx: usize) -> Result<F>
+    where
+        F: FitsRow,
+    {
         F::from_table(self, fits_file, idx)
     }
 }
@@ -1999,7 +2002,6 @@ mod test {
 
     extern crate tempdir;
 
-    use super::*;
     use FitsHdu;
     use fitsfile::FitsFile;
     use types::*;
@@ -3308,23 +3310,5 @@ mod test {
             TableValue::Str(ref val) => assert_eq!(*val, "value4".to_string()),
             _ => panic!("should be str value"),
         }
-    }
-
-    #[test]
-    fn read_row_as_struct() {
-        #[derive(Default, FitsRow)]
-        struct Row {
-            intcol: i32,
-            floatcol: f32,
-            strcol: String,
-        }
-
-        let filename = "../testdata/full_example.fits[TESTEXT]";
-        let mut f = FitsFile::open(filename).unwrap();
-        let tbl_hdu = f.hdu("TESTEXT").unwrap();
-
-        // let result: Row = tbl_hdu.read_row(&mut f, 4).unwrap();
-        let result: Row = tbl_hdu.read_row_into_struct(&mut f, 4).unwrap();
-        assert_eq!(result.intcol, 16);
     }
 }
