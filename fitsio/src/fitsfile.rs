@@ -192,8 +192,8 @@ impl FitsFile {
         Ok(result)
     }
 
-    /// Function to make the HDU the current hdu
-    fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
+    #[doc(hidden)]
+    pub fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
         self.change_hdu(hdu.hdu_num)
     }
 
