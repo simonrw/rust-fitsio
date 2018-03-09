@@ -1986,7 +1986,7 @@ impl FitsHdu {
 }
 
 /// Trait derivable with custom derive
-pub trait FitsRow {
+pub trait FitsRow: ::std::default::Default {
     #[doc(hidden)]
     fn from_table(tbl: &FitsHdu, fits_file: &mut FitsFile, idx: usize) -> Result<Self>
     where

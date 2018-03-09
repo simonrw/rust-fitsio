@@ -6,7 +6,7 @@ extern crate syn;
 use proc_macro::TokenStream;
 use syn::DeriveInput;
 
-#[proc_macro_derive(FitsRow)]
+#[proc_macro_derive(FitsRow, attributes(fitsio))]
 pub fn read_row(input: TokenStream) -> TokenStream {
     let input: DeriveInput = syn::parse(input).unwrap();
     let expanded = impl_read_row(input);
@@ -23,11 +23,46 @@ fn impl_read_row(input: syn::DeriveInput) -> quote::Tokens {
             &syn::Fields::Named(ref fields) => for field in &fields.named {
                 let ident = &field.ident.unwrap();
                 let ident_str = ident.to_string();
-                tokens.push(quote! {
-                    out.#ident = tbl.read_cell_value(fits_file, #ident_str, idx)?;
-                });
+                if field.attrs.is_empty() {
+                    tokens.push(quote! {
+                        out.#ident = tbl.read_cell_value(fits_file, #ident_str, idx)?;
+                    });
+                } else {
+                    for attr in &field.attrs {
+                        match attr.interpret_meta() {
+                            Some(syn::Meta::List(l)) => for entry in l.nested {
+                                match entry {
+                                    syn::NestedMeta::Meta(syn::Meta::NameValue(
+                                        syn::MetaNameValue {
+                                            ident: attr_ident,
+                                            lit,
+                                            ..
+                                        },
+                                    )) => {
+                                        if attr_ident.to_string() != "colname" {
+                                            continue;
+                                        }
+
+                                        match lit {
+                                            syn::Lit::Str(ls) => {
+                                                tokens.push(quote! {
+                                                    out.#ident = tbl.read_cell_value(fits_file, #ls, idx)?;
+                                                });
+                                            }
+                                            _ => panic!(
+                                                "Only #[fitsio(colname = \"...\")] is supported"
+                                            ),
+                                        }
+                                    }
+                                    _ => panic!("Only #[fitsio(colname = \"...\")] is supported"),
+                                }
+                            },
+                            _ => panic!("Only #[fitsio(colname = \"...\")] is supported"),
+                        }
+                    }
+                }
             },
-            _ => unimplemented!(),
+            _ => panic!("Only #[fitsio(colname = \"...\")] is supported"),
         },
         _ => panic!("derive only possible for structs"),
     }

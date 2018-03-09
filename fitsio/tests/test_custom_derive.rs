@@ -9,18 +9,19 @@ use fitsio::fitsfile::FitsRow;
 
 #[derive(Default, FitsRow)]
 struct Row {
-    intcol: i32,
-    floatcol: f32,
-    strcol: String,
+    #[fitsio(colname = "intcol")]
+    intfoo: i32,
+    #[fitsio(colname = "strcol")]
+    foobar: String,
 }
 
 #[test]
-fn read_row_as_struct() {
-    let filename = "../testdata/full_example.fits[TESTEXT]";
+fn test_read_row_as_struct() {
+    let filename = "../testdata/full_example.fits";
     let mut f = FitsFile::open(filename).unwrap();
     let tbl_hdu = f.hdu("TESTEXT").unwrap();
 
-    // let result: Row = tbl_hdu.read_row(&mut f, 4).unwrap();
     let result: Row = tbl_hdu.read_row_into_struct(&mut f, 4).unwrap();
-    assert_eq!(result.intcol, 16);
+    assert_eq!(result.intfoo, 16);
+    assert_eq!(result.foobar, "value4");
 }
