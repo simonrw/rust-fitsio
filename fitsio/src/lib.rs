@@ -504,25 +504,28 @@
 //! Single rows can be read from a fits table with the [`row`][fits-hdu-row] method.
 //!
 //! ```rust
-//! # extern crate fitsio;
+//! #[macro_use]
+//! extern crate fitsio_derive;
+//! extern crate fitsio;
+//! use fitsio::fitsfile::FitsRow;
+//!
+//! #[derive(Default, FitsRow)]
+//! struct Row {
+//!     #[fitsio(colname = "intcol")]
+//!     intfoo: i32,
+//!     #[fitsio(colname = "strcol")]
+//!     foobar: String,
+//! }
+//! #
 //! # fn main() {
-//! use fitsio::types::TableValue;
 //! # let filename = "../testdata/full_example.fits[TESTEXT]";
 //! # let mut f = fitsio::FitsFile::open(filename).unwrap();
 //! # let hdu = f.hdu("TESTEXT").unwrap();
 //!
 //! // Pick the 4th row
-//! let row = hdu.row(&mut f, 4).unwrap();
-//!
-//! match row["intcol"] {
-//!     TableValue::Int(ref val) => assert_eq!(*val, 16),
-//!     _ => panic!("should be int value"),
-//! }
-//!
-//! match row["strcol"] {
-//!     TableValue::Str(ref val) => assert_eq!(*val, "value4".to_string()),
-//!     _ => panic!("should be str value"),
-//! }
+//! let row: Row = hdu.row(&mut f, 4).unwrap();
+//! assert_eq!(row.intfoo, 16);
+//! assert_eq!(row.foobar, "value4");
 //! # }
 //! ```
 //!

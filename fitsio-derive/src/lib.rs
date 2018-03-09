@@ -46,7 +46,10 @@ fn impl_read_row(input: syn::DeriveInput) -> quote::Tokens {
                                         match lit {
                                             syn::Lit::Str(ls) => {
                                                 tokens.push(quote! {
-                                                    out.#ident = tbl.read_cell_value(fits_file, #ls, idx)?;
+                                                    out.#ident = tbl.read_cell_value(
+                                                        fits_file,
+                                                        #ls,
+                                                        idx)?;
                                                 });
                                             }
                                             _ => panic!(
@@ -71,8 +74,8 @@ fn impl_read_row(input: syn::DeriveInput) -> quote::Tokens {
         impl FitsRow for #name {
             fn from_table(
                 tbl: &::fitsio::FitsHdu,
-                fits_file: &mut
-                FitsFile, idx: usize) -> ::fitsio::errors::Result<Self> where Self: Sized  {
+                fits_file: &mut ::fitsio::FitsFile, idx: usize) ->
+                    ::fitsio::errors::Result<Self> where Self: Sized  {
                 fits_file.make_current(tbl)?;
                 let mut out = Self::default();
 

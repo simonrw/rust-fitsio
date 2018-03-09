@@ -132,12 +132,7 @@ fn run() -> Result<(), Box<Error>> {
     assert_eq!(magnitudes.len(), 3);
 
     /* Read a single row from the file */
-    use fitsio::types::TableValue;
-    let row = table_hdu.row(&mut fitsfile, 4)?;
-    match row["OBJ_ID"] {
-        TableValue::Int(val) => assert_eq!(val, 4),
-        _ => return Err("invalid column value, should be 4".into()),
-    }
+    // TODO
 
     /* The file is closed when it is dropped here */
 

@@ -21,7 +21,7 @@ fn test_read_row_as_struct() {
     let mut f = FitsFile::open(filename).unwrap();
     let tbl_hdu = f.hdu("TESTEXT").unwrap();
 
-    let result: Row = tbl_hdu.read_row_into_struct(&mut f, 4).unwrap();
+    let result: Row = tbl_hdu.row(&mut f, 4).unwrap();
     assert_eq!(result.intfoo, 16);
     assert_eq!(result.foobar, "value4");
 }

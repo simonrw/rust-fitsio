@@ -14,13 +14,12 @@ use errors::{Error, IndexError, Result};
 use fitserror::{check_status, FitsError};
 use columndescription::*;
 use libc;
-use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType, TableValue};
+use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
 use std::ffi;
 use std::io::{self, Write};
 use std::ptr;
 use std::path::Path;
 use std::ops::Range;
-use std::collections::HashMap;
 
 static MAX_VALUE_LENGTH: usize = 71;
 
@@ -1929,41 +1928,6 @@ impl FitsHdu {
         check_status(status).map(|_| ())
     }
 
-    /// Method to return a single row from a fits table
-    pub fn row(&self, fits_file: &mut FitsFile, idx: usize) -> Result<HashMap<String, TableValue>> {
-        // Check that we are in a table hdu
-        match self.info {
-            HduInfo::TableInfo {
-                ref column_descriptions,
-                ..
-            } => {
-                let mut out = HashMap::new();
-
-                use self::ColumnDataType::*;
-                for desc in column_descriptions.iter() {
-                    let name = desc.name.clone();
-
-                    match desc.data_type.typ {
-                        Short | Int | Long => {
-                            let value = self.read_cell_value(fits_file, &name, idx)?;
-                            out.insert(name, TableValue::Int(value));
-                        }
-                        Float | Double => {
-                            let value = self.read_cell_value(fits_file, &name, idx)?;
-                            out.insert(name, TableValue::Double(value));
-                        }
-                        Text | String => {
-                            let value = self.read_cell_value(fits_file, &name, idx)?;
-                            out.insert(name, TableValue::Str(value));
-                        }
-                    }
-                }
-                Ok(out)
-            }
-            _ => Err("cannot get table row from an image".into()),
-        }
-    }
-
     /// Read a single value from a fits table
     ///
     /// This will be inefficient if lots of individual values are wanted.
@@ -1975,9 +1939,38 @@ impl FitsHdu {
         T::read_cell_value(fits_file, name, idx)
     }
 
-    /// TODO: DOCS
+    /// Extract a single row from the file
     ///
-    pub fn read_row_into_struct<F>(&self, fits_file: &mut FitsFile, idx: usize) -> Result<F>
+    /// This method uses returns a [`FitsRow`](trait.FitsRow.html), which is provided by the user,
+    /// using a `derive` implementation from the [`fitsio_derive`](https://docs.rs/fitsio_derive)
+    /// crate,
+    ///
+    /// ```rust
+    /// #[macro_use]
+    /// extern crate fitsio_derive;
+    /// extern crate fitsio;
+    /// use fitsio::fitsfile::FitsRow;
+    ///
+    /// #[derive(Default, FitsRow)]
+    /// struct Row {
+    ///     #[fitsio(colname = "intcol")]
+    ///     intfoo: i32,
+    ///     #[fitsio(colname = "strcol")]
+    ///     foobar: String,
+    /// }
+    /// #
+    /// # fn main() {
+    /// # let filename = "../testdata/full_example.fits[TESTEXT]";
+    /// # let mut f = fitsio::FitsFile::open(filename).unwrap();
+    /// # let hdu = f.hdu("TESTEXT").unwrap();
+    ///
+    /// // Pick the 4th row
+    /// let row: Row = hdu.row(&mut f, 4).unwrap();
+    /// assert_eq!(row.intfoo, 16);
+    /// assert_eq!(row.foobar, "value4");
+    /// # }
+    /// ```
+    pub fn row<F>(&self, fits_file: &mut FitsFile, idx: usize) -> Result<F>
     where
         F: FitsRow,
     {
@@ -3292,23 +3285,5 @@ mod test {
 
         let result: String = tbl_hdu.read_cell_value(&mut f, "strcol", 4).unwrap();
         assert_eq!(result, "value4".to_string());
-    }
-
-    #[test]
-    fn test_read_row_as_hash() {
-        let filename = "../testdata/full_example.fits[TESTEXT]";
-        let mut f = FitsFile::open(filename).unwrap();
-        let tbl_hdu = f.hdu("TESTEXT").unwrap();
-        let row = tbl_hdu.row(&mut f, 4).unwrap();
-
-        match row["intcol"] {
-            TableValue::Int(ref val) => assert_eq!(*val, 16),
-            _ => panic!("should be int value"),
-        }
-
-        match row["strcol"] {
-            TableValue::Str(ref val) => assert_eq!(*val, "value4".to_string()),
-            _ => panic!("should be str value"),
-        }
     }
 }
