@@ -917,6 +917,7 @@ mod stringutils;
 pub mod types;
 pub mod columndescription;
 pub mod fitsfile;
+mod longnam;
 
 pub use self::fitsfile::{FitsFile, FitsHdu};
 pub use self::types::HduInfo;
