@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [Unreleased]
 
+### Added
+### Changed
+### Removed
+
+## [0.13.0] - 2018-03-10
+
 ### Addded
 
 * (`fitsio`) add `primary_hdu` method [#77](https://github.com/mindriot101/rust-fitsio/pull/77)
@@ -119,6 +125,7 @@ Nothing
 [0.11.1]: https://github.com/mindriot101/rust-fitsio/compare/v0.10.0...v0.11.1
 [0.12.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.11.1...v0.12.0
 [0.12.1]: https://github.com/mindriot101/rust-fitsio/compare/v0.12.0...v0.12.1
+[0.13.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.12.1...v0.13.0
 
 ---
 
