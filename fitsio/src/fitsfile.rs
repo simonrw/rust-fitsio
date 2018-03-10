@@ -505,7 +505,7 @@ impl Drop for FitsFile {
     fn drop(&mut self) {
         let mut status = 0;
         unsafe {
-            longnam::ffclos(self.fptr as *mut _, &mut status);
+            longnam::fits_close_file(self.fptr as *mut _, &mut status);
         }
         self.fptr = ptr::null_mut();
     }

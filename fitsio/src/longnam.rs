@@ -1,7 +1,11 @@
 pub use sys::*;
+use libc::c_int;
+
+pub unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut c_int) -> c_int {
+    ffclos(fptr, status)
+}
 
 /*
-fits_close_file ffclos
 fits_copy_hdu ffcopy
 fits_create_img ffcrim
 fits_create_tbl ffcrtb
