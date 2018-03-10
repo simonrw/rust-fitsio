@@ -2,6 +2,13 @@
 name = "fitsio-derive"
 version = "0.1.0"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
+description = "Custom derive macros for the fitsio crate"
+homepage = "https://github.com/mindriot101/rust-fitsio"
+repository = "https://github.com/mindriot101/rust-fitsio"
+readme = "README.md"
+license = "MIT/Apache-2.0"
+documentation = "https://docs.rs/fitsio-derive"
+categories = ["external-ffi-bindings", "science"]
 
 [dependencies]
 quote = "0.4.2"
