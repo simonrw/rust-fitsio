@@ -1942,7 +1942,7 @@ impl FitsHdu {
     /// Extract a single row from the file
     ///
     /// This method uses returns a [`FitsRow`](trait.FitsRow.html), which is provided by the user,
-    /// using a `derive` implementation from the [`fitsio_derive`](https://docs.rs/fitsio_derive)
+    /// using a `derive` implementation from the [`fitsio-derive`](https://docs.rs/fitsio-derive)
     /// crate,
     ///
     /// ```rust
