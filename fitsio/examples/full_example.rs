@@ -1,4 +1,6 @@
 extern crate fitsio;
+#[macro_use]
+extern crate fitsio_derive;
 extern crate tempdir;
 
 /* This example docuents the following things:
@@ -17,7 +19,7 @@ extern crate tempdir;
 use std::error::Error;
 use tempdir::TempDir;
 use fitsio::FitsFile;
-use fitsio::fitsfile::ImageDescription;
+use fitsio::fitsfile::{FitsRow, ImageDescription};
 use fitsio::types::ImageType;
 use fitsio::columndescription::{ColumnDataType, ColumnDescription};
 
@@ -131,8 +133,21 @@ fn run() -> Result<(), Box<Error>> {
     let magnitudes: Vec<f32> = table_hdu.read_col_range(&mut fitsfile, "MAG", &(3..6))?;
     assert_eq!(magnitudes.len(), 3);
 
-    /* Read a single row from the file */
-    // TODO
+    /* Read a single row from the file. Columns can be renamed to allow for more rustic attribute
+     * names */
+    #[derive(Default, FitsRow)]
+    struct Row {
+        #[fitsio(colname = "OBJ_ID")]
+        obj_id: i32,
+        #[fitsio(colname = "NAME")]
+        name: String,
+        #[fitsio(colname = "MAG")]
+        mag: f32,
+    }
+    let row: Row = table_hdu.row(&mut fitsfile, 4)?;
+    assert_eq!(row.obj_id, 4);
+    assert_eq!(row.name, "N4");
+    assert!(row.mag > -1.0 && row.mag < -0.5);
 
     /* The file is closed when it is dropped here */
 
