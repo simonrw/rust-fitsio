@@ -501,7 +501,8 @@
 //!
 //! ### Reading rows
 //!
-//! Single rows can be read from a fits table with the [`row`][fits-hdu-row] method.
+//! Single rows can be read from a fits table with the [`row`][fits-hdu-row] method. This requires
+//! use of the [`fitsio-derive`][fitsio-derive] crate.
 //!
 //! ```rust
 //! #[macro_use]
@@ -896,6 +897,7 @@
 //! [new-fits-file-with-custom-primary]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
 //! [pretty-print]: fitsfile/struct.FitsFile.html#method.pretty_print
 //! [pretty-write]: fitsfile/struct.FitsFile.html#method.pretty_write
+//! [fitsio-derive]: https://crates.io/crates/fitsio-derive
 
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
