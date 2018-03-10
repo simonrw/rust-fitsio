@@ -766,7 +766,7 @@ macro_rules! reads_col_impl {
                                            &mut status);
 
                             }
-                            // check_status(status).map(|_| out)
+
                             match status {
                                 0 => Ok(out),
                                 307 => Err(IndexError {
@@ -1617,9 +1617,6 @@ impl FitsHdu {
         fits_file.make_current(self)?;
         T::read_row(fits_file, row)
     }
-
-    // /// TEMPORARY FUNCTION NAME
-    // pub fn deserialize_row(&self, fits_file: &mut FitsFile, row: usize) -> Box<FitsRow> {}
 
     /// Read a square region from the chip.
     ///
