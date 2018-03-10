@@ -76,7 +76,6 @@ fn impl_read_row(input: syn::DeriveInput) -> quote::Tokens {
                 tbl: &::fitsio::FitsHdu,
                 fits_file: &mut ::fitsio::FitsFile, idx: usize) ->
                     ::fitsio::errors::Result<Self> where Self: Sized  {
-                fits_file.make_current(tbl)?;
                 let mut out = Self::default();
 
                 #(#tokens)*

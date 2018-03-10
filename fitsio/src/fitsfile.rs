@@ -191,8 +191,7 @@ impl FitsFile {
         Ok(result)
     }
 
-    #[doc(hidden)]
-    pub fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
+    fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
         self.change_hdu(hdu.hdu_num)
     }
 
@@ -1974,6 +1973,7 @@ impl FitsHdu {
     where
         F: FitsRow,
     {
+        fits_file.make_current(self)?;
         F::from_table(self, fits_file, idx)
     }
 }
