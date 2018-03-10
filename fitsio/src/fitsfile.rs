@@ -1474,8 +1474,8 @@ impl<'a> ColumnIterator<'a> {
                 num_rows: _num_rows,
             }) => ColumnIterator {
                 current: 0,
-                column_descriptions: column_descriptions,
-                fits_file: fits_file,
+                column_descriptions,
+                fits_file,
             },
             Err(e) => panic!("{:?}", e),
             _ => panic!("Unknown error occurred"),
@@ -1499,31 +1499,31 @@ impl<'a> Iterator for ColumnIterator<'a> {
                 ColumnDataType::Int => i32::read_col(self.fits_file, current_name)
                     .map(|data| Column::Int32 {
                         name: current_name.to_string(),
-                        data: data,
+                        data,
                     })
                     .ok(),
                 ColumnDataType::Long => i64::read_col(self.fits_file, current_name)
                     .map(|data| Column::Int64 {
                         name: current_name.to_string(),
-                        data: data,
+                        data,
                     })
                     .ok(),
                 ColumnDataType::Float => f32::read_col(self.fits_file, current_name)
                     .map(|data| Column::Float {
                         name: current_name.to_string(),
-                        data: data,
+                        data,
                     })
                     .ok(),
                 ColumnDataType::Double => f64::read_col(self.fits_file, current_name)
                     .map(|data| Column::Double {
                         name: current_name.to_string(),
-                        data: data,
+                        data,
                     })
                     .ok(),
                 ColumnDataType::String => String::read_col(self.fits_file, current_name)
                     .map(|data| Column::String {
                         name: current_name.to_string(),
-                        data: data,
+                        data,
                     })
                     .ok(),
                 _ => unimplemented!(),
@@ -1931,7 +1931,7 @@ impl FitsHdu {
     where
         T: ReadsCol,
     {
-        fits_file.make_current(&self)?;
+        fits_file.make_current(self)?;
         T::read_cell_value(fits_file, name, idx)
     }
 
