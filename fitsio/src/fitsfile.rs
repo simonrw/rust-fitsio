@@ -78,7 +78,7 @@ impl FitsFile {
         let c_filename = ffi::CString::new(filename)?;
 
         unsafe {
-            longnam::ffopen(
+            longnam::fits_open_file(
                 &mut fptr as *mut *mut fitsfile,
                 c_filename.as_ptr(),
                 FileOpenMode::READONLY as libc::c_int,
@@ -101,7 +101,7 @@ impl FitsFile {
         let c_filename = ffi::CString::new(filename)?;
 
         unsafe {
-            longnam::ffopen(
+            longnam::fits_open_file(
                 &mut fptr as *mut *mut _,
                 c_filename.as_ptr(),
                 FileOpenMode::READWRITE as libc::c_int,
@@ -129,7 +129,7 @@ impl FitsFile {
         let mut status = 0;
         let mut iomode = 0;
         unsafe {
-            longnam::ffflmd(self.fptr as *mut _, &mut iomode, &mut status);
+            longnam::fits_file_mode(self.fptr as *mut _, &mut iomode, &mut status);
         }
 
         check_status(status).map(|_| match iomode {
@@ -142,7 +142,7 @@ impl FitsFile {
     fn add_empty_primary(&self) -> Result<()> {
         let mut status = 0;
         unsafe {
-            longnam::ffphps(
+            longnam::fits_write_imghdr(
                 self.fptr as *mut _,
                 ImageType::UnsignedByte.into(),
                 0,
@@ -174,7 +174,7 @@ impl FitsFile {
         let mut status = 0;
         let mut num_hdus = 0;
         unsafe {
-            longnam::ffthdu(self.fptr as *mut _, &mut num_hdus, &mut status);
+            longnam::fits_get_num_hdus(self.fptr as *mut _, &mut num_hdus, &mut status);
         }
 
         check_status(status).map(|_| num_hdus as _)
@@ -199,7 +199,7 @@ impl FitsFile {
     fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
         unsafe {
-            longnam::ffghdn(self.fptr as *mut _, &mut hdu_num);
+            longnam::fits_get_hdu_num(self.fptr as *mut _, &mut hdu_num);
         }
         (hdu_num - 1) as usize
     }
@@ -216,19 +216,19 @@ impl FitsFile {
         let mut hdu_type = 0;
 
         unsafe {
-            longnam::ffghdt(self.fptr as *mut _, &mut hdu_type, &mut status);
+            longnam::fits_get_hdu_type(self.fptr as *mut _, &mut hdu_type, &mut status);
         }
 
         let hdu_type = match hdu_type {
             0 => {
                 let mut dimensions = 0;
                 unsafe {
-                    longnam::ffgidm(self.fptr as *mut _, &mut dimensions, &mut status);
+                    longnam::fits_get_img_dim(self.fptr as *mut _, &mut dimensions, &mut status);
                 }
 
                 let mut shape = vec![0; dimensions as usize];
                 unsafe {
-                    longnam::ffgisz(
+                    longnam::fits_get_img_size(
                         self.fptr as *mut _,
                         dimensions,
                         shape.as_mut_ptr(),
@@ -246,7 +246,7 @@ impl FitsFile {
                      * See description here:
                      * https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node40.html
                      */
-                    longnam::ffgiet(self.fptr as *mut _, &mut bitpix, &mut status);
+                    longnam::fits_get_img_equivtype(self.fptr as *mut _, &mut bitpix, &mut status);
                 }
 
                 let image_type = match bitpix {
@@ -270,12 +270,12 @@ impl FitsFile {
             1 | 2 => {
                 let mut num_rows = 0;
                 unsafe {
-                    longnam::ffgnrw(self.fptr as *mut _, &mut num_rows, &mut status);
+                    longnam::fits_get_num_rows(self.fptr as *mut _, &mut num_rows, &mut status);
                 }
 
                 let mut num_cols = 0;
                 unsafe {
-                    longnam::ffgncl(self.fptr as *mut _, &mut num_cols, &mut status);
+                    longnam::fits_get_num_cols(self.fptr as *mut _, &mut num_cols, &mut status);
                 }
                 let mut column_descriptions = Vec::with_capacity(num_cols as usize);
 
@@ -283,7 +283,7 @@ impl FitsFile {
                     let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
                     let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
                     unsafe {
-                        longnam::ffgbcl(
+                        longnam::fits_get_bcolparms(
                             self.fptr as *mut _,
                             (i + 1) as i32,
                             name_buffer.as_mut_ptr(),
@@ -354,7 +354,7 @@ impl FitsFile {
 
         let mut status: libc::c_int = 0;
         unsafe {
-            longnam::ffcrtb(
+            longnam::fits_create_tbl(
                 self.fptr as *mut _,
                 hdu_info.into(),
                 0,
@@ -396,7 +396,7 @@ impl FitsFile {
         dimensions.reverse();
 
         unsafe {
-            longnam::ffcrim(
+            longnam::fits_create_img(
                 self.fptr as *mut _,
                 image_description.data_type.into(),
                 naxis as i32,
@@ -587,7 +587,7 @@ where
         let c_filename = ffi::CString::new(path)?;
 
         unsafe {
-            longnam::ffinit(
+            longnam::fits_create_file(
                 &mut fptr as *mut *mut fitsfile,
                 c_filename.as_ptr(),
                 &mut status,
@@ -654,7 +654,7 @@ impl DescribesHdu for usize {
         let mut hdu_type = 0;
         let mut status = 0;
         unsafe {
-            longnam::ffmahd(
+            longnam::fits_movabs_hdu(
                 f.fptr as *mut _,
                 (*self + 1) as i32,
                 &mut hdu_type,
@@ -672,7 +672,7 @@ impl<'a> DescribesHdu for &'a str {
         let c_hdu_name = ffi::CString::new(*self)?;
 
         unsafe {
-            longnam::ffmnhd(
+            longnam::fits_movnam_hdu(
                 f.fptr as *mut _,
                 HduInfo::AnyInfo.into(),
                 c_hdu_name.into_raw(),
@@ -838,7 +838,7 @@ fn column_display_width(fits_file: &FitsFile, column_number: usize) -> Result<us
     let mut status = 0;
     let mut width = 0;
     unsafe {
-        longnam::ffgcdw(
+        longnam::fits_get_col_display_width(
             fits_file.fptr as *mut _,
             (column_number + 1) as _,
             &mut width,
@@ -882,7 +882,7 @@ impl ReadsCol for String {
                 }
 
                 unsafe {
-                    longnam::ffgcvs(
+                    longnam::fits_read_col_str(
                         fits_file.fptr as *mut _,
                         (column_number + 1) as _,
                         (range.start + 1) as _,
@@ -977,7 +977,7 @@ macro_rules! writes_col_impl {
                         let mut status = 0;
                         let n_elements = rows.end - rows.start;
                         unsafe {
-                            longnam::ffpcl(
+                            longnam::fits_write_col(
                                 fits_file.fptr as *mut _,
                                 $data_type.into(),
                                 (colno + 1) as _,
@@ -1037,7 +1037,7 @@ impl WritesCol for String {
                 }
 
                 unsafe {
-                    longnam::ffpcls(
+                    longnam::fits_write_col_str(
                         fits_file.fptr as *mut _,
                         (colno + 1) as _,
                         (start + 1) as _,
@@ -1111,7 +1111,7 @@ impl ReadsKey for String {
         let mut value: Vec<libc::c_char> = vec![0; MAX_VALUE_LENGTH];
 
         unsafe {
-            longnam::ffgkys(
+            longnam::fits_read_key_str(
                 f.fptr as *mut _,
                 c_name.into_raw(),
                 value.as_mut_ptr(),
@@ -1160,7 +1160,7 @@ impl WritesKey for i64 {
         let mut status = 0;
 
         unsafe {
-            longnam::ffpkyj(
+            longnam::fits_write_key_lng(
                 f.fptr as *mut _,
                 c_name.into_raw(),
                 value,
@@ -1187,7 +1187,7 @@ impl<'a> WritesKey for &'a str {
         let mut status = 0;
 
         unsafe {
-            longnam::ffpkys(
+            longnam::fits_write_key_str(
                 f.fptr as *mut _,
                 c_name.into_raw(),
                 ffi::CString::new(value)?.into_raw(),
@@ -1276,7 +1276,7 @@ macro_rules! read_write_image_impl {
                         let mut status = 0;
 
                         unsafe {
-                            longnam::ffgpv(fits_file.fptr as *mut _,
+                            longnam::fits_read_img(fits_file.fptr as *mut _,
                                        $data_type.into(),
                                        (range.start + 1) as i64,
                                        nelements as i64,
@@ -1344,7 +1344,7 @@ macro_rules! read_write_image_impl {
                             let mut status = 0;
 
                             unsafe {
-                                longnam::ffgsv(
+                                longnam::fits_read_subset(
                                     fits_file.fptr as *mut _,
                                     $data_type.into(),
                                     fpixel.as_mut_ptr(),
@@ -1377,7 +1377,7 @@ macro_rules! read_write_image_impl {
                             assert!(data.len() >= nelements);
                             let mut status = 0;
                             unsafe {
-                                longnam::ffppr(fits_file.fptr as *mut _,
+                                longnam::fits_write_img(fits_file.fptr as *mut _,
                                            $data_type.into(),
                                            (range.start + 1) as i64,
                                            nelements as i64,
@@ -1416,7 +1416,7 @@ macro_rules! read_write_image_impl {
                             let mut status = 0;
 
                             unsafe {
-                                longnam::ffpss(
+                                longnam::fits_write_subset(
                                     fits_file.fptr as *mut _,
                                     $data_type.into(),
                                     fpixel.as_mut_ptr(),
@@ -1706,7 +1706,7 @@ impl FitsHdu {
             HduInfo::ImageInfo { image_type, .. } => {
                 let mut status = 0;
                 unsafe {
-                    longnam::ffrsim(
+                    longnam::fits_resize_img(
                         fits_file.fptr as *mut _,
                         image_type.into(),
                         new_size.len() as _,
@@ -1729,7 +1729,7 @@ impl FitsHdu {
     ) -> Result<()> {
         let mut status = 0;
         unsafe {
-            longnam::ffcopy(
+            longnam::fits_copy_hdu(
                 src_fits_file.fptr as *mut _,
                 dest_fits_file.fptr as *mut _,
                 0,
@@ -1759,7 +1759,7 @@ impl FitsHdu {
         let c_type = ffi::CString::new(String::from(description.data_type.clone()))?;
 
         unsafe {
-            longnam::fficol(
+            longnam::fits_insert_col(
                 fits_file.fptr as *mut _,
                 (position + 1) as _,
                 c_name.into_raw(),
@@ -1814,7 +1814,7 @@ impl FitsHdu {
         let mut status = 0;
 
         unsafe {
-            longnam::ffdcol(fits_file.fptr as *mut _, (colno + 1) as _, &mut status);
+            longnam::fits_delete_col(fits_file.fptr as *mut _, (colno + 1) as _, &mut status);
         }
 
         check_status(status).and_then(|_| fits_file.current_hdu())
@@ -1839,7 +1839,7 @@ impl FitsHdu {
         };
 
         unsafe {
-            longnam::ffgcno(
+            longnam::fits_get_colnum(
                 fits_file.fptr as *mut _,
                 CaseSensitivity::CASEINSEN as _,
                 c_col_name.as_ptr() as *mut _,
@@ -1920,7 +1920,7 @@ impl FitsHdu {
         let mut status = 0;
         let mut curhdu = 0;
         unsafe {
-            longnam::ffdhdu(fits_file.fptr as *mut _, &mut curhdu, &mut status);
+            longnam::fits_delete_hdu(fits_file.fptr as *mut _, &mut curhdu, &mut status);
         }
         check_status(status).map(|_| ())
     }
@@ -3087,6 +3087,8 @@ mod test {
 
     #[test]
     fn test_access_fptr_unsafe() {
+        use sys::fitsfile;
+
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let fptr: *const fitsfile = unsafe { f.as_raw() };
         assert!(!fptr.is_null());
