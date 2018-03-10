@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Added
 ### Changed
 
-* (`fitsio`) add long cfitsio function names
+* (`fitsio`) add long cfitsio function names [#88](https://github.com/mindriot101/rust-fitsio/pull/88)
 
 ### Removed
 
