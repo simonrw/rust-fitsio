@@ -8,7 +8,8 @@
  * similar architectures).
  */
 
-use sys;
+use longnam::*;
+use sys::fitsfile;
 use stringutils::{self, status_to_string};
 use errors::{Error, IndexError, Result};
 use fitserror::{check_status, FitsError};
@@ -55,7 +56,7 @@ pub struct FitsFile {
     /// Name of the file
     pub filename: String,
     open_mode: FileOpenMode,
-    fptr: *const sys::fitsfile,
+    fptr: *const fitsfile,
 }
 
 impl FitsFile {
@@ -77,8 +78,8 @@ impl FitsFile {
         let c_filename = ffi::CString::new(filename)?;
 
         unsafe {
-            sys::ffopen(
-                &mut fptr as *mut *mut sys::fitsfile,
+            fits_open_file(
+                &mut fptr as *mut *mut fitsfile,
                 c_filename.as_ptr(),
                 FileOpenMode::READONLY as libc::c_int,
                 &mut status,
@@ -100,7 +101,7 @@ impl FitsFile {
         let c_filename = ffi::CString::new(filename)?;
 
         unsafe {
-            sys::ffopen(
+            fits_open_file(
                 &mut fptr as *mut *mut _,
                 c_filename.as_ptr(),
                 FileOpenMode::READWRITE as libc::c_int,
@@ -128,7 +129,7 @@ impl FitsFile {
         let mut status = 0;
         let mut iomode = 0;
         unsafe {
-            sys::ffflmd(self.fptr as *mut _, &mut iomode, &mut status);
+            fits_file_mode(self.fptr as *mut _, &mut iomode, &mut status);
         }
 
         check_status(status).map(|_| match iomode {
@@ -141,7 +142,7 @@ impl FitsFile {
     fn add_empty_primary(&self) -> Result<()> {
         let mut status = 0;
         unsafe {
-            sys::ffphps(
+            fits_write_imghdr(
                 self.fptr as *mut _,
                 ImageType::UnsignedByte.into(),
                 0,
@@ -173,7 +174,7 @@ impl FitsFile {
         let mut status = 0;
         let mut num_hdus = 0;
         unsafe {
-            sys::ffthdu(self.fptr as *mut _, &mut num_hdus, &mut status);
+            fits_get_num_hdus(self.fptr as *mut _, &mut num_hdus, &mut status);
         }
 
         check_status(status).map(|_| num_hdus as _)
@@ -198,7 +199,7 @@ impl FitsFile {
     fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
         unsafe {
-            sys::ffghdn(self.fptr as *mut _, &mut hdu_num);
+            fits_get_hdu_num(self.fptr as *mut _, &mut hdu_num);
         }
         (hdu_num - 1) as usize
     }
@@ -215,19 +216,19 @@ impl FitsFile {
         let mut hdu_type = 0;
 
         unsafe {
-            sys::ffghdt(self.fptr as *mut _, &mut hdu_type, &mut status);
+            fits_get_hdu_type(self.fptr as *mut _, &mut hdu_type, &mut status);
         }
 
         let hdu_type = match hdu_type {
             0 => {
                 let mut dimensions = 0;
                 unsafe {
-                    sys::ffgidm(self.fptr as *mut _, &mut dimensions, &mut status);
+                    fits_get_img_dim(self.fptr as *mut _, &mut dimensions, &mut status);
                 }
 
                 let mut shape = vec![0; dimensions as usize];
                 unsafe {
-                    sys::ffgisz(
+                    fits_get_img_size(
                         self.fptr as *mut _,
                         dimensions,
                         shape.as_mut_ptr(),
@@ -245,7 +246,7 @@ impl FitsFile {
                      * See description here:
                      * https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node40.html
                      */
-                    sys::ffgiet(self.fptr as *mut _, &mut bitpix, &mut status);
+                    fits_get_img_equivtype(self.fptr as *mut _, &mut bitpix, &mut status);
                 }
 
                 let image_type = match bitpix {
@@ -269,12 +270,12 @@ impl FitsFile {
             1 | 2 => {
                 let mut num_rows = 0;
                 unsafe {
-                    sys::ffgnrw(self.fptr as *mut _, &mut num_rows, &mut status);
+                    fits_get_num_rows(self.fptr as *mut _, &mut num_rows, &mut status);
                 }
 
                 let mut num_cols = 0;
                 unsafe {
-                    sys::ffgncl(self.fptr as *mut _, &mut num_cols, &mut status);
+                    fits_get_num_cols(self.fptr as *mut _, &mut num_cols, &mut status);
                 }
                 let mut column_descriptions = Vec::with_capacity(num_cols as usize);
 
@@ -282,7 +283,7 @@ impl FitsFile {
                     let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
                     let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
                     unsafe {
-                        sys::ffgbcl(
+                        fits_get_bcolparms(
                             self.fptr as *mut _,
                             (i + 1) as i32,
                             name_buffer.as_mut_ptr(),
@@ -353,7 +354,7 @@ impl FitsFile {
 
         let mut status: libc::c_int = 0;
         unsafe {
-            sys::ffcrtb(
+            fits_create_tbl(
                 self.fptr as *mut _,
                 hdu_info.into(),
                 0,
@@ -395,7 +396,7 @@ impl FitsFile {
         dimensions.reverse();
 
         unsafe {
-            sys::ffcrim(
+            fits_create_img(
                 self.fptr as *mut _,
                 image_description.data_type.into(),
                 naxis as i32,
@@ -495,7 +496,7 @@ impl FitsFile {
     /// This is marked as `unsafe` as it is definitely something that is not required by most
     /// users, and hence the unsafe-ness marks it as an advanced feature. I have also not
     /// considered possible concurrency or data race issues as yet.
-    pub unsafe fn as_raw(&self) -> *mut sys::fitsfile {
+    pub unsafe fn as_raw(&self) -> *mut fitsfile {
         self.fptr as *mut _
     }
 }
@@ -504,7 +505,7 @@ impl Drop for FitsFile {
     fn drop(&mut self) {
         let mut status = 0;
         unsafe {
-            sys::ffclos(self.fptr as *mut _, &mut status);
+            fits_close_file(self.fptr as *mut _, &mut status);
         }
         self.fptr = ptr::null_mut();
     }
@@ -586,8 +587,8 @@ where
         let c_filename = ffi::CString::new(path)?;
 
         unsafe {
-            sys::ffinit(
-                &mut fptr as *mut *mut sys::fitsfile,
+            fits_create_file(
+                &mut fptr as *mut *mut fitsfile,
                 c_filename.as_ptr(),
                 &mut status,
             );
@@ -653,7 +654,7 @@ impl DescribesHdu for usize {
         let mut hdu_type = 0;
         let mut status = 0;
         unsafe {
-            sys::ffmahd(
+            fits_movabs_hdu(
                 f.fptr as *mut _,
                 (*self + 1) as i32,
                 &mut hdu_type,
@@ -671,7 +672,7 @@ impl<'a> DescribesHdu for &'a str {
         let c_hdu_name = ffi::CString::new(*self)?;
 
         unsafe {
-            sys::ffmnhd(
+            fits_movnam_hdu(
                 f.fptr as *mut _,
                 HduInfo::AnyInfo.into(),
                 c_hdu_name.into_raw(),
@@ -755,7 +756,7 @@ macro_rules! reads_col_impl {
                                         format!("Cannot find column {:?}", test_name)))?;
                             let mut status = 0;
                             unsafe {
-                                sys::$func(fits_file.fptr as *mut _,
+                                $func(fits_file.fptr as *mut _,
                                            (column_number + 1) as i32,
                                            (range.start + 1) as i64,
                                            1,
@@ -800,7 +801,7 @@ macro_rules! reads_col_impl {
                                   let mut status = 0;
 
                                   unsafe {
-                                      sys::$func(fits_file.fptr as *mut _,
+                                      $func(fits_file.fptr as *mut _,
                                                  (column_number + 1) as i32,
                                                  (idx + 1) as i64,
                                                  1,
@@ -837,7 +838,7 @@ fn column_display_width(fits_file: &FitsFile, column_number: usize) -> Result<us
     let mut status = 0;
     let mut width = 0;
     unsafe {
-        sys::ffgcdw(
+        fits_get_col_display_width(
             fits_file.fptr as *mut _,
             (column_number + 1) as _,
             &mut width,
@@ -881,7 +882,7 @@ impl ReadsCol for String {
                 }
 
                 unsafe {
-                    sys::ffgcvs(
+                    fits_read_col_str(
                         fits_file.fptr as *mut _,
                         (column_number + 1) as _,
                         (range.start + 1) as _,
@@ -976,7 +977,7 @@ macro_rules! writes_col_impl {
                         let mut status = 0;
                         let n_elements = rows.end - rows.start;
                         unsafe {
-                            sys::ffpcl(
+                            fits_write_col(
                                 fits_file.fptr as *mut _,
                                 $data_type.into(),
                                 (colno + 1) as _,
@@ -1036,7 +1037,7 @@ impl WritesCol for String {
                 }
 
                 unsafe {
-                    sys::ffpcls(
+                    fits_write_col_str(
                         fits_file.fptr as *mut _,
                         (colno + 1) as _,
                         (start + 1) as _,
@@ -1082,7 +1083,7 @@ macro_rules! reads_key_impl {
                 let mut value: Self = Self::default();
 
                 unsafe {
-                    sys::$func(f.fptr as *mut _,
+                    $func(f.fptr as *mut _,
                            c_name.into_raw(),
                            &mut value,
                            ptr::null_mut(),
@@ -1110,7 +1111,7 @@ impl ReadsKey for String {
         let mut value: Vec<libc::c_char> = vec![0; MAX_VALUE_LENGTH];
 
         unsafe {
-            sys::ffgkys(
+            fits_read_key_str(
                 f.fptr as *mut _,
                 c_name.into_raw(),
                 value.as_mut_ptr(),
@@ -1140,7 +1141,7 @@ macro_rules! writes_key_impl_flt {
                 let mut status = 0;
 
                 unsafe {
-                    sys::$func(f.fptr as *mut _,
+                    $func(f.fptr as *mut _,
                                 c_name.into_raw(),
                                 value,
                                 9,
@@ -1159,7 +1160,7 @@ impl WritesKey for i64 {
         let mut status = 0;
 
         unsafe {
-            sys::ffpkyj(
+            fits_write_key_lng(
                 f.fptr as *mut _,
                 c_name.into_raw(),
                 value,
@@ -1186,7 +1187,7 @@ impl<'a> WritesKey for &'a str {
         let mut status = 0;
 
         unsafe {
-            sys::ffpkys(
+            fits_write_key_str(
                 f.fptr as *mut _,
                 c_name.into_raw(),
                 ffi::CString::new(value)?.into_raw(),
@@ -1275,7 +1276,7 @@ macro_rules! read_write_image_impl {
                         let mut status = 0;
 
                         unsafe {
-                            sys::ffgpv(fits_file.fptr as *mut _,
+                            fits_read_img(fits_file.fptr as *mut _,
                                        $data_type.into(),
                                        (range.start + 1) as i64,
                                        nelements as i64,
@@ -1343,7 +1344,7 @@ macro_rules! read_write_image_impl {
                             let mut status = 0;
 
                             unsafe {
-                                sys::ffgsv(
+                                fits_read_subset(
                                     fits_file.fptr as *mut _,
                                     $data_type.into(),
                                     fpixel.as_mut_ptr(),
@@ -1376,7 +1377,7 @@ macro_rules! read_write_image_impl {
                             assert!(data.len() >= nelements);
                             let mut status = 0;
                             unsafe {
-                                sys::ffppr(fits_file.fptr as *mut _,
+                                fits_write_img(fits_file.fptr as *mut _,
                                            $data_type.into(),
                                            (range.start + 1) as i64,
                                            nelements as i64,
@@ -1415,7 +1416,7 @@ macro_rules! read_write_image_impl {
                             let mut status = 0;
 
                             unsafe {
-                                sys::ffpss(
+                                fits_write_subset(
                                     fits_file.fptr as *mut _,
                                     $data_type.into(),
                                     fpixel.as_mut_ptr(),
@@ -1705,7 +1706,7 @@ impl FitsHdu {
             HduInfo::ImageInfo { image_type, .. } => {
                 let mut status = 0;
                 unsafe {
-                    sys::ffrsim(
+                    fits_resize_img(
                         fits_file.fptr as *mut _,
                         image_type.into(),
                         new_size.len() as _,
@@ -1728,7 +1729,7 @@ impl FitsHdu {
     ) -> Result<()> {
         let mut status = 0;
         unsafe {
-            sys::ffcopy(
+            fits_copy_hdu(
                 src_fits_file.fptr as *mut _,
                 dest_fits_file.fptr as *mut _,
                 0,
@@ -1758,7 +1759,7 @@ impl FitsHdu {
         let c_type = ffi::CString::new(String::from(description.data_type.clone()))?;
 
         unsafe {
-            sys::fficol(
+            fits_insert_col(
                 fits_file.fptr as *mut _,
                 (position + 1) as _,
                 c_name.into_raw(),
@@ -1813,7 +1814,7 @@ impl FitsHdu {
         let mut status = 0;
 
         unsafe {
-            sys::ffdcol(fits_file.fptr as *mut _, (colno + 1) as _, &mut status);
+            fits_delete_col(fits_file.fptr as *mut _, (colno + 1) as _, &mut status);
         }
 
         check_status(status).and_then(|_| fits_file.current_hdu())
@@ -1838,7 +1839,7 @@ impl FitsHdu {
         };
 
         unsafe {
-            sys::ffgcno(
+            fits_get_colnum(
                 fits_file.fptr as *mut _,
                 CaseSensitivity::CASEINSEN as _,
                 c_col_name.as_ptr() as *mut _,
@@ -1919,7 +1920,7 @@ impl FitsHdu {
         let mut status = 0;
         let mut curhdu = 0;
         unsafe {
-            sys::ffdhdu(fits_file.fptr as *mut _, &mut curhdu, &mut status);
+            fits_delete_hdu(fits_file.fptr as *mut _, &mut curhdu, &mut status);
         }
         check_status(status).map(|_| ())
     }
@@ -3086,8 +3087,10 @@ mod test {
 
     #[test]
     fn test_access_fptr_unsafe() {
+        use sys::fitsfile;
+
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let fptr: *const sys::fitsfile = unsafe { f.as_raw() };
+        let fptr: *const fitsfile = unsafe { f.as_raw() };
         assert!(!fptr.is_null());
     }
 
