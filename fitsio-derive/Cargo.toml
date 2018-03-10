@@ -1,0 +1,12 @@
+[package]
+name = "fitsio-derive"
+version = "0.1.0"
+authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
+
+[dependencies]
+quote = "0.4.2"
+syn = { version = "0.12.13", features = ["extra-traits"] }
+
+[lib]
+proc-macro = true
+

@@ -3,7 +3,7 @@
 //! This mostly concerns converting to and from the main error type defined
 //! in this crate: [`Error`](enum.Error.html)
 
-use std::ffi::NulError;
+use std::ffi::{IntoStringError, NulError};
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 use std::ops::Range;
@@ -30,6 +30,9 @@ pub enum Error {
 
     /// IO errors
     Io(io::Error),
+
+    /// String conversion errors
+    IntoString(IntoStringError),
 }
 
 /// Error raised when the user requests invalid indexes for data
@@ -98,6 +101,12 @@ impl ::std::convert::From<io::Error> for Error {
     }
 }
 
+impl ::std::convert::From<IntoStringError> for Error {
+    fn from(e: IntoStringError) -> Self {
+        Error::IntoString(e)
+    }
+}
+
 impl ::std::fmt::Display for Error {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::result::Result<(), ::std::fmt::Error> {
         match *self {
@@ -107,6 +116,7 @@ impl ::std::fmt::Display for Error {
             Error::Utf8(ref e) => e.fmt(f),
             Error::Index(ref e) => write!(f, "Error: {:?}", e),
             Error::Io(ref e) => e.fmt(f),
+            Error::IntoString(ref e) => e.fmt(f),
         }
     }
 }

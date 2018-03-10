@@ -15,6 +15,8 @@
 //! * [Reading file data](#reading-file-data)
 //!     * [Reading images](#reading-images)
 //!     * [Reading tables](#reading-tables)
+//!         * [Reading cell values](#reading-cell-values)
+//!         * [Reading rows](#reading-rows)
 //!     * [Iterating over columns](#iterating-over-columns)
 //! * [Writing file data](#writing-file-data)
 //!     * [Writing images](#writing-images)
@@ -479,6 +481,55 @@
 //! # }
 //! ```
 //!
+//! ### Reading cell values
+//!
+//! Individual cell values can be read from FITS tables:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits[TESTEXT]";
+//! # let mut f = fitsio::FitsFile::open(filename).unwrap();
+//! # let tbl_hdu = f.hdu("TESTEXT").unwrap();
+//! let result: i64 = tbl_hdu.read_cell_value(&mut f, "intcol", 4).unwrap();
+//! assert_eq!(result, 16);
+//!
+//! let result: String = tbl_hdu.read_cell_value(&mut f, "strcol", 4).unwrap();
+//! assert_eq!(result, "value4".to_string());
+//! # }
+//! ```
+//!
+//! ### Reading rows
+//!
+//! Single rows can be read from a fits table with the [`row`][fits-hdu-row] method. This requires
+//! use of the [`fitsio-derive`][fitsio-derive] crate.
+//!
+//! ```rust
+//! #[macro_use]
+//! extern crate fitsio_derive;
+//! extern crate fitsio;
+//! use fitsio::fitsfile::FitsRow;
+//!
+//! #[derive(Default, FitsRow)]
+//! struct Row {
+//!     #[fitsio(colname = "intcol")]
+//!     intfoo: i32,
+//!     #[fitsio(colname = "strcol")]
+//!     foobar: String,
+//! }
+//! #
+//! # fn main() {
+//! # let filename = "../testdata/full_example.fits[TESTEXT]";
+//! # let mut f = fitsio::FitsFile::open(filename).unwrap();
+//! # let hdu = f.hdu("TESTEXT").unwrap();
+//!
+//! // Pick the 4th row
+//! let row: Row = hdu.row(&mut f, 4).unwrap();
+//! assert_eq!(row.intfoo, 16);
+//! assert_eq!(row.foobar, "value4");
+//! # }
+//! ```
+//!
 //! ## Iterating over columns
 //!
 //! Iterate over the columns with [`columns`][fits-hdu-columns].
@@ -835,6 +886,7 @@
 //! [fits-hdu-copy-to]: fitsfile/struct.FitsHdu.html#method.copy_to
 //! [fits-hdu-delete]: fitsfile/struct.FitsHdu.html#method.copy_to
 //! [fits-hdu-resize]: fitsfile/struct.FitsHdu.html#method.resize
+//! [fits-hdu-row]: fitsfile/struct.FitsHdu.html#method.row
 //! [fits-hdu]: fitsfile/struct.FitsHdu.html
 //! [image-description]: fitsfile/struct.ImageDescription.html
 //! [reads-col]: fitsfile/trait.ReadsCol.html
@@ -845,6 +897,7 @@
 //! [new-fits-file-with-custom-primary]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
 //! [pretty-print]: fitsfile/struct.FitsFile.html#method.pretty_print
 //! [pretty-write]: fitsfile/struct.FitsFile.html#method.pretty_write
+//! [fitsio-derive]: https://crates.io/crates/fitsio-derive
 
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
