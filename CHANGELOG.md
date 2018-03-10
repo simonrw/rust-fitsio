@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Added
 ### Changed
+
+* (`fitsio`) add long cfitsio function names
+
 ### Removed
 
 ## [0.13.0] - 2018-03-10
