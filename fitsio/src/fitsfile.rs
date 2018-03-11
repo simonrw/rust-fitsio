@@ -16,6 +16,7 @@ use fitserror::{check_status, FitsError};
 use columndescription::*;
 use libc;
 use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
+use std::marker::PhantomData;
 use std::ffi;
 use std::io::{self, Write};
 use std::ptr;
@@ -160,12 +161,15 @@ impl FitsFile {
     }
 
     /// Return a new HDU object
-    pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<FitsHdu> {
+    pub fn hdu<'fitsfile, T: DescribesHdu>(
+        &'fitsfile mut self,
+        hdu_description: T,
+    ) -> Result<FitsHdu<'fitsfile>> {
         FitsHdu::new(self, hdu_description)
     }
 
     /// Return the primary hdu (HDU 0)
-    pub fn primary_hdu(&mut self) -> Result<FitsHdu> {
+    pub fn primary_hdu<'fitsfile>(&'fitsfile mut self) -> Result<FitsHdu<'fitsfile>> {
         self.hdu(0)
     }
 
@@ -205,7 +209,7 @@ impl FitsFile {
     }
 
     /// Get the current hdu as an HDU object
-    pub fn current_hdu(&mut self) -> Result<FitsHdu> {
+    pub fn current_hdu<'fitsfile>(&'fitsfile mut self) -> Result<FitsHdu<'fitsfile>> {
         let current_hdu_number = self.hdu_number();
         self.hdu(current_hdu_number)
     }
@@ -319,11 +323,11 @@ impl FitsFile {
     /// Create a new fits table
     ///
     /// Create a new fits table, with columns as detailed in the `ColumnDescription` object.
-    pub fn create_table<T>(
-        &mut self,
+    pub fn create_table<'fitsfile, T>(
+        &'fitsfile mut self,
         extname: T,
         table_description: &[ConcreteColumnDescription],
-    ) -> Result<FitsHdu>
+    ) -> Result<FitsHdu<'fitsfile>>
     where
         T: Into<String>,
     {
@@ -367,15 +371,15 @@ impl FitsFile {
             );
         }
 
-        check_status(status).and_then(|_| self.current_hdu())
+        check_status(status).and_then(move |_| self.current_hdu())
     }
 
     /// Create a new fits image, and return the [`FitsHdu`](struct.FitsHdu.html) object
-    pub fn create_image<T>(
-        &mut self,
+    pub fn create_image<'fitsfile, T>(
+        &'fitsfile mut self,
         extname: T,
         image_description: &ImageDescription,
-    ) -> Result<FitsHdu>
+    ) -> Result<FitsHdu<'fitsfile>>
     where
         T: Into<String>,
     {
@@ -414,10 +418,10 @@ impl FitsFile {
         }
 
         // Current HDU should be at the new HDU
-        let current_hdu = try!(self.current_hdu());
+        let current_hdu = self.current_hdu()?;
         current_hdu.write_key(self, "EXTNAME", extname.into())?;
 
-        check_status(status).and_then(|_| self.current_hdu())
+        check_status(status).map(move |_| current_hdu)
     }
 
     /// Iterate over the HDUs in the file
@@ -620,16 +624,17 @@ where
 }
 
 /// Iterator over fits HDUs
-pub struct FitsHduIterator<'a> {
+pub struct FitsHduIterator<'fitsfile> {
     current: usize,
     max: usize,
-    fits_file: &'a mut FitsFile,
+    fits_file: &'fitsfile mut FitsFile,
 }
 
-impl<'a> Iterator for FitsHduIterator<'a> {
-    type Item = FitsHdu;
+impl<'fitsfile> Iterator for FitsHduIterator<'fitsfile> {
+    type Item = FitsHdu<'fitsfile>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        /*
         if self.current >= self.max {
             return None;
         }
@@ -637,6 +642,8 @@ impl<'a> Iterator for FitsHduIterator<'a> {
         let hdu = self.fits_file.hdu(self.current).unwrap();
         self.current += 1;
         Some(hdu)
+        */
+        None
     }
 }
 
@@ -927,23 +934,23 @@ impl ReadsCol for String {
 /// Trait representing the ability to write column data
 pub trait WritesCol {
     #[doc(hidden)]
-    fn write_col_range<T: Into<String>>(
-        fits_file: &mut FitsFile,
+    fn write_col_range<'fitsfile, T: Into<String>>(
+        fits_file: &'fitsfile mut FitsFile,
         hdu: &FitsHdu,
         col_name: T,
         col_data: &[Self],
         rows: &Range<usize>,
-    ) -> Result<FitsHdu>
+    ) -> Result<FitsHdu<'fitsfile>>
     where
         Self: Sized;
 
     #[doc(hidden)]
-    fn write_col<T: Into<String>>(
-        fits_file: &mut FitsFile,
+    fn write_col<'fitsfile, T: Into<String>>(
+        fits_file: &'fitsfile mut FitsFile,
         hdu: &FitsHdu,
         col_name: T,
         col_data: &[Self],
-    ) -> Result<FitsHdu>
+    ) -> Result<FitsHdu<'fitsfile>>
     where
         Self: Sized,
     {
@@ -964,12 +971,12 @@ pub trait WritesCol {
 macro_rules! writes_col_impl {
     ($t: ty, $data_type: expr) => (
         impl WritesCol for $t {
-            fn write_col_range<T: Into<String>>(fits_file: &mut FitsFile,
+            fn write_col_range<'fitsfile, T: Into<String>>(fits_file: &'fitsfile mut FitsFile,
                 hdu: &FitsHdu,
                 col_name: T,
                 col_data: &[Self],
                 rows: &Range<usize>)
-            -> Result<FitsHdu> {
+            -> Result<FitsHdu<'fitsfile>> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { .. }) => {
                         let colno = hdu.get_column_no(fits_file, col_name.into())?;
@@ -988,7 +995,7 @@ macro_rules! writes_col_impl {
                                 &mut status
                             );
                         }
-                        check_status(status).and_then(|_| fits_file.current_hdu())
+                        check_status(status).and_then(move |_| fits_file.current_hdu())
                     },
                     Ok(HduInfo::ImageInfo { .. }) =>
                         Err("Cannot write column data to FITS image".into()),
@@ -1013,13 +1020,13 @@ writes_col_impl!(f32, DataType::TFLOAT);
 writes_col_impl!(f64, DataType::TDOUBLE);
 
 impl WritesCol for String {
-    fn write_col_range<T: Into<String>>(
-        fits_file: &mut FitsFile,
+    fn write_col_range<'fitsfile, T: Into<String>>(
+        fits_file: &'fitsfile mut FitsFile,
         hdu: &FitsHdu,
         col_name: T,
         col_data: &[Self],
         rows: &Range<usize>,
-    ) -> Result<FitsHdu> {
+    ) -> Result<FitsHdu<'fitsfile>> {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { .. }) => {
                 let colno = hdu.get_column_no(fits_file, col_name.into())?;
@@ -1047,7 +1054,7 @@ impl WritesCol for String {
                         &mut status,
                     );
                 }
-                check_status(status).and_then(|_| fits_file.current_hdu())
+                check_status(status).and_then(move |_| fits_file.current_hdu())
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
             Ok(HduInfo::AnyInfo { .. }) => {
@@ -1542,33 +1549,42 @@ impl<'a> Iterator for ColumnIterator<'a> {
 /// Struct representing a FITS HDU
 ///
 ///
-pub struct FitsHdu {
+pub struct FitsHdu<'fitsfile> {
     /// Information about the current HDU
     pub info: HduInfo,
     hdu_num: usize,
+    phantom: PhantomData<&'fitsfile FitsFile>,
 }
 
-impl FitsHdu {
-    fn new<T: DescribesHdu>(fits_file: &mut FitsFile, hdu_description: T) -> Result<Self> {
+impl<'fitsfile> FitsHdu<'fitsfile> {
+    fn new<T: DescribesHdu>(
+        fits_file: &'fitsfile mut FitsFile,
+        hdu_description: T,
+    ) -> Result<Self> {
         fits_file.change_hdu(hdu_description)?;
         match fits_file.fetch_hdu_info() {
             Ok(hdu_info) => Ok(FitsHdu {
                 info: hdu_info,
                 hdu_num: fits_file.hdu_number(),
+                phantom: PhantomData,
             }),
             Err(e) => Err(e),
         }
     }
 
     /// Read the HDU name
-    pub fn name(&self, fits_file: &mut FitsFile) -> Result<String> {
+    pub fn name(&self, fits_file: &'fitsfile mut FitsFile) -> Result<String> {
         let extname = self.read_key(fits_file, "EXTNAME")
             .unwrap_or_else(|_| "".to_string());
         Ok(extname)
     }
 
     /// Read header key
-    pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
+    pub fn read_key<T: ReadsKey>(
+        &self,
+        fits_file: &'fitsfile mut FitsFile,
+        name: &str,
+    ) -> Result<T> {
         fits_file.make_current(self)?;
         T::read_key(fits_file, name)
     }
@@ -1576,7 +1592,7 @@ impl FitsHdu {
     /// Write a fits key to the current header
     pub fn write_key<T: WritesKey>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         name: &str,
         value: T,
     ) -> Result<()> {
@@ -1590,7 +1606,7 @@ impl FitsHdu {
     /// The range is exclusive of the upper value
     pub fn read_section<T: ReadWriteImage>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         start: usize,
         end: usize,
     ) -> Result<Vec<T>> {
@@ -1601,7 +1617,7 @@ impl FitsHdu {
     /// Read multiple rows from a fits image
     pub fn read_rows<T: ReadWriteImage>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         start_row: usize,
         num_rows: usize,
     ) -> Result<Vec<T>> {
@@ -1612,7 +1628,7 @@ impl FitsHdu {
     /// Read a single row from a fits image
     pub fn read_row<T: ReadWriteImage>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         row: usize,
     ) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
@@ -1626,7 +1642,7 @@ impl FitsHdu {
     /// is inclusive of the lower end, and *exclusive* of the upper end.
     pub fn read_region<T: ReadWriteImage>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         ranges: &[&Range<usize>],
     ) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
@@ -1636,7 +1652,10 @@ impl FitsHdu {
     /// Read a whole image into a new `Vec`
     ///
     /// This reads an entire image into a one-dimensional vector
-    pub fn read_image<T: ReadWriteImage>(&self, fits_file: &mut FitsFile) -> Result<Vec<T>> {
+    pub fn read_image<T: ReadWriteImage>(
+        &self,
+        fits_file: &'fitsfile mut FitsFile,
+    ) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
         T::read_image(fits_file)
     }
@@ -1649,7 +1668,7 @@ impl FitsHdu {
     /// The range is exclusive of the upper value.
     pub fn write_section<T: ReadWriteImage>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         start: usize,
         end: usize,
         data: &[T],
@@ -1667,7 +1686,7 @@ impl FitsHdu {
     /// For example, writing with ranges 0..10 and 0..10 wries an 10x10 sized image.
     pub fn write_region<T: ReadWriteImage>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         ranges: &[&Range<usize>],
         data: &[T],
     ) -> Result<()> {
@@ -1682,7 +1701,7 @@ impl FitsHdu {
     /// After this, all of the data is written to the image.
     pub fn write_image<T: ReadWriteImage>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         data: &[T],
     ) -> Result<()> {
         fits_file.make_current(self)?;
@@ -1695,7 +1714,11 @@ impl FitsHdu {
     /// The `new_size` parameter defines the new size of the image. Unlike cfitsio, the order
     /// of the dimensions of `new_size` follows the C convention, i.e. [row-major
     /// order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
-    pub fn resize(self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<FitsHdu> {
+    pub fn resize(
+        self,
+        fits_file: &'fitsfile mut FitsFile,
+        new_size: &[usize],
+    ) -> Result<FitsHdu<'fitsfile>> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
@@ -1714,7 +1737,7 @@ impl FitsHdu {
                         &mut status,
                     );
                 }
-                check_status(status).and_then(|_| fits_file.current_hdu())
+                check_status(status).and_then(move |_| fits_file.current_hdu())
             }
             HduInfo::TableInfo { .. } => Err("cannot resize binary table".into()),
             HduInfo::AnyInfo => unreachable!(),
@@ -1724,7 +1747,7 @@ impl FitsHdu {
     /// Copy an HDU to another open fits file
     pub fn copy_to(
         &self,
-        src_fits_file: &mut FitsFile,
+        src_fits_file: &'fitsfile mut FitsFile,
         dest_fits_file: &mut FitsFile,
     ) -> Result<()> {
         let mut status = 0;
@@ -1746,10 +1769,10 @@ impl FitsHdu {
     /// columns are shifted back.
     pub fn insert_column(
         self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         position: usize,
         description: &ConcreteColumnDescription,
-    ) -> Result<FitsHdu> {
+    ) -> Result<FitsHdu<'fitsfile>> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
@@ -1768,15 +1791,15 @@ impl FitsHdu {
             );
         }
 
-        check_status(status).and_then(|_| fits_file.current_hdu())
+        check_status(status).and_then(move |_| fits_file.current_hdu())
     }
 
     /// Add a new column to the end of the table
     pub fn append_column(
         self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         description: &ConcreteColumnDescription,
-    ) -> Result<FitsHdu> {
+    ) -> Result<FitsHdu<'fitsfile>> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
@@ -1804,9 +1827,9 @@ impl FitsHdu {
     /// The column can be identified by id or name.
     pub fn delete_column<T: DescribesColumnLocation>(
         self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         col_identifier: T,
-    ) -> Result<FitsHdu> {
+    ) -> Result<FitsHdu<'fitsfile>> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
@@ -1817,7 +1840,7 @@ impl FitsHdu {
             fits_delete_col(fits_file.fptr as *mut _, (colno + 1) as _, &mut status);
         }
 
-        check_status(status).and_then(|_| fits_file.current_hdu())
+        check_status(status).and_then(move |_| fits_file.current_hdu())
     }
 
     /// Return the index for a given column.
@@ -1825,7 +1848,7 @@ impl FitsHdu {
     /// Internal method, not exposed.
     fn get_column_no<T: Into<String>>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         col_name: T,
     ) -> Result<usize> {
         fits_file.make_current(self)?;
@@ -1853,7 +1876,11 @@ impl FitsHdu {
     /// Read a subset of a fits column
     ///
     /// The range is exclusive of the upper value
-    pub fn read_col<T: ReadsCol>(&self, fits_file: &mut FitsFile, name: &str) -> Result<Vec<T>> {
+    pub fn read_col<T: ReadsCol>(
+        &self,
+        fits_file: &'fitsfile mut FitsFile,
+        name: &str,
+    ) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
         T::read_col(fits_file, name)
     }
@@ -1863,7 +1890,7 @@ impl FitsHdu {
     /// The range is exclusive of the upper value
     pub fn read_col_range<T: ReadsCol>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         name: &str,
         range: &Range<usize>,
     ) -> Result<Vec<T>> {
@@ -1876,11 +1903,11 @@ impl FitsHdu {
     /// The range is exclusive of the upper value
     pub fn write_col_range<T: WritesCol, N: Into<String>>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         name: N,
         col_data: &[T],
         rows: &Range<usize>,
-    ) -> Result<FitsHdu> {
+    ) -> Result<FitsHdu<'fitsfile>> {
         fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
         T::write_col_range(fits_file, self, name, col_data, rows)
@@ -1893,10 +1920,10 @@ impl FitsHdu {
     /// with extra rows. This is as per the fitsio definition.
     pub fn write_col<T: WritesCol, N: Into<String>>(
         &self,
-        fits_file: &mut FitsFile,
+        fits_file: &'fitsfile mut FitsFile,
         name: N,
         col_data: &[T],
-    ) -> Result<FitsHdu> {
+    ) -> Result<FitsHdu<'fitsfile>> {
         fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
         T::write_col(fits_file, self, name, col_data)
@@ -1914,7 +1941,7 @@ impl FitsHdu {
     ///
     /// Note this method takes `self` by value, and as such the hdu cannot be used after this
     /// method is called.
-    pub fn delete(self, fits_file: &mut FitsFile) -> Result<()> {
+    pub fn delete(self, fits_file: &'fitsfile mut FitsFile) -> Result<()> {
         fits_file.make_current(&self)?;
 
         let mut status = 0;
@@ -1928,7 +1955,12 @@ impl FitsHdu {
     /// Read a single value from a fits table
     ///
     /// This will be inefficient if lots of individual values are wanted.
-    pub fn read_cell_value<T>(&self, fits_file: &mut FitsFile, name: &str, idx: usize) -> Result<T>
+    pub fn read_cell_value<T>(
+        &self,
+        fits_file: &'fitsfile mut FitsFile,
+        name: &str,
+        idx: usize,
+    ) -> Result<T>
     where
         T: ReadsCol,
     {
@@ -1967,7 +1999,7 @@ impl FitsHdu {
     /// assert_eq!(row.foobar, "value4");
     /// # }
     /// ```
-    pub fn row<F>(&self, fits_file: &mut FitsFile, idx: usize) -> Result<F>
+    pub fn row<F>(&self, fits_file: &'fitsfile mut FitsFile, idx: usize) -> Result<F>
     where
         F: FitsRow,
     {
@@ -3285,5 +3317,15 @@ mod test {
 
         let result: String = tbl_hdu.read_cell_value(&mut f, "strcol", 4).unwrap();
         assert_eq!(result, "value4".to_string());
+    }
+
+    #[test]
+    fn test_hdu_outliving_fitsfile() {
+        let tbl_hdu = {
+            let filename = "../testdata/full_example.fits[TESTEXT]";
+            let mut f = FitsFile::open(filename).unwrap();
+            let tbl_hdu = f.hdu("TESTEXT").unwrap();
+            tbl_hdu
+        };
     }
 }
