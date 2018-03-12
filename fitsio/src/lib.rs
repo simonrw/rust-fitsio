@@ -904,9 +904,9 @@
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
 #[cfg(feature = "default")]
-extern crate fitsio_sys as sys;
+extern crate fitsio_sys;
 #[cfg(feature = "bindgen")]
-extern crate fitsio_sys_bindgen as sys;
+extern crate fitsio_sys_bindgen as fitsio_sys;
 
 extern crate libc;
 

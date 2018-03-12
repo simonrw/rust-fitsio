@@ -9,7 +9,7 @@
  */
 
 use longnam::*;
-use sys::fitsfile;
+use fitsio_sys::fitsfile;
 use stringutils::{self, status_to_string};
 use errors::{Error, IndexError, Result};
 use fitserror::{check_status, FitsError};
@@ -3087,7 +3087,7 @@ mod test {
 
     #[test]
     fn test_access_fptr_unsafe() {
-        use sys::fitsfile;
+        use fitsio_sys::fitsfile;
 
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let fptr: *const fitsfile = unsafe { f.as_raw() };

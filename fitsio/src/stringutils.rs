@@ -1,4 +1,4 @@
-use sys::ffgerr;
+use fitsio_sys::ffgerr;
 use libc::{c_char, c_int, size_t};
 use std::ffi::{CStr, CString};
 use errors::Result;

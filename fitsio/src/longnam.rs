@@ -1,6 +1,6 @@
 //! Long name wrappers of fitsio functions
 
-pub use sys::*;
+pub use fitsio_sys::*;
 #[cfg(feature = "default")]
 use libc::{c_char, c_double, c_int, c_long, c_void};
 #[cfg(feature = "bindgen")]
