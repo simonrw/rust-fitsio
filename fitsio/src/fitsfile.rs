@@ -124,6 +124,46 @@ impl FitsFile {
     }
 
     /// Create a new fits file on disk
+    ///
+    /// The [`create`] method returns a [`NewFitsFile`], which is an
+    /// internal representation of a temporary fits file on disk, before the file is fully created.
+    ///
+    /// This representation has two methods: [`open`] and [`with_custom_primary`]. The [`open`]
+    /// method actually creates the file on disk, but before calling this method, the
+    /// [`with_custom_primary`] method can be used to add a custom primary HDU. This is mostly
+    /// useful for images. Otherwise, a default primary HDU is created.  An example of not adding a
+    /// custom primary HDU is shown above. Below we see an example of [`with_custom_primary`]:
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use fitsio::FitsFile;
+    /// # use fitsio::types::ImageType;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// use fitsio::FitsFile;
+    ///
+    /// // let filename = ...;
+    /// let description = ImageDescription {
+    ///     data_type: ImageType::Double,
+    ///     dimensions: &[52, 103],
+    /// };
+    ///
+    /// let fptr = FitsFile::create(filename)
+    ///     .with_custom_primary(&description)
+    ///     .open()?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
+    /// [`create`]: #method.create
+    /// [`NewFitsFile`]: struct.NewFitsFile.html
+    /// [`open`]: struct.NewFitsFile.html#method.open
+    /// [`with_custom_primary`]: struct.NewFitsFile.html#method.with_custom_primary
     pub fn create<'a, T: AsRef<Path>>(path: T) -> NewFitsFile<'a, T> {
         NewFitsFile {
             path,

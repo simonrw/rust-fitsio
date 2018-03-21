@@ -59,14 +59,18 @@
 //! # extern crate tempdir;
 //! # extern crate fitsio;
 //! # use fitsio::FitsFile;
-//! # fn main() {
+//! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
 //! use fitsio::FitsFile;
 //!
 //! // let filename = ...;
-//! let fptr = FitsFile::create(filename).open().unwrap();
+//! let fptr = FitsFile::create(filename).open()?;
+//! # Ok(())
+//! # }
+//! # fn main() {
+//! # try_main().unwrap();
 //! # }
 //! ```
 //!
@@ -87,7 +91,7 @@
 //! # use fitsio::FitsFile;
 //! # use fitsio::types::ImageType;
 //! # use fitsio::fitsfile::ImageDescription;
-//! # fn main() {
+//! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 //! # let tdir_path = tdir.path();
 //! # let filename = tdir_path.join("test.fits");
@@ -98,11 +102,13 @@
 //!     data_type: ImageType::Double,
 //!     dimensions: &[52, 103],
 //! };
+//!
 //! let fptr = FitsFile::create(filename)
 //!     .with_custom_primary(&description)
-//!     .open()
-//!     .unwrap();
+//!     .open()?;
+//! # Ok(())
 //! # }
+//! # fn main() { try_main().unwrap(); }
 //! ```
 //!
 //! From this point, the current HDU can be queried and changed, or fits header cards can be read
