@@ -489,6 +489,26 @@ impl FitsFile {
     }
 
     /// Pretty-print file to stdout
+    ///
+    /// Fits files can be pretty-printed with [`pretty_print`], or its more powerful
+    /// cousin [`pretty_write`].
+    ///
+    /// ```rust
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # use fitsio::FitsFile;
+    /// # let filename = "../testdata/full_example.fits";
+    /// # use std::io;
+    /// let mut fptr = FitsFile::open(filename)?;
+    /// fptr.pretty_print()?;
+    /// // or
+    /// fptr.pretty_write(&mut io::stdout())?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
+    /// [`pretty_print`]: #method.pretty_print
+    /// [`pretty_write`]: #method.pretty_write
     pub fn pretty_print(&mut self) -> Result<()> {
         let stdout = io::stdout();
         let mut handle = stdout.lock();
@@ -497,6 +517,26 @@ impl FitsFile {
     }
 
     /// Pretty-print the fits file structure to any `Write` implementor
+    ///
+    /// Fits files can be pretty-printed with [`pretty_print`], or its more powerful
+    /// cousin [`pretty_write`].
+    ///
+    /// ```rust
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # use fitsio::FitsFile;
+    /// # let filename = "../testdata/full_example.fits";
+    /// # use std::io;
+    /// let mut fptr = FitsFile::open(filename)?;
+    /// fptr.pretty_print()?;
+    /// // or
+    /// fptr.pretty_write(&mut io::stdout())?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
+    /// [`pretty_print`]: #method.pretty_print
+    /// [`pretty_write`]: #method.pretty_write
     pub fn pretty_write<W>(&mut self, w: &mut W) -> Result<()>
     where
         W: Write,

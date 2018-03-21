@@ -136,17 +136,21 @@
 //! cousin [`pretty_write`][pretty-write].
 //!
 //! ```rust
+//! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # use fitsio::FitsFile;
 //! # let filename = "../testdata/full_example.fits";
 //! # use std::io;
-//! let mut fptr = FitsFile::open(filename).unwrap();
-//! fptr.pretty_print().unwrap();
+//! let mut fptr = FitsFile::open(filename)?;
+//! fptr.pretty_print()?;
 //! // or
-//! fptr.pretty_write(&mut io::stdout()).unwrap();
+//! fptr.pretty_write(&mut io::stdout())?;
+//! # Ok(())
+//! # }
+//! # fn main() { try_main().unwrap(); }
 //! ```
 //!
 //! In the continuing tradition of releasing fits summary programs with each fits library, this
-//! create contains a binary program `fitssummary` which can be installed with `cargo install`. This
+//! create contains a binary program [`fitssummary`] which can be installed with `cargo install`. This
 //! takes fits files on the command line and prints their summaries to stdout.
 //!
 //! ```sh
@@ -912,6 +916,7 @@
 //! [pretty-write]: fitsfile/struct.FitsFile.html#method.pretty_write
 //! [fitsio-derive]: https://crates.io/crates/fitsio-derive
 //! [fitsfile-open]: fitsfile/struct.FitsFile.html#method.open
+//! [`fitssummary`]: ../fitssummary/index.html
 
 #![doc(html_root_url = "https://docs.rs/fitsio/0.13.0")]
 #![deny(missing_docs)]
