@@ -166,8 +166,8 @@
 //! # HDU access
 //!
 //! HDU information belongs to the [`FitsHdu`][fits-hdu] object. HDUs can be fetched by
-//! `String`/`str` or integer (0-indexed).
-//! The `HduInfo` object contains information about the current HDU:
+//! `String`/`str` or integer (0-indexed), with the [`hdu`][fitsfile-hdu] method.  The `HduInfo`
+//! object contains information about the current HDU:
 //!
 //! ```rust
 //! # extern crate fitsio;
@@ -959,6 +959,7 @@
 //! [fitsio-derive]: https://crates.io/crates/fitsio-derive
 //! [fitsfile-open]: fitsfile/struct.FitsFile.html#method.open
 //! [`fitssummary`]: ../fitssummary/index.html
+//! [fitsfile-hdu]: fitsfile/struct.FitsFile.html#method.hdu
 
 #![doc(html_root_url = "https://docs.rs/fitsio/0.13.0")]
 #![deny(missing_docs)]

@@ -219,6 +219,40 @@ impl FitsFile {
     }
 
     /// Return a new HDU object
+    ///
+    /// HDU information belongs to the [`FitsHdu`] object. HDUs can be fetched by `String`/`str` or
+    /// integer (0-indexed).  The `HduInfo` object contains information about the current HDU:
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # #[cfg(feature = "default")]
+    /// # extern crate fitsio_sys as sys;
+    /// # #[cfg(feature = "bindgen")]
+    /// # extern crate fitsio_sys_bindgen as sys;
+    /// # use fitsio::{FitsFile, HduInfo};
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut fptr = FitsFile::open(filename)?;
+    /// let hdu = fptr.hdu(0)?;
+    /// // image HDU
+    /// if let HduInfo::ImageInfo { shape, .. } = hdu.info {
+    ///    println!("Image is {}-dimensional", shape.len());
+    ///    println!("Found image with shape {:?}", shape);
+    /// }
+    /// # let hdu = fptr.hdu("TESTEXT")?;
+    ///
+    /// // tables
+    /// if let HduInfo::TableInfo { column_descriptions, num_rows, .. } = hdu.info {
+    ///     println!("Table contains {} rows", num_rows);
+    ///     println!("Table has {} columns", column_descriptions.len());
+    /// }
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
+    /// [`FitsHdu`]: struct.FitsHdu.html
     pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<FitsHdu> {
         FitsHdu::new(self, hdu_description)
     }
