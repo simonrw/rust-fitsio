@@ -38,12 +38,17 @@
 //! To open an existing file, use the [open][fitsfile-open] method.
 //!
 //! ```rust
-//! # fn main() {
-//! # let filename = "../testdata/full_example.fits";
 //! use fitsio::FitsFile;
+//! # use std::error::Error;
 //!
+//! # fn run() -> Result<(), Box<Error>> {
+//! # let filename = "../testdata/full_example.fits";
 //! // let filename = ...;
-//! let fptr = FitsFile::open(filename).unwrap();
+//! let fptr = FitsFile::open(filename)?;
+//! # Ok(())
+//! # }
+//! # fn main() {
+//! # run().unwrap();
 //! # }
 //! ```
 //!

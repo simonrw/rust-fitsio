@@ -62,14 +62,21 @@ pub struct FitsFile {
 impl FitsFile {
     /// Open a fits file from disk
     ///
-    /// # Examples
+    /// ## Examples
     ///
-    /// ```
+    /// ```rust
     /// use fitsio::FitsFile;
+    /// # use std::error::Error;
     ///
-    /// let f = FitsFile::open("../testdata/full_example.fits").unwrap();
-    ///
-    /// // Continue to use `f` afterwards
+    /// # fn run() -> Result<(), Box<Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// // let filename = ...;
+    /// let fptr = FitsFile::open(filename)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() {
+    /// # run().unwrap();
+    /// # }
     /// ```
     pub fn open<T: AsRef<Path>>(filename: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
