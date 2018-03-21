@@ -905,6 +905,7 @@
 //! [fitsio-derive]: https://crates.io/crates/fitsio-derive
 //! [fitsfile-open]: fitsfile/struct.FitsFile.html#method.open
 
+#![doc(html_root_url = "https://docs.rs/fitsio/0.13.0")]
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
