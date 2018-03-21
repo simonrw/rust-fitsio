@@ -119,13 +119,15 @@
 //! on disk for editing.
 //!
 //! ```rust
-//! # fn main() {
+//! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let filename = "../testdata/full_example.fits";
 //! use fitsio::FitsFile;
 //!
 //! // let filename = ...;
-//! let fptr = FitsFile::edit(filename).unwrap();
+//! let fptr = FitsFile::edit(filename)?;
+//! # Ok(())
 //! # }
+//! # fn main() { try_main().unwrap(); }
 //! ```
 //!
 //! ## Pretty printing

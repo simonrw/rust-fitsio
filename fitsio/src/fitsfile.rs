@@ -101,6 +101,18 @@ impl FitsFile {
     }
 
     /// Open a fits file in read/write mode
+    ///
+    /// ```rust
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// use fitsio::FitsFile;
+    ///
+    /// // let filename = ...;
+    /// let fptr = FitsFile::edit(filename)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn edit<T: AsRef<Path>>(filename: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
