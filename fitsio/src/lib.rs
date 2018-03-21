@@ -35,7 +35,7 @@
 //!
 //! # File access
 //!
-//! Opening a file:
+//! To open an existing file, use the [open][fitsfile-open] method.
 //!
 //! ```rust
 //! # fn main() {
@@ -898,6 +898,7 @@
 //! [pretty-print]: fitsfile/struct.FitsFile.html#method.pretty_print
 //! [pretty-write]: fitsfile/struct.FitsFile.html#method.pretty_write
 //! [fitsio-derive]: https://crates.io/crates/fitsio-derive
+//! [fitsfile-open]: fitsfile/struct.FitsFile.html#method.open
 
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
