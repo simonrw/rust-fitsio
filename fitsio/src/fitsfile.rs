@@ -1269,7 +1269,7 @@ pub trait WriteImage: Sized {
     }
 }
 
-macro_rules! read_image_impl {
+macro_rules! read_image_impl_vec {
     ($t: ty, $default_value: expr, $data_type: expr) => (
         impl ReadImage for Vec<$t> {
 
@@ -1347,7 +1347,7 @@ macro_rules! read_image_impl {
                             }
 
                             let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
-                            let mut out = vec![$default_value; nelements as usize];
+                            let mut out = vec![$default_value; nelements];
                             let mut status = 0;
 
                             unsafe {
@@ -1450,18 +1450,18 @@ macro_rules! write_image_impl {
     )
 }
 
-read_image_impl!(i8, i8::default(), DataType::TSHORT);
-read_image_impl!(i32, i32::default(), DataType::TINT);
+read_image_impl_vec!(i8, i8::default(), DataType::TSHORT);
+read_image_impl_vec!(i32, i32::default(), DataType::TINT);
 #[cfg(target_pointer_width = "64")]
-read_image_impl!(i64, i64::default(), DataType::TLONG);
+read_image_impl_vec!(i64, i64::default(), DataType::TLONG);
 #[cfg(target_pointer_width = "32")]
-read_image_impl!(i64, i64::default() DataType::TLONGLONG);
-read_image_impl!(u8, u8::default(), DataType::TUSHORT);
-read_image_impl!(u32, u32::default(), DataType::TUINT);
+read_image_impl_vec!(i64, i64::default() DataType::TLONGLONG);
+read_image_impl_vec!(u8, u8::default(), DataType::TUSHORT);
+read_image_impl_vec!(u32, u32::default(), DataType::TUINT);
 #[cfg(target_pointer_width = "64")]
-read_image_impl!(u64, u64::default(), DataType::TULONG);
-read_image_impl!(f32, f32::default(), DataType::TFLOAT);
-read_image_impl!(f64, f64::default(), DataType::TDOUBLE);
+read_image_impl_vec!(u64, u64::default(), DataType::TULONG);
+read_image_impl_vec!(f32, f32::default(), DataType::TFLOAT);
+read_image_impl_vec!(f64, f64::default(), DataType::TDOUBLE);
 
 write_image_impl!(i8, i8::default(), DataType::TSHORT);
 write_image_impl!(i32, i32::default(), DataType::TINT);
