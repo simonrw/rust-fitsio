@@ -1200,8 +1200,9 @@ impl<'a> WritesKey for &'a str {
     }
 }
 
+// TODO: SPLIT THIS UP AND CREATE TRAIT ON Self = Vec<Self> to allow for ndarray
 /// Reading fits images
-pub trait ReadWriteImage: Sized {
+pub trait ReadImage: Sized {
     #[doc(hidden)]
     fn read_section(fits_file: &mut FitsFile, range: Range<usize>) -> Result<Vec<Self>>;
 
@@ -1229,6 +1230,11 @@ pub trait ReadWriteImage: Sized {
             Err(e) => Err(e),
         }
     }
+
+}
+
+/// Reading fits images
+pub trait WriteImage: Sized {
 
     #[doc(hidden)]
     fn write_section(fits_file: &mut FitsFile, range: Range<usize>, data: &[Self]) -> Result<()>;
@@ -1263,9 +1269,10 @@ pub trait ReadWriteImage: Sized {
     }
 }
 
-macro_rules! read_write_image_impl {
+macro_rules! read_image_impl {
     ($t: ty, $default_value: expr, $data_type: expr) => (
-        impl ReadWriteImage for $t {
+        impl ReadImage for $t {
+
             fn read_section(
                 fits_file: &mut FitsFile,
                 range: Range<usize>) -> Result<Vec<Self>> {
@@ -1277,13 +1284,13 @@ macro_rules! read_write_image_impl {
 
                         unsafe {
                             fits_read_img(fits_file.fptr as *mut _,
-                                       $data_type.into(),
-                                       (range.start + 1) as i64,
-                                       nelements as i64,
-                                       ptr::null_mut(),
-                                       out.as_mut_ptr() as *mut _,
-                                       ptr::null_mut(),
-                                       &mut status);
+                                          $data_type.into(),
+                                          (range.start + 1) as i64,
+                                          nelements as i64,
+                                          ptr::null_mut(),
+                                          out.as_mut_ptr() as *mut _,
+                                          ptr::null_mut(),
+                                          &mut status);
                         }
 
                         check_status(status).map(|_| out)
@@ -1297,24 +1304,24 @@ macro_rules! read_write_image_impl {
 
             fn read_rows(fits_file: &mut FitsFile, start_row: usize, num_rows: usize)
                 -> Result<Vec<Self>> {
-                match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::ImageInfo { shape, .. }) => {
-                        if shape.len() != 2 {
-                            unimplemented!();
-                        }
+                    match fits_file.fetch_hdu_info() {
+                        Ok(HduInfo::ImageInfo { shape, .. }) => {
+                            if shape.len() != 2 {
+                                unimplemented!();
+                            }
 
-                        let num_cols = shape[1];
-                        let start = start_row * num_cols;
-                        let end = (start_row + num_rows) * num_cols;
+                            let num_cols = shape[1];
+                            let start = start_row * num_cols;
+                            let end = (start_row + num_rows) * num_cols;
 
-                        Self::read_section(fits_file, start..end)
-                    },
-                    Ok(HduInfo::TableInfo { .. }) =>
-                        Err("cannot read image data from a table hdu".into()),
-                    Ok(HduInfo::AnyInfo) => unreachable!(),
-                    Err(e) => Err(e),
+                            Self::read_section(fits_file, start..end)
+                        },
+                        Ok(HduInfo::TableInfo { .. }) =>
+                            Err("cannot read image data from a table hdu".into()),
+                        Ok(HduInfo::AnyInfo) => unreachable!(),
+                        Err(e) => Err(e),
+                    }
                 }
-            }
 
             fn read_row(fits_file: &mut FitsFile, row: usize) -> Result<Vec<Self>> {
                 Self::read_rows(fits_file, row, 1)
@@ -1365,7 +1372,13 @@ macro_rules! read_write_image_impl {
                         Err(e) => Err(e),
                     }
                 }
+        }
+    )
+}
 
+macro_rules! write_image_impl {
+    ($t: ty, $default_value: expr, $data_type: expr) => (
+        impl WriteImage for $t {
             fn write_section(
                 fits_file: &mut FitsFile,
                 range: Range<usize>,
@@ -1437,18 +1450,31 @@ macro_rules! read_write_image_impl {
     )
 }
 
-read_write_image_impl!(i8, i8::default(), DataType::TSHORT);
-read_write_image_impl!(i32, i32::default(), DataType::TINT);
+read_image_impl!(i8, i8::default(), DataType::TSHORT);
+read_image_impl!(i32, i32::default(), DataType::TINT);
 #[cfg(target_pointer_width = "64")]
-read_write_image_impl!(i64, i64::default(), DataType::TLONG);
+read_image_impl!(i64, i64::default(), DataType::TLONG);
 #[cfg(target_pointer_width = "32")]
-read_write_image_impl!(i64, i64::default() DataType::TLONGLONG);
-read_write_image_impl!(u8, u8::default(), DataType::TUSHORT);
-read_write_image_impl!(u32, u32::default(), DataType::TUINT);
+read_image_impl!(i64, i64::default() DataType::TLONGLONG);
+read_image_impl!(u8, u8::default(), DataType::TUSHORT);
+read_image_impl!(u32, u32::default(), DataType::TUINT);
 #[cfg(target_pointer_width = "64")]
-read_write_image_impl!(u64, u64::default(), DataType::TULONG);
-read_write_image_impl!(f32, f32::default(), DataType::TFLOAT);
-read_write_image_impl!(f64, f64::default(), DataType::TDOUBLE);
+read_image_impl!(u64, u64::default(), DataType::TULONG);
+read_image_impl!(f32, f32::default(), DataType::TFLOAT);
+read_image_impl!(f64, f64::default(), DataType::TDOUBLE);
+
+write_image_impl!(i8, i8::default(), DataType::TSHORT);
+write_image_impl!(i32, i32::default(), DataType::TINT);
+#[cfg(target_pointer_width = "64")]
+write_image_impl!(i64, i64::default(), DataType::TLONG);
+#[cfg(target_pointer_width = "32")]
+write_image_impl!(i64, i64::default() DataType::TLONGLONG);
+write_image_impl!(u8, u8::default(), DataType::TUSHORT);
+write_image_impl!(u32, u32::default(), DataType::TUINT);
+#[cfg(target_pointer_width = "64")]
+write_image_impl!(u64, u64::default(), DataType::TULONG);
+write_image_impl!(f32, f32::default(), DataType::TFLOAT);
+write_image_impl!(f64, f64::default(), DataType::TDOUBLE);
 
 /// Columns of different types
 #[allow(missing_docs)]
@@ -1588,7 +1614,7 @@ impl FitsHdu {
     /// Read pixels from an image between a start index and end index
     ///
     /// The range is exclusive of the upper value
-    pub fn read_section<T: ReadWriteImage>(
+    pub fn read_section<T: ReadImage>(
         &self,
         fits_file: &mut FitsFile,
         start: usize,
@@ -1599,7 +1625,7 @@ impl FitsHdu {
     }
 
     /// Read multiple rows from a fits image
-    pub fn read_rows<T: ReadWriteImage>(
+    pub fn read_rows<T: ReadImage>(
         &self,
         fits_file: &mut FitsFile,
         start_row: usize,
@@ -1610,7 +1636,7 @@ impl FitsHdu {
     }
 
     /// Read a single row from a fits image
-    pub fn read_row<T: ReadWriteImage>(
+    pub fn read_row<T: ReadImage>(
         &self,
         fits_file: &mut FitsFile,
         row: usize,
@@ -1624,7 +1650,7 @@ impl FitsHdu {
     /// Lower left indicates the starting point of the square, and the upper
     /// right defines the pixel _beyond_ the end. The range of pixels included
     /// is inclusive of the lower end, and *exclusive* of the upper end.
-    pub fn read_region<T: ReadWriteImage>(
+    pub fn read_region<T: ReadImage>(
         &self,
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
@@ -1636,7 +1662,7 @@ impl FitsHdu {
     /// Read a whole image into a new `Vec`
     ///
     /// This reads an entire image into a one-dimensional vector
-    pub fn read_image<T: ReadWriteImage>(&self, fits_file: &mut FitsFile) -> Result<Vec<T>> {
+    pub fn read_image<T: ReadImage>(&self, fits_file: &mut FitsFile) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
         T::read_image(fits_file)
     }
@@ -1647,7 +1673,7 @@ impl FitsHdu {
     /// the data wraps around to the next row.
     ///
     /// The range is exclusive of the upper value.
-    pub fn write_section<T: ReadWriteImage>(
+    pub fn write_section<T: WriteImage>(
         &self,
         fits_file: &mut FitsFile,
         start: usize,
@@ -1665,7 +1691,7 @@ impl FitsHdu {
     /// are inclusive of the lower bounds, and *exclusive* of the and upper bounds.
     ///
     /// For example, writing with ranges 0..10 and 0..10 wries an 10x10 sized image.
-    pub fn write_region<T: ReadWriteImage>(
+    pub fn write_region<T: WriteImage>(
         &self,
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
@@ -1680,7 +1706,7 @@ impl FitsHdu {
     ///
     /// Firstly a check is performed, making sure that the amount of data will fit in the image.
     /// After this, all of the data is written to the image.
-    pub fn write_image<T: ReadWriteImage>(
+    pub fn write_image<T: WriteImage>(
         &self,
         fits_file: &mut FitsFile,
         data: &[T],
