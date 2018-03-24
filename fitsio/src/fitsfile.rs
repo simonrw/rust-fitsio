@@ -210,8 +210,9 @@ impl FitsFile {
         self.hdu(current_hdu_number)
     }
 
+    // TODO: make this method private
     /// Get the current hdu info
-    fn fetch_hdu_info(&self) -> Result<HduInfo> {
+    pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
         let mut status = 0;
         let mut hdu_type = 0;
 
@@ -1230,12 +1231,10 @@ pub trait ReadImage: Sized {
             Err(e) => Err(e),
         }
     }
-
 }
 
 /// Reading fits images
 pub trait WriteImage: Sized {
-
     #[doc(hidden)]
     fn write_section(fits_file: &mut FitsFile, range: Range<usize>, data: &[Self]) -> Result<()>;
 
@@ -1636,11 +1635,7 @@ impl FitsHdu {
     }
 
     /// Read a single row from a fits image
-    pub fn read_row<T: ReadImage>(
-        &self,
-        fits_file: &mut FitsFile,
-        row: usize,
-    ) -> Result<T> {
+    pub fn read_row<T: ReadImage>(&self, fits_file: &mut FitsFile, row: usize) -> Result<T> {
         fits_file.make_current(self)?;
         T::read_row(fits_file, row)
     }
@@ -1706,11 +1701,7 @@ impl FitsHdu {
     ///
     /// Firstly a check is performed, making sure that the amount of data will fit in the image.
     /// After this, all of the data is written to the image.
-    pub fn write_image<T: WriteImage>(
-        &self,
-        fits_file: &mut FitsFile,
-        data: &[T],
-    ) -> Result<()> {
+    pub fn write_image<T: WriteImage>(&self, fits_file: &mut FitsFile, data: &[T]) -> Result<()> {
         fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
         T::write_image(fits_file, data)
