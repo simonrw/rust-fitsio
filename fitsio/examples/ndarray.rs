@@ -29,12 +29,18 @@ impl ReadImage for NdArray {
     }
 
     fn read_rows(
-        _fits_file: &mut FitsFile,
-        _hdu: &FitsHdu,
-        _start_row: usize,
-        _num_rows: usize,
+        fits_file: &mut FitsFile,
+        hdu: &FitsHdu,
+        start_row: usize,
+        num_rows: usize,
     ) -> Result<Self> {
-        unimplemented!()
+        if num_rows == 0 || num_rows == 1 {
+            unimplemented!("not implemented for ndarray::Array2")
+        }
+        let data: Vec<u32> = ReadImage::read_rows(fits_file, hdu, start_row, num_rows)?;
+        let arr = ndarray::Array::from_vec(data);
+        let row_length = arr.len() / num_rows;
+        Ok(NdArray(arr.into_shape((num_rows, row_length)).unwrap()))
     }
 
     fn read_row(_fits_file: &mut FitsFile, _hdu: &FitsHdu, _row: usize) -> Result<Self> {
@@ -65,12 +71,19 @@ fn run() -> std::result::Result<(), Box<std::error::Error>> {
     let mut f = FitsFile::open("../testdata/full_example.fits")?;
     let hdu = f.primary_hdu()?;
 
-    /* Check read_image */
-    let data: NdArray = hdu.read_image(&mut f)?;
-    assert_eq!(data.dim(), (100, 100));
-    assert_eq!(data[[20, 5]], 152);
+    {
+        /* Check read_image */
+        let data: NdArray = hdu.read_image(&mut f)?;
+        assert_eq!(data.dim(), (100, 100));
+        assert_eq!(data[[20, 5]], 152);
+    }
 
-    /* Check read_row */
+    {
+        /* Check read_rows */
+        let data: NdArray = hdu.read_rows(&mut f, 0, 2)?;
+        assert_eq!(data.dim(), (2, 100));
+        assert_eq!(data[[1, 52]], 184);
+    }
 
     Ok(())
 }
