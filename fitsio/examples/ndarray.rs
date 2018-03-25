@@ -43,8 +43,8 @@ impl ReadImage for NdArray {
         Ok(NdArray(arr.into_shape((num_rows, row_length)).unwrap()))
     }
 
-    fn read_row(_fits_file: &mut FitsFile, _hdu: &FitsHdu, _row: usize) -> Result<Self> {
-        unimplemented!()
+    fn read_row(fits_file: &mut FitsFile, hdu: &FitsHdu, row: usize) -> Result<Self> {
+        Self::read_rows(fits_file, hdu, row, 1)
     }
 
     fn read_region(
