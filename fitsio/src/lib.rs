@@ -907,8 +907,9 @@
 extern crate fitsio_sys;
 #[cfg(feature = "bindgen")]
 extern crate fitsio_sys_bindgen as fitsio_sys;
-
 extern crate libc;
+#[cfg(feature = "array")]
+extern crate ndarray;
 
 #[macro_use]
 mod fitserror;
@@ -918,6 +919,8 @@ pub mod types;
 pub mod columndescription;
 pub mod fitsfile;
 mod longnam;
+#[cfg(feature = "array")]
+pub mod ndarray_compat;
 
 pub use self::fitsfile::{FitsFile, FitsHdu};
 pub use self::types::HduInfo;
