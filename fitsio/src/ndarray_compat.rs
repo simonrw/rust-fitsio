@@ -12,12 +12,35 @@ where
     T: Clone,
     Vec<T>: ReadImage,
 {
-    fn read_section(
-        _fits_file: &mut FitsFile,
-        _hdu: &FitsHdu,
-        _range: Range<usize>,
-    ) -> Result<Self> {
-        unimplemented!()
+    fn read_section(fits_file: &mut FitsFile, hdu: &FitsHdu, range: Range<usize>) -> Result<Self> {
+        match hdu.info {
+            HduInfo::ImageInfo { ref shape, .. } => {
+                if shape.len() != 2 {
+                    return Err("Only 2D images supported for now".into());
+                }
+
+                let width = shape[1];
+
+                if range.start % width != 0 {
+                    return Err("range must start on row boundary".into());
+                }
+                let start_pixel = range.start / width;
+
+                let n_pixels_requested = range.end - range.start;
+                if n_pixels_requested % width != 0 {
+                    return Err(
+                        "must request number of pixels exactly divisible by image width".into(),
+                    );
+                }
+
+                let n_rows = n_pixels_requested / width;
+                ReadImage::read_rows(fits_file, hdu, start_pixel, n_rows)
+            }
+            HduInfo::TableInfo { .. } => {
+                return Err("Cannot read image data from a FITS table".into())
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn read_rows(
@@ -111,5 +134,19 @@ mod tests {
         assert_eq!(dim[0], 10);
         assert_eq!(dim[1], 30);
         assert_eq!(data[[5, 10]], 160);
+    }
+
+    #[test]
+    fn test_read_section() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.primary_hdu().unwrap();
+
+        assert!(hdu.read_section::<ArrayD<u32>>(&mut f, 0, 250).is_err());
+
+        let data: ArrayD<u32> = hdu.read_section(&mut f, 0, 200).unwrap();
+        let dim = data.dim();
+        assert_eq!(dim[0], 2);
+        assert_eq!(dim[1], 100);
+        assert_eq!(data[[0, 10]], 160);
     }
 }
