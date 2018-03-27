@@ -13,3 +13,6 @@ cargo test --manifest-path fitsio/Cargo.toml --features bindgen --no-default-fea
 
 # Test the full example
 cargo run --manifest-path fitsio/Cargo.toml --example full_example
+
+# Test the array feature
+cargo test --manifest-path fitsio/Cargo.toml --features array
