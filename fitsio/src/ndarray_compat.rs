@@ -90,6 +90,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::errors::Error;
 
     #[test]
     fn test_read_image() {
@@ -141,7 +142,15 @@ mod tests {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.primary_hdu().unwrap();
 
-        assert!(hdu.read_section::<ArrayD<u32>>(&mut f, 0, 250).is_err());
+        match hdu.read_section::<ArrayD<u32>>(&mut f, 0, 250) {
+            Err(Error::Message(msg)) => {
+                assert_eq!(
+                    msg,
+                    "must request number of pixels exactly divisible by image width".to_string()
+                );
+            }
+            _ => panic!("invalid result"),
+        }
 
         let data: ArrayD<u32> = hdu.read_section(&mut f, 0, 200).unwrap();
         let dim = data.dim();
