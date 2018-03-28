@@ -137,12 +137,9 @@ fn run() -> Result<(), Box<Error>> {
      * names */
     #[derive(Default, FitsRow)]
     struct Row {
-        #[fitsio(colname = "OBJ_ID")]
-        obj_id: i32,
-        #[fitsio(colname = "NAME")]
-        name: String,
-        #[fitsio(colname = "MAG")]
-        mag: f32,
+        #[fitsio(colname = "OBJ_ID")] obj_id: i32,
+        #[fitsio(colname = "NAME")] name: String,
+        #[fitsio(colname = "MAG")] mag: f32,
     }
     let row: Row = table_hdu.row(&mut fitsfile, 4)?;
     assert_eq!(row.obj_id, 4);

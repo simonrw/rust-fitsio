@@ -9,10 +9,8 @@ use fitsio::fitsfile::FitsRow;
 
 #[derive(Default, FitsRow)]
 struct Row {
-    #[fitsio(colname = "intcol")]
-    intfoo: i32,
-    #[fitsio(colname = "strcol")]
-    foobar: String,
+    #[fitsio(colname = "intcol")] intfoo: i32,
+    #[fitsio(colname = "strcol")] foobar: String,
 }
 
 #[test]
