@@ -14,6 +14,7 @@
 //! * [Header keys](#header-keys)
 //! * [Reading file data](#reading-file-data)
 //!     * [Reading images](#reading-images)
+//!         * [`ndarray` support](#ndarray-support)
 //!     * [Reading tables](#reading-tables)
 //!         * [Reading cell values](#reading-cell-values)
 //!         * [Reading rows](#reading-rows)
@@ -464,6 +465,37 @@
 //! # }
 //! ```
 //!
+//! ### [`ndarray`][ndarray] support
+//!
+//! When `fitsio` is compiled with the `array` feature, images can be read into
+//! the [`ndarray::ArrayD`][arrayd] type:
+//!
+//! ```rust
+//! # extern crate fitsio;
+//! # #[cfg(feature = "array")]
+//! # extern crate ndarray;
+//! # use fitsio::FitsFile;
+//! # #[cfg(feature = "array")]
+//! # use ndarray::ArrayD;
+//! #
+//! # #[cfg(feature = "array")]
+//! # fn main() {
+//! let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+//! let hdu = f.primary_hdu().unwrap();
+//!
+//! let data: ArrayD<u32> = hdu.read_image(&mut f).unwrap();
+//! let dim = data.dim();
+//! assert_eq!(dim[0], 100);
+//! assert_eq!(dim[1], 100);
+//! assert_eq!(data[[20, 5]], 152);
+//! # }
+//! #
+//! # #[cfg(not(feature = "array"))]
+//! # fn main() {}
+//! ```
+//!
+//! For more details, see the [`ndarray_compat`](ndarray_compat/index.html) documentation.
+//!
 //! ## Reading tables
 //!
 //! Columns can be read using the [`read_col`][fits-hdu-read-col] function,
@@ -898,6 +930,8 @@
 //! [pretty-print]: fitsfile/struct.FitsFile.html#method.pretty_print
 //! [pretty-write]: fitsfile/struct.FitsFile.html#method.pretty_write
 //! [fitsio-derive]: https://crates.io/crates/fitsio-derive
+//! [ndarray]: https://crates.io/crates/ndarray
+//! [arrayd]: https://docs.rs/ndarray/0.11.2/ndarray/type.ArrayD.html
 
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
