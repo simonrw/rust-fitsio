@@ -99,6 +99,7 @@ mod tests {
 
         let data: ArrayD<u32> = hdu.read_image(&mut f).unwrap();
         let dim = data.dim();
+        assert_eq!(data.ndim(), 2);
         assert_eq!(dim[0], 100);
         assert_eq!(dim[1], 100);
         assert_eq!(data[[20, 5]], 152);
@@ -111,6 +112,7 @@ mod tests {
 
         let data: ArrayD<u32> = hdu.read_rows(&mut f, 0, 2).unwrap();
         let dim = data.dim();
+        assert_eq!(data.ndim(), 2);
         assert_eq!(dim[0], 2);
         assert_eq!(dim[1], 100);
         assert_eq!(data[[1, 52]], 184);
@@ -122,6 +124,7 @@ mod tests {
         let hdu = f.primary_hdu().unwrap();
 
         let data: ArrayD<u32> = hdu.read_row(&mut f, 49).unwrap();
+        assert_eq!(data.ndim(), 1);
         assert_eq!(data[20], 156);
     }
 
@@ -132,6 +135,7 @@ mod tests {
 
         let data: ArrayD<u32> = hdu.read_region(&mut f, &[&(70..80), &(20..50)]).unwrap();
         let dim = data.dim();
+        assert_eq!(data.ndim(), 2);
         assert_eq!(dim[0], 10);
         assert_eq!(dim[1], 30);
         assert_eq!(data[[5, 10]], 160);
@@ -154,6 +158,7 @@ mod tests {
 
         let data: ArrayD<u32> = hdu.read_section(&mut f, 0, 200).unwrap();
         let dim = data.dim();
+        assert_eq!(data.ndim(), 2);
         assert_eq!(dim[0], 2);
         assert_eq!(dim[1], 100);
         assert_eq!(data[[0, 10]], 160);
