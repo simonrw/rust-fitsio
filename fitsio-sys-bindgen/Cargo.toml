@@ -12,11 +12,11 @@ documentation = "https://docs.rs/fitsio-sys-bindgen"
 categories = ["external-ffi-bindings", "science"]
 
 [dependencies]
-libc = "0.2.21"
+libc = "0"
 
 [dev-dependencies]
-tempdir = "0.3.4"
+tempdir = "0"
 
 [build-dependencies]
-pkg-config = "0.3"
-bindgen = "0.22.1"
+pkg-config = "0"
+bindgen = "0"
