@@ -430,7 +430,31 @@ impl FitsFile {
 
     /// Create a new fits table
     ///
-    /// Create a new fits table, with columns as detailed in the `ColumnDescription` object.
+    /// Create a new fits table, with columns as detailed in the [`ColumnDescription`] object.
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use fitsio::columndescription::*;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// let first_description = ColumnDescription::new("A")
+    ///     .with_type(ColumnDataType::Int)
+    ///     .create()?;
+    /// let second_description = ColumnDescription::new("B")
+    ///     .with_type(ColumnDataType::Long)
+    ///     .create()?;
+    /// let descriptions = &[first_description, second_description];
+    /// let hdu = fptr.create_table("EXTNAME".to_string(), descriptions)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
+    /// [`ColumnDescription`]: ../columndescription/struct.ColumnDescription.html
     pub fn create_table<T>(
         &mut self,
         extname: T,
@@ -482,7 +506,32 @@ impl FitsFile {
         check_status(status).and_then(|_| self.current_hdu())
     }
 
-    /// Create a new fits image, and return the [`FitsHdu`](struct.FitsHdu.html) object
+    /// Create a new fits image, and return the [`FitsHdu`](struct.FitsHdu.html) object.
+    ///
+    /// This method takes an [`ImageDescription`] struct which defines the desired layout of the
+    /// image HDU.
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::types::ImageType;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// let image_description = ImageDescription {
+    ///     data_type: ImageType::Float,
+    ///     dimensions: &[100, 100],
+    /// };
+    /// let hdu = fptr.create_image("EXTNAME".to_string(), &image_description)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
+    /// [`ImageDescription`]: struct.ImageDescription.html
     pub fn create_image<T>(
         &mut self,
         extname: T,
