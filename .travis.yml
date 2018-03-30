@@ -22,8 +22,6 @@ addons:
     packages:
       - llvm-3.8-dev
       - clang
-      - libclang-3.8-dev
-      - build-essential
       - libcfitsio3-dev
       - pkg-config
 
