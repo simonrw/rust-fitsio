@@ -282,7 +282,7 @@ impl FitsFile {
     }
 
     /// Return the number of HDU objects in the file
-    pub fn num_hdus(&mut self) -> Result<usize> {
+    fn num_hdus(&mut self) -> Result<usize> {
         let mut status = 0;
         let mut num_hdus = 0;
         unsafe {
@@ -293,7 +293,7 @@ impl FitsFile {
     }
 
     /// Return the list of HDU names
-    pub fn hdu_names(&mut self) -> Result<Vec<String>> {
+    fn hdu_names(&mut self) -> Result<Vec<String>> {
         let num_hdus = self.num_hdus()?;
         let mut result = Vec::with_capacity(num_hdus);
         for i in 0..num_hdus {
@@ -317,7 +317,7 @@ impl FitsFile {
     }
 
     /// Get the current hdu as an HDU object
-    pub fn current_hdu(&mut self) -> Result<FitsHdu> {
+    fn current_hdu(&mut self) -> Result<FitsHdu> {
         let current_hdu_number = self.hdu_number();
         self.hdu(current_hdu_number)
     }
