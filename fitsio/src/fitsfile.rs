@@ -62,7 +62,7 @@ pub struct FitsFile {
 impl FitsFile {
     /// Open a fits file from disk
     ///
-    /// ## Examples
+    /// ## Example
     ///
     /// ```rust
     /// use fitsio::FitsFile;
@@ -101,6 +101,8 @@ impl FitsFile {
     }
 
     /// Open a fits file in read/write mode
+    ///
+    /// ## Example
     ///
     /// ```rust
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -145,6 +147,8 @@ impl FitsFile {
     /// [`with_custom_primary`] method can be used to add a custom primary HDU. This is mostly
     /// useful for images. Otherwise, a default primary HDU is created.  An example of not adding a
     /// custom primary HDU is shown above. Below we see an example of [`with_custom_primary`]:
+    ///
+    /// ## Example
     ///
     /// ```rust
     /// # extern crate tempdir;
@@ -223,6 +227,8 @@ impl FitsFile {
     /// HDU information belongs to the [`FitsHdu`] object. HDUs can be fetched by `String`/`str` or
     /// integer (0-indexed).  The `HduInfo` object contains information about the current HDU:
     ///
+    /// ## Example
+    ///
     /// ```rust
     /// # extern crate fitsio;
     /// # #[cfg(feature = "default")]
@@ -258,6 +264,8 @@ impl FitsFile {
     }
 
     /// Return the primary hdu (HDU 0)
+    ///
+    /// ## Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -432,6 +440,8 @@ impl FitsFile {
     ///
     /// Create a new fits table, with columns as detailed in the [`ColumnDescription`] object.
     ///
+    /// ## Example
+    ///
     /// ```rust
     /// # extern crate tempdir;
     /// # extern crate fitsio;
@@ -511,6 +521,8 @@ impl FitsFile {
     /// This method takes an [`ImageDescription`] struct which defines the desired layout of the
     /// image HDU.
     ///
+    /// ## Example
+    ///
     /// ```rust
     /// # extern crate tempdir;
     /// # extern crate fitsio;
@@ -582,6 +594,20 @@ impl FitsFile {
     }
 
     /// Iterate over the HDUs in the file
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// #     let mut fptr = fitsio::FitsFile::open("../testdata/full_example.fits")?;
+    /// for hdu in fptr.iter() {
+    ///     // Do something with hdu
+    /// }
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn iter(&mut self) -> FitsHduIterator {
         FitsHduIterator {
             current: 0,
@@ -594,6 +620,8 @@ impl FitsFile {
     ///
     /// Fits files can be pretty-printed with [`pretty_print`], or its more powerful
     /// cousin [`pretty_write`].
+    ///
+    /// ## Example
     ///
     /// ```rust
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -622,6 +650,8 @@ impl FitsFile {
     ///
     /// Fits files can be pretty-printed with [`pretty_print`], or its more powerful
     /// cousin [`pretty_write`].
+    ///
+    /// ## Example
     ///
     /// ```rust
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -697,12 +727,54 @@ impl FitsFile {
     /// This is marked as `unsafe` as it is definitely something that is not required by most
     /// users, and hence the unsafe-ness marks it as an advanced feature. I have also not
     /// considered possible concurrency or data race issues as yet.
+    ///
+    /// Any changes to the underlying fits file will not be updated in existing [`FitsHdu`]
+    /// objects, so these must be recreated.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # #[cfg(not(feature="bindgen"))]
+    /// extern crate fitsio_sys;
+    /// # #[cfg(feature="bindgen")]
+    /// # extern crate fitsio_sys_bindgen as fitsio_sys;
+    ///
+    /// # use fitsio::FitsFile;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// let fptr = FitsFile::open(filename)?;
+    ///
+    /// /* Find out the number of HDUs in the file */
+    /// let mut num_hdus = 0;
+    /// let mut status = 0;
+    ///
+    /// unsafe {
+    ///     let fitsfile = fptr.as_raw();
+    ///
+    ///     /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
+    ///     implemented in this crate */
+    ///     fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
+    /// }
+    /// assert_eq!(num_hdus, 2);
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
+    /// [`FitsHdu`]: struct.FitsHdu.html
     pub unsafe fn as_raw(&self) -> *mut fitsfile {
         self.fptr as *mut _
     }
 }
 
 impl Drop for FitsFile {
+    /// Executes the destructor for this type. [Read
+    /// more](https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop)
+    ///
+    /// Dropping a [`FitsFile`] closes the file on disk, flushing existing buffers.
+    ///
+    /// [`FitsFile`]: struct.FitsFile.html
     fn drop(&mut self) {
         let mut status = 0;
         unsafe {
@@ -719,6 +791,8 @@ impl Drop for FitsFile {
 ///
 /// The [`with_custom_primary`][new-fits-file-with-custom-primary] method allows for creation of a
 /// custom primary HDU.
+///
+/// ## Example
 ///
 /// ```rust
 /// # extern crate tempdir;
@@ -747,6 +821,8 @@ impl Drop for FitsFile {
 ///
 /// The [`open`][new-fits-file-open] method actually creates a `Result<FitsFile>` from this
 /// temporary representation.
+///
+/// ## Example
 ///
 /// ```rust
 /// # extern crate tempdir;
@@ -2143,6 +2219,8 @@ impl FitsHdu {
     /// This method uses returns a [`FitsRow`](trait.FitsRow.html), which is provided by the user,
     /// using a `derive` implementation from the [`fitsio-derive`](https://docs.rs/fitsio-derive)
     /// crate,
+    ///
+    /// ## Example
     ///
     /// ```rust
     /// #[macro_use]
