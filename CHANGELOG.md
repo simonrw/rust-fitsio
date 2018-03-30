@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 * (`fitsio`) add lots of documentation
 
 ### Changed
+
+* (`fitsio`) switch to using long named fitsio functions
+
 ### Removed
 
 ## [0.13.0] - 2018-03-10
