@@ -1,11 +1,17 @@
 language: rust
-script: bash ./bin/test
+script: python ./bin/travis_test
 sudo: false
 
 rust:
   - stable
   - beta
   - nightly
+
+env:
+  - TRAVIS_FITSIO_BINDGEN=0
+  - TRAVIS_FITSIO_BINDGEN=1
+  - TRAVIS_FITSIO_ARRAY=0
+  - TRAVIS_FITSIO_ARRAY=1
 
 cache:
   directories:
