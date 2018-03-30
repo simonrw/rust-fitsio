@@ -102,7 +102,7 @@ imagetype_into_impl!(i64);
 /// [`fetch_hdu_info`](struct.FitsFile.html#method.fetch_hdu_info) returns `HduInfo::ImageInfo`.
 /// Otherwise the variant is `HduInfo::TableInfo`.
 #[allow(missing_docs)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum HduInfo {
     ImageInfo {
         shape: Vec<usize>,

@@ -15,7 +15,7 @@ For the time being, it's best to stick to the development version from
 github.  The code is tested before being pushed and is relatively
 stable. Add this to your `Cargo.toml` file:
 
-```toml
+```toml,no_sync
 [dependencies]
 fitsio = { git = "https://github.com/mindriot101/rust-fitsio" }
 ```
@@ -31,7 +31,7 @@ Or pin a specific version:
 
 ```toml
 [dependencies]
-fitsio = "0.12.1"
+fitsio = "0.13.0"
 ```
 
 This repository contains `fitsio-sys-bindgen` which generates the C
@@ -49,7 +49,7 @@ or use from your `Cargo.toml` as such:
 
 ```toml
 [dependencies]
-fitsio = { version = "0.12.1", default-features = false, features = ["bindgen"] }
+fitsio = { version = "0.13.0", default-features = false, features = ["bindgen"] }
 ```
 
 
