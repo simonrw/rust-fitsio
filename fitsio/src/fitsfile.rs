@@ -1130,16 +1130,16 @@ macro_rules! reads_col_impl {
     )
 }
 
-reads_col_impl!(i32, ffgcvk, 0);
-reads_col_impl!(u32, ffgcvuk, 0);
-reads_col_impl!(f32, ffgcve, 0.0);
-reads_col_impl!(f64, ffgcvd, 0.0);
+reads_col_impl!(i32, fits_read_col_int, 0);
+reads_col_impl!(u32, fits_read_col_uint, 0);
+reads_col_impl!(f32, fits_read_col_flt, 0.0);
+reads_col_impl!(f64, fits_read_col_dbl, 0.0);
 #[cfg(target_pointer_width = "64")]
-reads_col_impl!(i64, ffgcvj, 0);
+reads_col_impl!(i64, fits_read_col_lng, 0);
 #[cfg(target_pointer_width = "32")]
-reads_col_impl!(i64, ffgcvjj, 0);
+reads_col_impl!(i64, fits_read_col_lnglng, 0);
 #[cfg(target_pointer_width = "64")]
-reads_col_impl!(u64, ffgcvuj, 0);
+reads_col_impl!(u64, fits_read_col_ulng, 0);
 
 /// Helper function to get the display width of a column
 fn column_display_width(fits_file: &FitsFile, column_number: usize) -> Result<usize> {
@@ -1404,13 +1404,13 @@ macro_rules! reads_key_impl {
     )
 }
 
-reads_key_impl!(i32, ffgkyl);
+reads_key_impl!(i32, fits_read_key_log);
 #[cfg(target_pointer_width = "64")]
-reads_key_impl!(i64, ffgkyj);
+reads_key_impl!(i64, fits_read_key_lng);
 #[cfg(target_pointer_width = "32")]
-reads_key_impl!(i64, ffgkyjj);
-reads_key_impl!(f32, ffgkye);
-reads_key_impl!(f64, ffgkyd);
+reads_key_impl!(i64, fits_read_key_lnglng);
+reads_key_impl!(f32, fits_read_key_flt);
+reads_key_impl!(f64, fits_read_key_dbl);
 
 impl ReadsKey for String {
     fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
@@ -1480,8 +1480,8 @@ impl WritesKey for i64 {
     }
 }
 
-writes_key_impl_flt!(f32, ffpkye);
-writes_key_impl_flt!(f64, ffpkyd);
+writes_key_impl_flt!(f32, fits_write_key_flt);
+writes_key_impl_flt!(f64, fits_write_key_dbl);
 
 impl WritesKey for String {
     fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {

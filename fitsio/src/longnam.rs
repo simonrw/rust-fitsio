@@ -1,10 +1,15 @@
 //! Long name wrappers of fitsio functions
 
-pub use fitsio_sys::*;
+pub use fitsio_sys::{ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw,
+                     ffgcno, ffgcvd, ffgcve, ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn,
+                     ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyl, ffgkys,
+                     ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl,
+                     ffpcls, ffphps, ffpkyd, ffpkye, ffpkyj, ffpkys, ffppr, ffpss, ffrsim, ffthdu,
+                     fitsfile, LONGLONG};
 #[cfg(feature = "default")]
-use libc::{c_char, c_double, c_int, c_long, c_void};
+use libc::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
 #[cfg(feature = "bindgen")]
-use std::os::raw::{c_char, c_double, c_int, c_long, c_void};
+use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
 
 pub unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut c_int) -> c_int {
     ffclos(fptr, status)
@@ -142,6 +147,190 @@ pub unsafe fn fits_read_col_str(
         anynul,
         status,
     )
+}
+
+pub unsafe fn fits_read_col_int(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_int,
+    array: *mut c_int,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvk(
+        fptr,
+        colnum,
+        firstrow,
+        firstelem,
+        nelem,
+        nulval,
+        array,
+        anynul,
+        status,
+    )
+}
+
+pub unsafe fn fits_read_col_uint(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_uint,
+    array: *mut c_uint,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvuk(
+        fptr,
+        colnum,
+        firstrow,
+        firstelem,
+        nelem,
+        nulval,
+        array,
+        anynul,
+        status,
+    )
+}
+
+pub unsafe fn fits_read_col_flt(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_float,
+    array: *mut c_float,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcve(
+        fptr,
+        colnum,
+        firstrow,
+        firstelem,
+        nelem,
+        nulval,
+        array,
+        anynul,
+        status,
+    )
+}
+
+pub unsafe fn fits_read_col_dbl(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_double,
+    array: *mut c_double,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvd(
+        fptr,
+        colnum,
+        firstrow,
+        firstelem,
+        nelem,
+        nulval,
+        array,
+        anynul,
+        status,
+    )
+}
+
+pub unsafe fn fits_read_col_lng(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_long,
+    array: *mut c_long,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvj(
+        fptr,
+        colnum,
+        firstrow,
+        firstelem,
+        nelem,
+        nulval,
+        array,
+        anynul,
+        status,
+    )
+}
+
+pub unsafe fn fits_read_col_ulng(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_ulong,
+    array: *mut c_ulong,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvuj(
+        fptr,
+        colnum,
+        firstrow,
+        firstelem,
+        nelem,
+        nulval,
+        array,
+        anynul,
+        status,
+    )
+}
+
+pub unsafe fn fits_read_key_log(
+    fptr: *mut fitsfile,
+    keyname: *const c_char,
+    value: *mut c_int,
+    comm: *mut c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffgkyl(fptr, keyname, value, comm, status)
+}
+
+pub unsafe fn fits_read_key_lng(
+    fptr: *mut fitsfile,
+    keyname: *const c_char,
+    value: *mut c_long,
+    comm: *mut c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffgkyj(fptr, keyname, value, comm, status)
+}
+
+pub unsafe fn fits_read_key_flt(
+    fptr: *mut fitsfile,
+    keyname: *const c_char,
+    value: *mut c_float,
+    comm: *mut c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffgkye(fptr, keyname, value, comm, status)
+}
+
+pub unsafe fn fits_read_key_dbl(
+    fptr: *mut fitsfile,
+    keyname: *const c_char,
+    value: *mut c_double,
+    comm: *mut c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffgkyd(fptr, keyname, value, comm, status)
 }
 
 pub unsafe fn fits_get_hdu_num(fptr: *mut fitsfile, chdunum: *mut c_int) -> c_int {
@@ -324,6 +513,27 @@ pub unsafe fn fits_write_imghdr(
     ffphps(fptr, bitpix, naxis, naxes, status)
 }
 
+pub unsafe fn fits_write_key_flt(
+    fptr: *mut fitsfile,
+    keyname: *const c_char,
+    value: c_float,
+    decim: c_int,
+    comm: *const c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffpkye(fptr, keyname, value, decim, comm, status)
+}
+
+pub unsafe fn fits_write_key_dbl(
+    fptr: *mut fitsfile,
+    keyname: *const c_char,
+    value: c_double,
+    decim: c_int,
+    comm: *const c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffpkyd(fptr, keyname, value, decim, comm, status)
+}
 pub unsafe fn fits_write_key_lng(
     fptr: *mut fitsfile,
     keyname: *const c_char,
