@@ -2082,6 +2082,31 @@ impl FitsHdu {
     /// the data wraps around to the next row.
     ///
     /// The range is exclusive of the upper value.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # extern crate tempdir;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::types::ImageType;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let desc = ImageDescription {
+    /// #    data_type: ImageType::Float,
+    /// #    dimensions: &[100, 100],
+    /// # };
+    /// # let hdu = fptr.create_image("".to_string(), &desc)?;
+    /// let data_to_write: Vec<f64> = vec![1.0, 2.0, 3.0];
+    /// hdu.write_section(&mut fptr, 0, data_to_write.len(), &data_to_write)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn write_section<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -2100,6 +2125,32 @@ impl FitsHdu {
     /// are inclusive of the lower bounds, and *exclusive* of the and upper bounds.
     ///
     /// For example, writing with ranges 0..10 and 0..10 wries an 10x10 sized image.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # extern crate tempdir;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::types::ImageType;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let desc = ImageDescription {
+    /// #    data_type: ImageType::Float,
+    /// #    dimensions: &[100, 100],
+    /// # };
+    /// # let hdu = fptr.create_image("".to_string(), &desc)?;
+    /// let data_to_write: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];
+    /// let ranges = [&(0..1), &(0..1)];
+    /// hdu.write_region(&mut fptr, &ranges, &data_to_write)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn write_region<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -2115,6 +2166,32 @@ impl FitsHdu {
     ///
     /// Firstly a check is performed, making sure that the amount of data will fit in the image.
     /// After this, all of the data is written to the image.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # extern crate tempdir;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::types::ImageType;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let desc = ImageDescription {
+    /// #    data_type: ImageType::Float,
+    /// #    dimensions: &[3, 1],
+    /// # };
+    /// # let hdu = fptr.create_image("".to_string(), &desc)?;
+    /// // Image is 3x1
+    /// assert!(hdu.write_image(&mut fptr, &[1.0, 2.0, 3.0]).is_ok());
+    /// assert!(hdu.write_image(&mut fptr, &[1.0, 2.0, 3.0, 4.0]).is_err());
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn write_image<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -2130,6 +2207,36 @@ impl FitsHdu {
     /// The `new_size` parameter defines the new size of the image. Unlike cfitsio, the order
     /// of the dimensions of `new_size` follows the C convention, i.e. [row-major
     /// order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use std::fs::copy;
+    /// # use fitsio::HduInfo;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # copy("../testdata/full_example.fits", &filename)?;
+    /// # let filename = filename.to_str().unwrap();
+    /// # let mut fptr = fitsio::FitsFile::edit(filename)?;
+    /// # let hdu = fptr.hdu(0)?;
+    /// hdu.resize(&mut fptr, &[1024, 1024])?;
+    /// #
+    /// // Have to get the HDU again, to reflect the latest changes
+    /// let hdu = fptr.hdu(0)?;
+    /// match hdu.info {
+    ///     HduInfo::ImageInfo { shape, .. } => {
+    ///         assert_eq!(shape, [1024, 1024]);
+    ///     }
+    ///     _ => panic!("Unexpected hdu type"),
+    /// }
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn resize(self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<FitsHdu> {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
@@ -2157,6 +2264,27 @@ impl FitsHdu {
     }
 
     /// Copy an HDU to another open fits file
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut src_fptr = fitsio::FitsFile::open(filename)?;
+    /// #
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut dest_fptr = fitsio::FitsFile::create(filename).open()?;
+    /// #
+    /// # let hdu = src_fptr.hdu(1)?;
+    /// hdu.copy_to(&mut src_fptr, &mut dest_fptr)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn copy_to(
         &self,
         src_fits_file: &mut FitsFile,
@@ -2207,6 +2335,35 @@ impl FitsHdu {
     }
 
     /// Add a new column to the end of the table
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # extern crate tempdir;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::types::ImageType;
+    /// # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let table_description = &[
+    /// #     ColumnDescription::new("bar")
+    /// #         .with_type(ColumnDataType::Int)
+    /// #         .create()?,
+    /// # ];
+    /// # let hdu = fptr.create_table("foo".to_string(), table_description)?;
+    /// let column_description = ColumnDescription::new("abcdefg")
+    ///     .with_type(ColumnDataType::Int)
+    ///     .create()?;
+    /// hdu.append_column(&mut fptr, &column_description)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn append_column(
         self,
         fits_file: &mut FitsFile,
@@ -2237,6 +2394,48 @@ impl FitsHdu {
     /// Remove a column from the fits file
     ///
     /// The column can be identified by id or name.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # extern crate tempdir;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::types::ImageType;
+    /// # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let table_description = &[
+    /// #     ColumnDescription::new("bar")
+    /// #         .with_type(ColumnDataType::Int)
+    /// #         .create()?,
+    /// # ];
+    /// # let hdu = fptr.create_table("foo".to_string(), table_description)?;
+    /// let newhdu = hdu.delete_column(&mut fptr, "bar")?;
+    /// # }
+    /// # {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let table_description = &[
+    /// #     ColumnDescription::new("bar")
+    /// #         .with_type(ColumnDataType::Int)
+    /// #         .create()?,
+    /// # ];
+    /// # let hdu = fptr.create_table("foo".to_string(), table_description)?;
+    /// // or
+    /// let newhdu = hdu.delete_column(&mut fptr, 0)?;
+    /// # }
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn delete_column<T: DescribesColumnLocation>(
         self,
         fits_file: &mut FitsFile,
@@ -2288,6 +2487,34 @@ impl FitsHdu {
     /// Read a subset of a fits column
     ///
     /// The range is exclusive of the upper value
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use std::fs::copy;
+    /// # use fitsio::HduInfo;
+    /// # use fitsio::columndescription::*;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let table_description = vec![
+    /// #     ColumnDescription::new("bar")
+    /// #         .with_type(ColumnDataType::Int)
+    /// #         .create()?,
+    /// # ];
+    /// # let hdu = fptr.create_table("foo".to_string(), &table_description)?;
+    /// let data_to_write: Vec<i32> = vec![10101; 10];
+    /// hdu.write_col_range(&mut fptr, "bar", &data_to_write, &(0..5))?;
+    /// let data: Vec<i32> = hdu.read_col(&mut fptr, "bar")?;
+    /// assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn read_col<T: ReadsCol>(&self, fits_file: &mut FitsFile, name: &str) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
         T::read_col(fits_file, name)
@@ -2309,6 +2536,34 @@ impl FitsHdu {
     /// Write data to part of a column
     ///
     /// The range is exclusive of the upper value
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use std::fs::copy;
+    /// # use fitsio::HduInfo;
+    /// # use fitsio::columndescription::*;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let table_description = vec![
+    /// #     ColumnDescription::new("bar")
+    /// #         .with_type(ColumnDataType::Int)
+    /// #         .create()?,
+    /// # ];
+    /// # let hdu = fptr.create_table("foo".to_string(), &table_description)?;
+    /// let data_to_write: Vec<i32> = vec![10101; 10];
+    /// hdu.write_col_range(&mut fptr, "bar", &data_to_write, &(0..5))?;
+    /// # let data: Vec<i32> = hdu.read_col(&mut fptr, "bar")?;
+    /// # assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn write_col_range<T: WritesCol, N: Into<String>>(
         &self,
         fits_file: &mut FitsFile,
@@ -2326,6 +2581,36 @@ impl FitsHdu {
     /// This default implementation does not check the length of the column first, but if the
     /// length of the data array is longer than the length of the table, the table will be extended
     /// with extra rows. This is as per the fitsio definition.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use std::fs::copy;
+    /// # use fitsio::HduInfo;
+    /// # use fitsio::columndescription::*;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let table_description = vec![
+    /// #     ColumnDescription::new("bar")
+    /// #         .with_type(ColumnDataType::Int)
+    /// #         .create()
+    /// #         ?,
+    /// # ];
+    /// # let hdu = fptr.create_table("foo".to_string(), &table_description)
+    /// #     ?;
+    /// let data_to_write: Vec<i32> = vec![10101; 5];
+    /// hdu.write_col(&mut fptr, "bar", &data_to_write)?;
+    /// # let data: Vec<i32> = hdu.read_col(&mut fptr, "bar")?;
+    /// # assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn write_col<T: WritesCol, N: Into<String>>(
         &self,
         fits_file: &mut FitsFile,
@@ -2338,6 +2623,23 @@ impl FitsHdu {
     }
 
     /// Iterate over the columns in a fits file
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut fptr = fitsio::FitsFile::open(filename)?;
+    /// # let hdu = fptr.hdu("TESTEXT")?;
+    /// for column in hdu.columns(&mut fptr) {
+    ///     // Do something with column
+    /// }
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn columns<'a>(&self, fits_file: &'a mut FitsFile) -> ColumnIterator<'a> {
         fits_file
             .make_current(self)
@@ -2349,6 +2651,32 @@ impl FitsHdu {
     ///
     /// Note this method takes `self` by value, and as such the hdu cannot be used after this
     /// method is called.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::types::ImageType;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let image_description = ImageDescription {
+    /// #     data_type: ImageType::Float,
+    /// #     dimensions: &[100, 100],
+    /// # };
+    /// # let hdu = fptr.create_image("EXTNAME".to_string(), &image_description)?;
+    /// // let fptr = FitsFile::open(...)?;
+    /// // let hdu = fptr.hdu(0)?;
+    /// hdu.delete(&mut fptr)?;
+    /// // Cannot use hdu after this
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn delete(self, fits_file: &mut FitsFile) -> Result<()> {
         fits_file.make_current(&self)?;
 
@@ -2363,6 +2691,24 @@ impl FitsHdu {
     /// Read a single value from a fits table
     ///
     /// This will be inefficient if lots of individual values are wanted.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits[TESTEXT]";
+    /// # let mut f = fitsio::FitsFile::open(filename)?;
+    /// # let tbl_hdu = f.hdu("TESTEXT")?;
+    /// let result: i64 = tbl_hdu.read_cell_value(&mut f, "intcol", 4)?;
+    /// assert_eq!(result, 16);
+    ///
+    /// let result: String = tbl_hdu.read_cell_value(&mut f, "strcol", 4)?;
+    /// assert_eq!(result, "value4".to_string());
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn read_cell_value<T>(&self, fits_file: &mut FitsFile, name: &str, idx: usize) -> Result<T>
     where
         T: ReadsCol,

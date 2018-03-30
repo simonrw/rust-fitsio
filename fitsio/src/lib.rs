@@ -833,7 +833,6 @@
 //! # Ok(())
 //! # }
 //! # fn main() { try_main().unwrap(); }
-//!
 //! ```
 //!
 //! ### Deleting columns
