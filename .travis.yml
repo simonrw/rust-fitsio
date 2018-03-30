@@ -20,8 +20,7 @@ cache:
 addons:
   apt:
     packages:
-      - llvm-3.8-dev
-      - clang
+      - llvm-3.9-dev
       - libcfitsio3-dev
       - pkg-config
 
