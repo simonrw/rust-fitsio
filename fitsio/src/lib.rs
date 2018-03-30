@@ -535,7 +535,8 @@
 //! # fn main() {}
 //! ```
 //!
-//! For more details, see the [`ndarray_compat`](ndarray_compat/index.html) documentation.
+//! For more details, see the [`ndarray_compat`](ndarray_compat/index.html) documentation (only
+//! available if compiled with `array` feature).
 //!
 //! ## Reading tables
 //!
