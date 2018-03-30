@@ -1889,12 +1889,34 @@ impl FitsHdu {
     /// # {
     /// let int_value: i64 = hdu.read_key(&mut fptr, "INTTEST")?;
     /// # }
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
     pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
         fits_file.make_current(self)?;
         T::read_key(fits_file, name)
     }
 
     /// Write a fits key to the current header
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # {
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// fptr.primary_hdu()?.write_key(&mut fptr, "foo", 1i64)?;
+    /// assert_eq!(fptr.hdu(0)?.read_key::<i64>(&mut fptr, "foo")?, 1i64);
+    /// # Ok(())
+    /// # }
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn write_key<T: WritesKey>(
         &self,
         fits_file: &mut FitsFile,
@@ -1909,6 +1931,23 @@ impl FitsHdu {
     /// Read pixels from an image between a start index and end index
     ///
     /// The range is exclusive of the upper value
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut fptr = fitsio::FitsFile::open(filename)?;
+    /// # let hdu = fptr.hdu(0)?;
+    /// // Read the first 100 pixels
+    /// let first_row: Vec<i32> = hdu.read_section(&mut fptr, 0, 100)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
     pub fn read_section<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1920,6 +1959,26 @@ impl FitsHdu {
     }
 
     /// Read multiple rows from a fits image
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut fptr = fitsio::FitsFile::open(filename)?;
+    /// # let hdu = fptr.hdu(0)?;
+    /// let start_row = 0;
+    /// let num_rows = 10;
+    /// let first_few_rows: Vec<f32> = hdu.read_rows(&mut fptr, start_row, num_rows)?;
+    ///
+    /// // 10 rows of 100 columns
+    /// assert_eq!(first_few_rows.len(), 1000);
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn read_rows<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1931,6 +1990,25 @@ impl FitsHdu {
     }
 
     /// Read a single row from a fits image
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut fptr = fitsio::FitsFile::open(filename)?;
+    /// # let hdu = fptr.hdu(0)?;
+    /// let chosen_row = 5;
+    /// let row: Vec<f32> = hdu.read_row(&mut fptr, chosen_row)?;
+    ///
+    /// // Should have 100 pixel values
+    /// assert_eq!(row.len(), 100);
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn read_row<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1945,6 +2023,24 @@ impl FitsHdu {
     /// Lower left indicates the starting point of the square, and the upper
     /// right defines the pixel _beyond_ the end. The range of pixels included
     /// is inclusive of the lower end, and *exclusive* of the upper end.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut fptr = fitsio::FitsFile::open(filename)?;
+    /// # let hdu = fptr.hdu(0)?;
+    /// // Read a square section of the image
+    /// let xcoord = 0..10;
+    /// let ycoord = 0..10;
+    /// let chunk: Vec<i32> = hdu.read_region(&mut fptr, &[&ycoord, &xcoord])?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn read_region<T: ReadWriteImage>(
         &self,
         fits_file: &mut FitsFile,
@@ -1957,6 +2053,24 @@ impl FitsHdu {
     /// Read a whole image into a new `Vec`
     ///
     /// This reads an entire image into a one-dimensional vector
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut fptr = fitsio::FitsFile::open(filename)?;
+    /// # let hdu = fptr.hdu(0)?;
+    /// let image_data: Vec<f32> = hdu.read_image(&mut fptr)?;
+    ///
+    /// // 100 rows of 100 columns
+    /// assert_eq!(image_data.len(), 10_000);
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn read_image<T: ReadWriteImage>(&self, fits_file: &mut FitsFile) -> Result<Vec<T>> {
         fits_file.make_current(self)?;
         T::read_image(fits_file)
