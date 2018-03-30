@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 * (`fitsio`) add long cfitsio function names [#88](https://github.com/mindriot101/rust-fitsio/pull/88)
 * (`fitsio`) add lots of documentation
+* (`fitsio`) add `ndarray` support [#92](https://github.com/mindriot101/rust-fitsio/pull/92)
 
 ### Changed
 ### Removed
