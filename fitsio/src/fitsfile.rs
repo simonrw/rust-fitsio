@@ -258,6 +258,25 @@ impl FitsFile {
     }
 
     /// Return the primary hdu (HDU 0)
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # #[cfg(feature = "default")]
+    /// # extern crate fitsio_sys as sys;
+    /// # #[cfg(feature = "bindgen")]
+    /// # extern crate fitsio_sys_bindgen as sys;
+    /// # use fitsio::{FitsFile, HduInfo};
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut fptr = FitsFile::open(filename)?;
+    /// let hdu = fptr.hdu(0)?;
+    /// let phdu = fptr.primary_hdu()?;
+    /// assert_eq!(hdu, phdu);
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn primary_hdu(&mut self) -> Result<FitsHdu> {
         self.hdu(0)
     }
@@ -1675,6 +1694,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
 /// Struct representing a FITS HDU
 ///
 ///
+#[derive(Debug, PartialEq)]
 pub struct FitsHdu {
     /// Information about the current HDU
     pub info: HduInfo,
