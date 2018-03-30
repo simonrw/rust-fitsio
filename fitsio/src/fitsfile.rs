@@ -2307,6 +2307,35 @@ impl FitsHdu {
     ///
     /// The column location is 0-indexed. It is inserted _at_ that position, and the following
     /// columns are shifted back.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # extern crate tempdir;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::types::ImageType;
+    /// # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let table_description = &[
+    /// #     ColumnDescription::new("bar")
+    /// #         .with_type(ColumnDataType::Int)
+    /// #         .create()?,
+    /// # ];
+    /// # let hdu = fptr.create_table("foo".to_string(), table_description)?;
+    /// let column_description = ColumnDescription::new("abcdefg")
+    ///     .with_type(ColumnDataType::Int)
+    ///     .create()?;
+    /// hdu.insert_column(&mut fptr, 1, &column_description)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn insert_column(
         self,
         fits_file: &mut FitsFile,
@@ -2523,6 +2552,34 @@ impl FitsHdu {
     /// Read a subset of a fits column
     ///
     /// The range is exclusive of the upper value
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use std::fs::copy;
+    /// # use fitsio::HduInfo;
+    /// # use fitsio::columndescription::*;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    /// # let table_description = vec![
+    /// #     ColumnDescription::new("bar")
+    /// #         .with_type(ColumnDataType::Int)
+    /// #         .create()?,
+    /// # ];
+    /// # let hdu = fptr.create_table("foo".to_string(), &table_description)?;
+    /// # let data_to_write: Vec<i32> = vec![10101; 10];
+    /// # hdu.write_col_range(&mut fptr, "bar", &data_to_write, &(0..5))?;
+    /// let data: Vec<i32> = hdu.read_col_range(&mut fptr, "bar", &(0..5))?;
+    /// assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
     pub fn read_col_range<T: ReadsCol>(
         &self,
         fits_file: &mut FitsFile,
