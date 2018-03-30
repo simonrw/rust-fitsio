@@ -889,7 +889,37 @@ where
     }
 
     /// When creating a new file, add a custom primary HDU description before creating the
-    /// `FitsFile` object.
+    /// [`FitsFile`] object.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use fitsio::FitsFile;
+    /// # use fitsio::types::ImageType;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// use fitsio::FitsFile;
+    ///
+    /// // let filename = ...;
+    /// let description = ImageDescription {
+    ///     data_type: ImageType::Double,
+    ///     dimensions: &[52, 103],
+    /// };
+    ///
+    /// let fptr = FitsFile::create(filename)
+    ///     .with_custom_primary(&description)
+    ///     .open()?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
+    /// [`FitsFile`]: struct.FitsFile.html
     pub fn with_custom_primary(mut self, description: &ImageDescription<'a>) -> Self {
         self.image_description = Some(description.clone());
         self
@@ -1846,6 +1876,19 @@ impl FitsHdu {
     }
 
     /// Read header key
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// #
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// # let mut fptr = fitsio::FitsFile::open(filename)?;
+    /// # let hdu = fptr.primary_hdu()?;
+    /// # {
+    /// let int_value: i64 = hdu.read_key(&mut fptr, "INTTEST")?;
+    /// # }
     pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
         fits_file.make_current(self)?;
         T::read_key(fits_file, name)
