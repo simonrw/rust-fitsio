@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+
+from __future__ import print_function
+import os
+import subprocess as sp
+
+
+def main():
+    features = []
+    disable_default_features = False
+
+    if os.environ.get('TRAVIS_FITSIO_ARRAY', '') == '1':
+        print('Compiling with array feature')
+        features.append('array')
+    if os.environ.get('TRAVIS_FITSIO_BINDGEN', '') == '1':
+        print('Compiling with bindgen feature')
+        features.append('bindgen')
+        disable_default_features = True
+
+    if not features:
+        # Run the normal tests
+        cargo_dirs = ['fitsio-derive', 'fitsio-sys', 'fitsio-sys-bindgen', 'fitsio']
+        for dirname in cargo_dirs:
+            cargo_location = os.path.join(dirname, 'Cargo.toml')
+            assert os.path.isfile(cargo_location), 'Cannot find cargo file under %s' % cargo_location
+            cmd = ['cargo', 'test', '--manifest-path', cargo_location]
+            sp.check_call(cmd)
+    else:
+        # Run the special compilation
+        cmd = ['cargo', 'test', '--manifest-path', 'fitsio/Cargo.toml']
+        if features:
+            cmd.extend(['--features', ','.join(features)])
+
+        if disable_default_features:
+            cmd.append('--no-default-features')
+
+        sp.check_call(cmd)
+
+
+if __name__ == '__main__':
+    main()

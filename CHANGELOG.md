@@ -8,12 +8,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Added
 
-* (`fitsio`) add long cfitsio function names [#88](https://github.com/mindriot101/rust-fitsio/pull/88)
+* (`fitsio`) add `ndarray` support [#92](https://github.com/mindriot101/rust-fitsio/pull/92)
 * (`fitsio`) add lots of documentation
 
 ### Changed
 
-* (`fitsio`) switch to using long named fitsio functions
+* (`fitsio`) add long cfitsio function names internally [#88](https://github.com/mindriot101/rust-fitsio/pull/88)
 
 ### Removed
 
