@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 
 [dependencies]
-fitsio = { version = "*", git = "https://github.com/mindriot101/rust-fitsio" }
+fitsio = { version = "*", git = "https://github.com/mindriot101/rust-fitsio", features = ["array"]}
+ndarray = "*"
