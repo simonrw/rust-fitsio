@@ -14,17 +14,7 @@ to read and write astronomy-specific files.
 ## Example
 
 ```rust
-extern crate fitsio;
-
-use std::error::Error;
-use fitsio::FitsFile;
-
-fn try_main() -> Result<(), Box<Error>> {
-    let filename = "example.fits";
-    let mut fptr = FitsFile::open(filename)?;
-}
-
-fn main() { try_main().unwrap() }
+{{#include ../fitsioexample/src/main.rs}}
 ```
 
 [`cfitsio`]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
