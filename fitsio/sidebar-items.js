@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["HduInfo",""]],"struct":[["FitsError","Error type"],["FitsFile",""]],"trait":[["DescribesHdu","Hdu description type"],["ReadsKey","Trait applied to types which can be read from a FITS header"],["WritesKey",""]],"type":[["Result",""]]});
