@@ -85,7 +85,7 @@
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <ol class="chapter"><li><a href="index.html"><strong aria-hidden="true">1.</strong> FITSIO</a></li><li><a href="news/index.html"><strong aria-hidden="true">2.</strong> News</a></li><li><ol class="section"><li><a href="news/00-ndarray-support.html" class="active"><strong aria-hidden="true">2.1.</strong> ndarray support</a></li></ol></li></ol>
+            <ol class="chapter"><li><a href="index.html"><strong aria-hidden="true">1.</strong> FITSIO</a></li><li><a href="news/index.html"><strong aria-hidden="true">2.</strong> News</a></li><li><ol class="section"><li><a href="news/99-ndarray-support.html" class="active"><strong aria-hidden="true">2.1.</strong> ndarray support</a></li></ol></li></ol>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -147,7 +147,31 @@
 
                 <div id="content" class="content">
                     <main>
-                        <a class="header" href="news/00-ndarray-support.html#ndarray-support" id="ndarray-support"><h1>ndarray support</h1></a>
+                        <a class="header" href="news/99-ndarray-support.html#ndarray-support" id="ndarray-support"><h1>ndarray support</h1></a>
+<p>Date: 2018-04-02</p>
+<p>The latest feature has been added to the master branch. <code>fitsio</code> now
+supports reading image data into <a href="https://crates.io/crates/ndarray"><code>ndarray</code></a> arrays.</p>
+<p>Replicating some of the functionality of the Python <a href="https://pypi.python.org/pypi/numpy">numpy</a> library,
+where an array object can be treated like a simple scalar variable.</p>
+<p>For example:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+let filename = &quot;../testdata/full_example.fits&quot;;
+let mut fptr = FitsFile::open(filename)?;
+let phdu = fptr.primary_hdu()?;
+let image: ArrayD&lt;f32&gt; = phdu.read_image(&amp;mut fptr)?;
+let new_image = (image * 4.0) / 5.2;
+assert_eq!(new_image.ndim(), 2);
+#}</code></pre></pre>
+<p>Currently, only reading images is supported. I do see writing <code>Array</code>
+objects coming in the future, but it is not currently supported.</p>
+<p>I hope to be adding <code>ndarray</code> support to a formal versioned release
+soon.</p>
+<a class="header" href="news/99-ndarray-support.html#contributions" id="contributions"><h2>Contributions</h2></a>
+<ul>
+<li><a href="https://users.rust-lang.org/u/astrojhgu/summary">astrojghu</a> for seeding the idea in <a href="https://users.rust-lang.org/t/calling-all-rusty-astronomers/14099">this thread</a></li>
+</ul>
 
                     </main>
 
