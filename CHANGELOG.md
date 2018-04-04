@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 * (`fitsio`) add `ndarray` support [#92](https://github.com/mindriot101/rust-fitsio/pull/92)
 * (`fitsio`) add lots of documentation
+* (`fitsio`) add `overwrite` method to `NewFitsFile` [#94](https://github.com/mindriot101/rust-fitsio/pull/94)
 
 ### Changed
 

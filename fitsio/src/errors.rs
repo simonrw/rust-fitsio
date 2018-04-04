@@ -33,6 +33,9 @@ pub enum Error {
 
     /// String conversion errors
     IntoString(IntoStringError),
+
+    /// File path already exists
+    ExistingFile(String),
 }
 
 /// Error raised when the user requests invalid indexes for data
@@ -117,6 +120,7 @@ impl ::std::fmt::Display for Error {
             Error::Index(ref e) => write!(f, "Error: {:?}", e),
             Error::Io(ref e) => e.fmt(f),
             Error::IntoString(ref e) => e.fmt(f),
+            Error::ExistingFile(ref filename) => write!(f, "File {} already exists", filename),
         }
     }
 }
