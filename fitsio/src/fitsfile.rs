@@ -184,6 +184,7 @@ impl FitsFile {
         NewFitsFile {
             path,
             image_description: None,
+            overwrite: false,
         }
     }
 
@@ -849,6 +850,7 @@ where
 {
     path: T,
     image_description: Option<ImageDescription<'a>>,
+    overwrite: bool,
 }
 
 impl<'a, T> NewFitsFile<'a, T>
@@ -863,6 +865,17 @@ where
         let mut status = 0;
         let path = self.path.as_ref().to_str().expect("converting filename");
         let c_filename = ffi::CString::new(path)?;
+
+        // Check if the overwrite flag is set
+        if self.path.as_ref().is_file() {
+            if !self.overwrite {
+                return Err(Error::ExistingFile(path.to_owned()));
+            } else {
+                use std::fs::remove_file;
+
+                remove_file(self.path.as_ref())?;
+            }
+        }
 
         unsafe {
             fits_create_file(
@@ -923,6 +936,45 @@ where
     /// [`FitsFile`]: struct.FitsFile.html
     pub fn with_custom_primary(mut self, description: &ImageDescription<'a>) -> Self {
         self.image_description = Some(description.clone());
+        self
+    }
+
+    /// Overwrite any existing files
+    ///
+    /// When creating a new fits file, if a file exists with the same filename, then overwrite the
+    /// existing file. This does not however check if the underlying object is a file or not; it
+    /// just removes it. For example, if the underlying "file" is a directory, this will fail to
+    /// remove it.
+    ///
+    /// If this is not given, then when calling [`open`] will return an
+    /// [`Error::ExistingFile(filename)`]
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// # extern crate tempdir;
+    /// # extern crate fitsio;
+    /// # use fitsio::FitsFile;
+    /// # use fitsio::types::ImageType;
+    /// # use fitsio::fitsfile::ImageDescription;
+    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
+    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
+    /// # let tdir_path = tdir.path();
+    /// # let filename = tdir_path.join("test.fits");
+    /// # use fitsio::FitsFile;
+    /// // filename already exists
+    /// let fptr = FitsFile::create(filename)
+    ///     .overwrite()
+    ///     .open()?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() { try_main().unwrap(); }
+    /// ```
+    ///
+    /// [`open`]: struct.NewFitsFile.html#method.open
+    /// [`Error::ExistingFile(filename)`]: ../errors/enum.Error.html#variant.ExistingFile
+    pub fn overwrite(mut self) -> Self {
+        self.overwrite = true;
         self
     }
 }
@@ -2941,6 +2993,34 @@ mod test {
                 }
                 _ => panic!("INVALID"),
             }
+        });
+    }
+
+    #[test]
+    fn test_overwriting() {
+        use std::fs::File;
+        use std::io::Write;
+        with_temp_file(|filename| {
+            {
+                // Test with existing file
+                let mut f = File::create(filename).unwrap();
+                f.write(b"Hello world").unwrap();
+            }
+
+            match FitsFile::create(filename).open() {
+                Err(Error::ExistingFile(_)) => {}
+                _ => unreachable!(),
+            }
+        });
+
+        with_temp_file(|filename| {
+            {
+                // Test with existing file
+                let mut f = File::create(filename).unwrap();
+                f.write(b"Hello world").unwrap();
+            }
+
+            FitsFile::create(filename).overwrite().open().unwrap();
         });
     }
 
