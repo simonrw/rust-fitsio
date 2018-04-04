@@ -35,8 +35,10 @@ fn run() -> Result<(), Box<Error>> {
     };
 
     {
+        // .overwrite ensures that if the file already exists, the existing file is removed first.
         let mut fitsfile = FitsFile::create(&file_path)
             .with_custom_primary(&primary_hdu_description)
+            .overwrite()
             .open()?;
 
         /* We will now add some dummy header keys. We add:
