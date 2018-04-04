@@ -866,14 +866,13 @@ where
         let path = self.path.as_ref().to_str().expect("converting filename");
         let c_filename = ffi::CString::new(path)?;
 
-        // Check if the overwrite flag is set
+        // Check if there is an existing file already with the given filename
         if self.path.as_ref().is_file() {
+            // Check if the overwrite flag is set
             if !self.overwrite {
                 return Err(Error::ExistingFile(path.to_owned()));
             } else {
-                use std::fs::remove_file;
-
-                remove_file(self.path.as_ref())?;
+                ::std::fs::remove_file(self.path.as_ref())?;
             }
         }
 
