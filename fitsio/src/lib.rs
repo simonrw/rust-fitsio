@@ -1010,14 +1010,17 @@ extern crate ndarray;
 
 #[macro_use]
 mod fitserror;
-pub mod errors;
 mod stringutils;
-pub mod types;
-pub mod columndescription;
-pub mod fitsfile;
 mod longnam;
+pub mod errors;
+pub mod types;
+pub mod descriptions;
+pub mod fitsfile;
 #[cfg(feature = "array")]
 pub mod ndarray_compat;
 
-pub use self::fitsfile::{FitsFile, FitsHdu};
-pub use self::types::HduInfo;
+// Re-exports
+pub use fitsfile::{FitsFile, FitsHdu};
+
+// For custom derive purposes
+pub use fitsfile::FitsRow;

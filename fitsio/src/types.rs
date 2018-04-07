@@ -1,5 +1,5 @@
 //! Data types used within `fitsio`
-use columndescription::*;
+use descriptions::*;
 
 /// Enumeration of different data types used for column and key types
 #[allow(missing_docs)]

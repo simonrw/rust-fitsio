@@ -1,11 +1,28 @@
-//! Handling column descriptions
+//! Data descriptions
+//!
+//! Images are described as [`ImageDescription`](struct.ImageDescription.html) objects.
 //!
 //! Columns are represented as
 //! [`ConcreteColumnDescription`](struct.ConcreteColumnDescription.html). This is constructed
 //! through the builder pattern, by creating a [`ColumnDescription`](struct.ColumnDescription.html)
 //! and calling [`create`](struct.ColumnDescription.html#method.create)
+
 use errors::Result;
+use types::ImageType;
 use std::str::FromStr;
+
+/// Description of a new image
+#[derive(Clone)]
+pub struct ImageDescription<'a> {
+    /// Data type of the new image
+    pub data_type: ImageType,
+
+    /// Shape of the image
+    ///
+    /// Unlike cfitsio, the order of the dimensions follows the C convention, i.e. [row-major
+    /// order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
+    pub dimensions: &'a [usize],
+}
 
 /// Description for new columns
 #[derive(Debug, Clone)]

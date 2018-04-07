@@ -13,7 +13,7 @@ use fitsio_sys::fitsfile;
 use stringutils::{self, status_to_string};
 use errors::{Error, IndexError, Result};
 use fitserror::{check_status, FitsError};
-use columndescription::*;
+use descriptions::*;
 use libc;
 use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
 use std::ffi;
@@ -34,19 +34,6 @@ macro_rules! fits_check_readwrite {
             }.into());
         }
     )
-}
-
-/// Description of a new image
-#[derive(Clone)]
-pub struct ImageDescription<'a> {
-    /// Data type of the new image
-    pub data_type: ImageType,
-
-    /// Shape of the image
-    ///
-    /// Unlike cfitsio, the order of the dimensions follows the C convention, i.e. [row-major
-    /// order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
-    pub dimensions: &'a [usize],
 }
 
 /// Main entry point to the FITS file format
