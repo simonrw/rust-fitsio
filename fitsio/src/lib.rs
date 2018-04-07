@@ -1020,7 +1020,7 @@ pub mod fitsfile;
 pub mod ndarray_compat;
 
 // Re-exports
-pub use fitsfile::{FitsFile, FitsHdu};
+pub use fitsfile::FitsFile;
 
 // For custom derive purposes
 pub use fitsfile::FitsRow;
