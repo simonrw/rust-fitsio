@@ -1010,11 +1010,14 @@ extern crate ndarray;
 
 #[macro_use]
 mod fitserror;
+#[macro_use]
+mod macros;
 mod stringutils;
 mod longnam;
 pub mod errors;
 pub mod types;
 pub mod descriptions;
+pub mod fitshdu;
 pub mod fitsfile;
 #[cfg(feature = "array")]
 pub mod ndarray_compat;
