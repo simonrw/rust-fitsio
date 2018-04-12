@@ -73,7 +73,7 @@ fn impl_read_row(input: syn::DeriveInput) -> quote::Tokens {
     quote!{
         impl FitsRow for #name {
             fn from_table(
-                tbl: &::fitsio::fitsfile::FitsHdu,
+                tbl: &::fitsio::hdu::FitsHdu,
                 fits_file: &mut ::fitsio::FitsFile, idx: usize) ->
                     ::fitsio::errors::Result<Self> where Self: Sized  {
                 let mut out = Self::default();
