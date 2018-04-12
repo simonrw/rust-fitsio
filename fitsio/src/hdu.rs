@@ -1,5 +1,95 @@
+//! Fits HDU related code
+
 use std::ffi;
-use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
+use std::ops::Range;
+use fitsfile::FitsFile;
+use headers::{ReadsKey, WritesKey};
+use images::{ImageType, ReadImage, WriteImage};
+use tables::{Column, ColumnDataType, ConcreteColumnDescription, DescribesColumnLocation, FitsRow,
+             ReadsCol, WritesCol};
+use longnam::*;
+use fitsfile::CaseSensitivity;
+use errors::Result;
+use fitserror::check_status;
+
+/// Iterator type for columns
+pub struct ColumnIterator<'a> {
+    current: usize,
+    column_descriptions: Vec<ConcreteColumnDescription>,
+    fits_file: &'a FitsFile,
+}
+
+impl<'a> ColumnIterator<'a> {
+    fn new(fits_file: &'a FitsFile) -> Self {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo {
+                column_descriptions,
+                num_rows: _num_rows,
+            }) => ColumnIterator {
+                current: 0,
+                column_descriptions,
+                fits_file,
+            },
+            Err(e) => panic!("{:?}", e),
+            _ => panic!("Unknown error occurred"),
+        }
+    }
+}
+
+impl<'a> Iterator for ColumnIterator<'a> {
+    type Item = Column;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ncols = self.column_descriptions.len();
+
+        if self.current < ncols {
+            let description = &self.column_descriptions[self.current];
+            let current_name = description.name.as_str();
+            // let current_type = typechar_to_data_type(description.data_type.as_str());
+            let current_type = description.data_type.typ;
+
+            let retval = match current_type {
+                ColumnDataType::Int => i32::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Int32 {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                ColumnDataType::Long => i64::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Int64 {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                ColumnDataType::Float => f32::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Float {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                ColumnDataType::Double => f64::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Double {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                ColumnDataType::String => String::read_col(self.fits_file, current_name)
+                    .map(|data| Column::String {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                _ => unimplemented!(),
+            };
+
+            self.current += 1;
+
+            retval
+        } else {
+            None
+        }
+    }
+}
 
 /// Struct representing a FITS HDU
 ///
@@ -8,11 +98,14 @@ use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
 pub struct FitsHdu {
     /// Information about the current HDU
     pub info: HduInfo,
-    hdu_num: usize,
+    pub(crate) hdu_num: usize,
 }
 
 impl FitsHdu {
-    fn new<T: DescribesHdu>(fits_file: &mut FitsFile, hdu_description: T) -> Result<Self> {
+    pub(crate) fn new<T: DescribesHdu>(
+        fits_file: &mut FitsFile,
+        hdu_description: T,
+    ) -> Result<Self> {
         fits_file.change_hdu(hdu_description)?;
         match fits_file.fetch_hdu_info() {
             Ok(hdu_info) => Ok(FitsHdu {
@@ -632,7 +725,7 @@ impl FitsHdu {
     /// Return the index for a given column.
     ///
     /// Internal method, not exposed.
-    fn get_column_no<T: Into<String>>(
+    pub(crate) fn get_column_no<T: Into<String>>(
         &self,
         fits_file: &mut FitsFile,
         col_name: T,
@@ -961,3 +1054,106 @@ impl FitsHdu {
         F::from_table(self, fits_file, idx)
     }
 }
+
+/// Iterator over fits HDUs
+pub struct FitsHduIterator<'a> {
+    pub(crate) current: usize,
+    pub(crate) max: usize,
+    pub(crate) fits_file: &'a mut FitsFile,
+}
+
+impl<'a> Iterator for FitsHduIterator<'a> {
+    type Item = FitsHdu;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current >= self.max {
+            return None;
+        }
+
+        let hdu = self.fits_file.hdu(self.current).unwrap();
+        self.current += 1;
+        Some(hdu)
+    }
+}
+
+/// Hdu description type
+///
+/// Any way of describing a HDU - number or string which either
+/// changes the hdu by absolute number, or by name.
+pub trait DescribesHdu {
+    /// Method by which the current HDU of a file can be changed
+    fn change_hdu(&self, fptr: &mut FitsFile) -> Result<()>;
+}
+
+impl DescribesHdu for usize {
+    fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
+        let mut hdu_type = 0;
+        let mut status = 0;
+        unsafe {
+            fits_movabs_hdu(
+                f.fptr as *mut _,
+                (*self + 1) as i32,
+                &mut hdu_type,
+                &mut status,
+            );
+        }
+
+        check_status(status)
+    }
+}
+
+impl<'a> DescribesHdu for &'a str {
+    fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
+        let mut status = 0;
+        let c_hdu_name = ffi::CString::new(*self)?;
+
+        unsafe {
+            fits_movnam_hdu(
+                f.fptr as *mut _,
+                HduInfo::AnyInfo.into(),
+                c_hdu_name.into_raw(),
+                0,
+                &mut status,
+            );
+        }
+
+        check_status(status)
+    }
+}
+
+/// Description of the current HDU
+///
+/// If the current HDU is an image, then
+/// [`fetch_hdu_info`](struct.FitsFile.html#method.fetch_hdu_info) returns `HduInfo::ImageInfo`.
+/// Otherwise the variant is `HduInfo::TableInfo`.
+#[allow(missing_docs)]
+#[derive(Debug, PartialEq)]
+pub enum HduInfo {
+    ImageInfo {
+        shape: Vec<usize>,
+        image_type: ImageType,
+    },
+    TableInfo {
+        column_descriptions: Vec<ConcreteColumnDescription>,
+        num_rows: usize,
+    },
+    AnyInfo,
+}
+
+macro_rules! hduinfo_into_impl {
+    ($t: ty) => (
+        impl From<HduInfo> for $t {
+            fn from(original: HduInfo) -> $t {
+                match original {
+                    HduInfo::ImageInfo { .. } => 0,
+                    HduInfo::TableInfo { .. } => 2,
+                    HduInfo::AnyInfo => -1,
+                }
+            }
+        }
+    )
+}
+
+hduinfo_into_impl!(i8);
+hduinfo_into_impl!(i32);
+hduinfo_into_impl!(i64);

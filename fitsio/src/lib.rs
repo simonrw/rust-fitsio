@@ -996,7 +996,7 @@
 //! [fitsfile-hdu]: fitsfile/struct.FitsFile.html#method.hdu
 
 #![doc(html_root_url = "https://docs.rs/fitsio/0.13.0")]
-#![deny(missing_docs)]
+#![warn(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
@@ -1014,16 +1014,19 @@ mod fitserror;
 mod macros;
 mod stringutils;
 mod longnam;
-pub mod errors;
-pub mod types;
-pub mod descriptions;
-pub mod fitshdu;
-pub mod fitsfile;
+pub mod headers;
+pub mod images;
+pub mod tables;
+mod types;
+pub mod hdu;
+mod fitsfile;
 #[cfg(feature = "array")]
-pub mod ndarray_compat;
+mod ndarray_compat;
+
+pub mod errors;
 
 // Re-exports
 pub use fitsfile::FitsFile;
 
 // For custom derive purposes
-pub use fitsfile::FitsRow;
+// pub use tables::FitsRow;

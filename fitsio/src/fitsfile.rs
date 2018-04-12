@@ -11,19 +11,16 @@
 use longnam::*;
 use fitsio_sys::fitsfile;
 use stringutils::{self, status_to_string};
-use errors::{Error, IndexError, Result};
-use fitserror::{check_status, FitsError};
-use fitshdu::FitsHdu;
-use descriptions::*;
+use errors::{Error, Result};
+use fitserror::check_status;
+use images::{ImageDescription, ImageType};
+use hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
+use tables::{ColumnDataDescription, ConcreteColumnDescription};
 use libc;
-use types::{CaseSensitivity, DataType, FileOpenMode, HduInfo, ImageType};
 use std::ffi;
 use std::io::{self, Write};
 use std::ptr;
 use std::path::Path;
-use std::ops::Range;
-
-static MAX_VALUE_LENGTH: usize = 71;
 
 /// Main entry point to the FITS file format
 ///
@@ -32,7 +29,7 @@ pub struct FitsFile {
     /// Name of the file
     pub filename: String,
     open_mode: FileOpenMode,
-    fptr: *const fitsfile,
+    pub(crate) fptr: *const fitsfile,
 }
 
 impl FitsFile {
@@ -165,7 +162,7 @@ impl FitsFile {
     }
 
     /// Method to extract what open mode the file is in
-    fn open_mode(&self) -> Result<FileOpenMode> {
+    pub(crate) fn open_mode(&self) -> Result<FileOpenMode> {
         let mut status = 0;
         let mut iomode = 0;
         unsafe {
@@ -195,7 +192,7 @@ impl FitsFile {
     }
 
     /// Change the current HDU
-    fn change_hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<()> {
+    pub(crate) fn change_hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<()> {
         hdu_description.change_hdu(self)
     }
 
@@ -289,11 +286,11 @@ impl FitsFile {
         Ok(result)
     }
 
-    fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
+    pub(crate) fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
         self.change_hdu(hdu.hdu_num)
     }
 
-    fn hdu_number(&self) -> usize {
+    pub(crate) fn hdu_number(&self) -> usize {
         let mut hdu_num = 0;
         unsafe {
             fits_get_hdu_num(self.fptr as *mut _, &mut hdu_num);
@@ -302,7 +299,7 @@ impl FitsFile {
     }
 
     /// Get the current hdu as an HDU object
-    fn current_hdu(&mut self) -> Result<FitsHdu> {
+    pub(crate) fn current_hdu(&mut self) -> Result<FitsHdu> {
         let current_hdu_number = self.hdu_number();
         self.hdu(current_hdu_number)
     }
@@ -954,970 +951,63 @@ where
     }
 }
 
-/// Iterator over fits HDUs
-pub struct FitsHduIterator<'a> {
-    current: usize,
-    max: usize,
-    fits_file: &'a mut FitsFile,
-}
-
-impl<'a> Iterator for FitsHduIterator<'a> {
-    type Item = FitsHdu;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current >= self.max {
-            return None;
-        }
-
-        let hdu = self.fits_file.hdu(self.current).unwrap();
-        self.current += 1;
-        Some(hdu)
-    }
-}
-
-/// Hdu description type
-///
-/// Any way of describing a HDU - number or string which either
-/// changes the hdu by absolute number, or by name.
-pub trait DescribesHdu {
-    /// Method by which the current HDU of a file can be changed
-    fn change_hdu(&self, fptr: &mut FitsFile) -> Result<()>;
-}
-
-impl DescribesHdu for usize {
-    fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
-        let mut hdu_type = 0;
-        let mut status = 0;
-        unsafe {
-            fits_movabs_hdu(
-                f.fptr as *mut _,
-                (*self + 1) as i32,
-                &mut hdu_type,
-                &mut status,
-            );
-        }
-
-        check_status(status)
-    }
-}
-
-impl<'a> DescribesHdu for &'a str {
-    fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
-        let mut status = 0;
-        let c_hdu_name = ffi::CString::new(*self)?;
-
-        unsafe {
-            fits_movnam_hdu(
-                f.fptr as *mut _,
-                HduInfo::AnyInfo.into(),
-                c_hdu_name.into_raw(),
-                0,
-                &mut status,
-            );
-        }
-
-        check_status(status)
-    }
-}
-
-/// Way of describing a column location
-pub trait DescribesColumnLocation {
-    /// Method by which the column number can be computed
-    fn get_column_no(&self, hdu: &FitsHdu, fptr: &mut FitsFile) -> Result<i32>;
-}
-
-impl DescribesColumnLocation for usize {
-    fn get_column_no(&self, _: &FitsHdu, _: &mut FitsFile) -> Result<i32> {
-        Ok(*self as i32)
-    }
-}
-
-impl<'a> DescribesColumnLocation for &'a str {
-    fn get_column_no(&self, hdu: &FitsHdu, fits_file: &mut FitsFile) -> Result<i32> {
-        match hdu.get_column_no(fits_file, *self) {
-            Ok(value) => Ok(value as _),
-            Err(e) => Err(e),
-        }
-    }
-}
-
-/// Trait for reading a fits column
-pub trait ReadsCol {
-    #[doc(hidden)]
-    fn read_col_range<T: Into<String>>(
-        fits_file: &FitsFile,
-        name: T,
-        range: &Range<usize>,
-    ) -> Result<Vec<Self>>
-    where
-        Self: Sized;
-
-    #[doc(hidden)]
-    fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
-    where
-        T: Into<String>,
-        Self: Sized;
-
-    #[doc(hidden)]
-    fn read_col<T: Into<String>>(fits_file: &FitsFile, name: T) -> Result<Vec<Self>>
-    where
-        Self: Sized,
-    {
-        match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo { num_rows, .. }) => {
-                let range = 0..num_rows;
-                Self::read_col_range(fits_file, name, &range)
-            }
-            Err(e) => Err(e),
-            _ => panic!("Unknown error occurred"),
-        }
-    }
-}
-
-macro_rules! reads_col_impl {
-    ($t: ty, $func: ident, $nullval: expr) => (
-        impl ReadsCol for $t {
-            fn read_col_range<T: Into<String>>(fits_file: &FitsFile, name: T, range: &Range<usize>)
-                -> Result<Vec<Self>> {
-                    match fits_file.fetch_hdu_info() {
-                        Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
-                            let num_output_rows = range.end - range.start;
-                            let mut out = vec![$nullval; num_output_rows];
-                            let test_name = name.into();
-                            let column_number = column_descriptions
-                                .iter()
-                                .position(|ref desc| { desc.name == test_name })
-                                .ok_or(Error::Message(
-                                        format!("Cannot find column {:?}", test_name)))?;
-                            let mut status = 0;
-                            unsafe {
-                                $func(fits_file.fptr as *mut _,
-                                           (column_number + 1) as i32,
-                                           (range.start + 1) as i64,
-                                           1,
-                                           num_output_rows as _,
-                                           $nullval,
-                                           out.as_mut_ptr(),
-                                           ptr::null_mut(),
-                                           &mut status);
-
-                            }
-
-                            match status {
-                                0 => Ok(out),
-                                307 => Err(IndexError {
-                                    message: "given indices out of range".to_string(),
-                                    given: range.clone(),
-                                }.into()),
-                                e => Err(FitsError {
-                                    status: e,
-                                    message: status_to_string(e).unwrap().unwrap(),
-                                }.into()),
-                            }
-                        },
-                        Err(e) => Err(e),
-                        _ => panic!("Unknown error occurred"),
-                    }
-                }
-
-            #[doc(hidden)]
-            fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
-                where T: Into<String>,
-                      Self: Sized {
-                          match fits_file.fetch_hdu_info() {
-                              Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
-                                  let mut out = $nullval;
-                                  let test_name = name.into();
-                                  let column_number = column_descriptions
-                                      .iter()
-                                      .position(|ref desc| { desc.name == test_name })
-                                      .ok_or(Error::Message(
-                                              format!("Cannot find column {:?}", test_name)))?;
-                                  let mut status = 0;
-
-                                  unsafe {
-                                      $func(fits_file.fptr as *mut _,
-                                                 (column_number + 1) as i32,
-                                                 (idx + 1) as i64,
-                                                 1,
-                                                 1,
-                                                 $nullval,
-                                                 &mut out,
-                                                 ptr::null_mut(),
-                                                 &mut status);
-                                  }
-
-                                  check_status(status).map(|_| out)
-                              }
-                              Err(e) => Err(e),
-                              _ => panic!("Unknown error occurred"),
-                          }
-                      }
-        }
-    )
-}
-
-reads_col_impl!(i32, fits_read_col_int, 0);
-reads_col_impl!(u32, fits_read_col_uint, 0);
-reads_col_impl!(f32, fits_read_col_flt, 0.0);
-reads_col_impl!(f64, fits_read_col_dbl, 0.0);
-#[cfg(target_pointer_width = "64")]
-reads_col_impl!(i64, fits_read_col_lng, 0);
-#[cfg(target_pointer_width = "32")]
-reads_col_impl!(i64, fits_read_col_lnglng, 0);
-#[cfg(target_pointer_width = "64")]
-reads_col_impl!(u64, fits_read_col_ulng, 0);
-
-/// Helper function to get the display width of a column
-fn column_display_width(fits_file: &FitsFile, column_number: usize) -> Result<usize> {
-    let mut status = 0;
-    let mut width = 0;
-    unsafe {
-        fits_get_col_display_width(
-            fits_file.fptr as *mut _,
-            (column_number + 1) as _,
-            &mut width,
-            &mut status,
-        );
-    }
-    check_status(status).map(|_| width as usize)
-}
-
-impl ReadsCol for String {
-    fn read_col_range<T: Into<String>>(
-        fits_file: &FitsFile,
-        name: T,
-        range: &Range<usize>,
-    ) -> Result<Vec<Self>> {
-        match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo {
-                column_descriptions,
-                ..
-            }) => {
-                let num_output_rows = range.end - range.start;
-                let test_name = name.into();
-                let column_number = column_descriptions
-                    .iter()
-                    .position(|desc| desc.name == test_name)
-                    .ok_or_else(|| Error::Message(format!("Cannot find column {:?}", test_name)))?;
-
-                /* Set up the storage arrays for the column string values */
-                let mut raw_char_data: Vec<*mut libc::c_char> =
-                    Vec::with_capacity(num_output_rows as usize);
-
-                let mut status = 0;
-                let width = column_display_width(fits_file, column_number)?;
-
-                let mut vecs: Vec<Vec<libc::c_char>> = Vec::with_capacity(num_output_rows as usize);
-                for _ in 0..num_output_rows {
-                    let mut data: Vec<libc::c_char> = vec![0; width as _];
-                    let data_p = data.as_mut_ptr();
-                    vecs.push(data);
-                    raw_char_data.push(data_p);
-                }
-
-                unsafe {
-                    fits_read_col_str(
-                        fits_file.fptr as *mut _,
-                        (column_number + 1) as _,
-                        (range.start + 1) as _,
-                        1,
-                        raw_char_data.len() as _,
-                        ptr::null_mut(),
-                        raw_char_data.as_ptr() as *mut *mut _,
-                        ptr::null_mut(),
-                        &mut status,
-                    );
-                }
-
-                check_status(status)?;
-
-                let mut out = Vec::with_capacity(num_output_rows);
-                for val in &vecs {
-                    let bytes: Vec<u8> = val.into_iter()
-                        .filter(|v| **v != 0)
-                        .map(|v| *v as u8)
-                        .collect();
-                    let cstr = String::from_utf8(bytes)?;
-                    out.push(cstr);
-                }
-                Ok(out)
-            }
-            Err(e) => Err(e),
-            _ => panic!("Unknown error occurred"),
-        }
-    }
-
-    #[doc(hidden)]
-    fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
-    where
-        T: Into<String>,
-        Self: Sized,
-    {
-        // XXX Ineffient but works
-        Self::read_col_range(fits_file, name, &(idx..idx + 1)).map(|v| v[0].clone())
-    }
-}
-
-/// Trait representing the ability to write column data
-pub trait WritesCol {
-    #[doc(hidden)]
-    fn write_col_range<T: Into<String>>(
-        fits_file: &mut FitsFile,
-        hdu: &FitsHdu,
-        col_name: T,
-        col_data: &[Self],
-        rows: &Range<usize>,
-    ) -> Result<FitsHdu>
-    where
-        Self: Sized;
-
-    #[doc(hidden)]
-    fn write_col<T: Into<String>>(
-        fits_file: &mut FitsFile,
-        hdu: &FitsHdu,
-        col_name: T,
-        col_data: &[Self],
-    ) -> Result<FitsHdu>
-    where
-        Self: Sized,
-    {
-        match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo { .. }) => {
-                let row_range = 0..col_data.len();
-                Self::write_col_range(fits_file, hdu, col_name, col_data, &row_range)
-            }
-            Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
-            Ok(HduInfo::AnyInfo { .. }) => {
-                Err("Cannot determine HDU type, so cannot write column data".into())
-            }
-            Err(e) => Err(e),
-        }
-    }
-}
-
-macro_rules! writes_col_impl {
-    ($t: ty, $data_type: expr) => (
-        impl WritesCol for $t {
-            fn write_col_range<T: Into<String>>(fits_file: &mut FitsFile,
-                hdu: &FitsHdu,
-                col_name: T,
-                col_data: &[Self],
-                rows: &Range<usize>)
-            -> Result<FitsHdu> {
-                match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::TableInfo { .. }) => {
-                        let colno = hdu.get_column_no(fits_file, col_name.into())?;
-                        // TODO: check that the column exists in the file
-                        let mut status = 0;
-                        let n_elements = rows.end - rows.start;
-                        unsafe {
-                            fits_write_col(
-                                fits_file.fptr as *mut _,
-                                $data_type.into(),
-                                (colno + 1) as _,
-                                (rows.start + 1) as _,
-                                1,
-                                n_elements as _,
-                                col_data.as_ptr() as *mut _,
-                                &mut status
-                            );
-                        }
-                        check_status(status).and_then(|_| fits_file.current_hdu())
-                    },
-                    Ok(HduInfo::ImageInfo { .. }) =>
-                        Err("Cannot write column data to FITS image".into()),
-                    Ok(HduInfo::AnyInfo { .. }) =>
-                        Err("Cannot determine HDU type, so cannot write column data".into()),
-                    Err(e) => Err(e),
-                }
-            }
-        }
-    )
-}
-
-writes_col_impl!(u32, DataType::TUINT);
-#[cfg(target_pointer_width = "64")]
-writes_col_impl!(u64, DataType::TULONG);
-writes_col_impl!(i32, DataType::TINT);
-#[cfg(target_pointer_width = "64")]
-writes_col_impl!(i64, DataType::TLONG);
-#[cfg(target_pointer_width = "32")]
-writes_col_impl!(i64, DataType::TLONGLONG);
-writes_col_impl!(f32, DataType::TFLOAT);
-writes_col_impl!(f64, DataType::TDOUBLE);
-
-impl WritesCol for String {
-    fn write_col_range<T: Into<String>>(
-        fits_file: &mut FitsFile,
-        hdu: &FitsHdu,
-        col_name: T,
-        col_data: &[Self],
-        rows: &Range<usize>,
-    ) -> Result<FitsHdu> {
-        match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo { .. }) => {
-                let colno = hdu.get_column_no(fits_file, col_name.into())?;
-                let mut status = 0;
-
-                let start = rows.start;
-                let end = rows.end;
-                let n_elements = end - start;
-                let mut ptr_array = Vec::with_capacity(n_elements);
-
-                let rows = rows.clone();
-                for i in rows {
-                    let s = ffi::CString::new(col_data[i].clone())?;
-                    ptr_array.push(s.into_raw());
-                }
-
-                unsafe {
-                    fits_write_col_str(
-                        fits_file.fptr as *mut _,
-                        (colno + 1) as _,
-                        (start + 1) as _,
-                        1,
-                        n_elements as _,
-                        ptr_array.as_mut_ptr() as _,
-                        &mut status,
-                    );
-                }
-                check_status(status).and_then(|_| fits_file.current_hdu())
-            }
-            Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
-            Ok(HduInfo::AnyInfo { .. }) => {
-                Err("Cannot determine HDU type, so cannot write column data".into())
-            }
-            Err(e) => Err(e),
-        }
-    }
-}
-
-/// Trait applied to types which can be read from a FITS header
-///
-/// This is currently:
-///
-/// * i32
-/// * i64
-/// * f32
-/// * f64
-/// * String
-pub trait ReadsKey {
-    #[doc(hidden)]
-    fn read_key(f: &FitsFile, name: &str) -> Result<Self>
-    where
-        Self: Sized;
-}
-
-macro_rules! reads_key_impl {
-    ($t:ty, $func:ident) => (
-        impl ReadsKey for $t {
-            fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
-                let c_name = ffi::CString::new(name)?;
-                let mut status = 0;
-                let mut value: Self = Self::default();
-
-                unsafe {
-                    $func(f.fptr as *mut _,
-                           c_name.into_raw(),
-                           &mut value,
-                           ptr::null_mut(),
-                           &mut status);
-                }
-
-                check_status(status).map(|_| value)
-            }
-        }
-    )
-}
-
-reads_key_impl!(i32, fits_read_key_log);
-#[cfg(target_pointer_width = "64")]
-reads_key_impl!(i64, fits_read_key_lng);
-#[cfg(target_pointer_width = "32")]
-reads_key_impl!(i64, fits_read_key_lnglng);
-reads_key_impl!(f32, fits_read_key_flt);
-reads_key_impl!(f64, fits_read_key_dbl);
-
-impl ReadsKey for String {
-    fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
-        let c_name = ffi::CString::new(name)?;
-        let mut status = 0;
-        let mut value: Vec<libc::c_char> = vec![0; MAX_VALUE_LENGTH];
-
-        unsafe {
-            fits_read_key_str(
-                f.fptr as *mut _,
-                c_name.into_raw(),
-                value.as_mut_ptr(),
-                ptr::null_mut(),
-                &mut status,
-            );
-        }
-
-        check_status(status).and_then(|_| {
-            let value: Vec<u8> = value.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
-            Ok(String::from_utf8(value)?)
-        })
-    }
-}
-
-/// Writing a fits keyword
-pub trait WritesKey {
-    #[doc(hidden)]
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()>;
-}
-
-macro_rules! writes_key_impl_flt {
-    ($t:ty, $func:ident) => (
-        impl WritesKey for $t {
-            fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-                let c_name = ffi::CString::new(name)?;
-                let mut status = 0;
-
-                unsafe {
-                    $func(f.fptr as *mut _,
-                                c_name.into_raw(),
-                                value,
-                                9,
-                                ptr::null_mut(),
-                                &mut status);
-                }
-                check_status(status)
-            }
-        }
-    )
-}
-
-impl WritesKey for i64 {
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-        let c_name = ffi::CString::new(name)?;
-        let mut status = 0;
-
-        unsafe {
-            fits_write_key_lng(
-                f.fptr as *mut _,
-                c_name.into_raw(),
-                value,
-                ptr::null_mut(),
-                &mut status,
-            );
-        }
-        check_status(status)
-    }
-}
-
-writes_key_impl_flt!(f32, fits_write_key_flt);
-writes_key_impl_flt!(f64, fits_write_key_dbl);
-
-impl WritesKey for String {
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-        WritesKey::write_key(f, name, value.as_str())
-    }
-}
-
-impl<'a> WritesKey for &'a str {
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-        let c_name = ffi::CString::new(name)?;
-        let mut status = 0;
-
-        unsafe {
-            fits_write_key_str(
-                f.fptr as *mut _,
-                c_name.into_raw(),
-                ffi::CString::new(value)?.into_raw(),
-                ptr::null_mut(),
-                &mut status,
-            );
-        }
-
-        check_status(status)
-    }
-}
-
-// TODO: SPLIT THIS UP AND CREATE TRAIT ON Self = Vec<Self> to allow for ndarray
-/// Reading fits images
-pub trait ReadImage: Sized {
-    #[doc(hidden)]
-    fn read_section(fits_file: &mut FitsFile, hdu: &FitsHdu, range: Range<usize>) -> Result<Self>;
-
-    #[doc(hidden)]
-    fn read_rows(
-        fits_file: &mut FitsFile,
-        hdu: &FitsHdu,
-        start_row: usize,
-        num_rows: usize,
-    ) -> Result<Self>;
-
-    #[doc(hidden)]
-    fn read_row(fits_file: &mut FitsFile, hdu: &FitsHdu, row: usize) -> Result<Self>;
-
-    #[doc(hidden)]
-    fn read_region(
-        fits_file: &mut FitsFile,
-        hdu: &FitsHdu,
-        ranges: &[&Range<usize>],
-    ) -> Result<Self>;
-
-    #[doc(hidden)]
-    fn read_image(fits_file: &mut FitsFile, hdu: &FitsHdu) -> Result<Self> {
-        match hdu.info {
-            HduInfo::ImageInfo { ref shape, .. } => {
-                let mut npixels = 1;
-                for dimension in shape {
-                    npixels *= *dimension;
-                }
-                Self::read_section(fits_file, hdu, 0..npixels)
-            }
-            HduInfo::TableInfo { .. } => Err("cannot read image data from a table hdu".into()),
-            HduInfo::AnyInfo => unreachable!(),
-        }
-    }
-}
-
-/// Reading fits images
-pub trait WriteImage: Sized {
-    #[doc(hidden)]
-    fn write_section(
-        fits_file: &mut FitsFile,
-        hdu: &FitsHdu,
-        range: Range<usize>,
-        data: &[Self],
-    ) -> Result<()>;
-
-    #[doc(hidden)]
-    fn write_region(
-        fits_file: &mut FitsFile,
-        hdu: &FitsHdu,
-        ranges: &[&Range<usize>],
-        data: &[Self],
-    ) -> Result<()>;
-
-    #[doc(hidden)]
-    fn write_image(fits_file: &mut FitsFile, hdu: &FitsHdu, data: &[Self]) -> Result<()> {
-        match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::ImageInfo { shape, .. }) => {
-                let image_npixels = shape.iter().product();
-                if data.len() > image_npixels {
-                    return Err(format!(
-                        "cannot write more data ({} elements) to the current image (shape: {:?})",
-                        data.len(),
-                        shape
-                    ).as_str()
-                        .into());
-                }
-
-                Self::write_section(fits_file, hdu, 0..data.len(), data)
-            }
-            Ok(HduInfo::TableInfo { .. }) => Err("cannot write image data to a table hdu".into()),
-            Ok(HduInfo::AnyInfo) => unreachable!(),
-            Err(e) => Err(e),
-        }
-    }
-}
-
-macro_rules! read_image_impl_vec {
-    ($t: ty, $default_value: expr, $data_type: expr) => (
-        impl ReadImage for Vec<$t> {
-
-            fn read_section(
-                fits_file: &mut FitsFile,
-                hdu: &FitsHdu,
-                range: Range<usize>) -> Result<Self> {
-                match hdu.info {
-                    HduInfo::ImageInfo { .. } => {
-                        let nelements = range.end - range.start;
-                        let mut out = vec![$default_value; nelements];
-                        let mut status = 0;
-
-                        unsafe {
-                            fits_read_img(fits_file.fptr as *mut _,
-                                          $data_type.into(),
-                                          (range.start + 1) as i64,
-                                          nelements as i64,
-                                          ptr::null_mut(),
-                                          out.as_mut_ptr() as *mut _,
-                                          ptr::null_mut(),
-                                          &mut status);
-                        }
-
-                        check_status(status).map(|_| out)
-                    },
-                    HduInfo::TableInfo { .. } =>
-                        Err("cannot read image data from a table hdu".into()),
-                    HduInfo::AnyInfo => unreachable!(),
-                }
-            }
-
-            fn read_rows(fits_file: &mut FitsFile, hdu: &FitsHdu, start_row: usize, num_rows: usize)
-                -> Result<Self> {
-                    match hdu.info {
-                        HduInfo::ImageInfo { ref shape, .. } => {
-                            if shape.len() != 2 {
-                                unimplemented!();
-                            }
-
-                            let num_cols = shape[1];
-                            let start = start_row * num_cols;
-                            let end = (start_row + num_rows) * num_cols;
-
-                            Self::read_section(fits_file, hdu, start..end)
-                        },
-                        HduInfo::TableInfo { .. } =>
-                            Err("cannot read image data from a table hdu".into()),
-                        HduInfo::AnyInfo => unreachable!(),
-                    }
-                }
-
-            fn read_row(fits_file: &mut FitsFile, hdu: &FitsHdu, row: usize) -> Result<Self> {
-                Self::read_rows(fits_file, hdu, row, 1)
-            }
-
-            fn read_region(fits_file: &mut FitsFile, hdu: &FitsHdu, ranges: &[&Range<usize>])
-                -> Result<Self> {
-                    match hdu.info {
-                        HduInfo::ImageInfo { .. } => {
-                            let n_ranges = ranges.len();
-
-                            let mut fpixel = Vec::with_capacity(n_ranges);
-                            let mut lpixel = Vec::with_capacity(n_ranges);
-
-                            let mut nelements = 1;
-                            for range in ranges {
-                                let start = range.start + 1;
-                                let end = range.end + 1;
-                                fpixel.push(start as _);
-                                lpixel.push(end as _);
-
-                                nelements *= end - start;
-                            }
-
-                            let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
-                            let mut out = vec![$default_value; nelements];
-                            let mut status = 0;
-
-                            unsafe {
-                                fits_read_subset(
-                                    fits_file.fptr as *mut _,
-                                    $data_type.into(),
-                                    fpixel.as_mut_ptr(),
-                                    lpixel.as_mut_ptr(),
-                                    inc.as_mut_ptr(),
-                                    ptr::null_mut(),
-                                    out.as_mut_ptr() as *mut _,
-                                    ptr::null_mut(),
-                                    &mut status);
-
-                            }
-
-                            check_status(status).map(|_| out)
-                        }
-                        HduInfo::TableInfo { .. } =>
-                            Err("cannot read image data from a table hdu".into()),
-                        HduInfo::AnyInfo => unreachable!(),
-                    }
-                }
-        }
-    )
-}
-
-macro_rules! write_image_impl {
-    ($t: ty, $default_value: expr, $data_type: expr) => (
-        impl WriteImage for $t {
-            fn write_section(
-                fits_file: &mut FitsFile,
-                hdu: &FitsHdu,
-                range: Range<usize>,
-                data: &[Self])
-                -> Result<()> {
-                    match hdu.info {
-                        HduInfo::ImageInfo { .. } => {
-                            let nelements = range.end - range.start;
-                            assert!(data.len() >= nelements);
-                            let mut status = 0;
-                            unsafe {
-                                fits_write_img(fits_file.fptr as *mut _,
-                                           $data_type.into(),
-                                           (range.start + 1) as i64,
-                                           nelements as i64,
-                                           data.as_ptr() as *mut _,
-                                           &mut status);
-                            }
-
-                            check_status(status)
-                        },
-                        HduInfo::TableInfo { .. } =>
-                            Err("cannot write image data to a table hdu".into()),
-                        HduInfo::AnyInfo => unreachable!(),
-                    }
-                }
-
-            fn write_region(
-                fits_file: &mut FitsFile,
-                hdu: &FitsHdu,
-                ranges: &[&Range<usize>],
-                data: &[Self])
-                -> Result<()> {
-                    match hdu.info {
-                        HduInfo::ImageInfo { .. } => {
-                            let n_ranges = ranges.len();
-
-                            let mut fpixel = Vec::with_capacity(n_ranges);
-                            let mut lpixel = Vec::with_capacity(n_ranges);
-
-                            for range in ranges {
-                                let start = range.start + 1;
-                                let end = range.end + 1;
-                                fpixel.push(start as _);
-                                lpixel.push(end as _);
-                            }
-
-                            let mut status = 0;
-
-                            unsafe {
-                                fits_write_subset(
-                                    fits_file.fptr as *mut _,
-                                    $data_type.into(),
-                                    fpixel.as_mut_ptr(),
-                                    lpixel.as_mut_ptr(),
-                                    data.as_ptr() as *mut _,
-                                    &mut status);
-                            }
-
-                            check_status(status)
-                        },
-                        HduInfo::TableInfo { .. } =>
-                            Err("cannot write image data to a table hdu".into()),
-                        HduInfo::AnyInfo => unreachable!(),
-                    }
-                }
-        }
-    )
-}
-
-read_image_impl_vec!(i8, i8::default(), DataType::TSHORT);
-read_image_impl_vec!(i32, i32::default(), DataType::TINT);
-#[cfg(target_pointer_width = "64")]
-read_image_impl_vec!(i64, i64::default(), DataType::TLONG);
-#[cfg(target_pointer_width = "32")]
-read_image_impl_vec!(i64, i64::default() DataType::TLONGLONG);
-read_image_impl_vec!(u8, u8::default(), DataType::TUSHORT);
-read_image_impl_vec!(u32, u32::default(), DataType::TUINT);
-#[cfg(target_pointer_width = "64")]
-read_image_impl_vec!(u64, u64::default(), DataType::TULONG);
-read_image_impl_vec!(f32, f32::default(), DataType::TFLOAT);
-read_image_impl_vec!(f64, f64::default(), DataType::TDOUBLE);
-
-write_image_impl!(i8, i8::default(), DataType::TSHORT);
-write_image_impl!(i32, i32::default(), DataType::TINT);
-#[cfg(target_pointer_width = "64")]
-write_image_impl!(i64, i64::default(), DataType::TLONG);
-#[cfg(target_pointer_width = "32")]
-write_image_impl!(i64, i64::default() DataType::TLONGLONG);
-write_image_impl!(u8, u8::default(), DataType::TUSHORT);
-write_image_impl!(u32, u32::default(), DataType::TUINT);
-#[cfg(target_pointer_width = "64")]
-write_image_impl!(u64, u64::default(), DataType::TULONG);
-write_image_impl!(f32, f32::default(), DataType::TFLOAT);
-write_image_impl!(f64, f64::default(), DataType::TDOUBLE);
-
-/// Columns of different types
+/// Enumeration of file open modes
 #[allow(missing_docs)]
-pub enum Column {
-    Int32 { name: String, data: Vec<i32> },
-    Int64 { name: String, data: Vec<i64> },
-    Float { name: String, data: Vec<f32> },
-    Double { name: String, data: Vec<f64> },
-    String { name: String, data: Vec<String> },
+#[repr(C)]
+#[derive(Debug, PartialEq, Eq)]
+pub enum FileOpenMode {
+    READONLY,
+    READWRITE,
 }
 
-/// Iterator type for columns
-pub struct ColumnIterator<'a> {
-    current: usize,
-    column_descriptions: Vec<ConcreteColumnDescription>,
-    fits_file: &'a FitsFile,
-}
-
-impl<'a> ColumnIterator<'a> {
-    fn new(fits_file: &'a FitsFile) -> Self {
-        match fits_file.fetch_hdu_info() {
-            Ok(HduInfo::TableInfo {
-                column_descriptions,
-                num_rows: _num_rows,
-            }) => ColumnIterator {
-                current: 0,
-                column_descriptions,
-                fits_file,
-            },
-            Err(e) => panic!("{:?}", e),
-            _ => panic!("Unknown error occurred"),
+macro_rules! fileopenmode_into_impl {
+    ($t: ty) => (
+        impl From<FileOpenMode> for $t {
+            fn from(original: FileOpenMode) -> $t {
+                match original {
+                    FileOpenMode::READONLY => 0,
+                    FileOpenMode::READWRITE => 1,
+                }
+            }
         }
-    }
+        )
 }
 
-impl<'a> Iterator for ColumnIterator<'a> {
-    type Item = Column;
+fileopenmode_into_impl!(u8);
+fileopenmode_into_impl!(u32);
+fileopenmode_into_impl!(u64);
+fileopenmode_into_impl!(i8);
+fileopenmode_into_impl!(i32);
+fileopenmode_into_impl!(i64);
 
-    fn next(&mut self) -> Option<Self::Item> {
-        let ncols = self.column_descriptions.len();
+/// Enumeration of options for case sensitivity
+#[allow(missing_docs)]
+#[repr(C)]
+#[derive(Debug, PartialEq, Eq)]
+pub enum CaseSensitivity {
+    CASEINSEN,
+    CASESEN,
+}
 
-        if self.current < ncols {
-            let description = &self.column_descriptions[self.current];
-            let current_name = description.name.as_str();
-            // let current_type = typechar_to_data_type(description.data_type.as_str());
-            let current_type = description.data_type.typ;
-
-            let retval = match current_type {
-                ColumnDataType::Int => i32::read_col(self.fits_file, current_name)
-                    .map(|data| Column::Int32 {
-                        name: current_name.to_string(),
-                        data,
-                    })
-                    .ok(),
-                ColumnDataType::Long => i64::read_col(self.fits_file, current_name)
-                    .map(|data| Column::Int64 {
-                        name: current_name.to_string(),
-                        data,
-                    })
-                    .ok(),
-                ColumnDataType::Float => f32::read_col(self.fits_file, current_name)
-                    .map(|data| Column::Float {
-                        name: current_name.to_string(),
-                        data,
-                    })
-                    .ok(),
-                ColumnDataType::Double => f64::read_col(self.fits_file, current_name)
-                    .map(|data| Column::Double {
-                        name: current_name.to_string(),
-                        data,
-                    })
-                    .ok(),
-                ColumnDataType::String => String::read_col(self.fits_file, current_name)
-                    .map(|data| Column::String {
-                        name: current_name.to_string(),
-                        data,
-                    })
-                    .ok(),
-                _ => unimplemented!(),
-            };
-
-            self.current += 1;
-
-            retval
-        } else {
-            None
+macro_rules! casesensitivity_into_impl {
+    ($t: ty) => (
+        impl From<CaseSensitivity> for $t {
+            fn from(original: CaseSensitivity) -> $t {
+                match original {
+                    CaseSensitivity::CASEINSEN => 0,
+                    CaseSensitivity::CASESEN => 1,
+                }
+            }
         }
-    }
+        )
 }
 
-/// Trait derivable with custom derive
-pub trait FitsRow: ::std::default::Default {
-    #[doc(hidden)]
-    fn from_table(tbl: &FitsHdu, fits_file: &mut FitsFile, idx: usize) -> Result<Self>
-    where
-        Self: Sized;
-}
-
+casesensitivity_into_impl!(u8);
+casesensitivity_into_impl!(u32);
+casesensitivity_into_impl!(u64);
+casesensitivity_into_impl!(i8);
+casesensitivity_into_impl!(i32);
+casesensitivity_into_impl!(i64);
 #[cfg(test)]
 mod test {
     #[cfg(feature = "default")]
@@ -1927,9 +1017,8 @@ mod test {
 
     extern crate tempdir;
 
-    use fitshdu::FitsHdu;
+    use hdu::FitsHdu;
     use fitsfile::FitsFile;
-    use types::*;
     use fitsfile::ImageDescription;
     use errors::{Error, IndexError, Result};
     use std::path::Path;
