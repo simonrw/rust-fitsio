@@ -732,7 +732,7 @@ impl<'a> Iterator for ColumnIterator<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use testhelpers::{with_temp_file, floats_close_f32, floats_close_f64};
+    use testhelpers::{duplicate_test_file, with_temp_file, floats_close_f32, floats_close_f64};
 
     #[test]
     fn test_parsing() {
@@ -1049,5 +1049,109 @@ mod test {
             assert_eq!(data[0], "value0");
             assert_eq!(data[19], "value19");
         });
+    }
+
+    #[test]
+    fn test_inserting_columns() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+
+            let coldesc = ColumnDescription::new("abcdefg")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap();
+
+            let newhdu = hdu.insert_column(&mut f, 0, &coldesc).unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo {
+                    column_descriptions,
+                    ..
+                } => {
+                    assert_eq!(column_descriptions[0].name, "abcdefg");
+                }
+                _ => panic!("ERROR"),
+            }
+        });
+    }
+
+    #[test]
+    fn test_appending_columns() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+
+            let coldesc = ColumnDescription::new("abcdefg")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap();
+
+            let newhdu = hdu.append_column(&mut f, &coldesc).unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo {
+                    column_descriptions,
+                    ..
+                } => {
+                    assert_eq!(
+                        column_descriptions[column_descriptions.len() - 1].name,
+                        "abcdefg"
+                    );
+                }
+                _ => panic!("ERROR"),
+            }
+        });
+    }
+
+    #[test]
+    fn test_deleting_columns_by_name() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+            let newhdu = hdu.delete_column(&mut f, "intcol").unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo {
+                    column_descriptions,
+                    ..
+                } => for col in column_descriptions {
+                    assert!(col.name != "intcol");
+                },
+                _ => panic!("ERROR"),
+            }
+        });
+    }
+
+    #[test]
+    fn test_deleting_columns_by_number() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+            let newhdu = hdu.delete_column(&mut f, 0).unwrap();
+
+            match newhdu.info {
+                HduInfo::TableInfo {
+                    column_descriptions,
+                    ..
+                } => for col in column_descriptions {
+                    assert!(col.name != "intcol");
+                },
+                _ => panic!("ERROR"),
+            }
+        });
+    }
+
+    #[test]
+    fn test_read_single_table_value() {
+        let filename = "../testdata/full_example.fits[TESTEXT]";
+        let mut f = FitsFile::open(filename).unwrap();
+        let tbl_hdu = f.hdu("TESTEXT").unwrap();
+
+        let result: i64 = tbl_hdu.read_cell_value(&mut f, "intcol", 4).unwrap();
+        assert_eq!(result, 16);
+
+        let result: String = tbl_hdu.read_cell_value(&mut f, "strcol", 4).unwrap();
+        assert_eq!(result, "value4".to_string());
     }
 }

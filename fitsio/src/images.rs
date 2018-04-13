@@ -342,3 +342,214 @@ macro_rules! imagetype_into_impl {
 imagetype_into_impl!(i8);
 imagetype_into_impl!(i32);
 imagetype_into_impl!(i64);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fitsfile::FitsFile;
+    use testhelpers::with_temp_file;
+
+    #[test]
+    fn test_read_image_data() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let first_row: Vec<i32> = hdu.read_section(&mut f, 0, 100).unwrap();
+        assert_eq!(first_row.len(), 100);
+        assert_eq!(first_row[0], 108);
+        assert_eq!(first_row[49], 176);
+
+        let second_row: Vec<i32> = hdu.read_section(&mut f, 100, 200).unwrap();
+        assert_eq!(second_row.len(), 100);
+        assert_eq!(second_row[0], 177);
+        assert_eq!(second_row[49], 168);
+    }
+
+    #[test]
+    fn test_read_whole_image() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let image: Vec<i32> = hdu.read_image(&mut f).unwrap();
+        assert_eq!(image.len(), 10000);
+    }
+
+    #[test]
+    fn test_read_image_rows() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let row: Vec<i32> = hdu.read_rows(&mut f, 0, 2).unwrap();
+        let ref_row: Vec<i32> = hdu.read_section(&mut f, 0, 200).unwrap();
+        assert_eq!(row, ref_row);
+    }
+
+    #[test]
+    fn test_read_image_row() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        let row: Vec<i32> = hdu.read_row(&mut f, 0).unwrap();
+        let ref_row: Vec<i32> = hdu.read_section(&mut f, 0, 100).unwrap();
+        assert_eq!(row, ref_row);
+    }
+
+    #[test]
+    fn test_read_image_slice() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+
+        let xcoord = 5..7;
+        let ycoord = 2..3;
+
+        let chunk: Vec<i32> = hdu.read_region(&mut f, &vec![&ycoord, &xcoord]).unwrap();
+        assert_eq!(chunk.len(), 2);
+        assert_eq!(chunk[0], 168);
+        assert_eq!(chunk[chunk.len() - 1], 193);
+    }
+
+    #[test]
+    fn test_write_image_section() {
+        with_temp_file(|filename| {
+            let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
+
+            // Scope ensures file is closed properly
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::Long,
+                    dimensions: &[100, 20],
+                };
+                let hdu = f.create_image("foo".to_string(), &image_description)
+                    .unwrap();
+                hdu.write_section(&mut f, 0, 100, &data_to_write).unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let first_row: Vec<i64> = hdu.read_section(&mut f, 0, 100).unwrap();
+            assert_eq!(first_row, data_to_write);
+        });
+    }
+
+    #[test]
+    fn test_write_image_region() {
+        with_temp_file(|filename| {
+            // Scope ensures file is closed properly
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::Long,
+                    dimensions: &[100, 5],
+                };
+                let hdu = f.create_image("foo".to_string(), &image_description)
+                    .unwrap();
+
+                let data: Vec<i64> = (0..66).map(|v| v + 50).collect();
+                hdu.write_region(&mut f, &[&(0..10), &(0..5)], &data)
+                    .unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let chunk: Vec<i64> = hdu.read_region(&mut f, &[&(0..10), &(0..5)]).unwrap();
+            assert_eq!(chunk.len(), 10 * 5);
+            assert_eq!(chunk[0], 50);
+            assert_eq!(chunk[25], 75);
+        });
+    }
+
+    #[test]
+    fn test_write_image() {
+        with_temp_file(|filename| {
+            let data: Vec<i64> = (0..2000).collect();
+
+            // Scope ensures file is closed properly
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::Long,
+                    dimensions: &[100, 20],
+                };
+                let hdu = f.create_image("foo".to_string(), &image_description)
+                    .unwrap();
+
+                hdu.write_image(&mut f, &data).unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let chunk: Vec<i64> = hdu.read_image(&mut f).unwrap();
+            assert_eq!(chunk, data);
+        });
+    }
+
+    #[test]
+    fn test_resizing_images() {
+        with_temp_file(|filename| {
+            // Scope ensures file is closed properly
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::Long,
+                    dimensions: &[100, 20],
+                };
+                f.create_image("foo".to_string(), &image_description)
+                    .unwrap();
+            }
+
+            /* Now resize the image */
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                hdu.resize(&mut f, &[1024, 1024]).unwrap();
+            }
+
+            /* Images are only resized when flushed to disk, so close the file and
+             * open it again */
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                match hdu.info {
+                    HduInfo::ImageInfo { shape, .. } => {
+                        assert_eq!(shape, [1024, 1024]);
+                    }
+                    _ => panic!("Unexpected hdu type"),
+                }
+            }
+        });
+    }
+
+    #[test]
+    fn test_resize_3d() {
+        with_temp_file(|filename| {
+            // Scope ensures file is closed properly
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let image_description = ImageDescription {
+                    data_type: ImageType::Long,
+                    dimensions: &[100, 20],
+                };
+                f.create_image("foo".to_string(), &image_description)
+                    .unwrap();
+            }
+
+            /* Now resize the image */
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                hdu.resize(&mut f, &[1024, 1024, 5]).unwrap();
+            }
+
+            /* Images are only resized when flushed to disk, so close the file and
+             * open it again */
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("foo").unwrap();
+                match hdu.info {
+                    HduInfo::ImageInfo { shape, .. } => {
+                        assert_eq!(shape, [1024, 1024, 5]);
+                    }
+                    _ => panic!("Unexpected hdu type"),
+                }
+            }
+        });
+    }
+
+}

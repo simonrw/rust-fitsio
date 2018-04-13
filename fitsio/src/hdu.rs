@@ -1082,6 +1082,7 @@ hduinfo_into_impl!(i64);
 mod tests {
     use super::FitsFile;
     use hdu::{FitsHdu, HduInfo};
+    use testhelpers::duplicate_test_file;
 
     #[test]
     fn test_manually_creating_a_fits_hdu() {
@@ -1093,6 +1094,61 @@ mod tests {
             }
             _ => panic!("Incorrect HDU type found"),
         }
+    }
+
+    #[test]
+    fn test_multi_hdu_workflow() {
+        /* Check that hdu objects change the current HDU on every file access method */
+
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let primary_hdu = f.hdu(0).unwrap();
+        let column_hdu = f.hdu(1).unwrap();
+
+        let first_row: Vec<i32> = primary_hdu.read_section(&mut f, 0, 100).unwrap();
+        assert_eq!(first_row.len(), 100);
+        assert_eq!(first_row[0], 108);
+        assert_eq!(first_row[49], 176);
+
+        let intcol_data: Vec<i32> = column_hdu.read_col(&mut f, "intcol").unwrap();
+        assert_eq!(intcol_data[0], 18);
+        assert_eq!(intcol_data[49], 12);
+    }
+
+    #[test]
+    fn test_fetch_hdu_name() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("TESTEXT").unwrap();
+            assert_eq!(hdu.name(&mut f).unwrap(), "TESTEXT".to_string());
+        });
+    }
+    #[test]
+    fn test_delete_hdu() {
+        duplicate_test_file(|filename| {
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.hdu("TESTEXT").unwrap();
+                hdu.delete(&mut f).unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu_names = f.hdu_names().unwrap();
+            assert!(!hdu_names.contains(&"TESTEXT".to_string()));
+        });
+    }
+
+    #[test]
+    fn test_hdu_iterator() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::open(filename).unwrap();
+            let mut counter = 0;
+
+            for _ in f.iter() {
+                counter += 1;
+            }
+
+            assert_eq!(counter, 2);
+        });
     }
 
 }
