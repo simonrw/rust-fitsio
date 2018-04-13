@@ -1012,14 +1012,16 @@ extern crate ndarray;
 mod macros;
 mod stringutils;
 mod longnam;
-pub mod headers;
-pub mod images;
-pub mod tables;
 mod types;
-pub mod hdu;
 mod fitsfile;
 #[cfg(feature = "array")]
 mod ndarray_compat;
+
+// Public mods
+pub mod headers;
+pub mod images;
+pub mod tables;
+pub mod hdu;
 
 pub mod errors;
 
