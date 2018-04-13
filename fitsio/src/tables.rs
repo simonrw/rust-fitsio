@@ -732,6 +732,8 @@ impl<'a> Iterator for ColumnIterator<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use testhelpers::{with_temp_file, floats_close_f32, floats_close_f64};
+
     #[test]
     fn test_parsing() {
         let s = "1E";
@@ -785,5 +787,267 @@ mod test {
         /* Do not call `with_type` */
         let bad_desc = ColumnDescription::new("FOO").create();
         assert!(bad_desc.is_err());
+    }
+
+    #[test]
+    fn test_fetching_column_width() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        f.hdu(1).unwrap();
+        let width = column_display_width(&f, 3).unwrap();
+        assert_eq!(width, 7);
+    }
+
+    #[test]
+    fn test_read_columns() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let intcol_data: Vec<i32> = hdu.read_col(&mut f, "intcol").unwrap();
+        assert_eq!(intcol_data[0], 18);
+        assert_eq!(intcol_data[15], 10);
+        assert_eq!(intcol_data[49], 12);
+
+        let floatcol_data: Vec<f32> = hdu.read_col(&mut f, "floatcol").unwrap();
+        assert!(
+            floats_close_f32(floatcol_data[0], 17.496801),
+            "{:?} != {:?}",
+            floatcol_data[0],
+            17.496801
+        );
+        assert!(
+            floats_close_f32(floatcol_data[15], 19.570272),
+            "{:?} != {:?}",
+            floatcol_data[15],
+            19.570272
+        );
+        assert!(
+            floats_close_f32(floatcol_data[49], 10.217053),
+            "{:?} != {:?}",
+            floatcol_data[49],
+            10.217053
+        );
+
+        let doublecol_data: Vec<f64> = hdu.read_col(&mut f, "doublecol").unwrap();
+        assert!(
+            floats_close_f64(doublecol_data[0], 16.959972808730814),
+            "{:?} != {:?}",
+            doublecol_data[0],
+            16.959972808730814
+        );
+        assert!(
+            floats_close_f64(doublecol_data[15], 19.013522579233065),
+            "{:?} != {:?}",
+            doublecol_data[15],
+            19.013522579233065
+        );
+        assert!(
+            floats_close_f64(doublecol_data[49], 16.61153656123406),
+            "{:?} != {:?}",
+            doublecol_data[49],
+            16.61153656123406
+        );
+    }
+
+    #[test]
+    fn test_read_string_col() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let strcol: Vec<String> = hdu.read_col(&mut f, "strcol").unwrap();
+        assert_eq!(strcol.len(), 50);
+        assert_eq!(strcol[0], "value0");
+        assert_eq!(strcol[15], "value15");
+        assert_eq!(strcol[49], "value49");
+    }
+
+    #[test]
+    fn test_read_column_regions() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let intcol_data: Vec<i32> = hdu.read_col_range(&mut f, "intcol", &(0..2)).unwrap();
+        assert_eq!(intcol_data.len(), 2);
+        assert_eq!(intcol_data[0], 18);
+        assert_eq!(intcol_data[1], 13);
+    }
+
+    #[test]
+    fn test_read_invalid_column_range() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        match hdu.read_col_range::<i32>(&mut f, "intcol", &(0..1024)) {
+            Err(Error::Index(IndexError { message, given })) => {
+                assert_eq!(message, "given indices out of range".to_string());
+                assert_eq!(given, (0..1024));
+            }
+            _ => panic!("Should be error"),
+        }
+    }
+
+    #[test]
+    fn test_read_string_column_regions() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let intcol_data: Vec<String> = hdu.read_col_range(&mut f, "strcol", &(0..2)).unwrap();
+        assert_eq!(intcol_data.len(), 2);
+        assert_eq!(intcol_data[0], "value0");
+        assert_eq!(intcol_data[1], "value1");
+    }
+
+    #[test]
+    fn test_read_column_region_check_ranges() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let result_data: Result<Vec<i32>> = hdu.read_col_range(&mut f, "intcol", &(0..2_000_000));
+        assert!(result_data.is_err());
+    }
+
+    #[test]
+    fn test_column_iterator() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        let column_names: Vec<String> = hdu.columns(&mut f)
+            .map(|col| match col {
+                Column::Int32 { name, .. } => name,
+                Column::Int64 { name, .. } => name,
+                Column::Float { name, .. } => name,
+                Column::Double { name, .. } => name,
+                Column::String { name, .. } => name,
+            })
+            .collect();
+
+        assert_eq!(
+            column_names,
+            vec![
+                "intcol".to_string(),
+                "floatcol".to_string(),
+                "doublecol".to_string(),
+                "strcol".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_column_number() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu("testext").unwrap();
+        assert_eq!(hdu.get_column_no(&mut f, "intcol").unwrap(), 0);
+        assert_eq!(hdu.get_column_no(&mut f, "floatcol").unwrap(), 1);
+        assert_eq!(hdu.get_column_no(&mut f, "doublecol").unwrap(), 2);
+    }
+
+    #[test]
+    fn test_write_column_data() {
+        with_temp_file(|filename| {
+            let data_to_write: Vec<i32> = vec![10101; 10];
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let table_description = vec![
+                    ColumnDescription::new("bar")
+                        .with_type(ColumnDataType::Int)
+                        .create()
+                        .unwrap(),
+                ];
+                let hdu = f.create_table("foo".to_string(), &table_description)
+                    .unwrap();
+
+                hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let data: Vec<i32> = hdu.read_col(&mut f, "bar").unwrap();
+            assert_eq!(data, data_to_write);
+        });
+    }
+
+    #[test]
+    fn test_write_column_subset() {
+        with_temp_file(|filename| {
+            let data_to_write: Vec<i32> = vec![10101; 10];
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let table_description = vec![
+                    ColumnDescription::new("bar")
+                        .with_type(ColumnDataType::Int)
+                        .create()
+                        .unwrap(),
+                ];
+                let hdu = f.create_table("foo".to_string(), &table_description)
+                    .unwrap();
+
+                hdu.write_col_range(&mut f, "bar", &data_to_write, &(0..5))
+                    .unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let data: Vec<i32> = hdu.read_col(&mut f, "bar").unwrap();
+            assert_eq!(data.len(), 5);
+            assert_eq!(data[..], data_to_write[0..5]);
+        });
+    }
+
+    #[test]
+    fn test_write_string_col() {
+        with_temp_file(|filename| {
+            let mut data_to_write: Vec<String> = Vec::new();
+            for i in 0..50 {
+                data_to_write.push(format!("value{}", i));
+            }
+
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let table_description = vec![
+                    ColumnDescription::new("bar")
+                        .with_type(ColumnDataType::String)
+                        .that_repeats(7)
+                        .create()
+                        .unwrap(),
+                ];
+                let hdu = f.create_table("foo".to_string(), &table_description)
+                    .unwrap();
+
+                hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let data: Vec<String> = hdu.read_col(&mut f, "bar").unwrap();
+            assert_eq!(data.len(), data_to_write.len());
+            assert_eq!(data[0], "value0");
+            assert_eq!(data[49], "value49");
+        });
+    }
+
+    #[test]
+    fn test_write_string_col_range() {
+        with_temp_file(|filename| {
+            let mut data_to_write: Vec<String> = Vec::new();
+            for i in 0..50 {
+                data_to_write.push(format!("value{}", i));
+            }
+
+            let range = 0..20;
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                let table_description = vec![
+                    ColumnDescription::new("bar")
+                        .with_type(ColumnDataType::String)
+                        .that_repeats(7)
+                        .create()
+                        .unwrap(),
+                ];
+                let hdu = f.create_table("foo".to_string(), &table_description)
+                    .unwrap();
+
+                hdu.write_col_range(&mut f, "bar", &data_to_write, &range)
+                    .unwrap();
+            }
+
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.hdu("foo").unwrap();
+            let data: Vec<String> = hdu.read_col(&mut f, "bar").unwrap();
+            assert_eq!(data.len(), range.end - range.start);
+            assert_eq!(data[0], "value0");
+            assert_eq!(data[19], "value19");
+        });
     }
 }
