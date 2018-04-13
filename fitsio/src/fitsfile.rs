@@ -1008,6 +1008,7 @@ casesensitivity_into_impl!(u64);
 casesensitivity_into_impl!(i8);
 casesensitivity_into_impl!(i32);
 casesensitivity_into_impl!(i64);
+
 #[cfg(test)]
 mod test {
     #[cfg(feature = "default")]
@@ -1017,9 +1018,11 @@ mod test {
 
     extern crate tempdir;
 
-    use hdu::FitsHdu;
+    use hdu::{FitsHdu, HduInfo};
     use fitsfile::FitsFile;
-    use fitsfile::ImageDescription;
+    use fitsfile::{FileOpenMode, ImageDescription};
+    use images::ImageType;
+    use tables::{Column, ColumnDataType, ColumnDescription};
     use errors::{Error, IndexError, Result};
     use std::path::Path;
     use std::{f32, f64};
@@ -1129,8 +1132,6 @@ mod test {
 
     #[test]
     fn test_cannot_write_to_readonly_file() {
-        use columndescription::*;
-
         duplicate_test_file(|filename| {
             let mut f = FitsFile::open(filename).unwrap();
 
@@ -1201,8 +1202,6 @@ mod test {
 
     #[test]
     fn test_fetching_hdu_info() {
-        use columndescription::*;
-
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         match f.fetch_hdu_info() {
             Ok(HduInfo::ImageInfo { shape, image_type }) => {
@@ -1266,8 +1265,6 @@ mod test {
 
     #[test]
     fn test_adding_new_table() {
-        use columndescription::*;
-
         with_temp_file(|filename| {
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
@@ -1442,8 +1439,6 @@ mod test {
 
     #[test]
     fn test_creating_new_table_returns_hdu_object() {
-        use columndescription::*;
-
         with_temp_file(|filename| {
             let mut f = FitsFile::create(filename).open().unwrap();
             let table_description = vec![
@@ -1537,7 +1532,7 @@ mod test {
 
     #[test]
     fn test_fetching_column_width() {
-        use super::column_display_width;
+        use tables::column_display_width;
 
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.hdu(1).unwrap();
@@ -1649,8 +1644,6 @@ mod test {
 
     #[test]
     fn test_column_iterator() {
-        use super::Column;
-
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
         let column_names: Vec<String> = hdu.columns(&mut f)
@@ -1685,8 +1678,6 @@ mod test {
 
     #[test]
     fn test_write_column_data() {
-        use columndescription::*;
-
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
             {
@@ -1735,8 +1726,6 @@ mod test {
 
     #[test]
     fn test_write_column_subset() {
-        use columndescription::*;
-
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
             {
@@ -1764,8 +1753,6 @@ mod test {
 
     #[test]
     fn test_write_string_col() {
-        use columndescription::*;
-
         with_temp_file(|filename| {
             let mut data_to_write: Vec<String> = Vec::new();
             for i in 0..50 {
@@ -1798,8 +1785,6 @@ mod test {
 
     #[test]
     fn test_write_string_col_range() {
-        use columndescription::*;
-
         with_temp_file(|filename| {
             let mut data_to_write: Vec<String> = Vec::new();
             for i in 0..50 {
@@ -2073,8 +2058,6 @@ mod test {
         with_temp_file(|filename| {
             let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
-            use columndescription::*;
-
             let mut f = FitsFile::create(filename).open().unwrap();
             let table_description = &[
                 ColumnDescription::new("bar")
@@ -2094,8 +2077,6 @@ mod test {
 
     #[test]
     fn test_write_image_region_to_table() {
-        use columndescription::*;
-
         with_temp_file(|filename| {
             let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
@@ -2204,8 +2185,6 @@ mod test {
     #[test]
     fn test_inserting_columns() {
         duplicate_test_file(|filename| {
-            use columndescription::{ColumnDataType, ColumnDescription};
-
             let mut f = FitsFile::edit(filename).unwrap();
             let hdu = f.hdu("TESTEXT").unwrap();
 
@@ -2231,8 +2210,6 @@ mod test {
     #[test]
     fn test_appending_columns() {
         duplicate_test_file(|filename| {
-            use columndescription::{ColumnDataType, ColumnDescription};
-
             let mut f = FitsFile::edit(filename).unwrap();
             let hdu = f.hdu("TESTEXT").unwrap();
 

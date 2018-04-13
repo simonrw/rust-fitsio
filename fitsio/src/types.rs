@@ -25,7 +25,10 @@ pub enum DataType {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use images::ImageType;
+    use hdu::HduInfo;
+    use fitsfile::{CaseSensitivity, FileOpenMode};
+    use types::DataType;
 
     #[test]
     fn test_image_types() {

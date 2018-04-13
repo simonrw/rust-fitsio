@@ -357,7 +357,7 @@ pub trait FitsRow: ::std::default::Default {
 }
 
 /// Helper function to get the display width of a column
-fn column_display_width(fits_file: &FitsFile, column_number: usize) -> Result<usize> {
+pub(crate) fn column_display_width(fits_file: &FitsFile, column_number: usize) -> Result<usize> {
     let mut status = 0;
     let mut width = 0;
     unsafe {
