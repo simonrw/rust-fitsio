@@ -126,8 +126,7 @@ impl FitsFile {
     /// # extern crate tempdir;
     /// # extern crate fitsio;
     /// # use fitsio::FitsFile;
-    /// # use fitsio::types::ImageType;
-    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::images::{ImageDescription, ImageType};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
     /// # let tdir_path = tdir.path();
@@ -208,7 +207,8 @@ impl FitsFile {
     /// # extern crate fitsio_sys as sys;
     /// # #[cfg(feature = "bindgen")]
     /// # extern crate fitsio_sys_bindgen as sys;
-    /// # use fitsio::{FitsFile, HduInfo};
+    /// # use fitsio::FitsFile;
+    /// # use fitsio::hdu::HduInfo;
     /// #
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let filename = "../testdata/full_example.fits";
@@ -246,7 +246,8 @@ impl FitsFile {
     /// # extern crate fitsio_sys as sys;
     /// # #[cfg(feature = "bindgen")]
     /// # extern crate fitsio_sys_bindgen as sys;
-    /// # use fitsio::{FitsFile, HduInfo};
+    /// # use fitsio::FitsFile;
+    /// # use fitsio::hdu::HduInfo;
     /// #
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let filename = "../testdata/full_example.fits";
@@ -419,7 +420,7 @@ impl FitsFile {
     /// ```rust
     /// # extern crate tempdir;
     /// # extern crate fitsio;
-    /// # use fitsio::columndescription::*;
+    /// # use fitsio::tables::{ColumnDataType, ColumnDescription};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();
@@ -500,8 +501,7 @@ impl FitsFile {
     /// ```rust
     /// # extern crate tempdir;
     /// # extern crate fitsio;
-    /// # use fitsio::fitsfile::ImageDescription;
-    /// # use fitsio::types::ImageType;
+    /// # use fitsio::images::{ImageDescription, ImageType};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();
@@ -772,8 +772,7 @@ impl Drop for FitsFile {
 /// # extern crate tempdir;
 /// # extern crate fitsio;
 /// # use fitsio::FitsFile;
-/// # use fitsio::types::ImageType;
-/// # use fitsio::fitsfile::ImageDescription;
+/// # use fitsio::images::{ImageDescription, ImageType};
 /// # fn main() {
 /// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 /// # let tdir_path = tdir.path();
@@ -882,8 +881,7 @@ where
     /// # extern crate tempdir;
     /// # extern crate fitsio;
     /// # use fitsio::FitsFile;
-    /// # use fitsio::types::ImageType;
-    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::images::{ImageType, ImageDescription};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();
@@ -926,8 +924,7 @@ where
     /// # extern crate tempdir;
     /// # extern crate fitsio;
     /// # use fitsio::FitsFile;
-    /// # use fitsio::types::ImageType;
-    /// # use fitsio::fitsfile::ImageDescription;
+    /// # use fitsio::images::{ImageType, ImageDescription};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();

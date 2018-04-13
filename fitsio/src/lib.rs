@@ -90,8 +90,7 @@
 //! # extern crate tempdir;
 //! # extern crate fitsio;
 //! # use fitsio::FitsFile;
-//! # use fitsio::types::ImageType;
-//! # use fitsio::fitsfile::ImageDescription;
+//! # use fitsio::images::{ImageType, ImageDescription};
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
 //! # let tdir_path = tdir.path();
@@ -176,7 +175,8 @@
 //! # extern crate fitsio_sys as sys;
 //! # #[cfg(feature = "bindgen")]
 //! # extern crate fitsio_sys_bindgen as sys;
-//! # use fitsio::{FitsFile, HduInfo};
+//! # use fitsio::FitsFile;
+//! # use fitsio::hdu::HduInfo;
 //! #
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let filename = "../testdata/full_example.fits";
@@ -213,8 +213,7 @@
 //! ```rust
 //! # extern crate tempdir;
 //! # extern crate fitsio;
-//! # use fitsio::fitsfile::ImageDescription;
-//! # use fitsio::types::ImageType;
+//! # use fitsio::images::{ImageDescription, ImageType};
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
 //! # let tdir_path = tdir.path();
@@ -242,7 +241,7 @@
 //! ```rust
 //! # extern crate tempdir;
 //! # extern crate fitsio;
-//! # use fitsio::columndescription::*;
+//! # use fitsio::tables::{ColumnDescription, ColumnDataType};
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
 //! # let tdir_path = tdir.path();
@@ -278,7 +277,7 @@
 //!
 //! ```rust
 //! # extern crate fitsio;
-//! # use fitsio::columndescription::*;
+//! # use fitsio::tables::{ColumnDescription, ColumnDataDescription, ColumnDataType};
 //! # fn main() {
 //! let desc = ColumnDataDescription::scalar(ColumnDataType::Int);
 //! assert_eq!(desc.repeat, 1);
@@ -290,7 +289,7 @@
 //!
 //! ```rust
 //! # extern crate fitsio;
-//! # use fitsio::columndescription::*;
+//! # use fitsio::tables::{ColumnDataDescription, ColumnDescription, ColumnDataType};
 //! # fn main() {
 //! let desc = ColumnDataDescription::vector(ColumnDataType::Int, 100);
 //! assert_eq!(desc.repeat, 100);
@@ -303,7 +302,7 @@
 //!
 //! ```rust
 //! # extern crate fitsio;
-//! # use fitsio::columndescription::*;
+//! # use fitsio::tables::{ColumnDataDescription, ColumnDescription, ColumnDataType};
 //! # fn main() {
 //! let desc = ColumnDataDescription::scalar(ColumnDataType::Int);
 //! assert_eq!(String::from(desc), "1J".to_string());
@@ -343,8 +342,7 @@
 //! ```rust
 //! # extern crate tempdir;
 //! # extern crate fitsio;
-//! # use fitsio::fitsfile::ImageDescription;
-//! # use fitsio::types::ImageType;
+//! # use fitsio::images::{ImageType, ImageDescription};
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
 //! # let tdir_path = tdir.path();
@@ -586,7 +584,7 @@
 //! #[macro_use]
 //! extern crate fitsio_derive;
 //! extern crate fitsio;
-//! use fitsio::fitsfile::FitsRow;
+//! use fitsio::tables::FitsRow;
 //!
 //! #[derive(Default, FitsRow)]
 //! struct Row {
@@ -647,8 +645,7 @@
 //! ```rust
 //! # extern crate fitsio;
 //! # extern crate tempdir;
-//! # use fitsio::fitsfile::ImageDescription;
-//! # use fitsio::types::ImageType;
+//! # use fitsio::images::{ImageType, ImageDescription};
 //! #
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -673,8 +670,7 @@
 //! ```rust
 //! # extern crate fitsio;
 //! # extern crate tempdir;
-//! # use fitsio::fitsfile::ImageDescription;
-//! # use fitsio::types::ImageType;
+//! # use fitsio::images::{ImageType, ImageDescription};
 //! #
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -703,8 +699,7 @@
 //! ```rust
 //! # extern crate fitsio;
 //! # extern crate tempdir;
-//! # use fitsio::fitsfile::ImageDescription;
-//! # use fitsio::types::ImageType;
+//! # use fitsio::images::{ImageType, ImageDescription};
 //! #
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -737,7 +732,7 @@
 //! # extern crate tempdir;
 //! # extern crate fitsio;
 //! # use std::fs::copy;
-//! # use fitsio::HduInfo;
+//! # use fitsio::hdu::HduInfo;
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
 //! # let tdir_path = tdir.path();
@@ -779,8 +774,8 @@
 //! # extern crate tempdir;
 //! # extern crate fitsio;
 //! # use std::fs::copy;
-//! # use fitsio::HduInfo;
-//! # use fitsio::columndescription::*;
+//! # use fitsio::hdu::HduInfo;
+//! # use fitsio::tables::{ColumnDescription, ColumnDataType};
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
 //! # let tdir_path = tdir.path();
@@ -810,8 +805,8 @@
 //! # extern crate tempdir;
 //! # extern crate fitsio;
 //! # use std::fs::copy;
-//! # use fitsio::HduInfo;
-//! # use fitsio::columndescription::*;
+//! # use fitsio::hdu::HduInfo;
+//! # use fitsio::tables::{ColumnDescription, ColumnDataType};
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
 //! # let tdir_path = tdir.path();
@@ -844,10 +839,8 @@
 //! ```rust
 //! # extern crate fitsio;
 //! # extern crate tempdir;
-//! # use fitsio::fitsfile::ImageDescription;
-//! # use fitsio::types::ImageType;
-//! # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
-//! #
+//! # use fitsio::images::{ImageType, ImageDescription};
+//! # use fitsio::tables::{ColumnDescription, ColumnDataType};
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # let tdir = tempdir::TempDir::new("fitsio-")?;
 //! # let tdir_path = tdir.path();
@@ -876,9 +869,8 @@
 //! ```rust
 //! # extern crate fitsio;
 //! # extern crate tempdir;
-//! # use fitsio::fitsfile::ImageDescription;
-//! # use fitsio::types::ImageType;
-//! # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+//! # use fitsio::images::{ImageType, ImageDescription};
+//! # use fitsio::tables::{ColumnDescription, ColumnDataType};
 //! #
 //! # fn try_main() -> Result<(), Box<std::error::Error>> {
 //! # {

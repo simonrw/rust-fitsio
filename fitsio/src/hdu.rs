@@ -251,8 +251,7 @@ impl FitsHdu {
     /// ```rust
     /// # extern crate fitsio;
     /// # extern crate tempdir;
-    /// # use fitsio::fitsfile::ImageDescription;
-    /// # use fitsio::types::ImageType;
+    /// # use fitsio::images::{ImageDescription, ImageType};
     /// #
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -294,8 +293,7 @@ impl FitsHdu {
     /// ```rust
     /// # extern crate fitsio;
     /// # extern crate tempdir;
-    /// # use fitsio::fitsfile::ImageDescription;
-    /// # use fitsio::types::ImageType;
+    /// # use fitsio::images::{ImageDescription, ImageType};
     /// #
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -335,8 +333,7 @@ impl FitsHdu {
     /// ```rust
     /// # extern crate fitsio;
     /// # extern crate tempdir;
-    /// # use fitsio::fitsfile::ImageDescription;
-    /// # use fitsio::types::ImageType;
+    /// # use fitsio::images::{ImageType, ImageDescription};
     /// #
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -373,7 +370,7 @@ impl FitsHdu {
     /// # extern crate tempdir;
     /// # extern crate fitsio;
     /// # use std::fs::copy;
-    /// # use fitsio::HduInfo;
+    /// # use fitsio::hdu::HduInfo;
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();
@@ -472,9 +469,8 @@ impl FitsHdu {
     /// ```rust
     /// # extern crate fitsio;
     /// # extern crate tempdir;
-    /// # use fitsio::fitsfile::ImageDescription;
-    /// # use fitsio::types::ImageType;
-    /// # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+    /// # use fitsio::images::{ImageType, ImageDescription};
+    /// # use fitsio::tables::{ColumnDescription, ColumnDataType};
     /// #
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -529,9 +525,8 @@ impl FitsHdu {
     /// ```rust
     /// # extern crate fitsio;
     /// # extern crate tempdir;
-    /// # use fitsio::fitsfile::ImageDescription;
-    /// # use fitsio::types::ImageType;
-    /// # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+    /// # use fitsio::images::{ImageType, ImageDescription};
+    /// # use fitsio::tables::{ColumnDescription, ColumnDataType};
     /// #
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -588,9 +583,8 @@ impl FitsHdu {
     /// ```rust
     /// # extern crate fitsio;
     /// # extern crate tempdir;
-    /// # use fitsio::fitsfile::ImageDescription;
-    /// # use fitsio::types::ImageType;
-    /// # use fitsio::columndescription::{ColumnDescription, ColumnDataType};
+    /// # use fitsio::images::{ImageType, ImageDescription};
+    /// # use fitsio::tables::{ColumnDescription, ColumnDataType};
     /// #
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # {
@@ -682,8 +676,8 @@ impl FitsHdu {
     /// # extern crate tempdir;
     /// # extern crate fitsio;
     /// # use std::fs::copy;
-    /// # use fitsio::HduInfo;
-    /// # use fitsio::columndescription::*;
+    /// # use fitsio::hdu::HduInfo;
+    /// # use fitsio::tables::{ColumnDescription, ColumnDataType};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();
@@ -718,8 +712,8 @@ impl FitsHdu {
     /// # extern crate tempdir;
     /// # extern crate fitsio;
     /// # use std::fs::copy;
-    /// # use fitsio::HduInfo;
-    /// # use fitsio::columndescription::*;
+    /// # use fitsio::hdu::HduInfo;
+    /// # use fitsio::tables::{ColumnDescription, ColumnDataType};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();
@@ -759,8 +753,8 @@ impl FitsHdu {
     /// # extern crate tempdir;
     /// # extern crate fitsio;
     /// # use std::fs::copy;
-    /// # use fitsio::HduInfo;
-    /// # use fitsio::columndescription::*;
+    /// # use fitsio::hdu::HduInfo;
+    /// # use fitsio::tables::{ColumnDescription, ColumnDataType};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();
@@ -804,8 +798,8 @@ impl FitsHdu {
     /// # extern crate tempdir;
     /// # extern crate fitsio;
     /// # use std::fs::copy;
-    /// # use fitsio::HduInfo;
-    /// # use fitsio::columndescription::*;
+    /// # use fitsio::hdu::HduInfo;
+    /// # use fitsio::tables::{ColumnDescription, ColumnDataType};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();
@@ -873,8 +867,7 @@ impl FitsHdu {
     /// ```rust
     /// # extern crate tempdir;
     /// # extern crate fitsio;
-    /// # use fitsio::fitsfile::ImageDescription;
-    /// # use fitsio::types::ImageType;
+    /// # use fitsio::images::{ImageDescription, ImageType};
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
     /// # let tdir = tempdir::TempDir::new("fitsio-")?;
     /// # let tdir_path = tdir.path();
@@ -945,7 +938,7 @@ impl FitsHdu {
     /// #[macro_use]
     /// extern crate fitsio_derive;
     /// extern crate fitsio;
-    /// use fitsio::fitsfile::FitsRow;
+    /// use fitsio::tables::FitsRow;
     ///
     /// #[derive(Default, FitsRow)]
     /// struct Row {
