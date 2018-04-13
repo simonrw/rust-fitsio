@@ -1,5 +1,7 @@
 extern crate tempdir;
 
+use std::{f32, f64};
+
 /// Function to allow access to a temporary file
 pub(crate) fn with_temp_file<F>(callback: F)
 where
@@ -23,4 +25,13 @@ where
         fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
         callback(filename);
     });
+}
+
+/// Helper function for float comparisons
+pub(crate) fn floats_close_f32(a: f32, b: f32) -> bool {
+    (a - b).abs() < f32::EPSILON
+}
+
+pub(crate) fn floats_close_f64(a: f64, b: f64) -> bool {
+    (a - b).abs() < f64::EPSILON
 }

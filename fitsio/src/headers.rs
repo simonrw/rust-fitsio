@@ -148,3 +148,59 @@ impl<'a> WritesKey for &'a str {
         check_status(status)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use testhelpers::{with_temp_file, floats_close_f64};
+
+    #[test]
+    fn test_reading_header_keys() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(0).unwrap();
+        match hdu.read_key::<i64>(&mut f, "INTTEST") {
+            Ok(value) => assert_eq!(value, 42),
+            Err(e) => panic!("Error reading key: {:?}", e),
+        }
+
+        match hdu.read_key::<f64>(&mut f, "DBLTEST") {
+            Ok(value) => assert!(
+                floats_close_f64(value, 0.09375),
+                "{:?} != {:?}",
+                value,
+                0.09375
+            ),
+            Err(e) => panic!("Error reading key: {:?}", e),
+        }
+
+        match hdu.read_key::<String>(&mut f, "TEST") {
+            Ok(value) => assert_eq!(value, "value"),
+            Err(e) => panic!("Error reading key: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn test_writing_header_keywords() {
+        with_temp_file(|filename| {
+            // Scope ensures file is closed properly
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                f.hdu(0).unwrap().write_key(&mut f, "FOO", 1i64).unwrap();
+                f.hdu(0)
+                    .unwrap()
+                    .write_key(&mut f, "BAR", "baz".to_string())
+                    .unwrap();
+            }
+
+            FitsFile::open(filename)
+                .map(|mut f| {
+                    assert_eq!(f.hdu(0).unwrap().read_key::<i64>(&mut f, "foo").unwrap(), 1);
+                    assert_eq!(
+                        f.hdu(0).unwrap().read_key::<String>(&mut f, "bar").unwrap(),
+                        "baz".to_string()
+                    );
+                })
+                .unwrap();
+        });
+    }
+}

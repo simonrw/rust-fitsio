@@ -1077,3 +1077,22 @@ macro_rules! hduinfo_into_impl {
 hduinfo_into_impl!(i8);
 hduinfo_into_impl!(i32);
 hduinfo_into_impl!(i64);
+
+#[cfg(test)]
+mod tests {
+    use super::FitsFile;
+    use hdu::{FitsHdu, HduInfo};
+
+    #[test]
+    fn test_manually_creating_a_fits_hdu() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = FitsHdu::new(&mut f, "TESTEXT").unwrap();
+        match hdu.info {
+            HduInfo::TableInfo { num_rows, .. } => {
+                assert_eq!(num_rows, 50);
+            }
+            _ => panic!("Incorrect HDU type found"),
+        }
+    }
+
+}

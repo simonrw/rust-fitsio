@@ -1023,7 +1023,7 @@ mod test {
     use images::ImageType;
     use tables::{Column, ColumnDataType, ColumnDescription};
     use errors::{Error, IndexError, Result};
-    use testhelpers::{duplicate_test_file, with_temp_file};
+    use testhelpers::{duplicate_test_file, with_temp_file, floats_close_f32, floats_close_f64};
     use std::path::Path;
     use std::{f32, f64};
 
@@ -1428,80 +1428,6 @@ mod test {
                 hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
                 "foo".to_string()
             );
-        });
-    }
-
-    // FitsHdu tests
-
-    /// Helper function for float comparisons
-    fn floats_close_f32(a: f32, b: f32) -> bool {
-        (a - b).abs() < f32::EPSILON
-    }
-
-    fn floats_close_f64(a: f64, b: f64) -> bool {
-        (a - b).abs() < f64::EPSILON
-    }
-
-    #[test]
-    fn test_manually_creating_a_fits_hdu() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let hdu = FitsHdu::new(&mut f, "TESTEXT").unwrap();
-        match hdu.info {
-            HduInfo::TableInfo { num_rows, .. } => {
-                assert_eq!(num_rows, 50);
-            }
-            _ => panic!("Incorrect HDU type found"),
-        }
-    }
-
-    #[test]
-    fn test_reading_header_keys() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let hdu = f.hdu(0).unwrap();
-        match hdu.read_key::<i64>(&mut f, "INTTEST") {
-            Ok(value) => assert_eq!(value, 42),
-            Err(e) => panic!("Error reading key: {:?}", e),
-        }
-
-        match hdu.read_key::<f64>(&mut f, "DBLTEST") {
-            Ok(value) => assert!(
-                floats_close_f64(value, 0.09375),
-                "{:?} != {:?}",
-                value,
-                0.09375
-            ),
-            Err(e) => panic!("Error reading key: {:?}", e),
-        }
-
-        match hdu.read_key::<String>(&mut f, "TEST") {
-            Ok(value) => assert_eq!(value, "value"),
-            Err(e) => panic!("Error reading key: {:?}", e),
-        }
-    }
-
-    // Writing data
-    #[test]
-    fn test_writing_header_keywords() {
-        with_temp_file(|filename| {
-            // Scope ensures file is closed properly
-            {
-                let mut f = FitsFile::create(filename).open().unwrap();
-                f.hdu(0).unwrap().write_key(&mut f, "FOO", 1i64).unwrap();
-                f.hdu(0)
-                    .unwrap()
-                    .write_key(&mut f, "BAR", "baz".to_string())
-                    .unwrap();
-            }
-
-            FitsFile::open(filename)
-                .map(|mut f| {
-                    assert_eq!(f.hdu(0).unwrap().read_key::<i64>(&mut f, "foo").unwrap(), 1);
-                    assert_eq!(
-                        f.hdu(0).unwrap().read_key::<String>(&mut f, "bar").unwrap(),
-                        "baz".to_string()
-                    );
-                })
-                .unwrap();
         });
     }
 
