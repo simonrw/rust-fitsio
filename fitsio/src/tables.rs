@@ -650,3 +650,82 @@ pub enum Column {
     Double { name: String, data: Vec<f64> },
     String { name: String, data: Vec<String> },
 }
+
+/// Iterator type for columns
+pub struct ColumnIterator<'a> {
+    current: usize,
+    column_descriptions: Vec<ConcreteColumnDescription>,
+    fits_file: &'a FitsFile,
+}
+
+impl<'a> ColumnIterator<'a> {
+    pub(crate) fn new(fits_file: &'a FitsFile) -> Self {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo {
+                column_descriptions,
+                num_rows: _num_rows,
+            }) => ColumnIterator {
+                current: 0,
+                column_descriptions,
+                fits_file,
+            },
+            Err(e) => panic!("{:?}", e),
+            _ => panic!("Unknown error occurred"),
+        }
+    }
+}
+
+impl<'a> Iterator for ColumnIterator<'a> {
+    type Item = Column;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ncols = self.column_descriptions.len();
+
+        if self.current < ncols {
+            let description = &self.column_descriptions[self.current];
+            let current_name = description.name.as_str();
+            // let current_type = typechar_to_data_type(description.data_type.as_str());
+            let current_type = description.data_type.typ;
+
+            let retval = match current_type {
+                ColumnDataType::Int => i32::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Int32 {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                ColumnDataType::Long => i64::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Int64 {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                ColumnDataType::Float => f32::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Float {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                ColumnDataType::Double => f64::read_col(self.fits_file, current_name)
+                    .map(|data| Column::Double {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                ColumnDataType::String => String::read_col(self.fits_file, current_name)
+                    .map(|data| Column::String {
+                        name: current_name.to_string(),
+                        data,
+                    })
+                    .ok(),
+                _ => unimplemented!(),
+            };
+
+            self.current += 1;
+
+            retval
+        } else {
+            None
+        }
+    }
+}
