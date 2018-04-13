@@ -1016,6 +1016,8 @@ mod types;
 mod fitsfile;
 #[cfg(feature = "array")]
 mod ndarray_compat;
+#[cfg(test)]
+mod testhelpers;
 
 // Public mods
 pub mod headers;
