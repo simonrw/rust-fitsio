@@ -137,7 +137,9 @@ impl ::std::error::Error for Error {
 /// error message.
 #[derive(Debug, PartialEq, Eq)]
 pub struct FitsError {
+    /// `cfitsio` error code
     pub status: i32,
+    /// `cfitsio` message for error code
     pub message: String,
 }
 

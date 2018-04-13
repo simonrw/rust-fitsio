@@ -1,3 +1,4 @@
+//! Header-related code
 use std::ffi;
 use std::ptr;
 use libc;

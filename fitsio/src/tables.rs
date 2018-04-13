@@ -1,3 +1,4 @@
+//! Table-related code
 use std::ptr;
 use std::str::FromStr;
 use std::ffi;

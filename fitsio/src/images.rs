@@ -1,3 +1,4 @@
+//! Image related code
 use std::ptr;
 use std::ops::Range;
 use fitsfile::FitsFile;

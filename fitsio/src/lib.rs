@@ -988,7 +988,7 @@
 //! [fitsfile-hdu]: fitsfile/struct.FitsFile.html#method.hdu
 
 #![doc(html_root_url = "https://docs.rs/fitsio/0.13.0")]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
