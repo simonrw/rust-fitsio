@@ -1009,8 +1009,6 @@ extern crate libc;
 extern crate ndarray;
 
 #[macro_use]
-mod fitserror;
-#[macro_use]
 mod macros;
 mod stringutils;
 mod longnam;

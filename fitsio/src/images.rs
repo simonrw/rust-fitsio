@@ -1,11 +1,10 @@
 use std::ptr;
 use std::ops::Range;
 use fitsfile::FitsFile;
-use fitserror::check_status;
 use hdu::{FitsHdu, HduInfo};
 use types::DataType;
 use longnam::*;
-use errors::Result;
+use errors::{check_status, Result};
 
 /// Reading fits images
 pub trait ReadImage: Sized {

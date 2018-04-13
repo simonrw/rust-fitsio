@@ -11,8 +11,7 @@
 use longnam::*;
 use fitsio_sys::fitsfile;
 use stringutils::{self, status_to_string};
-use errors::{Error, Result};
-use fitserror::check_status;
+use errors::{check_status, Error, Result};
 use images::{ImageDescription, ImageType};
 use hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
 use tables::{ColumnDataDescription, ConcreteColumnDescription};

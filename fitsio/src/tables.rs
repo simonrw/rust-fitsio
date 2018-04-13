@@ -1,8 +1,7 @@
 use std::ptr;
 use std::str::FromStr;
 use std::ffi;
-use errors::{Error, IndexError, Result};
-use fitserror::{check_status, FitsError};
+use errors::{check_status, Error, FitsError, IndexError, Result};
 use stringutils::status_to_string;
 use fitsfile::FitsFile;
 use hdu::{FitsHdu, HduInfo};

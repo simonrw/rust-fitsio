@@ -9,8 +9,7 @@ use tables::{ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation,
              ReadsCol, WritesCol};
 use longnam::*;
 use fitsfile::CaseSensitivity;
-use errors::Result;
-use fitserror::check_status;
+use errors::{check_status, Result};
 
 /// Struct representing a FITS HDU
 ///

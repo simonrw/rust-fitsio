@@ -3,8 +3,7 @@ use std::ptr;
 use libc;
 use fitsfile::FitsFile;
 use longnam::*;
-use fitserror::check_status;
-use errors::Result;
+use errors::{check_status, Result};
 
 const MAX_VALUE_LENGTH: usize = 71;
 

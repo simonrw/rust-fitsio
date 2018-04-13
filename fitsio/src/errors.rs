@@ -8,7 +8,7 @@ use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 use std::ops::Range;
 use std::io;
-use fitserror::FitsError;
+use stringutils::status_to_string;
 
 /// Enumeration of all error types
 #[derive(Debug)]
@@ -128,5 +128,46 @@ impl ::std::fmt::Display for Error {
 impl ::std::error::Error for Error {
     fn description(&self) -> &str {
         "fitsio error"
+    }
+}
+
+/// Error type
+///
+/// `cfitsio` passes errors through integer status codes. This struct wraps this and its associated
+/// error message.
+#[derive(Debug, PartialEq, Eq)]
+pub struct FitsError {
+    pub status: i32,
+    pub message: String,
+}
+
+/// Function for chaining result types
+pub fn check_status(status: i32) -> Result<()> {
+    match status {
+        0 => Ok(()),
+        _ => Err(Error::Fits(FitsError {
+            status,
+            message: status_to_string(status)?.expect("guaranteed to be Some"),
+        })),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_check_status_ok() {
+        assert!(check_status(0).is_ok());
+    }
+
+    #[test]
+    fn test_check_status_ok_with_value() {
+        assert_eq!(check_status(0).map(|_| 10i32).unwrap(), 10i32);
+    }
+
+    #[test]
+    fn test_check_status_with_err() {
+        assert!(check_status(105).map(|_| 10i32).is_err());
     }
 }
