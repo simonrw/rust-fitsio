@@ -45,7 +45,7 @@ impl FitsHdu {
 
     /// Read header key
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -67,7 +67,7 @@ impl FitsHdu {
 
     /// Write a fits key to the current header
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate tempdir;
@@ -100,7 +100,7 @@ impl FitsHdu {
     ///
     /// The range is exclusive of the upper value
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -127,7 +127,7 @@ impl FitsHdu {
     }
 
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -158,7 +158,7 @@ impl FitsHdu {
 
     /// Read a single row from a fits image
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -187,7 +187,7 @@ impl FitsHdu {
     /// right defines the pixel _beyond_ the end. The range of pixels included
     /// is inclusive of the lower end, and *exclusive* of the upper end.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -217,7 +217,7 @@ impl FitsHdu {
     ///
     /// This reads an entire image into a one-dimensional vector
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -246,7 +246,7 @@ impl FitsHdu {
     ///
     /// The range is exclusive of the upper value.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -288,7 +288,7 @@ impl FitsHdu {
     ///
     /// For example, writing with ranges 0..10 and 0..10 wries an 10x10 sized image.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -928,11 +928,11 @@ impl FitsHdu {
 
     /// Extract a single row from the file
     ///
-    /// This method uses returns a [`FitsRow`](../tables/trait.FitsRow.html), which is provided by the user,
-    /// using a `derive` implementation from the [`fitsio-derive`](https://docs.rs/fitsio-derive)
-    /// crate,
+    /// This method uses returns a [`FitsRow`](../tables/trait.FitsRow.html), which is provided by
+    /// the user, using a `derive` implementation from the
+    /// [`fitsio-derive`](https://docs.rs/fitsio-derive) crate.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// #[macro_use]

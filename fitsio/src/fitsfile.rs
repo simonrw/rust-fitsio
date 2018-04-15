@@ -34,7 +34,7 @@ pub struct FitsFile {
 impl FitsFile {
     /// Open a fits file from disk
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// use fitsio::FitsFile;
@@ -74,7 +74,7 @@ impl FitsFile {
 
     /// Open a fits file in read/write mode
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -120,7 +120,7 @@ impl FitsFile {
     /// useful for images. Otherwise, a default primary HDU is created.  An example of not adding a
     /// custom primary HDU is shown above. Below we see an example of [`with_custom_primary`]:
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate tempdir;
@@ -199,7 +199,7 @@ impl FitsFile {
     /// HDU information belongs to the [`FitsHdu`] object. HDUs can be fetched by `String`/`str` or
     /// integer (0-indexed).  The `HduInfo` object contains information about the current HDU:
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -238,7 +238,7 @@ impl FitsFile {
 
     /// Return the primary hdu (HDU 0)
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -415,7 +415,7 @@ impl FitsFile {
     ///
     /// Create a new fits table, with columns as detailed in the [`ColumnDescription`] object.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate tempdir;
@@ -496,7 +496,7 @@ impl FitsFile {
     /// This method takes an [`ImageDescription`] struct which defines the desired layout of the
     /// image HDU.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate tempdir;
@@ -569,7 +569,7 @@ impl FitsFile {
 
     /// Iterate over the HDUs in the file
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -595,7 +595,7 @@ impl FitsFile {
     /// Fits files can be pretty-printed with [`pretty_print`], or its more powerful
     /// cousin [`pretty_write`].
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -625,7 +625,7 @@ impl FitsFile {
     /// Fits files can be pretty-printed with [`pretty_print`], or its more powerful
     /// cousin [`pretty_write`].
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -705,7 +705,7 @@ impl FitsFile {
     /// Any changes to the underlying fits file will not be updated in existing [`FitsHdu`]
     /// objects, so these must be recreated.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate fitsio;
@@ -766,7 +766,7 @@ impl Drop for FitsFile {
 /// The [`with_custom_primary`][new-fits-file-with-custom-primary] method allows for creation of a
 /// custom primary HDU.
 ///
-/// ## Example
+/// # Example
 ///
 /// ```rust
 /// # extern crate tempdir;
@@ -795,7 +795,7 @@ impl Drop for FitsFile {
 /// The [`open`][new-fits-file-open] method actually creates a `Result<FitsFile>` from this
 /// temporary representation.
 ///
-/// ## Example
+/// # Example
 ///
 /// ```rust
 /// # extern crate tempdir;
@@ -875,7 +875,7 @@ where
     /// When creating a new file, add a custom primary HDU description before creating the
     /// [`FitsFile`] object.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate tempdir;
@@ -918,7 +918,7 @@ where
     /// If this is not given, then when calling [`open`] will return an
     /// [`Error::ExistingFile(filename)`]
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```rust
     /// # extern crate tempdir;
