@@ -168,10 +168,10 @@ assert_eq!(data[[0, 10]], 160);
 */
 
 use std::ops::Range;
-use super::{FitsFile, FitsHdu};
-use super::fitsfile::ReadImage;
-use super::errors::Result;
-use super::types::HduInfo;
+use fitsfile::FitsFile;
+use hdu::{FitsHdu, HduInfo};
+use images::ReadImage;
+use errors::Result;
 use ndarray::{Array, ArrayD};
 
 impl<T> ReadImage for ArrayD<T>
