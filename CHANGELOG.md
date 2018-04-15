@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 
 * (`fitsio`) add long cfitsio function names internally [#88](https://github.com/mindriot101/rust-fitsio/pull/88)
+* (`fitsio`) move code into more logical submodule arrangement [#95](https://github.com/mindriot101/rust-fitsio/pull/95)
 
 ### Removed
 
