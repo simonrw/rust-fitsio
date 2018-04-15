@@ -22,8 +22,6 @@ use std::ptr;
 use std::path::Path;
 
 /// Main entry point to the FITS file format
-///
-//
 pub struct FitsFile {
     /// Name of the file
     pub filename: String,
@@ -32,24 +30,26 @@ pub struct FitsFile {
 }
 
 impl FitsFile {
-    /// Open a fits file from disk
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use fitsio::FitsFile;
-    /// # use std::error::Error;
-    ///
-    /// # fn run() -> Result<(), Box<Error>> {
-    /// # let filename = "../testdata/full_example.fits";
-    /// // let filename = ...;
-    /// let fptr = FitsFile::open(filename)?;
-    /// # Ok(())
-    /// # }
-    /// # fn main() {
-    /// # run().unwrap();
-    /// # }
-    /// ```
+    /**
+    Open a fits file from disk
+    
+    # Example
+    
+    ```rust
+    use fitsio::FitsFile;
+    # use std::error::Error;
+    
+    # fn run() -> Result<(), Box<Error>> {
+    # let filename = "../testdata/full_example.fits";
+    // let filename = ...;
+    let fptr = FitsFile::open(filename)?;
+    # Ok(())
+    # }
+    # fn main() {
+    # run().unwrap();
+    # }
+    ```
+    */
     pub fn open<T: AsRef<Path>>(filename: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
@@ -72,21 +72,23 @@ impl FitsFile {
         })
     }
 
-    /// Open a fits file in read/write mode
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # let filename = "../testdata/full_example.fits";
-    /// use fitsio::FitsFile;
-    ///
-    /// // let filename = ...;
-    /// let fptr = FitsFile::edit(filename)?;
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
+    /**
+    Open a fits file in read/write mode
+    
+    # Example
+    
+    ```rust
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # let filename = "../testdata/full_example.fits";
+    use fitsio::FitsFile;
+    
+    // let filename = ...;
+    let fptr = FitsFile::edit(filename)?;
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    */
     pub fn edit<T: AsRef<Path>>(filename: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
@@ -109,48 +111,50 @@ impl FitsFile {
         })
     }
 
-    /// Create a new fits file on disk
-    ///
-    /// The [`create`] method returns a [`NewFitsFile`], which is an
-    /// internal representation of a temporary fits file on disk, before the file is fully created.
-    ///
-    /// This representation has two methods: [`open`] and [`with_custom_primary`]. The [`open`]
-    /// method actually creates the file on disk, but before calling this method, the
-    /// [`with_custom_primary`] method can be used to add a custom primary HDU. This is mostly
-    /// useful for images. Otherwise, a default primary HDU is created.  An example of not adding a
-    /// custom primary HDU is shown above. Below we see an example of [`with_custom_primary`]:
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # extern crate tempdir;
-    /// # extern crate fitsio;
-    /// # use fitsio::FitsFile;
-    /// # use fitsio::images::{ImageDescription, ImageType};
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-    /// # let tdir_path = tdir.path();
-    /// # let filename = tdir_path.join("test.fits");
-    /// use fitsio::FitsFile;
-    ///
-    /// // let filename = ...;
-    /// let description = ImageDescription {
-    ///     data_type: ImageType::Double,
-    ///     dimensions: &[52, 103],
-    /// };
-    ///
-    /// let fptr = FitsFile::create(filename)
-    ///     .with_custom_primary(&description)
-    ///     .open()?;
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
-    ///
-    /// [`create`]: #method.create
-    /// [`NewFitsFile`]: fitsfile/struct.NewFitsFile.html
-    /// [`open`]: fitsfile/struct.NewFitsFile.html#method.open
-    /// [`with_custom_primary`]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
+    /**
+    Create a new fits file on disk
+    
+    The [`create`] method returns a [`NewFitsFile`], which is an
+    internal representation of a temporary fits file on disk, before the file is fully created.
+    
+    This representation has two methods: [`open`] and [`with_custom_primary`]. The [`open`]
+    method actually creates the file on disk, but before calling this method, the
+    [`with_custom_primary`] method can be used to add a custom primary HDU. This is mostly
+    useful for images. Otherwise, a default primary HDU is created.  An example of not adding a
+    custom primary HDU is shown above. Below we see an example of [`with_custom_primary`]:
+    
+    # Example
+    
+    ```rust
+    # extern crate tempdir;
+    # extern crate fitsio;
+    # use fitsio::FitsFile;
+    # use fitsio::images::{ImageDescription, ImageType};
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+    # let tdir_path = tdir.path();
+    # let filename = tdir_path.join("test.fits");
+    use fitsio::FitsFile;
+    
+    // let filename = ...;
+    let description = ImageDescription {
+        data_type: ImageType::Double,
+        dimensions: &[52, 103],
+    };
+    
+    let fptr = FitsFile::create(filename)
+        .with_custom_primary(&description)
+        .open()?;
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    
+    [`create`]: #method.create
+    [`NewFitsFile`]: fitsfile/struct.NewFitsFile.html
+    [`open`]: fitsfile/struct.NewFitsFile.html#method.open
+    [`with_custom_primary`]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
+    */
     pub fn create<'a, T: AsRef<Path>>(path: T) -> NewFitsFile<'a, T> {
         NewFitsFile {
             path,
@@ -194,71 +198,75 @@ impl FitsFile {
         hdu_description.change_hdu(self)
     }
 
-    /// Return a new HDU object
-    ///
-    /// HDU information belongs to the [`FitsHdu`] object. HDUs can be fetched by `String`/`str` or
-    /// integer (0-indexed).  The `HduInfo` object contains information about the current HDU:
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # extern crate fitsio;
-    /// # #[cfg(feature = "default")]
-    /// # extern crate fitsio_sys as sys;
-    /// # #[cfg(feature = "bindgen")]
-    /// # extern crate fitsio_sys_bindgen as sys;
-    /// # use fitsio::FitsFile;
-    /// # use fitsio::hdu::HduInfo;
-    /// #
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # let filename = "../testdata/full_example.fits";
-    /// # let mut fptr = FitsFile::open(filename)?;
-    /// let hdu = fptr.hdu(0)?;
-    /// // image HDU
-    /// if let HduInfo::ImageInfo { shape, .. } = hdu.info {
-    ///    println!("Image is {}-dimensional", shape.len());
-    ///    println!("Found image with shape {:?}", shape);
-    /// }
-    /// # let hdu = fptr.hdu("TESTEXT")?;
-    ///
-    /// // tables
-    /// if let HduInfo::TableInfo { column_descriptions, num_rows, .. } = hdu.info {
-    ///     println!("Table contains {} rows", num_rows);
-    ///     println!("Table has {} columns", column_descriptions.len());
-    /// }
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
-    ///
-    /// [`FitsHdu`]: hdu/struct.FitsHdu.html
+    /**
+    Return a new HDU object
+    
+    HDU information belongs to the [`FitsHdu`] object. HDUs can be fetched by `String`/`str` or
+    integer (0-indexed).  The `HduInfo` object contains information about the current HDU:
+    
+    # Example
+    
+    ```rust
+    # extern crate fitsio;
+    # #[cfg(feature = "default")]
+    # extern crate fitsio_sys as sys;
+    # #[cfg(feature = "bindgen")]
+    # extern crate fitsio_sys_bindgen as sys;
+    # use fitsio::FitsFile;
+    # use fitsio::hdu::HduInfo;
+    #
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # let filename = "../testdata/full_example.fits";
+    # let mut fptr = FitsFile::open(filename)?;
+    let hdu = fptr.hdu(0)?;
+    // image HDU
+    if let HduInfo::ImageInfo { shape, .. } = hdu.info {
+       println!("Image is {}-dimensional", shape.len());
+       println!("Found image with shape {:?}", shape);
+    }
+    # let hdu = fptr.hdu("TESTEXT")?;
+    
+    // tables
+    if let HduInfo::TableInfo { column_descriptions, num_rows, .. } = hdu.info {
+        println!("Table contains {} rows", num_rows);
+        println!("Table has {} columns", column_descriptions.len());
+    }
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    
+    [`FitsHdu`]: hdu/struct.FitsHdu.html
+    */
     pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<FitsHdu> {
         FitsHdu::new(self, hdu_description)
     }
 
-    /// Return the primary hdu (HDU 0)
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # extern crate fitsio;
-    /// # #[cfg(feature = "default")]
-    /// # extern crate fitsio_sys as sys;
-    /// # #[cfg(feature = "bindgen")]
-    /// # extern crate fitsio_sys_bindgen as sys;
-    /// # use fitsio::FitsFile;
-    /// # use fitsio::hdu::HduInfo;
-    /// #
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # let filename = "../testdata/full_example.fits";
-    /// # let mut fptr = FitsFile::open(filename)?;
-    /// let hdu = fptr.hdu(0)?;
-    /// let phdu = fptr.primary_hdu()?;
-    /// assert_eq!(hdu, phdu);
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
+    /**
+    Return the primary hdu (HDU 0)
+    
+    # Example
+    
+    ```rust
+    # extern crate fitsio;
+    # #[cfg(feature = "default")]
+    # extern crate fitsio_sys as sys;
+    # #[cfg(feature = "bindgen")]
+    # extern crate fitsio_sys_bindgen as sys;
+    # use fitsio::FitsFile;
+    # use fitsio::hdu::HduInfo;
+    #
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # let filename = "../testdata/full_example.fits";
+    # let mut fptr = FitsFile::open(filename)?;
+    let hdu = fptr.hdu(0)?;
+    let phdu = fptr.primary_hdu()?;
+    assert_eq!(hdu, phdu);
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    */
     pub fn primary_hdu(&mut self) -> Result<FitsHdu> {
         self.hdu(0)
     }
@@ -411,35 +419,37 @@ impl FitsFile {
         check_status(status).map(|_| hdu_type)
     }
 
-    /// Create a new fits table
-    ///
-    /// Create a new fits table, with columns as detailed in the [`ColumnDescription`] object.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # extern crate tempdir;
-    /// # extern crate fitsio;
-    /// # use fitsio::tables::{ColumnDataType, ColumnDescription};
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
-    /// # let tdir_path = tdir.path();
-    /// # let filename = tdir_path.join("test.fits");
-    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
-    /// let first_description = ColumnDescription::new("A")
-    ///     .with_type(ColumnDataType::Int)
-    ///     .create()?;
-    /// let second_description = ColumnDescription::new("B")
-    ///     .with_type(ColumnDataType::Long)
-    ///     .create()?;
-    /// let descriptions = &[first_description, second_description];
-    /// let hdu = fptr.create_table("EXTNAME".to_string(), descriptions)?;
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
-    ///
-    /// [`ColumnDescription`]: tables/struct.ColumnDescription.html
+    /**
+    Create a new fits table
+    
+    Create a new fits table, with columns as detailed in the [`ColumnDescription`] object.
+    
+    # Example
+    
+    ```rust
+    # extern crate tempdir;
+    # extern crate fitsio;
+    # use fitsio::tables::{ColumnDataType, ColumnDescription};
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir_path = tdir.path();
+    # let filename = tdir_path.join("test.fits");
+    # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    let first_description = ColumnDescription::new("A")
+        .with_type(ColumnDataType::Int)
+        .create()?;
+    let second_description = ColumnDescription::new("B")
+        .with_type(ColumnDataType::Long)
+        .create()?;
+    let descriptions = &[first_description, second_description];
+    let hdu = fptr.create_table("EXTNAME".to_string(), descriptions)?;
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    
+    [`ColumnDescription`]: tables/struct.ColumnDescription.html
+    */
     pub fn create_table<T>(
         &mut self,
         extname: T,
@@ -491,33 +501,35 @@ impl FitsFile {
         check_status(status).and_then(|_| self.current_hdu())
     }
 
-    /// Create a new fits image, and return the [`FitsHdu`](hdu/struct.FitsHdu.html) object.
-    ///
-    /// This method takes an [`ImageDescription`] struct which defines the desired layout of the
-    /// image HDU.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # extern crate tempdir;
-    /// # extern crate fitsio;
-    /// # use fitsio::images::{ImageDescription, ImageType};
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
-    /// # let tdir_path = tdir.path();
-    /// # let filename = tdir_path.join("test.fits");
-    /// # let mut fptr = fitsio::FitsFile::create(filename).open()?;
-    /// let image_description = ImageDescription {
-    ///     data_type: ImageType::Float,
-    ///     dimensions: &[100, 100],
-    /// };
-    /// let hdu = fptr.create_image("EXTNAME".to_string(), &image_description)?;
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
-    ///
-    /// [`ImageDescription`]: images/struct.ImageDescription.html
+    /**
+    Create a new fits image, and return the [`FitsHdu`](hdu/struct.FitsHdu.html) object.
+    
+    This method takes an [`ImageDescription`] struct which defines the desired layout of the
+    image HDU.
+    
+    # Example
+    
+    ```rust
+    # extern crate tempdir;
+    # extern crate fitsio;
+    # use fitsio::images::{ImageDescription, ImageType};
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir_path = tdir.path();
+    # let filename = tdir_path.join("test.fits");
+    # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    let image_description = ImageDescription {
+        data_type: ImageType::Float,
+        dimensions: &[100, 100],
+    };
+    let hdu = fptr.create_image("EXTNAME".to_string(), &image_description)?;
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    
+    [`ImageDescription`]: images/struct.ImageDescription.html
+    */
     pub fn create_image<T>(
         &mut self,
         extname: T,
@@ -567,21 +579,23 @@ impl FitsFile {
         check_status(status).and_then(|_| self.current_hdu())
     }
 
-    /// Iterate over the HDUs in the file
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # extern crate fitsio;
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// #     let mut fptr = fitsio::FitsFile::open("../testdata/full_example.fits")?;
-    /// for hdu in fptr.iter() {
-    ///     // Do something with hdu
-    /// }
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
+    /**
+    Iterate over the HDUs in the file
+    
+    # Example
+    
+    ```rust
+    # extern crate fitsio;
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    #     let mut fptr = fitsio::FitsFile::open("../testdata/full_example.fits")?;
+    for hdu in fptr.iter() {
+        // Do something with hdu
+    }
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    */
     pub fn iter(&mut self) -> FitsHduIterator {
         FitsHduIterator {
             current: 0,
@@ -590,29 +604,31 @@ impl FitsFile {
         }
     }
 
-    /// Pretty-print file to stdout
-    ///
-    /// Fits files can be pretty-printed with [`pretty_print`], or its more powerful
-    /// cousin [`pretty_write`].
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # use fitsio::FitsFile;
-    /// # let filename = "../testdata/full_example.fits";
-    /// # use std::io;
-    /// let mut fptr = FitsFile::open(filename)?;
-    /// fptr.pretty_print()?;
-    /// // or
-    /// fptr.pretty_write(&mut io::stdout())?;
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
-    ///
-    /// [`pretty_print`]: #method.pretty_print
-    /// [`pretty_write`]: #method.pretty_write
+    /**
+    Pretty-print file to stdout
+    
+    Fits files can be pretty-printed with [`pretty_print`], or its more powerful
+    cousin [`pretty_write`].
+    
+    # Example
+    
+    ```rust
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # use fitsio::FitsFile;
+    # let filename = "../testdata/full_example.fits";
+    # use std::io;
+    let mut fptr = FitsFile::open(filename)?;
+    fptr.pretty_print()?;
+    // or
+    fptr.pretty_write(&mut io::stdout())?;
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    
+    [`pretty_print`]: #method.pretty_print
+    [`pretty_write`]: #method.pretty_write
+    */
     pub fn pretty_print(&mut self) -> Result<()> {
         let stdout = io::stdout();
         let mut handle = stdout.lock();
@@ -620,29 +636,31 @@ impl FitsFile {
         self.pretty_write(&mut handle)
     }
 
-    /// Pretty-print the fits file structure to any `Write` implementor
-    ///
-    /// Fits files can be pretty-printed with [`pretty_print`], or its more powerful
-    /// cousin [`pretty_write`].
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # use fitsio::FitsFile;
-    /// # let filename = "../testdata/full_example.fits";
-    /// # use std::io;
-    /// let mut fptr = FitsFile::open(filename)?;
-    /// fptr.pretty_print()?;
-    /// // or
-    /// fptr.pretty_write(&mut io::stdout())?;
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
-    ///
-    /// [`pretty_print`]: #method.pretty_print
-    /// [`pretty_write`]: #method.pretty_write
+    /**
+    Pretty-print the fits file structure to any `Write` implementor
+    
+    Fits files can be pretty-printed with [`pretty_print`], or its more powerful
+    cousin [`pretty_write`].
+    
+    # Example
+    
+    ```rust
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # use fitsio::FitsFile;
+    # let filename = "../testdata/full_example.fits";
+    # use std::io;
+    let mut fptr = FitsFile::open(filename)?;
+    fptr.pretty_print()?;
+    // or
+    fptr.pretty_write(&mut io::stdout())?;
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    
+    [`pretty_print`]: #method.pretty_print
+    [`pretty_write`]: #method.pretty_write
+    */
     pub fn pretty_write<W>(&mut self, w: &mut W) -> Result<()>
     where
         W: Write,
@@ -696,59 +714,63 @@ impl FitsFile {
         Ok(())
     }
 
-    /// Return a pointer to the underlying C `fitsfile` object representing the current file.
-    ///
-    /// This is marked as `unsafe` as it is definitely something that is not required by most
-    /// users, and hence the unsafe-ness marks it as an advanced feature. I have also not
-    /// considered possible concurrency or data race issues as yet.
-    ///
-    /// Any changes to the underlying fits file will not be updated in existing [`FitsHdu`]
-    /// objects, so these must be recreated.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # extern crate fitsio;
-    /// # #[cfg(not(feature="bindgen"))]
-    /// extern crate fitsio_sys;
-    /// # #[cfg(feature="bindgen")]
-    /// # extern crate fitsio_sys_bindgen as fitsio_sys;
-    ///
-    /// # use fitsio::FitsFile;
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # let filename = "../testdata/full_example.fits";
-    /// let fptr = FitsFile::open(filename)?;
-    ///
-    /// /* Find out the number of HDUs in the file */
-    /// let mut num_hdus = 0;
-    /// let mut status = 0;
-    ///
-    /// unsafe {
-    ///     let fitsfile = fptr.as_raw();
-    ///
-    ///     /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
-    ///     implemented in this crate */
-    ///     fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
-    /// }
-    /// assert_eq!(num_hdus, 2);
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
-    ///
-    /// [`FitsHdu`]: hdu/struct.FitsHdu.html
+    /**
+    Return a pointer to the underlying C `fitsfile` object representing the current file.
+    
+    This is marked as `unsafe` as it is definitely something that is not required by most
+    users, and hence the unsafe-ness marks it as an advanced feature. I have also not
+    considered possible concurrency or data race issues as yet.
+    
+    Any changes to the underlying fits file will not be updated in existing [`FitsHdu`]
+    objects, so these must be recreated.
+    
+    # Example
+    
+    ```rust
+    # extern crate fitsio;
+    # #[cfg(not(feature="bindgen"))]
+    extern crate fitsio_sys;
+    # #[cfg(feature="bindgen")]
+    # extern crate fitsio_sys_bindgen as fitsio_sys;
+    
+    # use fitsio::FitsFile;
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # let filename = "../testdata/full_example.fits";
+    let fptr = FitsFile::open(filename)?;
+    
+    /* Find out the number of HDUs in the file */
+    let mut num_hdus = 0;
+    let mut status = 0;
+    
+    unsafe {
+        let fitsfile = fptr.as_raw();
+    
+        /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
+        implemented in this crate */
+        fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
+    }
+    assert_eq!(num_hdus, 2);
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    
+    [`FitsHdu`]: hdu/struct.FitsHdu.html
+    */
     pub unsafe fn as_raw(&self) -> *mut fitsfile {
         self.fptr as *mut _
     }
 }
 
 impl Drop for FitsFile {
-    /// Executes the destructor for this type. [Read
-    /// more](https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop)
-    ///
-    /// Dropping a [`FitsFile`] closes the file on disk, flushing existing buffers.
-    ///
-    /// [`FitsFile`]: struct.FitsFile.html
+    /**
+    Executes the destructor for this type. [Read
+    more](https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop)
+    
+    Dropping a [`FitsFile`] closes the file on disk, flushing existing buffers.
+    
+    [`FitsFile`]: struct.FitsFile.html
+    */
     fn drop(&mut self) {
         let mut status = 0;
         unsafe {
@@ -758,63 +780,65 @@ impl Drop for FitsFile {
     }
 }
 
-/// New fits file representation
-///
-/// This is a temporary struct, which describes how the primary HDU of a new file should be
-/// created. It uses the builder pattern.
-///
-/// The [`with_custom_primary`][new-fits-file-with-custom-primary] method allows for creation of a
-/// custom primary HDU.
-///
-/// # Example
-///
-/// ```rust
-/// # extern crate tempdir;
-/// # extern crate fitsio;
-/// # use fitsio::FitsFile;
-/// # use fitsio::images::{ImageDescription, ImageType};
-/// # fn main() {
-/// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-/// # let tdir_path = tdir.path();
-/// # let _filename = tdir_path.join("test.fits");
-/// # let filename = _filename.to_str().unwrap();
-/// use fitsio::FitsFile;
-///
-/// // let filename = ...;
-/// let description = ImageDescription {
-///     data_type: ImageType::Double,
-///     dimensions: &[52, 103],
-/// };
-/// let fptr = FitsFile::create(filename)
-///     .with_custom_primary(&description)
-///     .open()
-///     .unwrap();
-/// # }
-/// ```
-///
-/// The [`open`][new-fits-file-open] method actually creates a `Result<FitsFile>` from this
-/// temporary representation.
-///
-/// # Example
-///
-/// ```rust
-/// # extern crate tempdir;
-/// # extern crate fitsio;
-/// # use fitsio::FitsFile;
-/// # fn main() {
-/// # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
-/// # let tdir_path = tdir.path();
-/// # let _filename = tdir_path.join("test.fits");
-/// # let filename = _filename.to_str().unwrap();
-/// use fitsio::FitsFile;
-///
-/// // let filename = ...;
-/// let fptr = FitsFile::create(filename).open().unwrap();
-/// # }
-/// ```
-/// [new-fits-file]: struct.NewFitsFile.html
-/// [new-fits-file-open]: struct.NewFitsFile.html#method.open
-/// [new-fits-file-with-custom-primary]: struct.NewFitsFile.html#method.with_custom_primary
+/**
+New fits file representation
+
+This is a temporary struct, which describes how the primary HDU of a new file should be
+created. It uses the builder pattern.
+
+The [`with_custom_primary`][new-fits-file-with-custom-primary] method allows for creation of a
+custom primary HDU.
+
+# Example
+
+```rust
+# extern crate tempdir;
+# extern crate fitsio;
+# use fitsio::FitsFile;
+# use fitsio::images::{ImageDescription, ImageType};
+# fn main() {
+# let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+# let tdir_path = tdir.path();
+# let _filename = tdir_path.join("test.fits");
+# let filename = _filename.to_str().unwrap();
+use fitsio::FitsFile;
+
+// let filename = ...;
+let description = ImageDescription {
+    data_type: ImageType::Double,
+    dimensions: &[52, 103],
+};
+let fptr = FitsFile::create(filename)
+    .with_custom_primary(&description)
+    .open()
+    .unwrap();
+# }
+```
+
+The [`open`][new-fits-file-open] method actually creates a `Result<FitsFile>` from this
+temporary representation.
+
+# Example
+
+```rust
+# extern crate tempdir;
+# extern crate fitsio;
+# use fitsio::FitsFile;
+# fn main() {
+# let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+# let tdir_path = tdir.path();
+# let _filename = tdir_path.join("test.fits");
+# let filename = _filename.to_str().unwrap();
+use fitsio::FitsFile;
+
+// let filename = ...;
+let fptr = FitsFile::create(filename).open().unwrap();
+# }
+```
+[new-fits-file]: struct.NewFitsFile.html
+[new-fits-file-open]: struct.NewFitsFile.html#method.open
+[new-fits-file-with-custom-primary]: struct.NewFitsFile.html#method.with_custom_primary
+*/
 pub struct NewFitsFile<'a, T>
 where
     T: AsRef<Path>,
@@ -828,9 +852,11 @@ impl<'a, T> NewFitsFile<'a, T>
 where
     T: AsRef<Path>,
 {
-    /// Create a `Result<FitsFile>` from a temporary [`NewFitsFile`][new-fits-file] representation.
-    ///
-    /// [new-fits-file]: struct.NewFitsFile.html
+    /**
+    Create a `Result<FitsFile>` from a temporary [`NewFitsFile`][new-fits-file] representation.
+    
+    [new-fits-file]: struct.NewFitsFile.html
+    */
     pub fn open(self) -> Result<FitsFile> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
@@ -872,75 +898,79 @@ where
         })
     }
 
-    /// When creating a new file, add a custom primary HDU description before creating the
-    /// [`FitsFile`] object.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # extern crate tempdir;
-    /// # extern crate fitsio;
-    /// # use fitsio::FitsFile;
-    /// # use fitsio::images::{ImageType, ImageDescription};
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
-    /// # let tdir_path = tdir.path();
-    /// # let filename = tdir_path.join("test.fits");
-    /// use fitsio::FitsFile;
-    ///
-    /// // let filename = ...;
-    /// let description = ImageDescription {
-    ///     data_type: ImageType::Double,
-    ///     dimensions: &[52, 103],
-    /// };
-    ///
-    /// let fptr = FitsFile::create(filename)
-    ///     .with_custom_primary(&description)
-    ///     .open()?;
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
-    ///
-    /// [`FitsFile`]: struct.FitsFile.html
+    /**
+    When creating a new file, add a custom primary HDU description before creating the
+    [`FitsFile`] object.
+    
+    # Example
+    
+    ```rust
+    # extern crate tempdir;
+    # extern crate fitsio;
+    # use fitsio::FitsFile;
+    # use fitsio::images::{ImageType, ImageDescription};
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir_path = tdir.path();
+    # let filename = tdir_path.join("test.fits");
+    use fitsio::FitsFile;
+    
+    // let filename = ...;
+    let description = ImageDescription {
+        data_type: ImageType::Double,
+        dimensions: &[52, 103],
+    };
+    
+    let fptr = FitsFile::create(filename)
+        .with_custom_primary(&description)
+        .open()?;
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    
+    [`FitsFile`]: struct.FitsFile.html
+    */
     pub fn with_custom_primary(mut self, description: &ImageDescription<'a>) -> Self {
         self.image_description = Some(description.clone());
         self
     }
 
-    /// Overwrite any existing files
-    ///
-    /// When creating a new fits file, if a file exists with the same filename, then overwrite the
-    /// existing file. This does not however check if the underlying object is a file or not; it
-    /// just removes it. For example, if the underlying "file" is a directory, this will fail to
-    /// remove it.
-    ///
-    /// If this is not given, then when calling [`open`] will return an
-    /// [`Error::ExistingFile(filename)`]
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # extern crate tempdir;
-    /// # extern crate fitsio;
-    /// # use fitsio::FitsFile;
-    /// # use fitsio::images::{ImageType, ImageDescription};
-    /// # fn try_main() -> Result<(), Box<std::error::Error>> {
-    /// # let tdir = tempdir::TempDir::new("fitsio-")?;
-    /// # let tdir_path = tdir.path();
-    /// # let filename = tdir_path.join("test.fits");
-    /// # use fitsio::FitsFile;
-    /// // filename already exists
-    /// let fptr = FitsFile::create(filename)
-    ///     .overwrite()
-    ///     .open()?;
-    /// # Ok(())
-    /// # }
-    /// # fn main() { try_main().unwrap(); }
-    /// ```
-    ///
-    /// [`open`]: struct.NewFitsFile.html#method.open
-    /// [`Error::ExistingFile(filename)`]: ../errors/enum.Error.html#variant.ExistingFile
+    /**
+    Overwrite any existing files
+    
+    When creating a new fits file, if a file exists with the same filename, then overwrite the
+    existing file. This does not however check if the underlying object is a file or not; it
+    just removes it. For example, if the underlying "file" is a directory, this will fail to
+    remove it.
+    
+    If this is not given, then when calling [`open`] will return an
+    [`Error::ExistingFile(filename)`]
+    
+    # Example
+    
+    ```rust
+    # extern crate tempdir;
+    # extern crate fitsio;
+    # use fitsio::FitsFile;
+    # use fitsio::images::{ImageType, ImageDescription};
+    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir_path = tdir.path();
+    # let filename = tdir_path.join("test.fits");
+    # use fitsio::FitsFile;
+    // filename already exists
+    let fptr = FitsFile::create(filename)
+        .overwrite()
+        .open()?;
+    # Ok(())
+    # }
+    # fn main() { try_main().unwrap(); }
+    ```
+    
+    [`open`]: struct.NewFitsFile.html#method.open
+    [`Error::ExistingFile(filename)`]: ../errors/enum.Error.html#variant.ExistingFile
+    */
     pub fn overwrite(mut self) -> Self {
         self.overwrite = true;
         self

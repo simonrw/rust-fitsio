@@ -8,15 +8,17 @@ use errors::{check_status, Result};
 
 const MAX_VALUE_LENGTH: usize = 71;
 
-/// Trait applied to types which can be read from a FITS header
-///
-/// This is currently:
-///
-/// * i32
-/// * i64
-/// * f32
-/// * f64
-/// * String
+/**
+Trait applied to types which can be read from a FITS header
+
+This is currently:
+
+* i32
+* i64
+* f32
+* f64
+* String
+* */
 pub trait ReadsKey {
     #[doc(hidden)]
     fn read_key(f: &FitsFile, name: &str) -> Result<Self>

@@ -1,7 +1,9 @@
-//! Errors and error handling
-//!
-//! This mostly concerns converting to and from the main error type defined
-//! in this crate: [`Error`](enum.Error.html)
+/*!
+Errors and error handling
+
+This mostly concerns converting to and from the main error type defined
+in this crate: [`Error`](enum.Error.html)
+*/
 
 use std::ffi::{IntoStringError, NulError};
 use std::str::Utf8Error;
@@ -131,10 +133,12 @@ impl ::std::error::Error for Error {
     }
 }
 
-/// Error type
-///
-/// `cfitsio` passes errors through integer status codes. This struct wraps this and its associated
-/// error message.
+/**
+Error type
+
+`cfitsio` passes errors through integer status codes. This struct wraps this and its associated
+error message.
+*/
 #[derive(Debug, PartialEq, Eq)]
 pub struct FitsError {
     /// `cfitsio` error code
