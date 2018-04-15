@@ -300,7 +300,7 @@ pub struct ImageDescription<'a> {
 
     /**
     Shape of the image
-    
+
     Unlike cfitsio, the order of the dimensions follows the C convention, i.e. [row-major
     order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
     */

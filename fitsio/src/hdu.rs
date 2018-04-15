@@ -43,9 +43,9 @@ impl FitsHdu {
 
     /**
     Read header key
-    
+
     # Example
-    
+
     ```rust
     # extern crate fitsio;
     #
@@ -67,9 +67,9 @@ impl FitsHdu {
 
     /**
     Write a fits key to the current header
-    
+
     # Example
-    
+
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
@@ -100,11 +100,11 @@ impl FitsHdu {
 
     /**
     Read pixels from an image between a start index and end index
-    
+
     The range is exclusive of the upper value
-    
+
     # Example
-    
+
     ```rust
     # extern crate fitsio;
     #
@@ -131,7 +131,7 @@ impl FitsHdu {
 
     /**
     # Example
-    
+
     ```rust
     # extern crate fitsio;
     #
@@ -142,7 +142,7 @@ impl FitsHdu {
     let start_row = 0;
     let num_rows = 10;
     let first_few_rows: Vec<f32> = hdu.read_rows(&mut fptr, start_row, num_rows)?;
-    
+
     // 10 rows of 100 columns
     assert_eq!(first_few_rows.len(), 1000);
     # Ok(())
@@ -162,9 +162,9 @@ impl FitsHdu {
 
     /**
     Read a single row from a fits image
-    
+
     # Example
-    
+
     ```rust
     # extern crate fitsio;
     #
@@ -174,7 +174,7 @@ impl FitsHdu {
     # let hdu = fptr.hdu(0)?;
     let chosen_row = 5;
     let row: Vec<f32> = hdu.read_row(&mut fptr, chosen_row)?;
-    
+
     // Should have 100 pixel values
     assert_eq!(row.len(), 100);
     # Ok(())
@@ -189,13 +189,13 @@ impl FitsHdu {
 
     /**
     Read a square region from the chip.
-    
+
     Lower left indicates the starting point of the square, and the upper
     right defines the pixel _beyond_ the end. The range of pixels included
     is inclusive of the lower end, and *exclusive* of the upper end.
-    
+
     # Example
-    
+
     ```rust
     # extern crate fitsio;
     #
@@ -223,11 +223,11 @@ impl FitsHdu {
 
     /**
     Read a whole image into a new `Vec`
-    
+
     This reads an entire image into a one-dimensional vector
-    
+
     # Example
-    
+
     ```rust
     # extern crate fitsio;
     #
@@ -236,7 +236,7 @@ impl FitsHdu {
     # let mut fptr = fitsio::FitsFile::open(filename)?;
     # let hdu = fptr.hdu(0)?;
     let image_data: Vec<f32> = hdu.read_image(&mut fptr)?;
-    
+
     // 100 rows of 100 columns
     assert_eq!(image_data.len(), 10_000);
     # Ok(())
@@ -251,14 +251,14 @@ impl FitsHdu {
 
     /**
     Write raw pixel values to a FITS image
-    
+
     If the length of the dataset exceeds the number of columns,
     the data wraps around to the next row.
-    
+
     The range is exclusive of the upper value.
-    
+
     # Example
-    
+
     ```rust
     # extern crate fitsio;
     # extern crate tempdir;
@@ -295,14 +295,14 @@ impl FitsHdu {
 
     /**
     Write a rectangular region to the fits image
-    
+
     The ranges must have length of 2, and they represent the limits of each axis. The limits
     are inclusive of the lower bounds, and *exclusive* of the and upper bounds.
-    
+
     For example, writing with ranges 0..10 and 0..10 wries an 10x10 sized image.
-    
+
     # Example
-    
+
     ```rust
     # extern crate fitsio;
     # extern crate tempdir;
@@ -339,12 +339,12 @@ impl FitsHdu {
 
     /**
     Write an entire image to the HDU passed in
-    
+
     Firstly a check is performed, making sure that the amount of data will fit in the image.
     After this, all of the data is written to the image.
-    
+
     ## Example
-    
+
     ```rust
     # extern crate fitsio;
     # extern crate tempdir;
@@ -376,13 +376,13 @@ impl FitsHdu {
 
     /**
     Resize a HDU image
-    
+
     The `new_size` parameter defines the new size of the image. Unlike cfitsio, the order
     of the dimensions of `new_size` follows the C convention, i.e. [row-major
     order](https://en.wikipedia.org/wiki/Row-_and_column-major_order).
-    
+
     ## Example
-    
+
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
@@ -439,9 +439,9 @@ impl FitsHdu {
 
     /**
     Copy an HDU to another open fits file
-    
+
     ## Example
-    
+
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
@@ -481,12 +481,12 @@ impl FitsHdu {
 
     /**
     Insert a column into a fits table
-    
+
     The column location is 0-indexed. It is inserted _at_ that position, and the following
     columns are shifted back.
-    
+
     ## Example
-    
+
     ```rust
     # extern crate fitsio;
     # extern crate tempdir;
@@ -542,9 +542,9 @@ impl FitsHdu {
 
     /**
     Add a new column to the end of the table
-    
+
     ## Example
-    
+
     ```rust
     # extern crate fitsio;
     # extern crate tempdir;
@@ -600,11 +600,11 @@ impl FitsHdu {
 
     /**
     Remove a column from the fits file
-    
+
     The column can be identified by id or name.
-    
+
     ## Example
-    
+
     ```rust
     # extern crate fitsio;
     # extern crate tempdir;
@@ -664,7 +664,7 @@ impl FitsHdu {
 
     /**
     Return the index for a given column.
-    
+
     Internal method, not exposed.
     */
     pub(crate) fn get_column_no<T: Into<String>>(
@@ -696,11 +696,11 @@ impl FitsHdu {
 
     /**
     Read a subset of a fits column
-    
+
     The range is exclusive of the upper value
-    
+
     ## Example
-    
+
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
@@ -734,11 +734,11 @@ impl FitsHdu {
 
     /**
     Read a subset of a fits column
-    
+
     The range is exclusive of the upper value
-    
+
     ## Example
-    
+
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
@@ -777,11 +777,11 @@ impl FitsHdu {
 
     /**
     Write data to part of a column
-    
+
     The range is exclusive of the upper value
-    
+
     ## Example
-    
+
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
@@ -822,13 +822,13 @@ impl FitsHdu {
 
     /**
     Write data to an entire column
-    
+
     This default implementation does not check the length of the column first, but if the
     length of the data array is longer than the length of the table, the table will be extended
     with extra rows. This is as per the fitsio definition.
-    
+
     ## Example
-    
+
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
@@ -870,9 +870,9 @@ impl FitsHdu {
 
     /**
     Iterate over the columns in a fits file
-    
+
     ## Example
-    
+
     ```rust
     # extern crate fitsio;
     #
@@ -897,12 +897,12 @@ impl FitsHdu {
 
     /**
     Delete the current HDU from the fits file.
-    
+
     Note this method takes `self` by value, and as such the hdu cannot be used after this
     method is called.
-    
+
     ## Example
-    
+
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
@@ -939,11 +939,11 @@ impl FitsHdu {
 
     /**
     Read a single value from a fits table
-    
+
     This will be inefficient if lots of individual values are wanted.
-    
+
     ## Example
-    
+
     ```rust
     # extern crate fitsio;
     # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -952,7 +952,7 @@ impl FitsHdu {
     # let tbl_hdu = f.hdu("TESTEXT")?;
     let result: i64 = tbl_hdu.read_cell_value(&mut f, "intcol", 4)?;
     assert_eq!(result, 16);
-    
+
     let result: String = tbl_hdu.read_cell_value(&mut f, "strcol", 4)?;
     assert_eq!(result, "value4".to_string());
     # Ok(())
@@ -970,19 +970,19 @@ impl FitsHdu {
 
     /**
     Extract a single row from the file
-    
+
     This method uses returns a [`FitsRow`](../tables/trait.FitsRow.html), which is provided by
     the user, using a `derive` implementation from the
     [`fitsio-derive`](https://docs.rs/fitsio-derive) crate.
-    
+
     # Example
-    
+
     ```rust
     #[macro_use]
     extern crate fitsio_derive;
     extern crate fitsio;
     use fitsio::tables::FitsRow;
-    
+
     #[derive(Default, FitsRow)]
     struct Row {
         #[fitsio(colname = "intcol")]
@@ -995,7 +995,7 @@ impl FitsHdu {
     # let filename = "../testdata/full_example.fits[TESTEXT]";
     # let mut f = fitsio::FitsFile::open(filename).unwrap();
     # let hdu = f.hdu("TESTEXT").unwrap();
-    
+
     // Pick the 4th row
     let row: Row = hdu.row(&mut f, 4).unwrap();
     assert_eq!(row.intfoo, 16);
