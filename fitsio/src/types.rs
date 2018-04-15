@@ -82,5 +82,4 @@ mod test {
         assert_eq!(u8::from(DataType::TFLOAT), 42);
         assert_eq!(u8::from(DataType::TDOUBLE), 82);
     }
-
 }

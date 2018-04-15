@@ -158,12 +158,12 @@
 //!
 //! [ndarray]: https://crates.io/crates/ndarray
 //! [arrayd]: https://docs.rs/ndarray/0.11.2/ndarray/type.ArrayD.html
-//! [fits-hdu]: ../fitsfile/struct.FitsHdu.html
-//! [read-image]: ../fitsfile/struct.FitsHdu.html#method.read_image
-//! [read-region]: ../fitsfile/struct.FitsHdu.html#method.read_region
-//! [read-row]: ../fitsfile/struct.FitsHdu.html#method.read_row
-//! [read-rows]: ../fitsfile/struct.FitsHdu.html#method.read_rows
-//! [read-section]: ../fitsfile/struct.FitsHdu.html#method.read_section
+//! [fits-hdu]: hdu/struct.FitsHdu.html
+//! [read-image]: images/struct.FitsHdu.html#method.read_image
+//! [read-region]: images/struct.FitsHdu.html#method.read_region
+//! [read-row]: images/struct.FitsHdu.html#method.read_row
+//! [read-rows]: images/struct.FitsHdu.html#method.read_rows
+//! [read-section]: images/struct.FitsHdu.html#method.read_section
 
 use std::ops::Range;
 use super::{FitsFile, FitsHdu};

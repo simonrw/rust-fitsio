@@ -1,4 +1,4 @@
-//! `fitsio` - a thin wrapper around the [`cfitsio`][1] C library.
+//! `fitsio` - a thin wrapper around the [`cfitsio`][cfitsio] C library.
 //!
 //! * [File access](#file-access)
 //!     * [Pretty printing](#pretty-printing)
@@ -28,7 +28,7 @@
 //!         * [Deleting columns](#deleting-columns)
 //! * [Raw fits file access](#raw-fits-file-access)
 //!
-//! This library wraps the low level `cfitsio` bindings: [`fitsio-sys`][2] and provides a more
+//! This library wraps the low level `cfitsio` bindings: [`fitsio-sys`][fitsio-sys] and provides a more
 //! native experience for rust users.
 //!
 //! The main interface to a fits file is [`FitsFile`][fits-file]. All file manipulation
@@ -636,7 +636,7 @@
 //!
 //! Image data is written through three methods on the HDU object:
 //! [`write_section`][fits-hdu-write-section], [`write_region`][fits-hdu-write-region], and
-//! [`write_image`](fits-hdu-write-image).
+//! [`write_image`][fits-hdu-write-image].
 //!
 //! [`write_section`][fits-hdu-write-section] requires a start index and
 //! end index and data to write. The data parameter needs to be a slice, meaning any contiguous
@@ -941,16 +941,17 @@
 //!
 //! This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][2] library directly.
 //!
-//! [1]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
-//! [2]: https://crates.io/crates/fitsio-sys
+//! [cfitsio]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
+//! [fitsio-sys]: https://crates.io/crates/fitsio-sys
 //! [column-data-description]: tables/struct.ColumnDataDescription.html
-//! [column-data-type]: tables/struct.ColumnDataType.html
+//! [column-data-type]: tables/enum.ColumnDataType.html
 //! [column-description]: tables/struct.ColumnDescription.html
 //! [fits-file-create-image]: fitsfile/struct.FitsFile.html#method.create_image
 //! [fits-file-create-table]: fitsfile/struct.FitsFile.html#method.create_table
 //! [fits-file-create]: fitsfile/struct.FitsFile.html#method.create
 //! [fits-file-edit]: fitsfile/struct.FitsFile.html#method.edit
 //! [fits-file]: fitsfile/struct.FitsFile.html
+//! [fits-hdu]: hdu/struct.FitsHdu.html
 //! [fits-hdu-append-column]: hdu/struct.FitsHdu.html#method.append_column
 //! [fits-hdu-columns]: hdu/struct.FitsHdu.html#method.columns
 //! [fits-hdu-delete-column]: hdu/struct.FitsHdu.html#method.delete_column
@@ -970,7 +971,6 @@
 //! [fits-hdu-delete]: hdu/struct.FitsHdu.html#method.copy_to
 //! [fits-hdu-resize]: hdu/struct.FitsHdu.html#method.resize
 //! [fits-hdu-row]: hdu/struct.FitsHdu.html#method.row
-//! [fits-hdu]: hdu/struct.FitsHdu.html
 //! [image-description]: images/struct.ImageDescription.html
 //! [reads-col]: tables/trait.ReadsCol.html
 //! [reads-key]: headers/trait.ReadsKey.html

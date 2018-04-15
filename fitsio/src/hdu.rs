@@ -928,7 +928,7 @@ impl FitsHdu {
 
     /// Extract a single row from the file
     ///
-    /// This method uses returns a [`FitsRow`](trait.FitsRow.html), which is provided by the user,
+    /// This method uses returns a [`FitsRow`](../tables/trait.FitsRow.html), which is provided by the user,
     /// using a `derive` implementation from the [`fitsio-derive`](https://docs.rs/fitsio-derive)
     /// crate,
     ///
@@ -1037,8 +1037,10 @@ impl<'a> DescribesHdu for &'a str {
 /// Description of the current HDU
 ///
 /// If the current HDU is an image, then
-/// [`fetch_hdu_info`](struct.FitsFile.html#method.fetch_hdu_info) returns `HduInfo::ImageInfo`.
+/// [`fetch_hdu_info`][fetch-hdu-info] returns `HduInfo::ImageInfo`.
 /// Otherwise the variant is `HduInfo::TableInfo`.
+///
+/// [fetch-hdu-info]: ../fitsfile/struct.FitsFile.html#method.fetch_hdu_info
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq)]
 pub enum HduInfo {

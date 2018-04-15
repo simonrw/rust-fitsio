@@ -1,4 +1,4 @@
-//! [`FitsFile`](struct.FitsFile.html) and [`FitsHdu`](struct.FitsHdu.html)
+//! [`FitsFile`](struct.FitsFile.html)
 
 /* Depending on the architecture, different functions have to be called. For example arm systems
  * define `int` as 4 bytes, and `long` as 4 bytes, unlike x86_64 systems which define `long` types
@@ -148,9 +148,9 @@ impl FitsFile {
     /// ```
     ///
     /// [`create`]: #method.create
-    /// [`NewFitsFile`]: struct.NewFitsFile.html
-    /// [`open`]: struct.NewFitsFile.html#method.open
-    /// [`with_custom_primary`]: struct.NewFitsFile.html#method.with_custom_primary
+    /// [`NewFitsFile`]: fitsfile/struct.NewFitsFile.html
+    /// [`open`]: fitsfile/struct.NewFitsFile.html#method.open
+    /// [`with_custom_primary`]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
     pub fn create<'a, T: AsRef<Path>>(path: T) -> NewFitsFile<'a, T> {
         NewFitsFile {
             path,
@@ -231,7 +231,7 @@ impl FitsFile {
     /// # fn main() { try_main().unwrap(); }
     /// ```
     ///
-    /// [`FitsHdu`]: struct.FitsHdu.html
+    /// [`FitsHdu`]: hdu/struct.FitsHdu.html
     pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<FitsHdu> {
         FitsHdu::new(self, hdu_description)
     }
@@ -439,7 +439,7 @@ impl FitsFile {
     /// # fn main() { try_main().unwrap(); }
     /// ```
     ///
-    /// [`ColumnDescription`]: ../columndescription/struct.ColumnDescription.html
+    /// [`ColumnDescription`]: tables/struct.ColumnDescription.html
     pub fn create_table<T>(
         &mut self,
         extname: T,
@@ -491,7 +491,7 @@ impl FitsFile {
         check_status(status).and_then(|_| self.current_hdu())
     }
 
-    /// Create a new fits image, and return the [`FitsHdu`](struct.FitsHdu.html) object.
+    /// Create a new fits image, and return the [`FitsHdu`](hdu/struct.FitsHdu.html) object.
     ///
     /// This method takes an [`ImageDescription`] struct which defines the desired layout of the
     /// image HDU.
@@ -517,7 +517,7 @@ impl FitsFile {
     /// # fn main() { try_main().unwrap(); }
     /// ```
     ///
-    /// [`ImageDescription`]: struct.ImageDescription.html
+    /// [`ImageDescription`]: images/struct.ImageDescription.html
     pub fn create_image<T>(
         &mut self,
         extname: T,
@@ -736,7 +736,7 @@ impl FitsFile {
     /// # fn main() { try_main().unwrap(); }
     /// ```
     ///
-    /// [`FitsHdu`]: struct.FitsHdu.html
+    /// [`FitsHdu`]: hdu/struct.FitsHdu.html
     pub unsafe fn as_raw(&self) -> *mut fitsfile {
         self.fptr as *mut _
     }
