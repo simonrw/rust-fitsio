@@ -995,7 +995,7 @@ This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][fitsio
 [fitsfile-hdu]: fitsfile/struct.FitsFile.html#method.hdu
 */
 
-#![doc(html_root_url = "https://docs.rs/fitsio/0.13.0")]
+#![doc(html_root_url = "https://docs.rs/fitsio/0.14.0")]
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
