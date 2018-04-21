@@ -1,10 +1,14 @@
 //! Header-related code
 use std::ffi;
 use std::ptr;
-use libc;
+#[cfg(feature = "bindgen")]
+use std::os::raw::*;
+#[cfg(not(feature = "bindgen"))]
+use libc::*;
 use fitsfile::FitsFile;
 use longnam::*;
 use errors::{check_status, Result};
+use types::DataType;
 
 const MAX_VALUE_LENGTH: usize = 71;
 
@@ -60,7 +64,7 @@ impl ReadsKey for String {
     fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
         let c_name = ffi::CString::new(name)?;
         let mut status = 0;
-        let mut value: Vec<libc::c_char> = vec![0; MAX_VALUE_LENGTH];
+        let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
 
         unsafe {
             fits_read_key_str(
@@ -85,6 +89,40 @@ pub trait WritesKey {
     fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()>;
 }
 
+macro_rules! writes_key_impl_int {
+    ($t:ty, $datatype:expr) => (
+        impl WritesKey for $t {
+            fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+                let c_name = ffi::CString::new(name)?;
+                let mut status = 0;
+
+                let datatype = u8::from($datatype);
+
+                unsafe {
+                    fits_write_key(
+                        f.fptr as *mut _,
+                        datatype as _,
+                        c_name.into_raw(),
+                        &value as *const $t as *mut c_void,
+                        ptr::null_mut(),
+                        &mut status,
+                        );
+                }
+                check_status(status)
+            }
+        }
+    )
+}
+
+writes_key_impl_int!(i8, DataType::TSHORT);
+writes_key_impl_int!(i16, DataType::TINT);
+writes_key_impl_int!(i32, DataType::TINT);
+writes_key_impl_int!(i64, DataType::TLONG);
+writes_key_impl_int!(u8, DataType::TUSHORT);
+writes_key_impl_int!(u16, DataType::TUINT);
+writes_key_impl_int!(u32, DataType::TUINT);
+writes_key_impl_int!(u64, DataType::TULONG);
+
 macro_rules! writes_key_impl_flt {
     ($t:ty, $func:ident) => (
         impl WritesKey for $t {
@@ -104,24 +142,6 @@ macro_rules! writes_key_impl_flt {
             }
         }
     )
-}
-
-impl WritesKey for i64 {
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
-        let c_name = ffi::CString::new(name)?;
-        let mut status = 0;
-
-        unsafe {
-            fits_write_key_lng(
-                f.fptr as *mut _,
-                c_name.into_raw(),
-                value,
-                ptr::null_mut(),
-                &mut status,
-            );
-        }
-        check_status(status)
-    }
 }
 
 writes_key_impl_flt!(f32, fits_write_key_flt);
@@ -155,7 +175,7 @@ impl<'a> WritesKey for &'a str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use testhelpers::{with_temp_file, floats_close_f64};
+    use testhelpers::{duplicate_test_file, with_temp_file, floats_close_f64};
 
     #[test]
     fn test_reading_header_keys() {
@@ -204,6 +224,22 @@ mod tests {
                     );
                 })
                 .unwrap();
+        });
+    }
+
+    #[test]
+    fn test_writing_integers() {
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu(0).unwrap();
+            hdu.write_key(&mut f, "ONE", 1i8).unwrap();
+            hdu.write_key(&mut f, "TWO", 1i16).unwrap();
+            hdu.write_key(&mut f, "THREE", 1i32).unwrap();
+            hdu.write_key(&mut f, "FOUR", 1i64).unwrap();
+            hdu.write_key(&mut f, "UONE", 1u8).unwrap();
+            hdu.write_key(&mut f, "UTWO", 1u16).unwrap();
+            hdu.write_key(&mut f, "UTHREE", 1u32).unwrap();
+            hdu.write_key(&mut f, "UFOUR", 1u64).unwrap();
         });
     }
 }

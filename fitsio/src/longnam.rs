@@ -4,8 +4,8 @@ pub use fitsio_sys::{ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffg
                      ffgcno, ffgcvd, ffgcve, ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn,
                      ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyl, ffgkys,
                      ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl,
-                     ffpcls, ffphps, ffpkyd, ffpkye, ffpkyj, ffpkys, ffppr, ffpss, ffrsim, ffthdu,
-                     fitsfile, LONGLONG};
+                     ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkyj, ffpkys, ffppr, ffpss, ffrsim,
+                     ffthdu, fitsfile, LONGLONG};
 #[cfg(feature = "default")]
 use libc::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
 #[cfg(feature = "bindgen")]
@@ -534,16 +534,6 @@ pub unsafe fn fits_write_key_dbl(
 ) -> c_int {
     ffpkyd(fptr, keyname, value, decim, comm, status)
 }
-pub unsafe fn fits_write_key_lng(
-    fptr: *mut fitsfile,
-    keyname: *const c_char,
-    value: LONGLONG,
-    comm: *const c_char,
-    status: *mut c_int,
-) -> c_int {
-    ffpkyj(fptr, keyname, value, comm, status)
-}
-
 pub unsafe fn fits_write_key_str(
     fptr: *mut fitsfile,
     keyname: *const c_char,
@@ -601,4 +591,15 @@ pub unsafe fn fits_open_file(
     status: *mut c_int,
 ) -> c_int {
     ffopen(fptr, filename, iomode, status)
+}
+
+pub unsafe fn fits_write_key(
+    fptr: *mut fitsfile,
+    datatype: c_int,
+    keyname: *const c_char,
+    value: *mut c_void,
+    comm: *const c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffpky(fptr, datatype, keyname, value, comm, status)
 }
