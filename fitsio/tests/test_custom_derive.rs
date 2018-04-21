@@ -5,7 +5,7 @@ extern crate fitsio;
 extern crate fitsio_derive;
 
 use fitsio::FitsFile;
-use fitsio::fitsfile::FitsRow;
+use fitsio::tables::FitsRow;
 
 #[derive(Default, FitsRow)]
 struct Row {
