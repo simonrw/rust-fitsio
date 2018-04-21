@@ -8,14 +8,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Added
 
+* (`fitsio`) add `overwrite` method to `NewFitsFile` [#94](https://github.com/mindriot101/rust-fitsio/pull/94)
 * (`fitsio`) add `ndarray` support [#92](https://github.com/mindriot101/rust-fitsio/pull/92)
 * (`fitsio`) add lots of documentation
-* (`fitsio`) add `overwrite` method to `NewFitsFile` [#94](https://github.com/mindriot101/rust-fitsio/pull/94)
 
 ### Changed
 
+* (`fitsio`) **BREAKING CHANGE**: move code into more logical submodule arrangement [#95](https://github.com/mindriot101/rust-fitsio/pull/95)
 * (`fitsio`) add long cfitsio function names internally [#88](https://github.com/mindriot101/rust-fitsio/pull/88)
-* (`fitsio`) move code into more logical submodule arrangement [#95](https://github.com/mindriot101/rust-fitsio/pull/95)
 
 ### Removed
 
@@ -23,17 +23,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Addded
 
-* (`fitsio`) add `primary_hdu` method [#77](https://github.com/mindriot101/rust-fitsio/pull/77)
-* (`fitsio`) add pretty-printing support [#83](https://github.com/mindriot101/rust-fitsio/pull/83)
 * (`fitsio`) add `row` method to read single row. This allows the user to declare a custom struct representing the row values [#86](https://github.com/mindriot101/rust-fitsio/pull/86)
+* (`fitsio`) add pretty-printing support [#83](https://github.com/mindriot101/rust-fitsio/pull/83)
+* (`fitsio`) add `primary_hdu` method [#77](https://github.com/mindriot101/rust-fitsio/pull/77)
 
 ### Changed
 
-* (`fitsio`) **BREAKING CHANGE**: inverted the order of image/region axes to match the C row-major convention [#59](https://github.com/mindriot101/rust-fitsio/pull/59)
-* (`fitsio`) **BREAKING CHANGE**: all ranges are now exclusive of the upper value, matching Rust's default behaviour [#61](https://github.com/mindriot101/rust-fitsio/pull/61)
-* (`fitsio`) `WritesKey::write_key` now accepts &str's as well as `String`s [#80](https://github.com/mindriot101/rust-fitsio/pull/80)
-* (`fitsio`) `create_image` and `create_table` take `Into<String>` [#81](https://github.com/mindriot101/rust-fitsio/pull/81)
 * (`fitsio`) **BREAKING CHANGE**: changed ImageType variants to be more rusty [#84](https://github.com/mindriot101/rust-fitsio/pull/84)
+* (`fitsio`) `create_image` and `create_table` take `Into<String>` [#81](https://github.com/mindriot101/rust-fitsio/pull/81)
+* (`fitsio`) `WritesKey::write_key` now accepts &str's as well as `String`s [#80](https://github.com/mindriot101/rust-fitsio/pull/80)
+* (`fitsio`) **BREAKING CHANGE**: all ranges are now exclusive of the upper value, matching Rust's default behaviour [#61](https://github.com/mindriot101/rust-fitsio/pull/61)
+* (`fitsio`) **BREAKING CHANGE**: inverted the order of image/region axes to match the C row-major convention [#59](https://github.com/mindriot101/rust-fitsio/pull/59)
 
 ### Removed
 
