@@ -7,9 +7,18 @@ FFI wrapper around cfitsio in Rust
 
 ## Installation
 
-`fitsio` supports versions of `cfitsio >= 3.08`.  _There is a problem
-with `cfitsio` version 3.410. Please ensure version 3.420+ is
-installed._
+`fitsio` supports versions of `cfitsio >= 3.08`.
+
+`cfitsio` must be compiled with `reentrant` support (making it
+thread-safe) if it is to be compiled with the `--enable-reentrant` flag
+passed to `configure`. This affects developers of this library as the
+tests by default are run in parallel.
+
+For example on a mac with homebrew, install `cfitsio` with:
+
+```sh
+brew install cfitsio --with-reentrant
+```
 
 For the time being, it's best to stick to the development version from
 github.  The code is tested before being pushed and is relatively
