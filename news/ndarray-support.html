@@ -3,13 +3,13 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>fitsio</title>
+        <title>2nd April 2018 - ndarray support - fitsio</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
-        <base href="">
+        <base href="../">
 
         <link rel="stylesheet" href="book.css">
         <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
@@ -85,7 +85,7 @@
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <ol class="chapter"><li><a href="index.html"><strong aria-hidden="true">1.</strong> FITSIO</a></li><li><a href="news/index.html"><strong aria-hidden="true">2.</strong> News</a></li><li><ol class="section"><li><a href="news/restructuring.html"><strong aria-hidden="true">2.1.</strong> 21st April 2018 - Restructuring</a></li><li><a href="news/ndarray-support.html"><strong aria-hidden="true">2.2.</strong> 2nd April 2018 - ndarray support</a></li></ol></li></ol>
+            <ol class="chapter"><li><a href="index.html"><strong aria-hidden="true">1.</strong> FITSIO</a></li><li><a href="news/index.html"><strong aria-hidden="true">2.</strong> News</a></li><li><ol class="section"><li><a href="news/restructuring.html"><strong aria-hidden="true">2.1.</strong> 21st April 2018 - Restructuring</a></li><li><a href="news/ndarray-support.html" class="active"><strong aria-hidden="true">2.2.</strong> 2nd April 2018 - ndarray support</a></li></ol></li></ol>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -147,69 +147,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <a class="header" href="print.html#fitsio" id="fitsio"><h1>FITSIO</h1></a>
-<p><code>fitsio</code> is a <a href="https://rust-lang.org/">Rust</a> FFI wrapper around <a href="http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html"><code>cfitsio</code></a>, enabling Rust users
-to read and write astronomy-specific files.</p>
-<a class="header" href="print.html#links" id="links"><h2>Links</h2></a>
-<ul>
-<li><a href="https://docs.rs/fitsio">Documentation</a></li>
-<li><a href="https://github.com/mindriot101/rust-fitsio/issues">Issue tracker</a></li>
-<li><a href="https://github.com/mindriot101/rust-fitsio/blob/master/CHANGELOG.md">Changelog</a></li>
-<li><a href="https://github.com/mindriot101/rust-fitsio/blob/master/CONTRIBUTING.md">Contributing guide</a></li>
-<li><a href="news/index.html">News</a></li>
-</ul>
-<a class="header" href="print.html#example" id="example"><h2>Example</h2></a>
-<pre><pre class="playpen"><code class="language-rust">extern crate fitsio;
-
-use std::error::Error;
-use fitsio::FitsFile;
-
-fn try_main() -&gt; Result&lt;(), Box&lt;Error&gt;&gt; {
-    let filename = &quot;../../testdata/full_example.fits&quot;;
-    let _fptr = FitsFile::open(filename)?;
-    Ok(())
-}
-
-fn main() { try_main().unwrap() }
-
-</code></pre></pre>
-<a class="header" href="print.html#news" id="news"><h1>News</h1></a>
-<p>See the sidebar for announcements about <code>fitsio</code>.</p>
-<a class="header" href="print.html#restructuring" id="restructuring"><h1>Restructuring</h1></a>
-<p>Date: 2018-04-21</p>
-<p>The layout of the crate has now changed. The import paths make a lot
-more sense now.</p>
-<p>Whereas before, for example <code>FitsHdu</code> was stored in <code>fitsfile.rs</code>, it
-now has it's own location under <code>hdu.rs</code>.</p>
-<p>This means the typical imports, for all functionality now look like
-this:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-use fitsio::FitsFile;
-use fitsio::hdu::HduInfo;
-use fitsio::images::{ImageDescription, ImageType};
-use fitsio::tables::{ColumnDataType, ColumnDescription, FitsRow};
-use fitsio::errors::{Result, Error};
-#}</code></pre></pre>
-<p>This may be put into a <code>prelude</code> in the future, but it's really not that
-much to import, especially if only partial functionality is needed.</p>
-<a class="header" href="print.html#migrating-to-v0140" id="migrating-to-v0140"><h2>Migrating to v0.14.0</h2></a>
-<p>The above types' previous and current locations are listed below for
-those transitioning:</p>
-<ul>
-<li><code>FitsFile</code>: no change (<code>fitsfile</code>)</li>
-<li><code>FitsHdu</code>: <code>fitsfile</code> -&gt; <code>hdu</code></li>
-<li><code>HduInfo</code>: <code>types</code> -&gt; <code>hdu</code></li>
-<li><code>ImageDescription</code>: <code>fitsfile</code> -&gt; <code>images</code></li>
-<li><code>ImageType</code>: <code>types</code> -&gt; <code>images</code></li>
-<li><code>ColumnDataType</code>: <code>columndescription</code> -&gt; <code>tables</code></li>
-<li><code>ColumnDescription</code>: <code>columndescription</code> -&gt; <code>tables</code></li>
-<li><code>FitsRow</code>: <code>fitsfile</code> -&gt; <code>tables</code></li>
-<li><code>Result</code>: no change (<code>errors</code>)</li>
-<li><code>Error</code>: no change (<code>errors</code>)</li>
-</ul>
-<a class="header" href="print.html#ndarray-support" id="ndarray-support"><h1>ndarray support</h1></a>
+                        <a class="header" href="news/ndarray-support.html#ndarray-support" id="ndarray-support"><h1>ndarray support</h1></a>
 <p>Date: 2018-04-02</p>
 <p>The latest feature has been added to the master branch. <code>fitsio</code> now
 supports reading image data into <a href="https://crates.io/crates/ndarray"><code>ndarray</code></a> arrays.</p>
@@ -230,7 +168,7 @@ assert_eq!(new_image.ndim(), 2);
 objects coming in the future, but it is not currently supported.</p>
 <p>I hope to be adding <code>ndarray</code> support to a formal versioned release
 soon.</p>
-<a class="header" href="print.html#contributions" id="contributions"><h2>Contributions</h2></a>
+<a class="header" href="news/ndarray-support.html#contributions" id="contributions"><h2>Contributions</h2></a>
 <ul>
 <li><a href="https://users.rust-lang.org/u/astrojhgu/summary">astrojghu</a> for seeding the idea in <a href="https://users.rust-lang.org/t/calling-all-rusty-astronomers/14099">this thread</a></li>
 </ul>
@@ -239,6 +177,10 @@ soon.</p>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="news/restructuring.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
                         
 
                         
@@ -249,6 +191,10 @@ soon.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a href="news/restructuring.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
                 
 
                 
@@ -283,12 +229,6 @@ soon.</p>
         <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
         
 
-        
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                window.print();
-            })
-        </script>
         
 
         <script src="highlight.js"></script>
