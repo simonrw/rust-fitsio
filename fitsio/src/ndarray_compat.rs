@@ -20,10 +20,10 @@ Data is read into the [`ndarray::ArrayD`][arrayd] type. The following methods fr
 # extern crate fitsio;
 # #[cfg(feature = "array")]
 # extern crate ndarray;
-# use fitsio::FitsFile;
+use fitsio::FitsFile;
 # #[cfg(feature = "array")]
-# use ndarray::ArrayD;
-#
+use ndarray::ArrayD;
+
 # #[cfg(feature = "array")]
 # fn main() {
 let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -47,10 +47,10 @@ assert_eq!(data[[20, 5]], 152);
 # extern crate fitsio;
 # #[cfg(feature = "array")]
 # extern crate ndarray;
-# use fitsio::FitsFile;
+use fitsio::FitsFile;
 # #[cfg(feature = "array")]
-# use ndarray::ArrayD;
-#
+use ndarray::ArrayD;
+
 # #[cfg(feature = "array")]
 # fn main() {
 let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -74,10 +74,10 @@ assert_eq!(data[[5, 10]], 160);
 # extern crate fitsio;
 # #[cfg(feature = "array")]
 # extern crate ndarray;
-# use fitsio::FitsFile;
+use fitsio::FitsFile;
 # #[cfg(feature = "array")]
-# use ndarray::ArrayD;
-#
+use ndarray::ArrayD;
+
 # #[cfg(feature = "array")]
 # fn main() {
 let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -98,10 +98,10 @@ assert_eq!(data[20], 156);
 # extern crate fitsio;
 # #[cfg(feature = "array")]
 # extern crate ndarray;
-# use fitsio::FitsFile;
+use fitsio::FitsFile;
 # #[cfg(feature = "array")]
-# use ndarray::ArrayD;
-#
+use ndarray::ArrayD;
+
 # #[cfg(feature = "array")]
 # fn main() {
 let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -125,11 +125,11 @@ assert_eq!(data[[1, 52]], 184);
 # extern crate fitsio;
 # #[cfg(feature = "array")]
 # extern crate ndarray;
-# use fitsio::FitsFile;
-# use fitsio::errors::Error;
+use fitsio::FitsFile;
+use fitsio::errors::Error;
 # #[cfg(feature = "array")]
-# use ndarray::ArrayD;
-#
+use ndarray::ArrayD;
+
 # #[cfg(feature = "array")]
 # fn main() {
 let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();

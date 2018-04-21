@@ -128,13 +128,12 @@ impl FitsFile {
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
-    # use fitsio::FitsFile;
-    # use fitsio::images::{ImageDescription, ImageType};
     # fn try_main() -> Result<(), Box<std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     use fitsio::FitsFile;
+    use fitsio::images::{ImageDescription, ImageType};
 
     // let filename = ...;
     let description = ImageDescription {
@@ -213,7 +212,7 @@ impl FitsFile {
     # #[cfg(feature = "bindgen")]
     # extern crate fitsio_sys_bindgen as sys;
     # use fitsio::FitsFile;
-    # use fitsio::hdu::HduInfo;
+    use fitsio::hdu::HduInfo;
     #
     # fn try_main() -> Result<(), Box<std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
@@ -429,7 +428,8 @@ impl FitsFile {
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
-    # use fitsio::tables::{ColumnDataType, ColumnDescription};
+    use fitsio::tables::{ColumnDataType, ColumnDescription};
+
     # fn try_main() -> Result<(), Box<std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-")?;
     # let tdir_path = tdir.path();
@@ -512,7 +512,8 @@ impl FitsFile {
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
-    # use fitsio::images::{ImageDescription, ImageType};
+    use fitsio::images::{ImageDescription, ImageType};
+
     # fn try_main() -> Result<(), Box<std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-")?;
     # let tdir_path = tdir.path();
@@ -614,7 +615,8 @@ impl FitsFile {
 
     ```rust
     # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # use fitsio::FitsFile;
+    use fitsio::FitsFile;
+
     # let filename = "../testdata/full_example.fits";
     # use std::io;
     let mut fptr = FitsFile::open(filename)?;
@@ -646,7 +648,8 @@ impl FitsFile {
 
     ```rust
     # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # use fitsio::FitsFile;
+    use fitsio::FitsFile;
+
     # let filename = "../testdata/full_example.fits";
     # use std::io;
     let mut fptr = FitsFile::open(filename)?;
@@ -733,7 +736,8 @@ impl FitsFile {
     # #[cfg(feature="bindgen")]
     # extern crate fitsio_sys_bindgen as fitsio_sys;
 
-    # use fitsio::FitsFile;
+    use fitsio::FitsFile;
+
     # fn try_main() -> Result<(), Box<std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     let fptr = FitsFile::open(filename)?;
@@ -794,14 +798,13 @@ custom primary HDU.
 ```rust
 # extern crate tempdir;
 # extern crate fitsio;
-# use fitsio::FitsFile;
-# use fitsio::images::{ImageDescription, ImageType};
 # fn main() {
 # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 # let tdir_path = tdir.path();
 # let _filename = tdir_path.join("test.fits");
 # let filename = _filename.to_str().unwrap();
 use fitsio::FitsFile;
+use fitsio::images::{ImageDescription, ImageType};
 
 // let filename = ...;
 let description = ImageDescription {
@@ -823,7 +826,6 @@ temporary representation.
 ```rust
 # extern crate tempdir;
 # extern crate fitsio;
-# use fitsio::FitsFile;
 # fn main() {
 # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
 # let tdir_path = tdir.path();
@@ -907,13 +909,12 @@ where
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
-    # use fitsio::FitsFile;
-    # use fitsio::images::{ImageType, ImageDescription};
     # fn try_main() -> Result<(), Box<std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-")?;
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     use fitsio::FitsFile;
+    use fitsio::images::{ImageType, ImageDescription};
 
     // let filename = ...;
     let description = ImageDescription {
@@ -952,13 +953,12 @@ where
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
-    # use fitsio::FitsFile;
-    # use fitsio::images::{ImageType, ImageDescription};
     # fn try_main() -> Result<(), Box<std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-")?;
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
-    # use fitsio::FitsFile;
+    use fitsio::FitsFile;
+
     // filename already exists
     let fptr = FitsFile::create(filename)
         .overwrite()
