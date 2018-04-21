@@ -60,7 +60,6 @@ Alternatively a new file can be created on disk with the companion method
 ```rust
 # extern crate tempdir;
 # extern crate fitsio;
-# use fitsio::FitsFile;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
@@ -90,13 +89,12 @@ example of not adding a custom primary HDU is shown above. Below we see an examp
 ```rust
 # extern crate tempdir;
 # extern crate fitsio;
-# use fitsio::FitsFile;
-# use fitsio::images::{ImageType, ImageDescription};
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 use fitsio::FitsFile;
+use fitsio::images::{ImageType, ImageDescription};
 
 // let filename = ...;
 let description = ImageDescription {
@@ -138,9 +136,10 @@ cousin [`pretty_write`][pretty-write].
 
 ```rust
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# use fitsio::FitsFile;
 # let filename = "../testdata/full_example.fits";
 # use std::io;
+use fitsio::FitsFile;
+
 let mut fptr = FitsFile::open(filename)?;
 fptr.pretty_print()?;
 // or
@@ -177,11 +176,12 @@ object contains information about the current HDU:
 # #[cfg(feature = "bindgen")]
 # extern crate fitsio_sys_bindgen as sys;
 # use fitsio::FitsFile;
-# use fitsio::hdu::HduInfo;
 #
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = FitsFile::open(filename)?;
+use fitsio::hdu::HduInfo;
+
 let hdu = fptr.hdu(0)?;
 // image HDU
 if let HduInfo::ImageInfo { shape, .. } = hdu.info {
@@ -214,12 +214,13 @@ the desired image:
 ```rust
 # extern crate tempdir;
 # extern crate fitsio;
-# use fitsio::images::{ImageDescription, ImageType};
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+use fitsio::images::{ImageDescription, ImageType};
+
 let image_description = ImageDescription {
     data_type: ImageType::Float,
     dimensions: &[100, 100],
@@ -242,12 +243,13 @@ name, and a slice of [`ColumnDescription`][column-description]s:
 ```rust
 # extern crate tempdir;
 # extern crate fitsio;
-# use fitsio::tables::{ColumnDescription, ColumnDataType};
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+use fitsio::tables::{ColumnDescription, ColumnDataType};
+
 let first_description = ColumnDescription::new("A")
     .with_type(ColumnDataType::Int)
     .create()?;
@@ -278,8 +280,9 @@ with the `scalar` method:
 
 ```rust
 # extern crate fitsio;
-# use fitsio::tables::{ColumnDescription, ColumnDataDescription, ColumnDataType};
 # fn main() {
+use fitsio::tables::{ColumnDescription, ColumnDataDescription, ColumnDataType};
+
 let desc = ColumnDataDescription::scalar(ColumnDataType::Int);
 assert_eq!(desc.repeat, 1);
 assert_eq!(desc.width, 1);
@@ -290,8 +293,9 @@ Vector columns can be constructed with the `vector` method:
 
 ```rust
 # extern crate fitsio;
-# use fitsio::tables::{ColumnDataDescription, ColumnDescription, ColumnDataType};
 # fn main() {
+use fitsio::tables::{ColumnDataDescription, ColumnDescription, ColumnDataType};
+
 let desc = ColumnDataDescription::vector(ColumnDataType::Int, 100);
 assert_eq!(desc.repeat, 100);
 assert_eq!(desc.width, 1);
@@ -303,8 +307,9 @@ be obtained:
 
 ```rust
 # extern crate fitsio;
-# use fitsio::tables::{ColumnDataDescription, ColumnDescription, ColumnDataType};
 # fn main() {
+use fitsio::tables::{ColumnDataDescription, ColumnDescription, ColumnDataType};
+
 let desc = ColumnDataDescription::scalar(ColumnDataType::Int);
 assert_eq!(String::from(desc), "1J".to_string());
 # }
@@ -514,12 +519,13 @@ the [`ndarray::ArrayD`][arrayd] type:
 # extern crate fitsio;
 # #[cfg(feature = "array")]
 # extern crate ndarray;
-# use fitsio::FitsFile;
-# #[cfg(feature = "array")]
-# use ndarray::ArrayD;
 #
 # #[cfg(feature = "array")]
 # fn main() {
+use fitsio::FitsFile;
+# #[cfg(feature = "array")]
+use ndarray::ArrayD;
+
 let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
 let hdu = f.primary_hdu().unwrap();
 
@@ -733,7 +739,6 @@ again. This ensures the image changes are reflected in the hew HDU object.
 # extern crate tempdir;
 # extern crate fitsio;
 # use std::fs::copy;
-# use fitsio::hdu::HduInfo;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
@@ -742,8 +747,10 @@ again. This ensures the image changes are reflected in the hew HDU object.
 # let filename = filename.to_str().unwrap();
 # let mut fptr = fitsio::FitsFile::edit(filename)?;
 # let hdu = fptr.hdu(0)?;
+use fitsio::hdu::HduInfo;
+
 hdu.resize(&mut fptr, &[1024, 1024])?;
-#
+
 // Have to get the HDU again, to reflect the latest changes
 let hdu = fptr.hdu(0)?;
 match hdu.info {
@@ -840,8 +847,8 @@ preferred as it does not require shifting of data within the file.
 ```rust
 # extern crate fitsio;
 # extern crate tempdir;
-# use fitsio::images::{ImageType, ImageDescription};
-# use fitsio::tables::{ColumnDescription, ColumnDataType};
+use fitsio::tables::{ColumnDescription, ColumnDataType};
+
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
@@ -870,9 +877,7 @@ The column can either be accessed by integer or name
 ```rust
 # extern crate fitsio;
 # extern crate tempdir;
-# use fitsio::images::{ImageType, ImageDescription};
 # use fitsio::tables::{ColumnDescription, ColumnDataType};
-#
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -918,7 +923,8 @@ extern crate fitsio_sys;
 # #[cfg(feature="bindgen")]
 # extern crate fitsio_sys_bindgen as fitsio_sys;
 
-# use fitsio::FitsFile;
+use fitsio::FitsFile;
+
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 let fptr = FitsFile::open(filename)?;
@@ -940,7 +946,7 @@ assert_eq!(num_hdus, 2);
 # fn main() { try_main().unwrap(); }
 ```
 
-This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][2] library directly.
+This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][fitsio-sys] library directly.
 
 [cfitsio]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
 [fitsio-sys]: https://crates.io/crates/fitsio-sys
