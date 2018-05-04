@@ -1,15 +1,15 @@
 //! Fits HDU related code
 
-use std::ffi;
-use std::ops::Range;
+use errors::{check_status, Result};
+use fitsfile::CaseSensitivity;
 use fitsfile::FitsFile;
 use headers::{ReadsKey, WritesKey};
 use images::{ImageType, ReadImage, WriteImage};
+use longnam::*;
+use std::ffi;
+use std::ops::Range;
 use tables::{ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation, FitsRow,
              ReadsCol, WritesCol};
-use longnam::*;
-use fitsfile::CaseSensitivity;
-use errors::{check_status, Result};
 
 /// Struct representing a FITS HDU
 #[derive(Debug, PartialEq)]
@@ -1103,7 +1103,7 @@ pub enum HduInfo {
 }
 
 macro_rules! hduinfo_into_impl {
-    ($t: ty) => (
+    ($t:ty) => {
         impl From<HduInfo> for $t {
             fn from(original: HduInfo) -> $t {
                 match original {
@@ -1113,7 +1113,7 @@ macro_rules! hduinfo_into_impl {
                 }
             }
         }
-    )
+    };
 }
 
 hduinfo_into_impl!(i8);

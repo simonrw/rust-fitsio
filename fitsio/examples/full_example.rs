@@ -19,9 +19,9 @@ extern crate tempdir;
 use std::error::Error;
 use tempdir::TempDir;
 
-use fitsio::FitsFile;
 use fitsio::images::{ImageDescription, ImageType};
 use fitsio::tables::{ColumnDataType, ColumnDescription, FitsRow};
+use fitsio::FitsFile;
 
 fn run() -> Result<(), Box<Error>> {
     /* Create a temporary directory to work from */

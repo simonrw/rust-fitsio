@@ -1,15 +1,15 @@
 //! Table-related code
-use std::ptr;
-use std::str::FromStr;
-use std::ffi;
 use errors::{check_status, Error, FitsError, IndexError, Result};
-use stringutils::status_to_string;
 use fitsfile::FitsFile;
 use hdu::{FitsHdu, HduInfo};
-use types::DataType;
-use std::ops::Range;
-use longnam::*;
 use libc;
+use longnam::*;
+use std::ffi;
+use std::ops::Range;
+use std::ptr;
+use std::str::FromStr;
+use stringutils::status_to_string;
+use types::DataType;
 
 /// Trait for reading a fits column
 pub trait ReadsCol {
@@ -45,86 +45,104 @@ pub trait ReadsCol {
 }
 
 macro_rules! reads_col_impl {
-    ($t: ty, $func: ident, $nullval: expr) => (
+    ($t:ty, $func:ident, $nullval:expr) => {
         impl ReadsCol for $t {
-            fn read_col_range<T: Into<String>>(fits_file: &FitsFile, name: T, range: &Range<usize>)
-                -> Result<Vec<Self>> {
-                    match fits_file.fetch_hdu_info() {
-                        Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
-                            let num_output_rows = range.end - range.start;
-                            let mut out = vec![$nullval; num_output_rows];
-                            let test_name = name.into();
-                            let column_number = column_descriptions
-                                .iter()
-                                .position(|ref desc| { desc.name == test_name })
-                                .ok_or(Error::Message(
-                                        format!("Cannot find column {:?}", test_name)))?;
-                            let mut status = 0;
-                            unsafe {
-                                $func(fits_file.fptr as *mut _,
-                                           (column_number + 1) as i32,
-                                           (range.start + 1) as i64,
-                                           1,
-                                           num_output_rows as _,
-                                           $nullval,
-                                           out.as_mut_ptr(),
-                                           ptr::null_mut(),
-                                           &mut status);
+            fn read_col_range<T: Into<String>>(
+                fits_file: &FitsFile,
+                name: T,
+                range: &Range<usize>,
+            ) -> Result<Vec<Self>> {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::TableInfo {
+                        column_descriptions,
+                        ..
+                    }) => {
+                        let num_output_rows = range.end - range.start;
+                        let mut out = vec![$nullval; num_output_rows];
+                        let test_name = name.into();
+                        let column_number = column_descriptions
+                            .iter()
+                            .position(|ref desc| desc.name == test_name)
+                            .ok_or(Error::Message(format!(
+                                "Cannot find column {:?}",
+                                test_name
+                            )))?;
+                        let mut status = 0;
+                        unsafe {
+                            $func(
+                                fits_file.fptr as *mut _,
+                                (column_number + 1) as i32,
+                                (range.start + 1) as i64,
+                                1,
+                                num_output_rows as _,
+                                $nullval,
+                                out.as_mut_ptr(),
+                                ptr::null_mut(),
+                                &mut status,
+                            );
+                        }
 
-                            }
-
-                            match status {
-                                0 => Ok(out),
-                                307 => Err(IndexError {
-                                    message: "given indices out of range".to_string(),
-                                    given: range.clone(),
-                                }.into()),
-                                e => Err(FitsError {
-                                    status: e,
-                                    message: status_to_string(e).unwrap().unwrap(),
-                                }.into()),
-                            }
-                        },
-                        Err(e) => Err(e),
-                        _ => panic!("Unknown error occurred"),
+                        match status {
+                            0 => Ok(out),
+                            307 => Err(IndexError {
+                                message: "given indices out of range".to_string(),
+                                given: range.clone(),
+                            }.into()),
+                            e => Err(FitsError {
+                                status: e,
+                                message: status_to_string(e).unwrap().unwrap(),
+                            }.into()),
+                        }
                     }
+                    Err(e) => Err(e),
+                    _ => panic!("Unknown error occurred"),
                 }
+            }
 
             #[doc(hidden)]
             fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
-                where T: Into<String>,
-                      Self: Sized {
-                          match fits_file.fetch_hdu_info() {
-                              Ok(HduInfo::TableInfo { column_descriptions, .. }) => {
-                                  let mut out = $nullval;
-                                  let test_name = name.into();
-                                  let column_number = column_descriptions
-                                      .iter()
-                                      .position(|ref desc| { desc.name == test_name })
-                                      .ok_or(Error::Message(
-                                              format!("Cannot find column {:?}", test_name)))?;
-                                  let mut status = 0;
+            where
+                T: Into<String>,
+                Self: Sized,
+            {
+                match fits_file.fetch_hdu_info() {
+                    Ok(HduInfo::TableInfo {
+                        column_descriptions,
+                        ..
+                    }) => {
+                        let mut out = $nullval;
+                        let test_name = name.into();
+                        let column_number = column_descriptions
+                            .iter()
+                            .position(|ref desc| desc.name == test_name)
+                            .ok_or(Error::Message(format!(
+                                "Cannot find column {:?}",
+                                test_name
+                            )))?;
+                        let mut status = 0;
 
-                                  unsafe {
-                                      $func(fits_file.fptr as *mut _,
-                                                 (column_number + 1) as i32,
-                                                 (idx + 1) as i64,
-                                                 1,
-                                                 1,
-                                                 $nullval,
-                                                 &mut out,
-                                                 ptr::null_mut(),
-                                                 &mut status);
-                                  }
+                        unsafe {
+                            $func(
+                                fits_file.fptr as *mut _,
+                                (column_number + 1) as i32,
+                                (idx + 1) as i64,
+                                1,
+                                1,
+                                $nullval,
+                                &mut out,
+                                ptr::null_mut(),
+                                &mut status,
+                            );
+                        }
 
-                                  check_status(status).map(|_| out)
-                              }
-                              Err(e) => Err(e),
-                              _ => panic!("Unknown error occurred"),
-                          }
-                      }
+                        check_status(status).map(|_| out)
+                    }
+                    Err(e) => Err(e),
+                    _ => panic!("Unknown error occurred"),
+                }
+            }
         }
-    )
+    };
 }
 
 reads_col_impl!(i32, fits_read_col_int, 0);
@@ -252,14 +270,15 @@ pub trait WritesCol {
 }
 
 macro_rules! writes_col_impl {
-    ($t: ty, $data_type: expr) => (
+    ($t:ty, $data_type:expr) => {
         impl WritesCol for $t {
-            fn write_col_range<T: Into<String>>(fits_file: &mut FitsFile,
+            fn write_col_range<T: Into<String>>(
+                fits_file: &mut FitsFile,
                 hdu: &FitsHdu,
                 col_name: T,
                 col_data: &[Self],
-                rows: &Range<usize>)
-            -> Result<FitsHdu> {
+                rows: &Range<usize>,
+            ) -> Result<FitsHdu> {
                 match fits_file.fetch_hdu_info() {
                     Ok(HduInfo::TableInfo { .. }) => {
                         let colno = hdu.get_column_no(fits_file, col_name.into())?;
@@ -275,20 +294,22 @@ macro_rules! writes_col_impl {
                                 1,
                                 n_elements as _,
                                 col_data.as_ptr() as *mut _,
-                                &mut status
+                                &mut status,
                             );
                         }
                         check_status(status).and_then(|_| fits_file.current_hdu())
-                    },
-                    Ok(HduInfo::ImageInfo { .. }) =>
-                        Err("Cannot write column data to FITS image".into()),
-                    Ok(HduInfo::AnyInfo { .. }) =>
-                        Err("Cannot determine HDU type, so cannot write column data".into()),
+                    }
+                    Ok(HduInfo::ImageInfo { .. }) => {
+                        Err("Cannot write column data to FITS image".into())
+                    }
+                    Ok(HduInfo::AnyInfo { .. }) => {
+                        Err("Cannot determine HDU type, so cannot write column data".into())
+                    }
                     Err(e) => Err(e),
                 }
             }
         }
-    )
+    };
 }
 
 writes_col_impl!(u32, DataType::TUINT);
@@ -609,7 +630,7 @@ impl<'a> DescribesColumnLocation for &'a str {
 }
 
 macro_rules! datatype_into_impl {
-    ($t: ty) => (
+    ($t:ty) => {
         impl From<DataType> for $t {
             fn from(original: DataType) -> $t {
                 match original {
@@ -632,7 +653,7 @@ macro_rules! datatype_into_impl {
                 }
             }
         }
-    )
+    };
 }
 
 datatype_into_impl!(u8);

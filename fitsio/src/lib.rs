@@ -1000,6 +1000,7 @@ This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][fitsio
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
+extern crate bit_vec;
 #[cfg(feature = "default")]
 extern crate fitsio_sys;
 #[cfg(feature = "bindgen")]
@@ -1010,20 +1011,22 @@ extern crate ndarray;
 
 #[macro_use]
 mod macros;
-mod stringutils;
-mod longnam;
-mod types;
 mod fitsfile;
+mod longnam;
 #[cfg(feature = "array")]
 mod ndarray_compat;
+pub mod nullvec;
+mod stringutils;
 #[cfg(test)]
 mod testhelpers;
+mod types;
 
 // Public mods
+pub mod hdu;
 pub mod headers;
 pub mod images;
 pub mod tables;
-pub mod hdu;
+pub mod possibly_nullable;
 
 pub mod errors;
 

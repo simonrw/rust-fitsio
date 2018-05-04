@@ -1,11 +1,11 @@
 //! Image related code
-use std::ptr;
-use std::ops::Range;
+use errors::{check_status, Result};
 use fitsfile::FitsFile;
 use hdu::{FitsHdu, HduInfo};
-use types::DataType;
 use longnam::*;
-use errors::{check_status, Result};
+use std::ops::Range;
+use std::ptr;
+use types::DataType;
 
 /// Reading fits images
 pub trait ReadImage: Sized {
@@ -88,13 +88,13 @@ pub trait WriteImage: Sized {
 }
 
 macro_rules! read_image_impl_vec {
-    ($t: ty, $default_value: expr, $data_type: expr) => (
+    ($t:ty, $default_value:expr, $data_type:expr) => {
         impl ReadImage for Vec<$t> {
-
             fn read_section(
                 fits_file: &mut FitsFile,
                 hdu: &FitsHdu,
-                range: Range<usize>) -> Result<Self> {
+                range: Range<usize>,
+            ) -> Result<Self> {
                 match hdu.info {
                     HduInfo::ImageInfo { .. } => {
                         let nelements = range.end - range.start;
@@ -102,168 +102,185 @@ macro_rules! read_image_impl_vec {
                         let mut status = 0;
 
                         unsafe {
-                            fits_read_img(fits_file.fptr as *mut _,
-                                          $data_type.into(),
-                                          (range.start + 1) as i64,
-                                          nelements as i64,
-                                          ptr::null_mut(),
-                                          out.as_mut_ptr() as *mut _,
-                                          ptr::null_mut(),
-                                          &mut status);
+                            fits_read_img(
+                                fits_file.fptr as *mut _,
+                                $data_type.into(),
+                                (range.start + 1) as i64,
+                                nelements as i64,
+                                ptr::null_mut(),
+                                out.as_mut_ptr() as *mut _,
+                                ptr::null_mut(),
+                                &mut status,
+                            );
                         }
 
                         check_status(status).map(|_| out)
-                    },
-                    HduInfo::TableInfo { .. } =>
-                        Err("cannot read image data from a table hdu".into()),
+                    }
+                    HduInfo::TableInfo { .. } => {
+                        Err("cannot read image data from a table hdu".into())
+                    }
                     HduInfo::AnyInfo => unreachable!(),
                 }
             }
 
-            fn read_rows(fits_file: &mut FitsFile, hdu: &FitsHdu, start_row: usize, num_rows: usize)
-                -> Result<Self> {
-                    match hdu.info {
-                        HduInfo::ImageInfo { ref shape, .. } => {
-                            if shape.len() != 2 {
-                                unimplemented!();
-                            }
+            fn read_rows(
+                fits_file: &mut FitsFile,
+                hdu: &FitsHdu,
+                start_row: usize,
+                num_rows: usize,
+            ) -> Result<Self> {
+                match hdu.info {
+                    HduInfo::ImageInfo { ref shape, .. } => {
+                        if shape.len() != 2 {
+                            unimplemented!();
+                        }
 
-                            let num_cols = shape[1];
-                            let start = start_row * num_cols;
-                            let end = (start_row + num_rows) * num_cols;
+                        let num_cols = shape[1];
+                        let start = start_row * num_cols;
+                        let end = (start_row + num_rows) * num_cols;
 
-                            Self::read_section(fits_file, hdu, start..end)
-                        },
-                        HduInfo::TableInfo { .. } =>
-                            Err("cannot read image data from a table hdu".into()),
-                        HduInfo::AnyInfo => unreachable!(),
+                        Self::read_section(fits_file, hdu, start..end)
                     }
+                    HduInfo::TableInfo { .. } => {
+                        Err("cannot read image data from a table hdu".into())
+                    }
+                    HduInfo::AnyInfo => unreachable!(),
                 }
+            }
 
             fn read_row(fits_file: &mut FitsFile, hdu: &FitsHdu, row: usize) -> Result<Self> {
                 Self::read_rows(fits_file, hdu, row, 1)
             }
 
-            fn read_region(fits_file: &mut FitsFile, hdu: &FitsHdu, ranges: &[&Range<usize>])
-                -> Result<Self> {
-                    match hdu.info {
-                        HduInfo::ImageInfo { .. } => {
-                            let n_ranges = ranges.len();
+            fn read_region(
+                fits_file: &mut FitsFile,
+                hdu: &FitsHdu,
+                ranges: &[&Range<usize>],
+            ) -> Result<Self> {
+                match hdu.info {
+                    HduInfo::ImageInfo { .. } => {
+                        let n_ranges = ranges.len();
 
-                            let mut fpixel = Vec::with_capacity(n_ranges);
-                            let mut lpixel = Vec::with_capacity(n_ranges);
+                        let mut fpixel = Vec::with_capacity(n_ranges);
+                        let mut lpixel = Vec::with_capacity(n_ranges);
 
-                            let mut nelements = 1;
-                            for range in ranges {
-                                let start = range.start + 1;
-                                let end = range.end + 1;
-                                fpixel.push(start as _);
-                                lpixel.push(end as _);
+                        let mut nelements = 1;
+                        for range in ranges {
+                            let start = range.start + 1;
+                            let end = range.end + 1;
+                            fpixel.push(start as _);
+                            lpixel.push(end as _);
 
-                                nelements *= end - start;
-                            }
-
-                            let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
-                            let mut out = vec![$default_value; nelements];
-                            let mut status = 0;
-
-                            unsafe {
-                                fits_read_subset(
-                                    fits_file.fptr as *mut _,
-                                    $data_type.into(),
-                                    fpixel.as_mut_ptr(),
-                                    lpixel.as_mut_ptr(),
-                                    inc.as_mut_ptr(),
-                                    ptr::null_mut(),
-                                    out.as_mut_ptr() as *mut _,
-                                    ptr::null_mut(),
-                                    &mut status);
-
-                            }
-
-                            check_status(status).map(|_| out)
+                            nelements *= end - start;
                         }
-                        HduInfo::TableInfo { .. } =>
-                            Err("cannot read image data from a table hdu".into()),
-                        HduInfo::AnyInfo => unreachable!(),
+
+                        let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
+                        let mut out = vec![$default_value; nelements];
+                        let mut status = 0;
+
+                        unsafe {
+                            fits_read_subset(
+                                fits_file.fptr as *mut _,
+                                $data_type.into(),
+                                fpixel.as_mut_ptr(),
+                                lpixel.as_mut_ptr(),
+                                inc.as_mut_ptr(),
+                                ptr::null_mut(),
+                                out.as_mut_ptr() as *mut _,
+                                ptr::null_mut(),
+                                &mut status,
+                            );
+                        }
+
+                        check_status(status).map(|_| out)
                     }
+                    HduInfo::TableInfo { .. } => {
+                        Err("cannot read image data from a table hdu".into())
+                    }
+                    HduInfo::AnyInfo => unreachable!(),
                 }
+            }
         }
-    )
+    };
 }
 
 macro_rules! write_image_impl {
-    ($t: ty, $default_value: expr, $data_type: expr) => (
+    ($t:ty, $default_value:expr, $data_type:expr) => {
         impl WriteImage for $t {
             fn write_section(
                 fits_file: &mut FitsFile,
                 hdu: &FitsHdu,
                 range: Range<usize>,
-                data: &[Self])
-                -> Result<()> {
-                    match hdu.info {
-                        HduInfo::ImageInfo { .. } => {
-                            let nelements = range.end - range.start;
-                            assert!(data.len() >= nelements);
-                            let mut status = 0;
-                            unsafe {
-                                fits_write_img(fits_file.fptr as *mut _,
-                                           $data_type.into(),
-                                           (range.start + 1) as i64,
-                                           nelements as i64,
-                                           data.as_ptr() as *mut _,
-                                           &mut status);
-                            }
+                data: &[Self],
+            ) -> Result<()> {
+                match hdu.info {
+                    HduInfo::ImageInfo { .. } => {
+                        let nelements = range.end - range.start;
+                        assert!(data.len() >= nelements);
+                        let mut status = 0;
+                        unsafe {
+                            fits_write_img(
+                                fits_file.fptr as *mut _,
+                                $data_type.into(),
+                                (range.start + 1) as i64,
+                                nelements as i64,
+                                data.as_ptr() as *mut _,
+                                &mut status,
+                            );
+                        }
 
-                            check_status(status)
-                        },
-                        HduInfo::TableInfo { .. } =>
-                            Err("cannot write image data to a table hdu".into()),
-                        HduInfo::AnyInfo => unreachable!(),
+                        check_status(status)
                     }
+                    HduInfo::TableInfo { .. } => {
+                        Err("cannot write image data to a table hdu".into())
+                    }
+                    HduInfo::AnyInfo => unreachable!(),
                 }
+            }
 
             fn write_region(
                 fits_file: &mut FitsFile,
                 hdu: &FitsHdu,
                 ranges: &[&Range<usize>],
-                data: &[Self])
-                -> Result<()> {
-                    match hdu.info {
-                        HduInfo::ImageInfo { .. } => {
-                            let n_ranges = ranges.len();
+                data: &[Self],
+            ) -> Result<()> {
+                match hdu.info {
+                    HduInfo::ImageInfo { .. } => {
+                        let n_ranges = ranges.len();
 
-                            let mut fpixel = Vec::with_capacity(n_ranges);
-                            let mut lpixel = Vec::with_capacity(n_ranges);
+                        let mut fpixel = Vec::with_capacity(n_ranges);
+                        let mut lpixel = Vec::with_capacity(n_ranges);
 
-                            for range in ranges {
-                                let start = range.start + 1;
-                                let end = range.end + 1;
-                                fpixel.push(start as _);
-                                lpixel.push(end as _);
-                            }
+                        for range in ranges {
+                            let start = range.start + 1;
+                            let end = range.end + 1;
+                            fpixel.push(start as _);
+                            lpixel.push(end as _);
+                        }
 
-                            let mut status = 0;
+                        let mut status = 0;
 
-                            unsafe {
-                                fits_write_subset(
-                                    fits_file.fptr as *mut _,
-                                    $data_type.into(),
-                                    fpixel.as_mut_ptr(),
-                                    lpixel.as_mut_ptr(),
-                                    data.as_ptr() as *mut _,
-                                    &mut status);
-                            }
+                        unsafe {
+                            fits_write_subset(
+                                fits_file.fptr as *mut _,
+                                $data_type.into(),
+                                fpixel.as_mut_ptr(),
+                                lpixel.as_mut_ptr(),
+                                data.as_ptr() as *mut _,
+                                &mut status,
+                            );
+                        }
 
-                            check_status(status)
-                        },
-                        HduInfo::TableInfo { .. } =>
-                            Err("cannot write image data to a table hdu".into()),
-                        HduInfo::AnyInfo => unreachable!(),
+                        check_status(status)
                     }
+                    HduInfo::TableInfo { .. } => {
+                        Err("cannot write image data to a table hdu".into())
+                    }
+                    HduInfo::AnyInfo => unreachable!(),
                 }
+            }
         }
-    )
+    };
 }
 
 read_image_impl_vec!(i8, i8::default(), DataType::TSHORT);
@@ -323,7 +340,7 @@ pub enum ImageType {
 }
 
 macro_rules! imagetype_into_impl {
-    ($t: ty) => (
+    ($t:ty) => {
         impl From<ImageType> for $t {
             fn from(original: ImageType) -> $t {
                 match original {
@@ -339,7 +356,7 @@ macro_rules! imagetype_into_impl {
                 }
             }
         }
-    )
+    };
 }
 
 imagetype_into_impl!(i8);

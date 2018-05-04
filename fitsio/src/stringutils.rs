@@ -1,7 +1,7 @@
+use errors::Result;
 use fitsio_sys::ffgerr;
 use libc::{c_char, c_int, size_t};
 use std::ffi::{CStr, CString};
-use errors::Result;
 
 /// Helper function converting a C string pointer to Rust String
 pub fn buf_to_string(buffer: &[c_char]) -> Result<String> {

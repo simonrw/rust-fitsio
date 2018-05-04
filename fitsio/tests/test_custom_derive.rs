@@ -4,8 +4,8 @@ extern crate fitsio;
 #[macro_use]
 extern crate fitsio_derive;
 
-use fitsio::FitsFile;
 use fitsio::tables::FitsRow;
+use fitsio::FitsFile;
 
 #[derive(Default, FitsRow)]
 struct Row {

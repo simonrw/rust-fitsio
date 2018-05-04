@@ -167,12 +167,12 @@ assert_eq!(data[[0, 10]], 160);
 [read-section]: images/struct.FitsHdu.html#method.read_section
 */
 
-use std::ops::Range;
+use errors::Result;
 use fitsfile::FitsFile;
 use hdu::{FitsHdu, HduInfo};
 use images::ReadImage;
-use errors::Result;
 use ndarray::{Array, ArrayD};
+use std::ops::Range;
 
 impl<T> ReadImage for ArrayD<T>
 where
@@ -256,8 +256,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::errors::Error;
+    use super::*;
 
     #[test]
     fn test_read_image() {

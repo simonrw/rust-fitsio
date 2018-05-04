@@ -5,9 +5,9 @@
  */
 extern crate fitsio;
 
-use fitsio::FitsFile;
 use fitsio::hdu::HduInfo;
 use fitsio::images::ImageType;
+use fitsio::FitsFile;
 
 #[test]
 fn test_ushort_reading() {
