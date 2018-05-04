@@ -1,0 +1,3 @@
+/*! Null vector implementation
+
+  */
