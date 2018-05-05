@@ -20,7 +20,7 @@ pub struct NullVec<T> {
 
 impl<T> NullVec<T>
 where
-    // Do we really want to specify Copy here?
+    // XXX Do we really want to specify Copy here?
     T: Default + Clone + Copy,
 {
     /// Create a new null vector
