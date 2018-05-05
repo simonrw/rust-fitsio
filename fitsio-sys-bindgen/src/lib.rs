@@ -61,10 +61,10 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 mod test {
     extern crate tempdir;
 
+    use super::*;
+    use libc::c_char;
     use std::ffi;
     use std::ptr;
-    use libc::c_char;
-    use super::*;
 
     #[test]
     fn raw_opening_an_existing_file() {

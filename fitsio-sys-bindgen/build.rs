@@ -1,11 +1,11 @@
 extern crate bindgen;
 extern crate pkg_config;
 
-use std::io::Write;
+use bindgen::RustTarget;
 use pkg_config::Error;
 use std::env;
+use std::io::Write;
 use std::path::PathBuf;
-use bindgen::RustTarget;
 
 fn main() {
     let package_name = "cfitsio";
