@@ -23,12 +23,6 @@ pub trait ReadsCol {
         Self: Sized;
 
     #[doc(hidden)]
-    fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
-    where
-        T: Into<String>,
-        Self: Sized;
-
-    #[doc(hidden)]
     fn read_col<T: Into<String>>(fits_file: &FitsFile, name: T) -> Result<Vec<Self>>
     where
         Self: Sized,
@@ -99,48 +93,6 @@ macro_rules! reads_col_impl {
                 }
             }
 
-            #[doc(hidden)]
-            fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
-            where
-                T: Into<String>,
-                Self: Sized,
-            {
-                match fits_file.fetch_hdu_info() {
-                    Ok(HduInfo::TableInfo {
-                        column_descriptions,
-                        ..
-                    }) => {
-                        let mut out = $nullval;
-                        let test_name = name.into();
-                        let column_number = column_descriptions
-                            .iter()
-                            .position(|ref desc| desc.name == test_name)
-                            .ok_or(Error::Message(format!(
-                                "Cannot find column {:?}",
-                                test_name
-                            )))?;
-                        let mut status = 0;
-
-                        unsafe {
-                            $func(
-                                fits_file.fptr as *mut _,
-                                (column_number + 1) as i32,
-                                (idx + 1) as i64,
-                                1,
-                                1,
-                                $nullval,
-                                &mut out,
-                                ptr::null_mut(),
-                                &mut status,
-                            );
-                        }
-
-                        check_status(status).map(|_| out)
-                    }
-                    Err(e) => Err(e),
-                    _ => panic!("Unknown error occurred"),
-                }
-            }
         }
     };
 }
@@ -220,12 +172,83 @@ impl ReadsCol for String {
             _ => panic!("Unknown error occurred"),
         }
     }
+}
 
+#[doc(hidden)]
+pub trait ReadsCell {
     #[doc(hidden)]
     fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
     where
         T: Into<String>,
-        Self: Sized,
+        Self: ReadsCol + Sized;
+}
+
+macro_rules! reads_cell_impl {
+    ($t:ty, $func:ident, $nullval:expr) => {
+        impl ReadsCell for $t {
+            #[doc(hidden)]
+            fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
+                where
+                    T: Into<String>,
+                    Self: ReadsCol + Sized,
+                    {
+                        match fits_file.fetch_hdu_info() {
+                            Ok(HduInfo::TableInfo {
+                                column_descriptions,
+                                ..
+                            }) => {
+                                let mut out = $nullval;
+                                let test_name = name.into();
+                                let column_number = column_descriptions
+                                    .iter()
+                                    .position(|ref desc| desc.name == test_name)
+                                    .ok_or(Error::Message(format!(
+                                                "Cannot find column {:?}",
+                                                test_name
+                                                )))?;
+                                let mut status = 0;
+
+                                unsafe {
+                                    $func(
+                                        fits_file.fptr as *mut _,
+                                        (column_number + 1) as i32,
+                                        (idx + 1) as i64,
+                                        1,
+                                        1,
+                                        $nullval,
+                                        &mut out,
+                                        ptr::null_mut(),
+                                        &mut status,
+                                        );
+                                }
+
+                                check_status(status).map(|_| out)
+                            }
+                            Err(e) => Err(e),
+                            _ => panic!("Unknown error occurred"),
+                        }
+                    }
+        }
+    }
+}
+
+reads_cell_impl!(i32, fits_read_col_int, 0);
+reads_cell_impl!(u32, fits_read_col_uint, 0);
+reads_cell_impl!(f32, fits_read_col_flt, 0.0);
+reads_cell_impl!(f64, fits_read_col_dbl, 0.0);
+#[cfg(target_pointer_width = "64")]
+reads_cell_impl!(i64, fits_read_col_lng, 0);
+#[cfg(target_pointer_width = "32")]
+reads_cell_impl!(i64, fits_read_col_lnglng, 0);
+#[cfg(target_pointer_width = "64")]
+reads_cell_impl!(u64, fits_read_col_ulng, 0);
+
+impl ReadsCell for String {
+    #[doc(hidden)]
+    fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
+    where
+        T: Into<String>,
+        Self: ReadsCol + Sized,
     {
         // XXX Ineffient but works
         Self::read_col_range(fits_file, name, &(idx..idx + 1)).map(|v| v[0].clone())

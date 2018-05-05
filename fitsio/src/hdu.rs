@@ -9,7 +9,7 @@ use longnam::*;
 use std::ffi;
 use std::ops::Range;
 use tables::{ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation, FitsRow,
-             ReadsCol, WritesCol};
+             ReadsCell, ReadsCol, WritesCol};
 
 /// Struct representing a FITS HDU
 #[derive(Debug, PartialEq)]
@@ -961,7 +961,7 @@ impl FitsHdu {
     */
     pub fn read_cell_value<T>(&self, fits_file: &mut FitsFile, name: &str, idx: usize) -> Result<T>
     where
-        T: ReadsCol,
+        T: ReadsCell + ReadsCol,
     {
         fits_file.make_current(self)?;
         T::read_cell_value(fits_file, name, idx)
