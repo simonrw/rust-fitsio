@@ -47,7 +47,7 @@ pub trait ReadsImage: Sized {
 }
 
 /// Reading fits images
-pub trait WriteImage: Sized {
+pub trait WritesImage: Sized {
     #[doc(hidden)]
     fn write_section(
         fits_file: &mut FitsFile,
@@ -206,7 +206,7 @@ macro_rules! read_image_impl_vec {
 
 macro_rules! write_image_impl {
     ($t:ty, $default_value:expr, $data_type:expr) => {
-        impl WriteImage for $t {
+        impl WritesImage for $t {
             fn write_section(
                 fits_file: &mut FitsFile,
                 hdu: &FitsHdu,

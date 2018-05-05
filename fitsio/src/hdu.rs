@@ -4,7 +4,7 @@ use errors::{check_status, Result};
 use fitsfile::CaseSensitivity;
 use fitsfile::FitsFile;
 use headers::{ReadsKey, WritesKey};
-use images::{ImageType, ReadsImage, WriteImage};
+use images::{ImageType, ReadsImage, WritesImage};
 use longnam::*;
 use std::ffi;
 use std::ops::Range;
@@ -281,7 +281,7 @@ impl FitsHdu {
     # fn main() { try_main().unwrap(); }
     ```
     */
-    pub fn write_section<T: WriteImage>(
+    pub fn write_section<T: WritesImage>(
         &self,
         fits_file: &mut FitsFile,
         start: usize,
@@ -326,7 +326,7 @@ impl FitsHdu {
     # fn main() { try_main().unwrap(); }
     ```
     */
-    pub fn write_region<T: WriteImage>(
+    pub fn write_region<T: WritesImage>(
         &self,
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
@@ -368,7 +368,7 @@ impl FitsHdu {
     # fn main() { try_main().unwrap(); }
     ```
     */
-    pub fn write_image<T: WriteImage>(&self, fits_file: &mut FitsFile, data: &[T]) -> Result<()> {
+    pub fn write_image<T: WritesImage>(&self, fits_file: &mut FitsFile, data: &[T]) -> Result<()> {
         fits_file.make_current(self)?;
         fits_check_readwrite!(fits_file);
         T::write_image(fits_file, self, data)
