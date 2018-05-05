@@ -75,7 +75,7 @@ where
         }
     }
 
-    pub fn get(&mut self, idx: usize) -> Option<T> {
+    pub fn get(&self, idx: usize) -> Option<T> {
         assert!(self.len() >= (idx + 1));
         if self.nullvals[idx] {
             Some(self.data[idx])
