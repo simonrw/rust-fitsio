@@ -1026,7 +1026,6 @@ pub mod hdu;
 pub mod headers;
 pub mod images;
 pub mod tables;
-pub mod possibly_nullable;
 
 pub mod errors;
 
