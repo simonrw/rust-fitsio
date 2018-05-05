@@ -170,14 +170,14 @@ assert_eq!(data[[0, 10]], 160);
 use errors::Result;
 use fitsfile::FitsFile;
 use hdu::{FitsHdu, HduInfo};
-use images::ReadImage;
+use images::ReadsImage;
 use ndarray::{Array, ArrayD};
 use std::ops::Range;
 
-impl<T> ReadImage for ArrayD<T>
+impl<T> ReadsImage for ArrayD<T>
 where
     T: Clone,
-    Vec<T>: ReadImage,
+    Vec<T>: ReadsImage,
 {
     fn read_section(fits_file: &mut FitsFile, hdu: &FitsHdu, range: Range<usize>) -> Result<Self> {
         match hdu.info {
@@ -201,7 +201,7 @@ where
                 }
 
                 let n_rows = n_pixels_requested / width;
-                ReadImage::read_rows(fits_file, hdu, start_pixel, n_rows)
+                ReadsImage::read_rows(fits_file, hdu, start_pixel, n_rows)
             }
             HduInfo::TableInfo { .. } => {
                 return Err("Cannot read image data from a FITS table".into())
@@ -216,14 +216,14 @@ where
         start_row: usize,
         num_rows: usize,
     ) -> Result<Self> {
-        let data: Vec<T> = ReadImage::read_rows(fits_file, hdu, start_row, num_rows)?;
+        let data: Vec<T> = ReadsImage::read_rows(fits_file, hdu, start_row, num_rows)?;
         let arr = Array::from_vec(data);
         let row_length = arr.len() / num_rows;
         Ok(arr.into_shape(vec![num_rows, row_length]).unwrap())
     }
 
     fn read_row(fits_file: &mut FitsFile, hdu: &FitsHdu, row: usize) -> Result<Self> {
-        let data: Vec<T> = ReadImage::read_row(fits_file, hdu, row)?;
+        let data: Vec<T> = ReadsImage::read_row(fits_file, hdu, row)?;
         let shape = vec![data.len()];
         Ok(Array::from_shape_vec(shape, data).unwrap())
     }
@@ -233,7 +233,7 @@ where
         hdu: &FitsHdu,
         ranges: &[&Range<usize>],
     ) -> Result<Self> {
-        let data: Vec<T> = ReadImage::read_region(fits_file, hdu, ranges)?;
+        let data: Vec<T> = ReadsImage::read_region(fits_file, hdu, ranges)?;
         let shape: Vec<usize> = (0..ranges.len())
             .map(|i| ranges[i].end - ranges[i].start)
             .collect();
@@ -244,7 +244,7 @@ where
     fn read_image(fits_file: &mut FitsFile, hdu: &FitsHdu) -> Result<Self> {
         match hdu.info {
             HduInfo::ImageInfo { ref shape, .. } => {
-                let data: Vec<T> = ReadImage::read_image(fits_file, hdu)?;
+                let data: Vec<T> = ReadsImage::read_image(fits_file, hdu)?;
                 let shape: Vec<usize> = (0..2).map(|i| shape[i]).collect();
                 let arr = Array::from_shape_vec(shape, data).unwrap();
                 Ok(arr)

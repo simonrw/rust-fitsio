@@ -8,7 +8,7 @@ use std::ptr;
 use types::DataType;
 
 /// Reading fits images
-pub trait ReadImage: Sized {
+pub trait ReadsImage: Sized {
     #[doc(hidden)]
     fn read_section(fits_file: &mut FitsFile, hdu: &FitsHdu, range: Range<usize>) -> Result<Self>;
 
@@ -89,7 +89,7 @@ pub trait WriteImage: Sized {
 
 macro_rules! read_image_impl_vec {
     ($t:ty, $default_value:expr, $data_type:expr) => {
-        impl ReadImage for Vec<$t> {
+        impl ReadsImage for Vec<$t> {
             fn read_section(
                 fits_file: &mut FitsFile,
                 hdu: &FitsHdu,

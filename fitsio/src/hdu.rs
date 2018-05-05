@@ -4,7 +4,7 @@ use errors::{check_status, Result};
 use fitsfile::CaseSensitivity;
 use fitsfile::FitsFile;
 use headers::{ReadsKey, WritesKey};
-use images::{ImageType, ReadImage, WriteImage};
+use images::{ImageType, ReadsImage, WriteImage};
 use longnam::*;
 use std::ffi;
 use std::ops::Range;
@@ -119,7 +119,7 @@ impl FitsHdu {
     # fn main() { try_main().unwrap(); }
     ```
     */
-    pub fn read_section<T: ReadImage>(
+    pub fn read_section<T: ReadsImage>(
         &self,
         fits_file: &mut FitsFile,
         start: usize,
@@ -150,7 +150,7 @@ impl FitsHdu {
     # fn main() { try_main().unwrap(); }
     ```
     */
-    pub fn read_rows<T: ReadImage>(
+    pub fn read_rows<T: ReadsImage>(
         &self,
         fits_file: &mut FitsFile,
         start_row: usize,
@@ -182,7 +182,7 @@ impl FitsHdu {
     # fn main() { try_main().unwrap(); }
     ```
     */
-    pub fn read_row<T: ReadImage>(&self, fits_file: &mut FitsFile, row: usize) -> Result<T> {
+    pub fn read_row<T: ReadsImage>(&self, fits_file: &mut FitsFile, row: usize) -> Result<T> {
         fits_file.make_current(self)?;
         T::read_row(fits_file, self, row)
     }
@@ -212,7 +212,7 @@ impl FitsHdu {
     # fn main() { try_main().unwrap(); }
     ```
     */
-    pub fn read_region<T: ReadImage>(
+    pub fn read_region<T: ReadsImage>(
         &self,
         fits_file: &mut FitsFile,
         ranges: &[&Range<usize>],
@@ -244,7 +244,7 @@ impl FitsHdu {
     # fn main() { try_main().unwrap(); }
     ```
     */
-    pub fn read_image<T: ReadImage>(&self, fits_file: &mut FitsFile) -> Result<T> {
+    pub fn read_image<T: ReadsImage>(&self, fits_file: &mut FitsFile) -> Result<T> {
         fits_file.make_current(self)?;
         T::read_image(fits_file, self)
     }
