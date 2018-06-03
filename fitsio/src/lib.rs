@@ -1010,20 +1010,20 @@ extern crate ndarray;
 
 #[macro_use]
 mod macros;
-mod stringutils;
-mod longnam;
-mod types;
 mod fitsfile;
+mod longnam;
 #[cfg(feature = "array")]
 mod ndarray_compat;
+mod stringutils;
 #[cfg(test)]
 mod testhelpers;
+mod types;
 
 // Public mods
+pub mod hdu;
 pub mod headers;
 pub mod images;
 pub mod tables;
-pub mod hdu;
 
 pub mod errors;
 

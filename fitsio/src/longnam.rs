@@ -46,15 +46,7 @@ pub unsafe fn fits_create_tbl(
     status: *mut c_int,
 ) -> c_int {
     ffcrtb(
-        fptr,
-        tbltype,
-        naxis2,
-        tfields,
-        ttype,
-        tform,
-        tunit,
-        extname,
-        status,
+        fptr, tbltype, naxis2, tfields, ttype, tform, tunit, extname, status,
     )
 }
 
@@ -92,17 +84,7 @@ pub unsafe fn fits_get_bcolparms(
     status: *mut c_int,
 ) -> c_int {
     ffgbcl(
-        fptr,
-        colnum,
-        ttype,
-        tunit,
-        dtype,
-        repeat,
-        tscal,
-        tzero,
-        tnull,
-        tdisp,
-        status,
+        fptr, colnum, ttype, tunit, dtype, repeat, tscal, tzero, tnull, tdisp, status,
     )
 }
 
@@ -137,15 +119,7 @@ pub unsafe fn fits_read_col_str(
     status: *mut c_int,
 ) -> c_int {
     ffgcvs(
-        fptr,
-        colnum,
-        firstrow,
-        firstelem,
-        nelem,
-        nulval,
-        array,
-        anynul,
-        status,
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }
 
@@ -161,15 +135,7 @@ pub unsafe fn fits_read_col_int(
     status: *mut c_int,
 ) -> c_int {
     ffgcvk(
-        fptr,
-        colnum,
-        firstrow,
-        firstelem,
-        nelem,
-        nulval,
-        array,
-        anynul,
-        status,
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }
 
@@ -185,15 +151,7 @@ pub unsafe fn fits_read_col_uint(
     status: *mut c_int,
 ) -> c_int {
     ffgcvuk(
-        fptr,
-        colnum,
-        firstrow,
-        firstelem,
-        nelem,
-        nulval,
-        array,
-        anynul,
-        status,
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }
 
@@ -209,15 +167,7 @@ pub unsafe fn fits_read_col_flt(
     status: *mut c_int,
 ) -> c_int {
     ffgcve(
-        fptr,
-        colnum,
-        firstrow,
-        firstelem,
-        nelem,
-        nulval,
-        array,
-        anynul,
-        status,
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }
 
@@ -233,15 +183,7 @@ pub unsafe fn fits_read_col_dbl(
     status: *mut c_int,
 ) -> c_int {
     ffgcvd(
-        fptr,
-        colnum,
-        firstrow,
-        firstelem,
-        nelem,
-        nulval,
-        array,
-        anynul,
-        status,
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }
 
@@ -257,15 +199,7 @@ pub unsafe fn fits_read_col_lng(
     status: *mut c_int,
 ) -> c_int {
     ffgcvj(
-        fptr,
-        colnum,
-        firstrow,
-        firstelem,
-        nelem,
-        nulval,
-        array,
-        anynul,
-        status,
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }
 
@@ -281,15 +215,7 @@ pub unsafe fn fits_read_col_ulng(
     status: *mut c_int,
 ) -> c_int {
     ffgcvuj(
-        fptr,
-        colnum,
-        firstrow,
-        firstelem,
-        nelem,
-        nulval,
-        array,
-        anynul,
-        status,
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }
 
@@ -407,14 +333,7 @@ pub unsafe fn fits_read_img(
     status: *mut c_int,
 ) -> c_int {
     ffgpv(
-        fptr,
-        datatype,
-        firstelem,
-        nelem,
-        nulval,
-        array,
-        anynul,
-        status,
+        fptr, datatype, firstelem, nelem, nulval, array, anynul, status,
     )
 }
 
@@ -480,14 +399,7 @@ pub unsafe fn fits_write_col(
     status: *mut c_int,
 ) -> c_int {
     ffpcl(
-        fptr,
-        datatype,
-        colnum,
-        firstrow,
-        firstelem,
-        nelem,
-        array,
-        status,
+        fptr, datatype, colnum, firstrow, firstelem, nelem, array, status,
     )
 }
 

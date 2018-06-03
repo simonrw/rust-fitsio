@@ -6,10 +6,10 @@ in this crate: [`Error`](enum.Error.html)
 */
 
 use std::ffi::{IntoStringError, NulError};
+use std::io;
+use std::ops::Range;
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
-use std::ops::Range;
-use std::io;
 use stringutils::status_to_string;
 
 /// Enumeration of all error types

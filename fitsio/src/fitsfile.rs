@@ -8,18 +8,18 @@
  * similar architectures).
  */
 
-use longnam::*;
-use fitsio_sys::fitsfile;
-use stringutils::{self, status_to_string};
 use errors::{check_status, Error, Result};
-use images::{ImageDescription, ImageType};
+use fitsio_sys::fitsfile;
 use hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
-use tables::{ColumnDataDescription, ConcreteColumnDescription};
+use images::{ImageDescription, ImageType};
 use libc;
+use longnam::*;
 use std::ffi;
 use std::io::{self, Write};
-use std::ptr;
 use std::path::Path;
+use std::ptr;
+use stringutils::{self, status_to_string};
+use tables::{ColumnDataDescription, ConcreteColumnDescription};
 
 /// Main entry point to the FITS file format
 pub struct FitsFile {
@@ -987,7 +987,7 @@ pub enum FileOpenMode {
 }
 
 macro_rules! fileopenmode_into_impl {
-    ($t: ty) => (
+    ($t:ty) => {
         impl From<FileOpenMode> for $t {
             fn from(original: FileOpenMode) -> $t {
                 match original {
@@ -996,7 +996,7 @@ macro_rules! fileopenmode_into_impl {
                 }
             }
         }
-        )
+    };
 }
 
 fileopenmode_into_impl!(u8);
@@ -1016,7 +1016,7 @@ pub enum CaseSensitivity {
 }
 
 macro_rules! casesensitivity_into_impl {
-    ($t: ty) => (
+    ($t:ty) => {
         impl From<CaseSensitivity> for $t {
             fn from(original: CaseSensitivity) -> $t {
                 match original {
@@ -1025,7 +1025,7 @@ macro_rules! casesensitivity_into_impl {
                 }
             }
         }
-        )
+    };
 }
 
 casesensitivity_into_impl!(u8);
@@ -1044,14 +1044,14 @@ mod test {
 
     extern crate tempdir;
 
-    use hdu::{FitsHdu, HduInfo};
+    use errors::Error;
     use fitsfile::FitsFile;
     use fitsfile::{FileOpenMode, ImageDescription};
+    use hdu::{FitsHdu, HduInfo};
     use images::ImageType;
-    use tables::{ColumnDataType, ColumnDescription};
-    use errors::Error;
-    use testhelpers::{duplicate_test_file, with_temp_file};
     use std::path::Path;
+    use tables::{ColumnDataType, ColumnDescription};
+    use testhelpers::{duplicate_test_file, with_temp_file};
 
     #[test]
     fn test_opening_an_existing_file() {
@@ -1509,12 +1509,10 @@ mod test {
             let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
             let mut f = FitsFile::create(filename).open().unwrap();
-            let table_description = &[
-                ColumnDescription::new("bar")
-                    .with_type(ColumnDataType::Int)
-                    .create()
-                    .unwrap(),
-            ];
+            let table_description = &[ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap()];
             let hdu = f.create_table("foo".to_string(), table_description)
                 .unwrap();
             if let Err(Error::Message(msg)) = hdu.write_section(&mut f, 0, 100, &data_to_write) {
@@ -1531,12 +1529,10 @@ mod test {
             let data_to_write: Vec<i64> = (0..100).map(|v| v + 50).collect();
 
             let mut f = FitsFile::create(filename).open().unwrap();
-            let table_description = &[
-                ColumnDescription::new("bar")
-                    .with_type(ColumnDataType::Int)
-                    .create()
-                    .unwrap(),
-            ];
+            let table_description = &[ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap()];
             let hdu = f.create_table("foo".to_string(), table_description)
                 .unwrap();
 

@@ -1,7 +1,7 @@
 extern crate pkg_config;
 
-use std::io::Write;
 use pkg_config::Error;
+use std::io::Write;
 
 fn main() {
     let package_name = "cfitsio";
