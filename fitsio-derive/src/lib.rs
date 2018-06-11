@@ -9,11 +9,6 @@ use syn::DeriveInput;
 #[proc_macro_derive(FitsRow, attributes(fitsio))]
 pub fn read_row(input: TokenStream) -> TokenStream {
     let input: DeriveInput = syn::parse(input).unwrap();
-    let expanded = impl_read_row(input);
-    expanded.into()
-}
-
-fn impl_read_row(input: syn::DeriveInput) -> quote::Tokens {
     let name = &input.ident;
 
     let mut tokens = Vec::new();
@@ -21,7 +16,7 @@ fn impl_read_row(input: syn::DeriveInput) -> quote::Tokens {
     match &input.data {
         &syn::Data::Struct(ref s) => match &s.fields {
             &syn::Fields::Named(ref fields) => for field in &fields.named {
-                let ident = &field.ident.unwrap();
+                let ident = &field.ident.as_ref().unwrap();
                 let ident_str = ident.to_string();
                 if field.attrs.is_empty() {
                     tokens.push(quote! {
@@ -70,7 +65,7 @@ fn impl_read_row(input: syn::DeriveInput) -> quote::Tokens {
         _ => panic!("derive only possible for structs"),
     }
 
-    quote!{
+    let expanded = quote!{
         impl FitsRow for #name {
             fn from_table(
                 tbl: &::fitsio::hdu::FitsHdu,
@@ -83,5 +78,6 @@ fn impl_read_row(input: syn::DeriveInput) -> quote::Tokens {
                 Ok(out)
             }
         }
-    }
+    };
+    expanded.into()
 }
