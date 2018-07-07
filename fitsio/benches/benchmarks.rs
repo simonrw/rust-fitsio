@@ -5,10 +5,10 @@ extern crate fitsio;
 use criterion::Criterion;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("opening and closing files", |b| b.iter(|| {
-        let filename = "../testdata/full_example.fits";
+    let filename = "../testdata/full_example.fits";
+    c.bench_function("opening and closing files", move |b| b.iter(|| {
         {
-            let f = fitsio::FitsFile::open(filename).unwrap();
+            let _f = fitsio::FitsFile::open(filename).unwrap();
             /* Implicit drop */
         }
     }));
