@@ -1,28 +1,17 @@
 #[macro_use]
 extern crate criterion;
+extern crate fitsio;
 
 use criterion::Criterion;
 
-fn fib(n: u64) -> u64 {
-    let mut a = 0u64;
-    let mut b = 1u64;
-    let mut c = 0u64;
-
-    if n == 0 {
-        return 0
-    }
-
-    for _ in 0..(n+1) {
-        c = a + b;
-        a = b;
-        b = c;
-    }
-
-    b
-}
-
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("fib 20", |b| b.iter(|| fib(20)));
+    c.bench_function("opening and closing files", |b| b.iter(|| {
+        let filename = "../testdata/full_example.fits";
+        {
+            let f = fitsio::FitsFile::open(filename).unwrap();
+            /* Implicit drop */
+        }
+    }));
 }
 
 criterion_group!(benches, criterion_benchmark);
