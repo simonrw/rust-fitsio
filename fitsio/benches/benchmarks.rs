@@ -4,7 +4,7 @@ extern crate fitsio;
 
 use criterion::Criterion;
 
-fn criterion_benchmark(c: &mut Criterion) {
+fn opening_files(c: &mut Criterion) {
     let filename = "../testdata/full_example.fits";
     c.bench_function("opening and closing files", move |b| b.iter(|| {
         {
@@ -14,5 +14,5 @@ fn criterion_benchmark(c: &mut Criterion) {
     }));
 }
 
-criterion_group!(benches, criterion_benchmark);
+criterion_group!(benches, opening_files);
 criterion_main!(benches);
