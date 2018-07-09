@@ -1,11 +1,12 @@
 //! Long name wrappers of fitsio functions
 
-pub use fitsio_sys::{ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw,
-                     ffgcno, ffgcvd, ffgcve, ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn,
-                     ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyl, ffgkys,
-                     ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl,
-                     ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkyj, ffpkys, ffppr, ffpss, ffrsim,
-                     ffthdu, fitsfile, LONGLONG};
+pub use fitsio_sys::{
+    ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
+    ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd,
+    ffgkye, ffgkyj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd,
+    ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkyj, ffpkys, ffppr, ffpss, ffrsim,
+    ffthdu, fitsfile, LONGLONG,
+};
 #[cfg(feature = "default")]
 use libc::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
 #[cfg(feature = "bindgen")]
