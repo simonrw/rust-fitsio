@@ -8,8 +8,10 @@ use images::{ImageType, ReadImage, WriteImage};
 use longnam::*;
 use std::ffi;
 use std::ops::Range;
-use tables::{ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation, FitsRow,
-             ReadsCol, WritesCol};
+use tables::{
+    ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation, FitsRow, ReadsCol,
+    WritesCol,
+};
 
 /// Struct representing a FITS HDU
 #[derive(Debug, PartialEq)]

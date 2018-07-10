@@ -10,6 +10,9 @@ license = "MIT/Apache-2.0"
 documentation = "https://docs.rs/fitsio"
 categories = ["external-ffi-bindings", "science"]
 
+[package.metadata.docs.rs]
+features = ["array"]
+
 [dependencies]
 libc = "0"
 fitsio-sys = { version = "0", path = "../fitsio-sys", optional = true}
@@ -21,11 +24,13 @@ ndarray = { version = "0.11.2", optional = true }
 tempdir = "0.3.4"
 fitsio-derive = { version = "0.1.0", path = "../fitsio-derive" }
 version-sync = "0.5.0"
+criterion = "0.2.3"
 
 [features]
 default = ["fitsio-sys"]
 bindgen = ["fitsio-sys-bindgen"]
 array = ["ndarray"]
 
-[package.metadata.docs.rs]
-features = ["array"]
+[[bench]]
+name = "benchmarks"
+harness = false
