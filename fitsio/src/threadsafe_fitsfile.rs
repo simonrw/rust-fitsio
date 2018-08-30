@@ -1,27 +1,45 @@
 /*! Thread-safe FitsFile struct */
 
-#![warn(missing_docs)]
-
 use errors::Result;
 use fitsfile::FitsFile;
-use hdu::{DescribesHdu, FitsHdu};
-use std::path::Path;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
+/** Thread-safe [`FitsFile`][fits-file] representation.
+
+This struct wraps an `Arc<Mutex<FitsFile>>` and implements `Send`.
+
+To get a [`ThreadsafeFitsfile`][threadsafe-fitsfile] from a [`FitsFile`][fits-file], call the
+[`threadsafe`][fits-file-threadsafe] method.
+
+[fits-file]: ../fitsfile/struct.FitsFile.html
+[threadsafe-fitsfile]: struct.ThreadsafeFitsFile.html
+[fits-file-threadsafe]: ../fitsfile/struct.FitsFile.html#method.threadsafe
+*/
 #[derive(Clone)]
-pub struct ThreadsafeFitsfile(Arc<Mutex<FitsFile>>);
+pub struct ThreadsafeFitsFile(Arc<Mutex<FitsFile>>);
 
-unsafe impl Send for ThreadsafeFitsfile {}
+/* Ensure that the new struct is safe to send to other threads */
+unsafe impl Send for ThreadsafeFitsFile {}
 
 impl FitsFile {
-    pub fn threadsafe(self) -> ThreadsafeFitsfile {
-        ThreadsafeFitsfile(Arc::new(Mutex::new(self)))
+    /**
+    Create a threadsafe [`ThreadsafeFitsFile`][threadsafe-fitsfile] copy of the current
+    [`FitsFile`][fits-file].
+
+    [threadsafe-fitsfile]: struct.ThreadsafeFitsFile.html
+    [fits-file]: ../fitsfile/struct.FitsFile.html
+     */
+    pub fn threadsafe(self) -> ThreadsafeFitsFile {
+        ThreadsafeFitsFile(Arc::new(Mutex::new(self)))
     }
 }
 
-impl ThreadsafeFitsfile {
-    pub fn hdu<T: DescribesHdu>(&mut self, hdu_description: T) -> Result<FitsHdu> {
-        FitsHdu::new(&mut *self.0.lock()?, hdu_description)
+impl ThreadsafeFitsFile {
+    /**
+    Lock the underlying mutex to return exclusive access to the FitsFile.
+    */
+    pub fn lock<'a>(&'a self) -> Result<MutexGuard<'a, FitsFile>> {
+        self.0.lock().map_err(From::from)
     }
 }
 
@@ -36,14 +54,23 @@ mod tests {
         let f = f.threadsafe();
 
         /* Spawn loads of threads... */
-        for _ in 0..10_000 {
+        let mut handles = Vec::new();
+        for i in 0..10_000 {
             let mut f1 = f.clone();
-            thread::spawn(move || {
-                let hdu = f1.hdu(0).unwrap();
-                let mut ff = f1.0.lock().unwrap();
-                let image: Vec<i32> = hdu.read_image(&mut ff).unwrap();
-                assert_eq!(image.len(), 10_000);
+            let handle = thread::spawn(move || {
+                /* Get the underlyng fits file back */
+                let mut t = f1.lock().unwrap();
+
+                /* Fetch a different HDU per thread */
+                let hdu_num = i % 2;
+                let _hdu = t.hdu(hdu_num).unwrap();
             });
+            handles.push(handle);
+        }
+
+        /* Wait for all of the threads to finish */
+        for handle in handles {
+            handle.join().unwrap();
         }
     }
 }
