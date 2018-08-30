@@ -1024,6 +1024,7 @@ pub mod hdu;
 pub mod headers;
 pub mod images;
 pub mod tables;
+pub mod threadsafe_fitsfile;
 
 pub mod errors;
 
