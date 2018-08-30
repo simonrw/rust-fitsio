@@ -10,6 +10,7 @@ use std::io;
 use std::ops::Range;
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
+use std::sync;
 use stringutils::status_to_string;
 
 /// Enumeration of all error types
@@ -38,6 +39,9 @@ pub enum Error {
 
     /// File path already exists
     ExistingFile(String),
+
+    /// Error unlocking a mutex
+    UnlockError,
 }
 
 /// Error raised when the user requests invalid indexes for data
@@ -112,6 +116,15 @@ impl ::std::convert::From<IntoStringError> for Error {
     }
 }
 
+use fitsfile::FitsFile;
+type PoisonError<'a> = sync::PoisonError<sync::MutexGuard<'a, FitsFile>>;
+
+impl<'a> ::std::convert::From<PoisonError<'a>> for Error {
+    fn from(_e: PoisonError) -> Self {
+        Error::UnlockError
+    }
+}
+
 impl ::std::fmt::Display for Error {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::result::Result<(), ::std::fmt::Error> {
         match *self {
@@ -123,6 +136,7 @@ impl ::std::fmt::Display for Error {
             Error::Io(ref e) => e.fmt(f),
             Error::IntoString(ref e) => e.fmt(f),
             Error::ExistingFile(ref filename) => write!(f, "File {} already exists", filename),
+            Error::UnlockError => write!(f, "Invalid concurrent access to fits file"),
         }
     }
 }
