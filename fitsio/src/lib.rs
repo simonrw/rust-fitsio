@@ -28,6 +28,7 @@
         * [Inserting columns](#inserting-columns)
         * [Deleting columns](#deleting-columns)
 * [Raw fits file access](#raw-fits-file-access)
+* [Threadsafe access](#threadsafe-access)
 
 This library wraps the low level `cfitsio` bindings: [`fitsio-sys`][fitsio-sys] and provides a more
 native experience for rust users.
@@ -948,6 +949,52 @@ assert_eq!(num_hdus, 2);
 
 This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][fitsio-sys] library directly.
 
+# Threadsafe access
+
+Access to a [`FitsFile`][fits-file] is not threadsafe. Behind the scenes, fetching a
+[`FitsHdu`][fits-hdu] changes internal state, and `fitsio` does not provide any concurrent access
+gauruntees. Therefore, a [`FitsFile`][fits-file] does not implement `Send` or `Sync`.
+
+In order to allow for threadsafe access, the [`FitsFile`][fits-file] struct has a
+[`threadsafe`][fits-file-threadsafe] method, which returns a threadsafe
+[`ThreadsafeFitsFile`][threadsafe-fits-file] struct (a tuple-type wrapper around
+`Arc<Mutex<FitsFile>>`) which can be shared between threads safely.
+
+The same concerns with `Arc<Mutex<T>>` data should be applied here. Additionally, the library is
+subject to OS level limits, such as the maximum number of open files.
+
+## Example
+
+```rust
+# extern crate fitsio;
+# use fitsio::FitsFile;
+# use std::thread;
+# let fptr = FitsFile::open("../testdata/full_example.fits").unwrap();
+let f = fptr.threadsafe();
+
+/* Spawn loads of threads... */
+# let mut handles = Vec::new();
+for i in 0..10_000 {
+    let mut f1 = f.clone();
+
+    /* Send the cloned ThreadsafeFitsFile to another thread */
+    let handle = thread::spawn(move || {
+        /* Get the underlyng fits file back */
+        let mut t = f1.lock().unwrap();
+
+        /* Fetch a different HDU per thread */
+        let hdu_num = i % 2;
+        let _hdu = t.hdu(hdu_num).unwrap();
+    });
+    # handles.push(handle);
+}
+#
+# /* Wait for all of the threads to finish */
+# for handle in handles {
+#     handle.join().unwrap();
+# }
+```
+
 [cfitsio]: http://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
 [fitsio-sys]: https://crates.io/crates/fitsio-sys
 [column-data-description]: tables/struct.ColumnDataDescription.html
@@ -957,6 +1004,7 @@ This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][fitsio
 [fits-file-create-table]: fitsfile/struct.FitsFile.html#method.create_table
 [fits-file-create]: fitsfile/struct.FitsFile.html#method.create
 [fits-file-edit]: fitsfile/struct.FitsFile.html#method.edit
+[fits-file-threadsafe]: fitsfile/struct.FitsFile.html#method.threadsafe
 [fits-file]: fitsfile/struct.FitsFile.html
 [fits-hdu]: hdu/struct.FitsHdu.html
 [fits-hdu-append-column]: hdu/struct.FitsHdu.html#method.append_column
@@ -993,6 +1041,7 @@ This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][fitsio
 [fitsfile-open]: fitsfile/struct.FitsFile.html#method.open
 [`fitssummary`]: ../fitssummary/index.html
 [fitsfile-hdu]: fitsfile/struct.FitsFile.html#method.hdu
+[threadsafe-fits-file]: threadsafe_fitsfile/struct.ThreadsafeFitsFile.html
 */
 
 #![doc(html_root_url = "https://docs.rs/fitsio/0.14.0")]
