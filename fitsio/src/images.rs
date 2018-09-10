@@ -436,7 +436,8 @@ mod tests {
                     data_type: ImageType::Long,
                     dimensions: &[100, 20],
                 };
-                let hdu = f.create_image("foo".to_string(), &image_description)
+                let hdu = f
+                    .create_image("foo".to_string(), &image_description)
                     .unwrap();
                 hdu.write_section(&mut f, 0, 100, &data_to_write).unwrap();
             }
@@ -458,7 +459,8 @@ mod tests {
                     data_type: ImageType::Long,
                     dimensions: &[100, 5],
                 };
-                let hdu = f.create_image("foo".to_string(), &image_description)
+                let hdu = f
+                    .create_image("foo".to_string(), &image_description)
                     .unwrap();
 
                 let data: Vec<i64> = (0..66).map(|v| v + 50).collect();
@@ -487,7 +489,8 @@ mod tests {
                     data_type: ImageType::Long,
                     dimensions: &[100, 20],
                 };
-                let hdu = f.create_image("foo".to_string(), &image_description)
+                let hdu = f
+                    .create_image("foo".to_string(), &image_description)
                     .unwrap();
 
                 hdu.write_image(&mut f, &data).unwrap();
