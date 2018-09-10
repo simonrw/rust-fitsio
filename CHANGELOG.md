@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Added
 
+* (`fitsio`) add boolean column type
 * (`fitsio`) add threadsafe version of a `FitsFile` [#99](https://github.com/mindriot101/rust-fitsio/pull/99)
 * (`fitsio`) add benchmarking [#98](https://github.com/mindriot101/rust-fitsio/pull/98)
 * (`fitsio`) add support for writing all integer header keys

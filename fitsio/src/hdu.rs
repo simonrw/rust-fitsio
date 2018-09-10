@@ -38,7 +38,8 @@ impl FitsHdu {
 
     /// Read the HDU name
     pub fn name(&self, fits_file: &mut FitsFile) -> Result<String> {
-        let extname = self.read_key(fits_file, "EXTNAME")
+        let extname = self
+            .read_key(fits_file, "EXTNAME")
             .unwrap_or_else(|_| "".to_string());
         Ok(extname)
     }

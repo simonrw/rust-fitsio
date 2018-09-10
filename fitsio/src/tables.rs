@@ -207,7 +207,8 @@ impl ReadsCol for String {
 
                 let mut out = Vec::with_capacity(num_output_rows);
                 for val in &vecs {
-                    let bytes: Vec<u8> = val.into_iter()
+                    let bytes: Vec<u8> = val
+                        .into_iter()
                         .filter(|v| **v != 0)
                         .map(|v| *v as u8)
                         .collect();
@@ -520,6 +521,7 @@ impl From<ColumnDataDescription> for String {
 #[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColumnDataType {
+    Bool,
     Int,
     Float,
     Text,
@@ -534,6 +536,7 @@ impl From<ColumnDataType> for String {
         use self::ColumnDataType::*;
 
         match orig {
+            Bool => "B",
             Int => "J",
             Float => "E",
             Text | String => "A",
@@ -588,6 +591,7 @@ impl FromStr for ColumnDataDescription {
         };
 
         let data_type = match data_type_char {
+            'B' => ColumnDataType::Bool,
             'E' => ColumnDataType::Float,
             'J' => ColumnDataType::Int,
             'D' => ColumnDataType::Double,
@@ -925,7 +929,8 @@ mod test {
     fn test_column_iterator() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(1).unwrap();
-        let column_names: Vec<String> = hdu.columns(&mut f)
+        let column_names: Vec<String> = hdu
+            .columns(&mut f)
             .map(|col| match col {
                 Column::Int32 { name, .. } => name,
                 Column::Int64 { name, .. } => name,
@@ -967,7 +972,8 @@ mod test {
                         .create()
                         .unwrap(),
                 ];
-                let hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f
+                    .create_table("foo".to_string(), &table_description)
                     .unwrap();
 
                 hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
@@ -992,7 +998,8 @@ mod test {
                         .create()
                         .unwrap(),
                 ];
-                let hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f
+                    .create_table("foo".to_string(), &table_description)
                     .unwrap();
 
                 hdu.write_col_range(&mut f, "bar", &data_to_write, &(0..5))
@@ -1024,7 +1031,8 @@ mod test {
                         .create()
                         .unwrap(),
                 ];
-                let hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f
+                    .create_table("foo".to_string(), &table_description)
                     .unwrap();
 
                 hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
@@ -1057,7 +1065,8 @@ mod test {
                         .create()
                         .unwrap(),
                 ];
-                let hdu = f.create_table("foo".to_string(), &table_description)
+                let hdu = f
+                    .create_table("foo".to_string(), &table_description)
                     .unwrap();
 
                 hdu.write_col_range(&mut f, "bar", &data_to_write, &range)

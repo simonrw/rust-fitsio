@@ -1343,7 +1343,8 @@ mod test {
                     data_type: ImageType::Long,
                     dimensions: &dimensions,
                 };
-                let image_hdu = f.create_image("foo".to_string(), &image_description)
+                let image_hdu = f
+                    .create_image("foo".to_string(), &image_description)
                     .unwrap();
                 let data_to_write: Vec<i64> = (0..3000).collect();
 
@@ -1363,7 +1364,8 @@ mod test {
             let ycoord = 11..17;
             let zcoord = 3..7;
 
-            let read_data: Vec<i64> = hdu.read_region(&mut f, &vec![&xcoord, &ycoord, &zcoord])
+            let read_data: Vec<i64> = hdu
+                .read_region(&mut f, &vec![&xcoord, &ycoord, &zcoord])
                 .unwrap();
 
             assert_eq!(read_data.len(), 96);
@@ -1429,7 +1431,8 @@ mod test {
                 data_type: ImageType::Long,
                 dimensions: &[100, 20],
             };
-            let hdu: FitsHdu = f.create_image("foo".to_string(), &image_description)
+            let hdu: FitsHdu = f
+                .create_image("foo".to_string(), &image_description)
                 .unwrap();
             assert_eq!(
                 hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
@@ -1448,7 +1451,8 @@ mod test {
                     .create()
                     .unwrap(),
             ];
-            let hdu: FitsHdu = f.create_table("foo".to_string(), &table_description)
+            let hdu: FitsHdu = f
+                .create_table("foo".to_string(), &table_description)
                 .unwrap();
             assert_eq!(
                 hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
@@ -1468,7 +1472,8 @@ mod test {
                 data_type: ImageType::Long,
                 dimensions: &[100, 20],
             };
-            let hdu = f.create_image("foo".to_string(), &image_description)
+            let hdu = f
+                .create_image("foo".to_string(), &image_description)
                 .unwrap();
 
             match hdu.write_col(&mut f, "bar", &data_to_write) {
@@ -1513,7 +1518,8 @@ mod test {
                 .with_type(ColumnDataType::Int)
                 .create()
                 .unwrap()];
-            let hdu = f.create_table("foo".to_string(), table_description)
+            let hdu = f
+                .create_table("foo".to_string(), table_description)
                 .unwrap();
             if let Err(Error::Message(msg)) = hdu.write_section(&mut f, 0, 100, &data_to_write) {
                 assert_eq!(msg, "cannot write image data to a table hdu");
@@ -1533,7 +1539,8 @@ mod test {
                 .with_type(ColumnDataType::Int)
                 .create()
                 .unwrap()];
-            let hdu = f.create_table("foo".to_string(), table_description)
+            let hdu = f
+                .create_table("foo".to_string(), table_description)
                 .unwrap();
 
             let ranges = vec![&(0..10), &(0..10)];

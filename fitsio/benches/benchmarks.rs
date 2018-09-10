@@ -137,7 +137,8 @@ fn full_example(c: &mut Criterion) {
              *
              * Note: this is not performant, and if this is the desired use of `fitsio`, I would not
              * suggest this approach. */
-            let _image_data: Vec<f32> = phdu.read_region(&mut fitsfile, &[&(19..29), &(19..29)])
+            let _image_data: Vec<f32> = phdu
+                .read_region(&mut fitsfile, &[&(19..29), &(19..29)])
                 .unwrap();
 
             /* We can now get the column data. Let's assume we want all of the magnitudes for objects near
