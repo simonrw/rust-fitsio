@@ -11,7 +11,7 @@ fn main() {
     let package_name = "cfitsio";
     match pkg_config::probe_library(package_name) {
         Ok(_) => {
-            let bindings = bindgen::Builder::default()
+            let bindings = bindgen::builder()
                 .header("wrapper.h")
                 .rust_target(RustTarget::Stable_1_0)
                 .generate()
