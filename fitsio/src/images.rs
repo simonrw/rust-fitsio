@@ -75,7 +75,7 @@ pub trait WriteImage: Sized {
                         data.len(),
                         shape
                     ).as_str()
-                        .into());
+                    .into());
                 }
 
                 Self::write_section(fits_file, hdu, 0..data.len(), data)

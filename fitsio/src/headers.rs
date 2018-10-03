@@ -226,8 +226,7 @@ mod tests {
                         f.hdu(0).unwrap().read_key::<String>(&mut f, "bar").unwrap(),
                         "baz".to_string()
                     );
-                })
-                .unwrap();
+                }).unwrap();
         });
     }
 
