@@ -13,6 +13,7 @@ fn main() {
         Ok(_) => {
             let bindings = bindgen::builder()
                 .header("wrapper.h")
+                .block_extern_crate(true)
                 .rust_target(RustTarget::Stable_1_0)
                 .generate()
                 .expect("Unable to generate bindings");
