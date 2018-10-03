@@ -13,6 +13,7 @@ categories = ["external-ffi-bindings", "science"]
 
 [dependencies]
 libc = "0"
+block = "0"
 
 [dev-dependencies]
 tempdir = "0"

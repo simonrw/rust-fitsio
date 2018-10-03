@@ -1073,8 +1073,7 @@ mod test {
                     let hdu = f.hdu(0).unwrap();
                     let naxis: i64 = hdu.read_key(&mut f, "NAXIS").unwrap();
                     assert_eq!(naxis, 0);
-                })
-                .unwrap();
+                }).unwrap();
         });
     }
 
@@ -1300,8 +1299,7 @@ mod test {
                         }
                         thing => panic!("{:?}", thing),
                     }
-                })
-                .unwrap();
+                }).unwrap();
         });
     }
 
@@ -1327,8 +1325,7 @@ mod test {
                         }
                         thing => panic!("{:?}", thing),
                     }
-                })
-                .unwrap();
+                }).unwrap();
         });
     }
 

@@ -717,32 +717,27 @@ impl<'a> Iterator for ColumnIterator<'a> {
                     .map(|data| Column::Int32 {
                         name: current_name.to_string(),
                         data,
-                    })
-                    .ok(),
+                    }).ok(),
                 ColumnDataType::Long => i64::read_col(self.fits_file, current_name)
                     .map(|data| Column::Int64 {
                         name: current_name.to_string(),
                         data,
-                    })
-                    .ok(),
+                    }).ok(),
                 ColumnDataType::Float => f32::read_col(self.fits_file, current_name)
                     .map(|data| Column::Float {
                         name: current_name.to_string(),
                         data,
-                    })
-                    .ok(),
+                    }).ok(),
                 ColumnDataType::Double => f64::read_col(self.fits_file, current_name)
                     .map(|data| Column::Double {
                         name: current_name.to_string(),
                         data,
-                    })
-                    .ok(),
+                    }).ok(),
                 ColumnDataType::String => String::read_col(self.fits_file, current_name)
                     .map(|data| Column::String {
                         name: current_name.to_string(),
                         data,
-                    })
-                    .ok(),
+                    }).ok(),
                 _ => unimplemented!(),
             };
 
@@ -937,8 +932,7 @@ mod test {
                 Column::Float { name, .. } => name,
                 Column::Double { name, .. } => name,
                 Column::String { name, .. } => name,
-            })
-            .collect();
+            }).collect();
 
         assert_eq!(
             column_names,
