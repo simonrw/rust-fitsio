@@ -1,7 +1,21 @@
-FROM rust:1.24.1
+FROM rust:latest
 
 RUN apt-get update && \
-    apt-get install -y libcfitsio-dev pkg-config libclang-3.8-dev build-essential clang
+    apt-get -yq dist-upgrade && \
+    apt-get install -yq --no-install-recommends \
+        libcfitsio-dev \
+        pkg-config \
+        libclang-3.8-dev \
+        build-essential \
+        clang \
+        gdb \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN rustup update && \
+    rustup install stable && \
+    rustup install nightly
 
 VOLUME ["/project"]
 WORKDIR "/project/fitsio"
