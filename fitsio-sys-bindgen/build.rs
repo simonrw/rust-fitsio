@@ -30,7 +30,8 @@ fn main() {
                 format!(
                     "{} was not found in the pkg-config search path",
                     package_name
-                ).as_ref(),
+                )
+                .as_ref(),
             ) {
                 let err_msg = format!(
                     "
