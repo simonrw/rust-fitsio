@@ -549,7 +549,8 @@ impl FitsFile {
                 status,
                 // unwrap guaranteed to succesed as status > 0
                 message: status_to_string(status)?.unwrap(),
-            }.into());
+            }
+            .into());
         }
 
         let mut dimensions: Vec<_> = image_description.dimensions.clone().to_vec();
@@ -570,7 +571,8 @@ impl FitsFile {
                 status,
                 // unwrap guaranteed to succesed as status > 0
                 message: status_to_string(status)?.unwrap(),
-            }.into());
+            }
+            .into());
         }
 
         // Current HDU should be at the new HDU
@@ -1073,7 +1075,8 @@ mod test {
                     let hdu = f.hdu(0).unwrap();
                     let naxis: i64 = hdu.read_key(&mut f, "NAXIS").unwrap();
                     assert_eq!(naxis, 0);
-                }).unwrap();
+                })
+                .unwrap();
         });
     }
 
@@ -1268,12 +1271,10 @@ mod test {
         with_temp_file(|filename| {
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
-                let table_description = vec![
-                    ColumnDescription::new("bar")
-                        .with_type(ColumnDataType::Int)
-                        .create()
-                        .unwrap(),
-                ];
+                let table_description = vec![ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::Int)
+                    .create()
+                    .unwrap()];
                 f.create_table("foo".to_string(), &table_description)
                     .unwrap();
             }
@@ -1299,7 +1300,8 @@ mod test {
                         }
                         thing => panic!("{:?}", thing),
                     }
-                }).unwrap();
+                })
+                .unwrap();
         });
     }
 
@@ -1325,7 +1327,8 @@ mod test {
                         }
                         thing => panic!("{:?}", thing),
                     }
-                }).unwrap();
+                })
+                .unwrap();
         });
     }
 
@@ -1442,12 +1445,10 @@ mod test {
     fn test_creating_new_table_returns_hdu_object() {
         with_temp_file(|filename| {
             let mut f = FitsFile::create(filename).open().unwrap();
-            let table_description = vec![
-                ColumnDescription::new("bar")
-                    .with_type(ColumnDataType::Int)
-                    .create()
-                    .unwrap(),
-            ];
+            let table_description = vec![ColumnDescription::new("bar")
+                .with_type(ColumnDataType::Int)
+                .create()
+                .unwrap()];
             let hdu: FitsHdu = f
                 .create_table("foo".to_string(), &table_description)
                 .unwrap();

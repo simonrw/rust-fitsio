@@ -935,11 +935,11 @@ let mut num_hdus = 0;
 let mut status = 0;
 
 unsafe {
-    let fitsfile = fptr.as_raw();
+let fitsfile = fptr.as_raw();
 
-    /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
-    implemented in this crate */
-    fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
+/* Use the unsafe fitsio-sys low level library to call a function that is possibly not
+implemented in this crate */
+fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
 }
 assert_eq!(num_hdus, 2);
 # Ok(())
@@ -975,18 +975,18 @@ let f = fptr.threadsafe();
 /* Spawn loads of threads... */
 # let mut handles = Vec::new();
 for i in 0..10_000 {
-    let mut f1 = f.clone();
+let mut f1 = f.clone();
 
-    /* Send the cloned ThreadsafeFitsFile to another thread */
-    let handle = thread::spawn(move || {
-        /* Get the underlyng fits file back */
-        let mut t = f1.lock().unwrap();
+/* Send the cloned ThreadsafeFitsFile to another thread */
+let handle = thread::spawn(move || {
+/* Get the underlyng fits file back */
+let mut t = f1.lock().unwrap();
 
-        /* Fetch a different HDU per thread */
-        let hdu_num = i % 2;
-        let _hdu = t.hdu(hdu_num).unwrap();
-    });
-    # handles.push(handle);
+/* Fetch a different HDU per thread */
+let hdu_num = i % 2;
+let _hdu = t.hdu(hdu_num).unwrap();
+});
+# handles.push(handle);
 }
 #
 # /* Wait for all of the threads to finish */

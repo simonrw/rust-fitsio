@@ -74,7 +74,8 @@ pub trait WriteImage: Sized {
                         "cannot write more data ({} elements) to the current image (shape: {:?})",
                         data.len(),
                         shape
-                    ).as_str()
+                    )
+                    .as_str()
                     .into());
                 }
 
