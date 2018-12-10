@@ -172,24 +172,31 @@ macro_rules! read_image_impl_vec {
                             fpixel.push(start as _);
                             lpixel.push(end as _);
 
-                            nelements *= end - start;
+                            nelements *= (end + 1) - start;
                         }
 
                         let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
-                        let mut out = vec![$default_value; nelements];
+                        let vec_size = nelements;
+                        println!(
+                            "FPIXEL: {:?}, LPIXEL: {:?}?, NUMBER OF ELEMENTS: {}, VECTOR SIZE: {}",
+                            fpixel, lpixel, nelements, vec_size
+                        );
+                        let mut out = vec![$default_value; vec_size];
                         let mut status = 0;
+
+                        println!("DATA TYPE: {:?}", $data_type);
 
                         unsafe {
                             fits_read_subset(
-                                fits_file.fptr as *mut _,
-                                $data_type.into(),
-                                fpixel.as_mut_ptr(),
-                                lpixel.as_mut_ptr(),
-                                inc.as_mut_ptr(),
-                                ptr::null_mut(),
-                                out.as_mut_ptr() as *mut _,
-                                ptr::null_mut(),
-                                &mut status,
+                                fits_file.fptr as *mut _,   // fptr
+                                $data_type.into(),          // datatype
+                                fpixel.as_mut_ptr(),        // fpixel
+                                lpixel.as_mut_ptr(),        // lpixel
+                                inc.as_mut_ptr(),           // inc
+                                ptr::null_mut(),            // nulval
+                                out.as_mut_ptr() as *mut _, // array
+                                ptr::null_mut(),            // anynul
+                                &mut status,                // status
                             );
                         }
 
@@ -420,9 +427,9 @@ mod tests {
         let ycoord = 2..3;
 
         let chunk: Vec<i32> = hdu.read_region(&mut f, &vec![&ycoord, &xcoord]).unwrap();
-        assert_eq!(chunk.len(), 2);
+        assert_eq!(chunk.len(), (8 - 5) * (4 - 2));
         assert_eq!(chunk[0], 168);
-        assert_eq!(chunk[chunk.len() - 1], 193);
+        assert_eq!(chunk[chunk.len() - 1], 132);
     }
 
     #[test]
@@ -472,7 +479,7 @@ mod tests {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
             let chunk: Vec<i64> = hdu.read_region(&mut f, &[&(0..10), &(0..5)]).unwrap();
-            assert_eq!(chunk.len(), 10 * 5);
+            assert_eq!(chunk.len(), 11 * 6);
             assert_eq!(chunk[0], 50);
             assert_eq!(chunk[25], 75);
         });
