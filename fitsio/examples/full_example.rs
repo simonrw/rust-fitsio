@@ -126,7 +126,7 @@ fn run() -> Result<(), Box<Error>> {
      * Note: this is not performant, and if this is the desired use of `fitsio`, I would not
      * suggest this approach. */
     let image_data: Vec<f32> = phdu.read_region(&mut fitsfile, &[&(19..29), &(19..29)])?;
-    assert_eq!(image_data.len(), 100);
+    assert_eq!(image_data.len(), 121);
 
     /* We can now get the column data. Let's assume we want all of the magnitudes for objects near
      * this one (by index). This object is at index 4 (0-indexed) and we want to read one value
