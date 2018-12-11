@@ -168,7 +168,8 @@ macro_rules! read_image_impl_vec {
                         let mut nelements = 1;
                         for range in ranges {
                             let start = range.start + 1;
-                            let end = range.end + 1;
+                            // No +1 as the range is exclusive
+                            let end = range.end;
                             fpixel.push(start as _);
                             lpixel.push(end as _);
 
@@ -255,7 +256,8 @@ macro_rules! write_image_impl {
 
                         for range in ranges {
                             let start = range.start + 1;
-                            let end = range.end + 1;
+                            // No +1 as the range is exclusive
+                            let end = range.end;
                             fpixel.push(start as _);
                             lpixel.push(end as _);
                         }
@@ -421,9 +423,9 @@ mod tests {
         let ycoord = 2..3;
 
         let chunk: Vec<i32> = hdu.read_region(&mut f, &vec![&ycoord, &xcoord]).unwrap();
-        assert_eq!(chunk.len(), (8 - 5) * (4 - 2));
+        assert_eq!(chunk.len(), (7 - 5) * (3 - 2));
         assert_eq!(chunk[0], 168);
-        assert_eq!(chunk[chunk.len() - 1], 132);
+        assert_eq!(chunk[chunk.len() - 1], 112);
     }
 
     #[test]
@@ -473,9 +475,9 @@ mod tests {
             let mut f = FitsFile::open(filename).unwrap();
             let hdu = f.hdu("foo").unwrap();
             let chunk: Vec<i64> = hdu.read_region(&mut f, &[&(0..10), &(0..5)]).unwrap();
-            assert_eq!(chunk.len(), 11 * 6);
+            assert_eq!(chunk.len(), 10 * 5);
             assert_eq!(chunk[0], 50);
-            assert_eq!(chunk[25], 75);
+            assert_eq!(chunk[25], 80);
         });
     }
 
