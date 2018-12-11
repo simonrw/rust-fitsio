@@ -59,9 +59,9 @@ let hdu = f.primary_hdu().unwrap();
 let data: ArrayD<u32> = hdu.read_region(&mut f, &[&(70..80), &(20..50)]).unwrap();
 let dim = data.dim();
 assert_eq!(data.ndim(), 2);
-assert_eq!(dim[0], 11);
-assert_eq!(dim[1], 31);
-assert_eq!(data[[5, 10]], 179);
+assert_eq!(dim[0], 10);
+assert_eq!(dim[1], 30);
+assert_eq!(data[[5, 10]], 177);
 # }
 #
 # #[cfg(not(feature = "array"))]
@@ -235,7 +235,7 @@ where
     ) -> Result<Self> {
         let data: Vec<T> = ReadImage::read_region(fits_file, hdu, ranges)?;
         let shape: Vec<usize> = (0..ranges.len())
-            .map(|i| (ranges[i].end + 1) - ranges[i].start)
+            .map(|i| ranges[i].end - ranges[i].start)
             .collect();
         let arr = Array::from_shape_vec(shape, data).unwrap();
         Ok(arr)
@@ -303,9 +303,9 @@ mod tests {
         let data: ArrayD<u32> = hdu.read_region(&mut f, &[&(70..80), &(20..50)]).unwrap();
         let dim = data.dim();
         assert_eq!(data.ndim(), 2);
-        assert_eq!(dim[0], 11);
-        assert_eq!(dim[1], 31);
-        assert_eq!(data[[5, 10]], 179);
+        assert_eq!(dim[0], 10);
+        assert_eq!(dim[1], 30);
+        assert_eq!(data[[5, 10]], 177);
     }
 
     #[test]
