@@ -59,9 +59,9 @@ let hdu = f.primary_hdu().unwrap();
 let data: ArrayD<u32> = hdu.read_region(&mut f, &[&(70..80), &(20..50)]).unwrap();
 let dim = data.dim();
 assert_eq!(data.ndim(), 2);
-assert_eq!(dim[0], 10);
-assert_eq!(dim[1], 30);
-assert_eq!(data[[5, 10]], 160);
+assert_eq!(dim[0], 11);
+assert_eq!(dim[1], 31);
+assert_eq!(data[[5, 10]], 179);
 # }
 #
 # #[cfg(not(feature = "array"))]
