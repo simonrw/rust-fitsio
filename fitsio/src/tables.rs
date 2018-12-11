@@ -87,11 +87,13 @@ macro_rules! reads_col_impl {
                             307 => Err(IndexError {
                                 message: "given indices out of range".to_string(),
                                 given: range.clone(),
-                            }.into()),
+                            }
+                            .into()),
                             e => Err(FitsError {
                                 status: e,
                                 message: status_to_string(e).unwrap().unwrap(),
-                            }.into()),
+                            }
+                            .into()),
                         }
                     }
                     Err(e) => Err(e),
@@ -543,7 +545,8 @@ impl From<ColumnDataType> for String {
             Double => "D",
             Short => "I",
             Long => "K",
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -717,27 +720,32 @@ impl<'a> Iterator for ColumnIterator<'a> {
                     .map(|data| Column::Int32 {
                         name: current_name.to_string(),
                         data,
-                    }).ok(),
+                    })
+                    .ok(),
                 ColumnDataType::Long => i64::read_col(self.fits_file, current_name)
                     .map(|data| Column::Int64 {
                         name: current_name.to_string(),
                         data,
-                    }).ok(),
+                    })
+                    .ok(),
                 ColumnDataType::Float => f32::read_col(self.fits_file, current_name)
                     .map(|data| Column::Float {
                         name: current_name.to_string(),
                         data,
-                    }).ok(),
+                    })
+                    .ok(),
                 ColumnDataType::Double => f64::read_col(self.fits_file, current_name)
                     .map(|data| Column::Double {
                         name: current_name.to_string(),
                         data,
-                    }).ok(),
+                    })
+                    .ok(),
                 ColumnDataType::String => String::read_col(self.fits_file, current_name)
                     .map(|data| Column::String {
                         name: current_name.to_string(),
                         data,
-                    }).ok(),
+                    })
+                    .ok(),
                 _ => unimplemented!(),
             };
 
@@ -932,7 +940,8 @@ mod test {
                 Column::Float { name, .. } => name,
                 Column::Double { name, .. } => name,
                 Column::String { name, .. } => name,
-            }).collect();
+            })
+            .collect();
 
         assert_eq!(
             column_names,
@@ -960,12 +969,10 @@ mod test {
             let data_to_write: Vec<i32> = vec![10101; 10];
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
-                let table_description = vec![
-                    ColumnDescription::new("bar")
-                        .with_type(ColumnDataType::Int)
-                        .create()
-                        .unwrap(),
-                ];
+                let table_description = vec![ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::Int)
+                    .create()
+                    .unwrap()];
                 let hdu = f
                     .create_table("foo".to_string(), &table_description)
                     .unwrap();
@@ -986,12 +993,10 @@ mod test {
             let data_to_write: Vec<i32> = vec![10101; 10];
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
-                let table_description = vec![
-                    ColumnDescription::new("bar")
-                        .with_type(ColumnDataType::Int)
-                        .create()
-                        .unwrap(),
-                ];
+                let table_description = vec![ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::Int)
+                    .create()
+                    .unwrap()];
                 let hdu = f
                     .create_table("foo".to_string(), &table_description)
                     .unwrap();
@@ -1018,13 +1023,11 @@ mod test {
 
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
-                let table_description = vec![
-                    ColumnDescription::new("bar")
-                        .with_type(ColumnDataType::String)
-                        .that_repeats(7)
-                        .create()
-                        .unwrap(),
-                ];
+                let table_description = vec![ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::String)
+                    .that_repeats(7)
+                    .create()
+                    .unwrap()];
                 let hdu = f
                     .create_table("foo".to_string(), &table_description)
                     .unwrap();
@@ -1052,13 +1055,11 @@ mod test {
             let range = 0..20;
             {
                 let mut f = FitsFile::create(filename).open().unwrap();
-                let table_description = vec![
-                    ColumnDescription::new("bar")
-                        .with_type(ColumnDataType::String)
-                        .that_repeats(7)
-                        .create()
-                        .unwrap(),
-                ];
+                let table_description = vec![ColumnDescription::new("bar")
+                    .with_type(ColumnDataType::String)
+                    .that_repeats(7)
+                    .create()
+                    .unwrap()];
                 let hdu = f
                     .create_table("foo".to_string(), &table_description)
                     .unwrap();
@@ -1140,9 +1141,11 @@ mod test {
                 HduInfo::TableInfo {
                     column_descriptions,
                     ..
-                } => for col in column_descriptions {
-                    assert!(col.name != "intcol");
-                },
+                } => {
+                    for col in column_descriptions {
+                        assert!(col.name != "intcol");
+                    }
+                }
                 _ => panic!("ERROR"),
             }
         });
@@ -1159,9 +1162,11 @@ mod test {
                 HduInfo::TableInfo {
                     column_descriptions,
                     ..
-                } => for col in column_descriptions {
-                    assert!(col.name != "intcol");
-                },
+                } => {
+                    for col in column_descriptions {
+                        assert!(col.name != "intcol");
+                    }
+                }
                 _ => panic!("ERROR"),
             }
         });

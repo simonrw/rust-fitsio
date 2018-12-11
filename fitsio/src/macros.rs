@@ -6,7 +6,8 @@ macro_rules! fits_check_readwrite {
             return Err(FitsError {
                 status: 602,
                 message: "cannot alter readonly file".to_string(),
-            }.into());
+            }
+            .into());
         }
     };
 }

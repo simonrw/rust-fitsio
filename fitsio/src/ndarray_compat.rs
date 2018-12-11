@@ -61,7 +61,7 @@ let dim = data.dim();
 assert_eq!(data.ndim(), 2);
 assert_eq!(dim[0], 10);
 assert_eq!(dim[1], 30);
-assert_eq!(data[[5, 10]], 160);
+assert_eq!(data[[5, 10]], 177);
 # }
 #
 # #[cfg(not(feature = "array"))]
@@ -305,7 +305,7 @@ mod tests {
         assert_eq!(data.ndim(), 2);
         assert_eq!(dim[0], 10);
         assert_eq!(dim[1], 30);
-        assert_eq!(data[[5, 10]], 160);
+        assert_eq!(data[[5, 10]], 177);
     }
 
     #[test]

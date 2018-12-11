@@ -2,17 +2,29 @@
 set -e
 set -x
 
+RUST_VERSION=${RUST_VERSION:-stable}
+
+run_cargo() {
+    if [ -z $TRAVIS ]; then
+        # Not running on travis
+        cargo +${RUST_VERSION} $*
+    else
+        # Running on travis
+        cargo $*
+    fi
+}
+
 export CARGO_TARGET_DIR=target
 
 for toml in $(find . -maxdepth 2 -name "Cargo.toml"); do
-    cargo test --manifest-path $toml
+    run_cargo test --manifest-path $toml
 done
 
 # Test the bindgen feature
-cargo test --manifest-path fitsio/Cargo.toml --features bindgen --no-default-features
+run_cargo test --manifest-path fitsio/Cargo.toml --features bindgen --no-default-features
 
 # Test the full example
-cargo run --manifest-path fitsio/Cargo.toml --example full_example
+run_cargo run --manifest-path fitsio/Cargo.toml --example full_example
 
 # Test the array feature
-cargo test --manifest-path fitsio/Cargo.toml --features array
+run_cargo test --manifest-path fitsio/Cargo.toml --features array

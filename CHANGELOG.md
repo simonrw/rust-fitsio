@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 * (`fitsio`) add support for writing all integer header keys
 
 ### Changed
+
+* (`fitsio`) fix errors with the system allocator, ensuring the package will run on the latest nightly and beta compilers [#100](https://github.com/mindriot101/rust-fitsio/pull/100)
+
 ### Removed
 
 ## [0.14.0] - 2018-04-21
