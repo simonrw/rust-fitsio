@@ -177,14 +177,8 @@ macro_rules! read_image_impl_vec {
 
                         let mut inc: Vec<_> = (0..n_ranges).map(|_| 1).collect();
                         let vec_size = nelements;
-                        println!(
-                            "FPIXEL: {:?}, LPIXEL: {:?}?, NUMBER OF ELEMENTS: {}, VECTOR SIZE: {}",
-                            fpixel, lpixel, nelements, vec_size
-                        );
                         let mut out = vec![$default_value; vec_size];
                         let mut status = 0;
-
-                        println!("DATA TYPE: {:?}", $data_type);
 
                         unsafe {
                             fits_read_subset(
