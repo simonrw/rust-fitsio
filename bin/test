@@ -28,3 +28,6 @@ run_cargo run --manifest-path fitsio/Cargo.toml --example full_example
 
 # Test the array feature
 run_cargo test --manifest-path fitsio/Cargo.toml --features array
+
+# Compile the book examples
+run_cargo build --manifest-path homepage/fitsioexample/Cargo.toml --bins
