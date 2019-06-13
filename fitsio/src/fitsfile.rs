@@ -311,9 +311,8 @@ impl FitsFile {
         self.hdu(current_hdu_number)
     }
 
-    // TODO: make this method private
     /// Get the current hdu info
-    pub fn fetch_hdu_info(&self) -> Result<HduInfo> {
+    pub(crate) fn fetch_hdu_info(&self) -> Result<HduInfo> {
         let mut status = 0;
         let mut hdu_type = 0;
 
