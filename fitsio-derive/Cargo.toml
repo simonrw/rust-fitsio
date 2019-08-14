@@ -11,7 +11,7 @@ documentation = "https://docs.rs/fitsio-derive"
 categories = ["external-ffi-bindings", "science"]
 
 [dependencies]
-quote = "0"
+quote = "1"
 syn = { version = "0", features = ["extra-traits"] }
 
 [lib]
