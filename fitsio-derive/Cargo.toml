@@ -12,7 +12,7 @@ categories = ["external-ffi-bindings", "science"]
 
 [dependencies]
 quote = "0"
-syn = { version = "0", features = ["extra-traits"] }
+syn = { version = "1", features = ["extra-traits"] }
 
 [lib]
 proc-macro = true
