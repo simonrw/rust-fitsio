@@ -551,7 +551,7 @@ impl From<ColumnDataType> for String {
 }
 
 impl FromStr for ColumnDataDescription {
-    type Err = Box<::std::error::Error>;
+    type Err = Box<dyn (::std::error::Error)>;
 
     fn from_str(s: &str) -> ::std::result::Result<Self, Self::Err> {
         let chars: Vec<_> = s.chars().collect();
