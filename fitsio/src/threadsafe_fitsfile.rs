@@ -56,7 +56,7 @@ mod tests {
         /* Spawn loads of threads... */
         let mut handles = Vec::new();
         for i in 0..10_000 {
-            let mut f1 = f.clone();
+            let f1 = f.clone();
             let handle = thread::spawn(move || {
                 /* Get the underlyng fits file back */
                 let mut t = f1.lock().unwrap();

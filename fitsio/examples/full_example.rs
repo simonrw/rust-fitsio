@@ -23,7 +23,7 @@ use fitsio::images::{ImageDescription, ImageType};
 use fitsio::tables::{ColumnDataType, ColumnDescription, FitsRow};
 use fitsio::FitsFile;
 
-fn run() -> Result<(), Box<Error>> {
+fn run() -> Result<(), Box<dyn Error>> {
     /* Create a temporary directory to work from */
     let tmp_dir = TempDir::new("fitsio")?;
     let file_path = tmp_dir.path().join("example.fits");
