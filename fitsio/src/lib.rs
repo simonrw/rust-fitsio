@@ -44,7 +44,7 @@ To open an existing file, use the [open][fitsfile-open] method.
 use fitsio::FitsFile;
 # use std::error::Error;
 
-# fn try_main() -> Result<(), Box<Error>> {
+# fn try_main() -> Result<(), Box<dyn Error>> {
 # let filename = "../testdata/full_example.fits";
 // let filename = ...;
 let fptr = FitsFile::open(filename)?;

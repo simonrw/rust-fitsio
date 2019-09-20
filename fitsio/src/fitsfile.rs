@@ -39,7 +39,7 @@ impl FitsFile {
     use fitsio::FitsFile;
     # use std::error::Error;
 
-    # fn run() -> Result<(), Box<Error>> {
+    # fn run() -> Result<(), Box<dyn Error>> {
     # let filename = "../testdata/full_example.fits";
     // let filename = ...;
     let fptr = FitsFile::open(filename)?;

@@ -5,7 +5,7 @@ use fitsio::FitsFile;
 use ndarray::ArrayD;
 use std::error::Error;
 
-fn try_main() -> Result<(), Box<Error>> {
+fn try_main() -> Result<(), Box<dyn Error>> {
     let filename = "../testdata/full_example.fits";
     let mut fptr = FitsFile::open(filename)?;
     let phdu = fptr.primary_hdu()?;
