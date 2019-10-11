@@ -10,7 +10,9 @@ BIAS_LEVEL = 2000
 RAW_IMAGE_SHAPE = (2048, 2048)
 
 
-def generate_frame(filename, shape, intdata=True, overscan=False, add_bias=False):
+def generate_frame(
+    filename, shape, intdata=True, overscan=False, add_bias=False, normalise=False
+):
     if overscan:
         shape = (shape[0] + 40, shape[1])
 
@@ -27,6 +29,13 @@ def generate_frame(filename, shape, intdata=True, overscan=False, add_bias=False
         else:
             data = np.random.uniform(0, 2 ** 16 - 1, size=shape)
 
+    if normalise:
+        r = data.ptp()
+        data = (data - data.min()) / r
+
+        # Put within normal flat range
+        data = (data * 0.3) + 0.7
+
     with fitsio.FITS(filename, fitsio.READWRITE, clobber=True) as outfile:
         outfile.write(data)
 
@@ -38,7 +47,7 @@ generate_dark = partial(
     generate_frame, shape=RAW_IMAGE_SHAPE, intdata=False, overscan=False
 )
 generate_flat = partial(
-    generate_frame, shape=RAW_IMAGE_SHAPE, intdata=False, overscan=False
+    generate_frame, shape=RAW_IMAGE_SHAPE, intdata=False, overscan=False, normalise=True
 )
 generate_image = partial(
     generate_frame, shape=RAW_IMAGE_SHAPE, intdata=False, overscan=False, add_bias=True
