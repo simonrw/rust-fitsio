@@ -17,7 +17,7 @@ def timeit(f, n=64):
         f()
         end_time = time.time()
         times.append(end_time - start_time)
-    return min(times)
+    return times
 
 
 def main():
@@ -29,5 +29,6 @@ def main():
     result = (science - bias - dark) / flat
 
 if __name__ == "__main__":
-    min_time = timeit(main, n=64)
-    print("Time taken: {} seconds".format(min_time))
+    times = timeit(main, n=64)
+    for time in times:
+        print(time)

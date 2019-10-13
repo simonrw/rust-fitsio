@@ -23,22 +23,17 @@ fn runit() -> usize {
     result.len()
 }
 
-fn timeit<F>(f: F, n: usize) -> f64
+fn timeit<F>(f: F, n: usize)
 where
     F: Fn() -> usize,
 {
-    let mut times: Vec<f64> = Vec::with_capacity(n);
-
     for _ in 0..n {
         let now = Instant::now();
         f();
-        times.push(now.elapsed().as_secs_f64());
+        println!("{}", now.elapsed().as_secs_f64());
     }
-
-    times.iter().fold(0.0, |acc, val| val.min(acc))
 }
 
 fn main() {
-    let min_time = timeit(runit, 64);
-    println!("Time taken: {:.8} seconds", min_time);
+    timeit(runit, 64);
 }

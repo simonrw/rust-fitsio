@@ -8,3 +8,11 @@ edition = "2018"
 
 [dependencies]
 fitsio = "0.14.1"
+
+[[bin]]
+name = "benchmark"
+path = "src/benchmark.rs"
+
+[[bin]]
+name = "rustversion"
+path = "src/main.rs"
