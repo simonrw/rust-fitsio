@@ -41,7 +41,7 @@ def generate_frame(
 
 
 generate_bias = partial(
-    generate_frame, shape=RAW_IMAGE_SHAPE, intdata=True,
+    generate_frame, shape=RAW_IMAGE_SHAPE, intdata=True, overscan=False,
 )
 generate_dark = partial(
     generate_frame, shape=RAW_IMAGE_SHAPE, intdata=False, overscan=False

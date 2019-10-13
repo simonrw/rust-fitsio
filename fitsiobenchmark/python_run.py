@@ -26,7 +26,7 @@ def main():
     flat = read_from_fits("flat.fits")
     science = read_from_fits("science.fits")
 
-    result = (science - bias[20:-20, :] - dark) / flat
+    result = (science - bias - dark) / flat
 
 if __name__ == "__main__":
     min_time = timeit(main, n=64)
