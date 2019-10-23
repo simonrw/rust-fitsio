@@ -926,9 +926,9 @@ extern crate fitsio_sys;
 
 use fitsio::FitsFile;
 
-# fn try_main() -> Result<(), Box<std::error::Error>> {
+# fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
-let fptr = FitsFile::open(filename)?;
+let mut fptr = FitsFile::open(filename)?;
 
 /* Find out the number of HDUs in the file */
 let mut num_hdus = 0;
@@ -1044,7 +1044,7 @@ let _hdu = t.hdu(hdu_num).unwrap();
 [threadsafe-fits-file]: threadsafe_fitsfile/struct.ThreadsafeFitsFile.html
 */
 
-#![doc(html_root_url = "https://docs.rs/fitsio/0.14.1")]
+#![doc(html_root_url = "https://docs.rs/fitsio/0.15.0")]
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]

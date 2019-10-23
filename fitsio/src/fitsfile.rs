@@ -26,7 +26,7 @@ pub struct FitsFile {
     /// Name of the file
     pub filename: String,
     open_mode: FileOpenMode,
-    pub(crate) fptr: *const fitsfile,
+    pub(crate) fptr: ptr::NonNull<fitsfile>,
 }
 
 impl FitsFile {
@@ -65,10 +65,13 @@ impl FitsFile {
             );
         }
 
-        check_status(status).map(|_| FitsFile {
-            fptr,
-            open_mode: FileOpenMode::READONLY,
-            filename: filename.to_string(),
+        check_status(status).map(|_| match ptr::NonNull::new(fptr) {
+            Some(p) => FitsFile {
+                fptr: p,
+                open_mode: FileOpenMode::READONLY,
+                filename: filename.to_string(),
+            },
+            None => unimplemented!(),
         })
     }
 
@@ -104,10 +107,13 @@ impl FitsFile {
             );
         }
 
-        check_status(status).map(|_| FitsFile {
-            fptr,
-            open_mode: FileOpenMode::READWRITE,
-            filename: filename.to_string(),
+        check_status(status).map(|_| match ptr::NonNull::new(fptr) {
+            Some(p) => FitsFile {
+                fptr: p,
+                open_mode: FileOpenMode::READWRITE,
+                filename: filename.to_string(),
+            },
+            None => unimplemented!(),
         })
     }
 
@@ -163,11 +169,11 @@ impl FitsFile {
     }
 
     /// Method to extract what open mode the file is in
-    pub(crate) fn open_mode(&self) -> Result<FileOpenMode> {
+    pub(crate) fn open_mode(&mut self) -> Result<FileOpenMode> {
         let mut status = 0;
         let mut iomode = 0;
         unsafe {
-            fits_file_mode(self.fptr as *mut _, &mut iomode, &mut status);
+            fits_file_mode(self.fptr.as_mut() as *mut _, &mut iomode, &mut status);
         }
 
         check_status(status).map(|_| match iomode {
@@ -177,11 +183,11 @@ impl FitsFile {
         })
     }
 
-    fn add_empty_primary(&self) -> Result<()> {
+    fn add_empty_primary(&mut self) -> Result<()> {
         let mut status = 0;
         unsafe {
             fits_write_imghdr(
-                self.fptr as *mut _,
+                self.fptr.as_mut() as *mut _,
                 ImageType::UnsignedByte.into(),
                 0,
                 ptr::null_mut(),
@@ -275,7 +281,7 @@ impl FitsFile {
         let mut status = 0;
         let mut num_hdus = 0;
         unsafe {
-            fits_get_num_hdus(self.fptr as *mut _, &mut num_hdus, &mut status);
+            fits_get_num_hdus(self.fptr.as_mut() as *mut _, &mut num_hdus, &mut status);
         }
 
         check_status(status).map(|_| num_hdus as _)
@@ -297,10 +303,10 @@ impl FitsFile {
         self.change_hdu(hdu.hdu_num)
     }
 
-    pub(crate) fn hdu_number(&self) -> usize {
+    pub(crate) fn hdu_number(&mut self) -> usize {
         let mut hdu_num = 0;
         unsafe {
-            fits_get_hdu_num(self.fptr as *mut _, &mut hdu_num);
+            fits_get_hdu_num(self.fptr.as_mut() as *mut _, &mut hdu_num);
         }
         (hdu_num - 1) as usize
     }
@@ -312,25 +318,25 @@ impl FitsFile {
     }
 
     /// Get the current hdu info
-    pub(crate) fn fetch_hdu_info(&self) -> Result<HduInfo> {
+    pub(crate) fn fetch_hdu_info(&mut self) -> Result<HduInfo> {
         let mut status = 0;
         let mut hdu_type = 0;
 
         unsafe {
-            fits_get_hdu_type(self.fptr as *mut _, &mut hdu_type, &mut status);
+            fits_get_hdu_type(self.fptr.as_mut() as *mut _, &mut hdu_type, &mut status);
         }
 
         let hdu_type = match hdu_type {
             0 => {
                 let mut dimensions = 0;
                 unsafe {
-                    fits_get_img_dim(self.fptr as *mut _, &mut dimensions, &mut status);
+                    fits_get_img_dim(self.fptr.as_mut() as *mut _, &mut dimensions, &mut status);
                 }
 
                 let mut shape = vec![0; dimensions as usize];
                 unsafe {
                     fits_get_img_size(
-                        self.fptr as *mut _,
+                        self.fptr.as_mut() as *mut _,
                         dimensions,
                         shape.as_mut_ptr(),
                         &mut status,
@@ -347,7 +353,7 @@ impl FitsFile {
                      * See description here:
                      * https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node40.html
                      */
-                    fits_get_img_equivtype(self.fptr as *mut _, &mut bitpix, &mut status);
+                    fits_get_img_equivtype(self.fptr.as_mut() as *mut _, &mut bitpix, &mut status);
                 }
 
                 let image_type = match bitpix {
@@ -371,12 +377,12 @@ impl FitsFile {
             1 | 2 => {
                 let mut num_rows = 0;
                 unsafe {
-                    fits_get_num_rows(self.fptr as *mut _, &mut num_rows, &mut status);
+                    fits_get_num_rows(self.fptr.as_mut() as *mut _, &mut num_rows, &mut status);
                 }
 
                 let mut num_cols = 0;
                 unsafe {
-                    fits_get_num_cols(self.fptr as *mut _, &mut num_cols, &mut status);
+                    fits_get_num_cols(self.fptr.as_mut() as *mut _, &mut num_cols, &mut status);
                 }
                 let mut column_descriptions = Vec::with_capacity(num_cols as usize);
 
@@ -385,7 +391,7 @@ impl FitsFile {
                     let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
                     unsafe {
                         fits_get_bcolparms(
-                            self.fptr as *mut _,
+                            self.fptr.as_mut() as *mut _,
                             (i + 1) as i32,
                             name_buffer.as_mut_ptr(),
                             ptr::null_mut(),
@@ -485,7 +491,7 @@ impl FitsFile {
         let mut status: libc::c_int = 0;
         unsafe {
             fits_create_tbl(
-                self.fptr as *mut _,
+                self.fptr.as_mut() as *mut _,
                 hdu_info.into(),
                 0,
                 tfields.len as libc::c_int,
@@ -557,7 +563,7 @@ impl FitsFile {
 
         unsafe {
             fits_create_img(
-                self.fptr as *mut _,
+                self.fptr.as_mut() as *mut _,
                 image_description.data_type.into(),
                 naxis as i32,
                 dimensions.as_ptr() as *mut libc::c_long,
@@ -739,9 +745,9 @@ impl FitsFile {
 
     use fitsio::FitsFile;
 
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
-    let fptr = FitsFile::open(filename)?;
+    let mut fptr = FitsFile::open(filename)?;
 
     /* Find out the number of HDUs in the file */
     let mut num_hdus = 0;
@@ -762,8 +768,8 @@ impl FitsFile {
 
     [`FitsHdu`]: hdu/struct.FitsHdu.html
     */
-    pub unsafe fn as_raw(&self) -> *mut fitsfile {
-        self.fptr as *mut _
+    pub unsafe fn as_raw(&mut self) -> *mut fitsfile {
+        self.fptr.as_mut() as *mut _
     }
 }
 
@@ -779,9 +785,8 @@ impl Drop for FitsFile {
     fn drop(&mut self) {
         let mut status = 0;
         unsafe {
-            fits_close_file(self.fptr as *mut _, &mut status);
+            fits_close_file(self.fptr.as_mut() as *mut _, &mut status);
         }
-        self.fptr = ptr::null_mut();
     }
 }
 
@@ -885,11 +890,14 @@ where
         }
 
         check_status(status).and_then(|_| {
-            let mut f = FitsFile {
-                fptr,
-                open_mode: FileOpenMode::READWRITE,
-                filename: path.to_string(),
-            };
+            let mut f = match ptr::NonNull::new(fptr) {
+                Some(p) => FitsFile {
+                    fptr: p,
+                    open_mode: FileOpenMode::READWRITE,
+                    filename: path.to_string(),
+                },
+                None => unimplemented!(),
+            };;
 
             match self.image_description {
                 Some(ref description) => {
@@ -910,7 +918,7 @@ where
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-")?;
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
@@ -1255,12 +1263,12 @@ mod test {
     #[test]
     fn test_getting_file_open_mode() {
         duplicate_test_file(|filename| {
-            let f = FitsFile::open(filename).unwrap();
+            let mut f = FitsFile::open(filename).unwrap();
             assert_eq!(f.open_mode().unwrap(), FileOpenMode::READONLY);
         });
 
         duplicate_test_file(|filename| {
-            let f = FitsFile::edit(filename).unwrap();
+            let mut f = FitsFile::edit(filename).unwrap();
             assert_eq!(f.open_mode().unwrap(), FileOpenMode::READWRITE);
         });
     }
@@ -1553,7 +1561,7 @@ mod test {
     fn test_access_fptr_unsafe() {
         use fitsio_sys::fitsfile;
 
-        let f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let fptr: *const fitsfile = unsafe { f.as_raw() };
         assert!(!fptr.is_null());
     }
@@ -1561,7 +1569,7 @@ mod test {
     #[test]
     fn test_extended_filename_syntax() {
         let filename = "../testdata/full_example.fits[TESTEXT]";
-        let f = FitsFile::open(filename).unwrap();
+        let mut f = FitsFile::open(filename).unwrap();
         match f.fetch_hdu_info() {
             Ok(HduInfo::TableInfo { .. }) => {}
             Ok(HduInfo::ImageInfo { .. }) => panic!("Should be binary table"),
@@ -1604,5 +1612,4 @@ mod test {
             }
         });
     }
-
 }

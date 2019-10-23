@@ -9,6 +9,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 ### Removed
 
+## [0.15.0]
+
+### Added
+
+### Changed
+
+* (`fitsio`) **BREAKING CHANGE**: implementing underlying raw `fitsfile` pointer as a `std::ptr::NonNull`, meaning the pointer is guaranteed to never be null, increasing the safety of the API. The breaking change is that more methods require a mutable (exclusive) reference (due to the method of converting the `NonNull` to mutable pointer, required by some lower level methods). The upside is that the `FitsFile` object *should* have exclusive access as it wraps the state of the fits file on disk. Safe concurrent (though not parallel) access is given by the `threadsafe` method.
+
+### Removed
+
+
 ## [0.14.1]
 
 ### Added
@@ -157,6 +168,7 @@ Nothing
 [0.13.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.12.1...v0.13.0
 [0.14.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.13.0...v0.14.0
 [0.14.1]: https://github.com/mindriot101/rust-fitsio/compare/v0.14.0...v0.14.1
+[0.15.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.14.1...v0.15.0
 
 ---
 

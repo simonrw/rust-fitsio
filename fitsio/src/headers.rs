@@ -25,7 +25,7 @@ This is currently:
 * */
 pub trait ReadsKey {
     #[doc(hidden)]
-    fn read_key(f: &FitsFile, name: &str) -> Result<Self>
+    fn read_key(f: &mut FitsFile, name: &str) -> Result<Self>
     where
         Self: Sized;
 }
@@ -33,14 +33,14 @@ pub trait ReadsKey {
 macro_rules! reads_key_impl {
     ($t:ty, $func:ident) => {
         impl ReadsKey for $t {
-            fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
+            fn read_key(f: &mut FitsFile, name: &str) -> Result<Self> {
                 let c_name = ffi::CString::new(name)?;
                 let mut status = 0;
                 let mut value: Self = Self::default();
 
                 unsafe {
                     $func(
-                        f.fptr as *mut _,
+                        f.fptr.as_mut() as *mut _,
                         c_name.into_raw(),
                         &mut value,
                         ptr::null_mut(),
@@ -63,14 +63,14 @@ reads_key_impl!(f32, fits_read_key_flt);
 reads_key_impl!(f64, fits_read_key_dbl);
 
 impl ReadsKey for String {
-    fn read_key(f: &FitsFile, name: &str) -> Result<Self> {
+    fn read_key(f: &mut FitsFile, name: &str) -> Result<Self> {
         let c_name = ffi::CString::new(name)?;
         let mut status = 0;
         let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
 
         unsafe {
             fits_read_key_str(
-                f.fptr as *mut _,
+                f.fptr.as_mut() as *mut _,
                 c_name.into_raw(),
                 value.as_mut_ptr(),
                 ptr::null_mut(),
@@ -88,13 +88,13 @@ impl ReadsKey for String {
 /// Writing a fits keyword
 pub trait WritesKey {
     #[doc(hidden)]
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()>;
+    fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()>;
 }
 
 macro_rules! writes_key_impl_int {
     ($t:ty, $datatype:expr) => {
         impl WritesKey for $t {
-            fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
                 let c_name = ffi::CString::new(name)?;
                 let mut status = 0;
 
@@ -102,7 +102,7 @@ macro_rules! writes_key_impl_int {
 
                 unsafe {
                     fits_write_key(
-                        f.fptr as *mut _,
+                        f.fptr.as_mut() as *mut _,
                         datatype as _,
                         c_name.into_raw(),
                         &value as *const $t as *mut c_void,
@@ -128,13 +128,13 @@ writes_key_impl_int!(u64, DataType::TULONG);
 macro_rules! writes_key_impl_flt {
     ($t:ty, $func:ident) => {
         impl WritesKey for $t {
-            fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
                 let c_name = ffi::CString::new(name)?;
                 let mut status = 0;
 
                 unsafe {
                     $func(
-                        f.fptr as *mut _,
+                        f.fptr.as_mut() as *mut _,
                         c_name.into_raw(),
                         value,
                         9,
@@ -152,19 +152,19 @@ writes_key_impl_flt!(f32, fits_write_key_flt);
 writes_key_impl_flt!(f64, fits_write_key_dbl);
 
 impl WritesKey for String {
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+    fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
         WritesKey::write_key(f, name, value.as_str())
     }
 }
 
 impl<'a> WritesKey for &'a str {
-    fn write_key(f: &FitsFile, name: &str, value: Self) -> Result<()> {
+    fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
         let c_name = ffi::CString::new(name)?;
         let mut status = 0;
 
         unsafe {
             fits_write_key_str(
-                f.fptr as *mut _,
+                f.fptr.as_mut() as *mut _,
                 c_name.into_raw(),
                 ffi::CString::new(value)?.into_raw(),
                 ptr::null_mut(),
