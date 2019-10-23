@@ -19,7 +19,7 @@ fn run_rust() -> Result<Vec<f64>> {
 }
 
 fn run_python() -> Result<Vec<f64>> {
-    let output = process::Command::new("./venv/bin/python")
+    let output = process::Command::new("python")
         .args(&["./python_run.py"])
         .output()?;
     parse_lines(std::str::from_utf8(&output.stdout)?)
