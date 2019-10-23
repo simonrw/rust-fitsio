@@ -15,7 +15,7 @@ use types::DataType;
 pub trait ReadsCol {
     #[doc(hidden)]
     fn read_col_range<T: Into<String>>(
-        fits_file: &FitsFile,
+        fits_file: &mut FitsFile,
         name: T,
         range: &Range<usize>,
     ) -> Result<Vec<Self>>
@@ -23,13 +23,13 @@ pub trait ReadsCol {
         Self: Sized;
 
     #[doc(hidden)]
-    fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
+    fn read_cell_value<T>(fits_file: &mut FitsFile, name: T, idx: usize) -> Result<Self>
     where
         T: Into<String>,
         Self: Sized;
 
     #[doc(hidden)]
-    fn read_col<T: Into<String>>(fits_file: &FitsFile, name: T) -> Result<Vec<Self>>
+    fn read_col<T: Into<String>>(fits_file: &mut FitsFile, name: T) -> Result<Vec<Self>>
     where
         Self: Sized,
     {
@@ -48,7 +48,7 @@ macro_rules! reads_col_impl {
     ($t:ty, $func:ident, $nullval:expr) => {
         impl ReadsCol for $t {
             fn read_col_range<T: Into<String>>(
-                fits_file: &FitsFile,
+                fits_file: &mut FitsFile,
                 name: T,
                 range: &Range<usize>,
             ) -> Result<Vec<Self>> {
@@ -70,7 +70,7 @@ macro_rules! reads_col_impl {
                         let mut status = 0;
                         unsafe {
                             $func(
-                                fits_file.fptr as *mut _,
+                                fits_file.fptr.as_mut() as *mut _,
                                 (column_number + 1) as i32,
                                 (range.start + 1) as i64,
                                 1,
@@ -102,7 +102,7 @@ macro_rules! reads_col_impl {
             }
 
             #[doc(hidden)]
-            fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
+            fn read_cell_value<T>(fits_file: &mut FitsFile, name: T, idx: usize) -> Result<Self>
             where
                 T: Into<String>,
                 Self: Sized,
@@ -125,7 +125,7 @@ macro_rules! reads_col_impl {
 
                         unsafe {
                             $func(
-                                fits_file.fptr as *mut _,
+                                fits_file.fptr.as_mut() as *mut _,
                                 (column_number + 1) as i32,
                                 (idx + 1) as i64,
                                 1,
@@ -160,7 +160,7 @@ reads_col_impl!(u64, fits_read_col_ulng, 0);
 
 impl ReadsCol for String {
     fn read_col_range<T: Into<String>>(
-        fits_file: &FitsFile,
+        fits_file: &mut FitsFile,
         name: T,
         range: &Range<usize>,
     ) -> Result<Vec<Self>> {
@@ -193,7 +193,7 @@ impl ReadsCol for String {
 
                 unsafe {
                     fits_read_col_str(
-                        fits_file.fptr as *mut _,
+                        fits_file.fptr.as_mut() as *mut _,
                         (column_number + 1) as _,
                         (range.start + 1) as _,
                         1,
@@ -225,7 +225,7 @@ impl ReadsCol for String {
     }
 
     #[doc(hidden)]
-    fn read_cell_value<T>(fits_file: &FitsFile, name: T, idx: usize) -> Result<Self>
+    fn read_cell_value<T>(fits_file: &mut FitsFile, name: T, idx: usize) -> Result<Self>
     where
         T: Into<String>,
         Self: Sized,
@@ -290,7 +290,7 @@ macro_rules! writes_col_impl {
                         let n_elements = rows.end - rows.start;
                         unsafe {
                             fits_write_col(
-                                fits_file.fptr as *mut _,
+                                fits_file.fptr.as_mut() as *mut _,
                                 $data_type.into(),
                                 (colno + 1) as _,
                                 (rows.start + 1) as _,
@@ -352,7 +352,7 @@ impl WritesCol for String {
 
                 unsafe {
                     fits_write_col_str(
-                        fits_file.fptr as *mut _,
+                        fits_file.fptr.as_mut() as *mut _,
                         (colno + 1) as _,
                         (start + 1) as _,
                         1,
@@ -381,12 +381,15 @@ pub trait FitsRow: ::std::default::Default {
 }
 
 /// Helper function to get the display width of a column
-pub(crate) fn column_display_width(fits_file: &FitsFile, column_number: usize) -> Result<usize> {
+pub(crate) fn column_display_width(
+    fits_file: &mut FitsFile,
+    column_number: usize,
+) -> Result<usize> {
     let mut status = 0;
     let mut width = 0;
     unsafe {
         fits_get_col_display_width(
-            fits_file.fptr as *mut _,
+            fits_file.fptr.as_mut() as *mut _,
             (column_number + 1) as _,
             &mut width,
             &mut status,
@@ -683,11 +686,11 @@ pub enum Column {
 pub struct ColumnIterator<'a> {
     current: usize,
     column_descriptions: Vec<ConcreteColumnDescription>,
-    fits_file: &'a FitsFile,
+    fits_file: &'a mut FitsFile,
 }
 
 impl<'a> ColumnIterator<'a> {
-    pub(crate) fn new(fits_file: &'a FitsFile) -> Self {
+    pub(crate) fn new(fits_file: &'a mut FitsFile) -> Self {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo {
                 column_descriptions,
@@ -822,7 +825,7 @@ mod test {
     fn test_fetching_column_width() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         f.hdu(1).unwrap();
-        let width = column_display_width(&f, 3).unwrap();
+        let width = column_display_width(&mut f, 3).unwrap();
         assert_eq!(width, 7);
     }
 

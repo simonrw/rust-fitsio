@@ -104,7 +104,7 @@ macro_rules! read_image_impl_vec {
 
                         unsafe {
                             fits_read_img(
-                                fits_file.fptr as *mut _,
+                                fits_file.fptr.as_mut() as *mut _,
                                 $data_type.into(),
                                 (range.start + 1) as i64,
                                 nelements as i64,
@@ -183,15 +183,15 @@ macro_rules! read_image_impl_vec {
 
                         unsafe {
                             fits_read_subset(
-                                fits_file.fptr as *mut _,   // fptr
-                                $data_type.into(),          // datatype
-                                fpixel.as_mut_ptr(),        // fpixel
-                                lpixel.as_mut_ptr(),        // lpixel
-                                inc.as_mut_ptr(),           // inc
-                                ptr::null_mut(),            // nulval
-                                out.as_mut_ptr() as *mut _, // array
-                                ptr::null_mut(),            // anynul
-                                &mut status,                // status
+                                fits_file.fptr.as_mut() as *mut _, // fptr
+                                $data_type.into(),                 // datatype
+                                fpixel.as_mut_ptr(),               // fpixel
+                                lpixel.as_mut_ptr(),               // lpixel
+                                inc.as_mut_ptr(),                  // inc
+                                ptr::null_mut(),                   // nulval
+                                out.as_mut_ptr() as *mut _,        // array
+                                ptr::null_mut(),                   // anynul
+                                &mut status,                       // status
                             );
                         }
 
@@ -223,7 +223,7 @@ macro_rules! write_image_impl {
                         let mut status = 0;
                         unsafe {
                             fits_write_img(
-                                fits_file.fptr as *mut _,
+                                fits_file.fptr.as_mut() as *mut _,
                                 $data_type.into(),
                                 (range.start + 1) as i64,
                                 nelements as i64,
@@ -266,7 +266,7 @@ macro_rules! write_image_impl {
 
                         unsafe {
                             fits_write_subset(
-                                fits_file.fptr as *mut _,
+                                fits_file.fptr.as_mut() as *mut _,
                                 $data_type.into(),
                                 fpixel.as_mut_ptr(),
                                 lpixel.as_mut_ptr(),
@@ -578,5 +578,4 @@ mod tests {
             }
         });
     }
-
 }
