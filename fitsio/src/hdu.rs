@@ -427,7 +427,7 @@ impl FitsHdu {
                 let mut status = 0;
                 unsafe {
                     fits_resize_img(
-                        fits_file.fptr as *mut _,
+                        fits_file.fptr.as_mut() as *mut _,
                         image_type.into(),
                         new_size.len() as _,
                         new_size.as_ptr() as *mut _,
@@ -473,8 +473,8 @@ impl FitsHdu {
         let mut status = 0;
         unsafe {
             fits_copy_hdu(
-                src_fits_file.fptr as *mut _,
-                dest_fits_file.fptr as *mut _,
+                src_fits_file.fptr.as_mut() as *mut _,
+                dest_fits_file.fptr.as_mut() as *mut _,
                 0,
                 &mut status,
             );
@@ -532,7 +532,7 @@ impl FitsHdu {
 
         unsafe {
             fits_insert_col(
-                fits_file.fptr as *mut _,
+                fits_file.fptr.as_mut() as *mut _,
                 (position + 1) as _,
                 c_name.into_raw(),
                 c_type.into_raw(),
@@ -658,7 +658,11 @@ impl FitsHdu {
         let mut status = 0;
 
         unsafe {
-            fits_delete_col(fits_file.fptr as *mut _, (colno + 1) as _, &mut status);
+            fits_delete_col(
+                fits_file.fptr.as_mut() as *mut _,
+                (colno + 1) as _,
+                &mut status,
+            );
         }
 
         check_status(status).and_then(|_| fits_file.current_hdu())
@@ -686,7 +690,7 @@ impl FitsHdu {
 
         unsafe {
             fits_get_colnum(
-                fits_file.fptr as *mut _,
+                fits_file.fptr.as_mut() as *mut _,
                 CaseSensitivity::CASEINSEN as _,
                 c_col_name.as_ptr() as *mut _,
                 &mut colno,
@@ -934,7 +938,7 @@ impl FitsHdu {
         let mut status = 0;
         let mut curhdu = 0;
         unsafe {
-            fits_delete_hdu(fits_file.fptr as *mut _, &mut curhdu, &mut status);
+            fits_delete_hdu(fits_file.fptr.as_mut() as *mut _, &mut curhdu, &mut status);
         }
         check_status(status).map(|_| ())
     }
@@ -1052,7 +1056,7 @@ impl DescribesHdu for usize {
         let mut status = 0;
         unsafe {
             fits_movabs_hdu(
-                f.fptr as *mut _,
+                f.fptr.as_mut() as *mut _,
                 (*self + 1) as i32,
                 &mut hdu_type,
                 &mut status,
@@ -1070,7 +1074,7 @@ impl<'a> DescribesHdu for &'a str {
 
         unsafe {
             fits_movnam_hdu(
-                f.fptr as *mut _,
+                f.fptr.as_mut() as *mut _,
                 HduInfo::AnyInfo.into(),
                 c_hdu_name.into_raw(),
                 0,
@@ -1195,5 +1199,4 @@ mod tests {
             assert_eq!(counter, 2);
         });
     }
-
 }
