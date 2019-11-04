@@ -897,7 +897,7 @@ where
                     filename: path.to_string(),
                 },
                 None => unimplemented!(),
-            };;
+            };
 
             match self.image_description {
                 Some(ref description) => {
