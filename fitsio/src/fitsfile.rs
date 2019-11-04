@@ -581,7 +581,7 @@ impl FitsFile {
         }
 
         // Current HDU should be at the new HDU
-        let current_hdu = try!(self.current_hdu());
+        let current_hdu = self.current_hdu()?;
         current_hdu.write_key(self, "EXTNAME", extname.into())?;
 
         check_status(status).and_then(|_| self.current_hdu())
