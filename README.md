@@ -5,8 +5,6 @@ FFI wrapper around cfitsio in Rust
 [![Join the chat at https://gitter.im/mindriot101/rust-fitsio](https://badges.gitter.im/mindriot101/rust-fitsio.svg)](https://gitter.im/rust-fitsio/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 [![Build Status](https://travis-ci.org/mindriot101/rust-fitsio.svg?branch=master)](https://travis-ci.org/mindriot101/rust-fitsio)
 
-**NOTE(2019/11/04): the `bindgen` feature of `fitsio` is broken on rustc>=1.40 until I have time to fix it**
-
 ## Installation
 
 `fitsio` supports versions of `cfitsio >= 3.08`.
