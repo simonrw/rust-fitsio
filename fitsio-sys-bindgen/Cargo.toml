@@ -20,4 +20,4 @@ tempdir = "0"
 
 [build-dependencies]
 pkg-config = "0"
-bindgen = "0"
+bindgen = "0.52"
