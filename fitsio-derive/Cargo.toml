@@ -17,3 +17,5 @@ syn = { version = "1", features = ["extra-traits"] }
 [lib]
 proc-macro = true
 
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]

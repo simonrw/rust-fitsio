@@ -11,6 +11,7 @@ documentation = "https://docs.rs/fitsio"
 categories = ["external-ffi-bindings", "science"]
 
 [package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
 features = ["array"]
 
 [dependencies]
