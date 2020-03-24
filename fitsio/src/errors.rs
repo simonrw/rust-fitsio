@@ -95,10 +95,9 @@ impl ::std::convert::From<Utf8Error> for Error {
 
 impl ::std::convert::From<Box<dyn (::std::error::Error)>> for Error {
     fn from(error: Box<dyn (::std::error::Error)>) -> Self {
-        let description = error.description();
         let message = match error.source() {
-            Some(msg) => format!("Error: {} caused by {}", description, msg),
-            None => format!("Error: {}", description),
+            Some(msg) => format!("Error: {} caused by {}", error, msg),
+            None => format!("Error: {}", error),
         };
         Error::Message(message)
     }
