@@ -39,14 +39,11 @@ impl FitsFile {
     use fitsio::FitsFile;
     # use std::error::Error;
 
-    # fn run() -> Result<(), Box<dyn Error>> {
+    # fn main() -> Result<(), Box<dyn Error>> {
     # let filename = "../testdata/full_example.fits";
     // let filename = ...;
     let fptr = FitsFile::open(filename)?;
     # Ok(())
-    # }
-    # fn main() {
-    # run().unwrap();
     # }
     ```
     */
@@ -81,7 +78,7 @@ impl FitsFile {
     # Example
 
     ```rust
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     use fitsio::FitsFile;
 
@@ -89,7 +86,6 @@ impl FitsFile {
     let fptr = FitsFile::edit(filename)?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn edit<T: AsRef<Path>>(filename: T) -> Result<Self> {
@@ -134,7 +130,7 @@ impl FitsFile {
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
@@ -152,7 +148,6 @@ impl FitsFile {
         .open()?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
 
     [`create`]: #method.create
@@ -220,7 +215,7 @@ impl FitsFile {
     # use fitsio::FitsFile;
     use fitsio::hdu::HduInfo;
     #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut fptr = FitsFile::open(filename)?;
     let hdu = fptr.hdu(0)?;
@@ -238,7 +233,6 @@ impl FitsFile {
     }
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
 
     [`FitsHdu`]: hdu/struct.FitsHdu.html
@@ -261,7 +255,7 @@ impl FitsFile {
     # use fitsio::FitsFile;
     # use fitsio::hdu::HduInfo;
     #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut fptr = FitsFile::open(filename)?;
     let hdu = fptr.hdu(0)?;
@@ -269,7 +263,6 @@ impl FitsFile {
     assert_eq!(hdu, phdu);
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn primary_hdu(&mut self) -> Result<FitsHdu> {
@@ -435,7 +428,7 @@ impl FitsFile {
     # extern crate fitsio;
     use fitsio::tables::{ColumnDataType, ColumnDescription};
 
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-")?;
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
@@ -450,7 +443,6 @@ impl FitsFile {
     let hdu = fptr.create_table("EXTNAME".to_string(), descriptions)?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
 
     [`ColumnDescription`]: tables/struct.ColumnDescription.html
@@ -519,7 +511,7 @@ impl FitsFile {
     # extern crate fitsio;
     use fitsio::images::{ImageDescription, ImageType};
 
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-")?;
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
@@ -531,7 +523,6 @@ impl FitsFile {
     let hdu = fptr.create_image("EXTNAME".to_string(), &image_description)?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
 
     [`ImageDescription`]: images/struct.ImageDescription.html
@@ -558,7 +549,7 @@ impl FitsFile {
             .into());
         }
 
-        let mut dimensions: Vec<_> = image_description.dimensions.clone().to_vec();
+        let mut dimensions: Vec<_> = image_description.dimensions.to_vec();
         dimensions.reverse();
 
         unsafe {
@@ -594,14 +585,13 @@ impl FitsFile {
 
     ```rust
     # extern crate fitsio;
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     #     let mut fptr = fitsio::FitsFile::open("../testdata/full_example.fits")?;
     for hdu in fptr.iter() {
         // Do something with hdu
     }
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn iter(&mut self) -> FitsHduIterator {
@@ -621,7 +611,7 @@ impl FitsFile {
     # Example
 
     ```rust
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     use fitsio::FitsFile;
 
     # let filename = "../testdata/full_example.fits";
@@ -632,7 +622,6 @@ impl FitsFile {
     fptr.pretty_write(&mut io::stdout())?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
 
     [`pretty_print`]: #method.pretty_print
@@ -654,7 +643,7 @@ impl FitsFile {
     # Example
 
     ```rust
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     use fitsio::FitsFile;
 
     # let filename = "../testdata/full_example.fits";
@@ -665,7 +654,6 @@ impl FitsFile {
     fptr.pretty_write(&mut io::stdout())?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
 
     [`pretty_print`]: #method.pretty_print
@@ -724,50 +712,49 @@ impl FitsFile {
         Ok(())
     }
 
-    /**
-    Return a pointer to the underlying C `fitsfile` object representing the current file.
-
-    This is marked as `unsafe` as it is definitely something that is not required by most
-    users, and hence the unsafe-ness marks it as an advanced feature. I have also not
-    considered possible concurrency or data race issues as yet.
-
-    Any changes to the underlying fits file will not be updated in existing [`FitsHdu`]
-    objects, so these must be recreated.
-
-    # Example
-
-    ```rust
-    # extern crate fitsio;
-    # #[cfg(not(feature="bindgen"))]
-    extern crate fitsio_sys;
-    # #[cfg(feature="bindgen")]
-    # extern crate fitsio_sys_bindgen as fitsio_sys;
-
-    use fitsio::FitsFile;
-
-    # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
-    # let filename = "../testdata/full_example.fits";
-    let mut fptr = FitsFile::open(filename)?;
-
-    /* Find out the number of HDUs in the file */
-    let mut num_hdus = 0;
-    let mut status = 0;
-
-    unsafe {
-        let fitsfile = fptr.as_raw();
-
-        /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
-        implemented in this crate */
-        fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
-    }
-    assert_eq!(num_hdus, 2);
-    # Ok(())
-    # }
-    # fn main() { try_main().unwrap(); }
-    ```
-
-    [`FitsHdu`]: hdu/struct.FitsHdu.html
-    */
+    /// Return a pointer to the underlying C `fitsfile` object representing the current file.
+    ///
+    /// Any changes to the underlying fits file will not be updated in existing [`FitsHdu`]
+    /// objects, so these must be recreated.
+    ///
+    /// # Safety
+    ///
+    /// This is marked as `unsafe` as it is definitely something that is not required by most
+    /// users, and hence the unsafe-ness marks it as an advanced feature. I have also not
+    /// considered possible concurrency or data race issues as yet.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # extern crate fitsio;
+    /// # #[cfg(not(feature="bindgen"))]
+    /// extern crate fitsio_sys;
+    /// # #[cfg(feature="bindgen")]
+    /// # extern crate fitsio_sys_bindgen as fitsio_sys;
+    ///
+    /// use fitsio::FitsFile;
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let filename = "../testdata/full_example.fits";
+    /// let mut fptr = FitsFile::open(filename)?;
+    ///
+    /// /* Find out the number of HDUs in the file */
+    /// let mut num_hdus = 0;
+    /// let mut status = 0;
+    ///
+    /// unsafe {
+    ///     let fitsfile = fptr.as_raw();
+    ///
+    ///     /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
+    ///     implemented in this crate */
+    ///     fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
+    /// }
+    /// assert_eq!(num_hdus, 2);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`FitsHdu`]: hdu/struct.FitsHdu.html
     pub unsafe fn as_raw(&mut self) -> *mut fitsfile {
         self.fptr.as_mut() as *mut _
     }
@@ -918,7 +905,7 @@ where
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
-    # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-")?;
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
@@ -936,7 +923,6 @@ where
         .open()?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
 
     [`FitsFile`]: struct.FitsFile.html
@@ -962,7 +948,7 @@ where
     ```rust
     # extern crate tempdir;
     # extern crate fitsio;
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<std::error::Error>> {
     # let tdir = tempdir::TempDir::new("fitsio-")?;
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
@@ -974,7 +960,6 @@ where
         .open()?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
 
     [`open`]: struct.NewFitsFile.html#method.open

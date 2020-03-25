@@ -13,9 +13,9 @@ pub fn read_row(input: TokenStream) -> TokenStream {
 
     let mut tokens = Vec::new();
 
-    match &input.data {
-        &syn::Data::Struct(ref s) => match &s.fields {
-            &syn::Fields::Named(ref fields) => {
+    match input.data {
+        syn::Data::Struct(ref s) => match s.fields {
+            syn::Fields::Named(ref fields) => {
                 for field in &fields.named {
                     let ident = &field.ident.as_ref().unwrap();
                     let ident_str = ident.to_string();

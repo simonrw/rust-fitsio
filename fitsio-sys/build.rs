@@ -28,7 +28,7 @@ PKG_CONFIG_PATH=<blah> cargo build
 ",
                     package_name
                 );
-                std::io::stderr().write(err_msg.as_bytes()).unwrap();
+                std::io::stderr().write_all(err_msg.as_bytes()).unwrap();
                 std::process::exit(output.status.code().unwrap());
             }
         }

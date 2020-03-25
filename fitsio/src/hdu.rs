@@ -419,7 +419,7 @@ impl FitsHdu {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
-        let mut new_size = new_size.clone().to_vec();
+        let mut new_size = new_size.to_vec();
         new_size.reverse();
 
         match self.info {

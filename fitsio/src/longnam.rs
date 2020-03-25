@@ -1,5 +1,8 @@
 //! Long name wrappers of fitsio functions
 
+// Disable clippy warnings as C uses long argument lists
+#![allow(clippy::too_many_arguments)]
+
 pub use fitsio_sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
     ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd,

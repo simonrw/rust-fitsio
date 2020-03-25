@@ -48,11 +48,23 @@
 //! [2]: https://crates.io/crates/fitsio
 //! [3]: http://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/cfitsio.html
 
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-#![allow(improper_ctypes)]
-
+#![allow(
+    non_upper_case_globals,
+    non_camel_case_types,
+    non_snake_case,
+    improper_ctypes
+)]
+// Prevent clippy from throwing errors in generated code
+#![allow(
+    clippy::unreadable_literal,
+    clippy::transmute_ptr_to_ptr,
+    clippy::redundant_static_lifetimes,
+    clippy::missing_safety_doc,
+    clippy::useless_transmute,
+    clippy::trivially_copy_pass_by_ref,
+    clippy::too_many_arguments,
+    clippy::should_implement_trait
+)]
 extern crate libc;
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
