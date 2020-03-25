@@ -14,6 +14,8 @@ fn main() {
             let bindings = bindgen::builder()
                 .header("wrapper.h")
                 .block_extern_crate(true)
+                .opaque_type("fitsfile")
+                .opaque_type("FITSfile")
                 .rust_target(RustTarget::Stable_1_0)
                 .generate()
                 .expect("Unable to generate bindings");
@@ -43,7 +45,7 @@ PKG_CONFIG_PATH=<blah> cargo build
 ",
                     package_name
                 );
-                std::io::stderr().write(err_msg.as_bytes()).unwrap();
+                std::io::stderr().write_all(err_msg.as_bytes()).unwrap();
                 std::process::exit(output.status.code().unwrap());
             }
         }
