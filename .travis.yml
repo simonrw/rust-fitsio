@@ -1,5 +1,8 @@
 language: rust
-script: bash ./bin/test
+install: |
+  rustup component add clippy
+script: |
+  bash ./bin/test
 sudo: false
 
 rust:
