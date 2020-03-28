@@ -217,7 +217,7 @@ where
         num_rows: usize,
     ) -> Result<Self> {
         let data: Vec<T> = ReadImage::read_rows(fits_file, hdu, start_row, num_rows)?;
-        let arr = Array::from_vec(data);
+        let arr = Array::from(data);
         let row_length = arr.len() / num_rows;
         Ok(arr.into_shape(vec![num_rows, row_length]).unwrap())
     }
