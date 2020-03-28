@@ -167,10 +167,10 @@ assert_eq!(data[[0, 10]], 160);
 [read-section]: images/struct.FitsHdu.html#method.read_section
 */
 
-use errors::Result;
-use fitsfile::FitsFile;
-use hdu::{FitsHdu, HduInfo};
-use images::ReadImage;
+use crate::errors::Result;
+use crate::fitsfile::FitsFile;
+use crate::hdu::{FitsHdu, HduInfo};
+use crate::images::ReadImage;
 use ndarray::{Array, ArrayD};
 use std::ops::Range;
 
