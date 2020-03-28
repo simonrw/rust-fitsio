@@ -4,6 +4,17 @@ set -e
 
 main() {
 
+    # Assume we are in a subdirectory of `fitsio` and move upwards
+    while [ ! -f fitsio/Cargo.toml ]; do
+        if [[ $PWD = "/" ]]; then
+            # Top of the file system
+            echo "Cannot find fitsio dir" >&2
+            exit 1
+        fi
+
+        cd ..
+    done
+
     # Check the number of arguments. If the user supplies an argument, assume
     # they want to run a single sanitiser.
     if [[ $# -eq 0 ]]; then
