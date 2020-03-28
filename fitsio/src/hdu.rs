@@ -1,14 +1,14 @@
 //! Fits HDU related code
 
-use errors::{check_status, Result};
-use fitsfile::CaseSensitivity;
-use fitsfile::FitsFile;
-use headers::{ReadsKey, WritesKey};
-use images::{ImageType, ReadImage, WriteImage};
-use longnam::*;
+use crate::errors::{check_status, Result};
+use crate::fitsfile::CaseSensitivity;
+use crate::fitsfile::FitsFile;
+use crate::headers::{ReadsKey, WritesKey};
+use crate::images::{ImageType, ReadImage, WriteImage};
+use crate::longnam::*;
 use std::ffi;
 use std::ops::Range;
-use tables::{
+use crate::tables::{
     ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation, FitsRow, ReadsCol,
     WritesCol,
 };
@@ -1130,8 +1130,8 @@ hduinfo_into_impl!(i64);
 #[cfg(test)]
 mod tests {
     use super::FitsFile;
-    use hdu::{FitsHdu, HduInfo};
-    use testhelpers::duplicate_test_file;
+    use crate::hdu::{FitsHdu, HduInfo};
+    use crate::testhelpers::duplicate_test_file;
 
     #[test]
     fn test_manually_creating_a_fits_hdu() {

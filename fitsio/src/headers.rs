@@ -1,14 +1,14 @@
 //! Header-related code
-use errors::{check_status, Result};
-use fitsfile::FitsFile;
+use crate::errors::{check_status, Result};
+use crate::fitsfile::FitsFile;
 #[cfg(not(feature = "bindgen"))]
 use libc::*;
-use longnam::*;
+use crate::longnam::*;
 use std::ffi;
 #[cfg(feature = "bindgen")]
 use std::os::raw::*;
 use std::ptr;
-use types::DataType;
+use crate::types::DataType;
 
 const MAX_VALUE_LENGTH: usize = 71;
 
@@ -179,7 +179,7 @@ impl<'a> WritesKey for &'a str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use testhelpers::{duplicate_test_file, floats_close_f64, with_temp_file};
+    use crate::testhelpers::{duplicate_test_file, floats_close_f64, with_temp_file};
 
     #[test]
     fn test_reading_header_keys() {

@@ -1,8 +1,3 @@
-extern crate fitsio;
-#[macro_use]
-extern crate fitsio_derive;
-extern crate tempdir;
-
 /* This example docuents the following things:
  *
  * creating a new file
@@ -22,6 +17,7 @@ use tempdir::TempDir;
 use fitsio::images::{ImageDescription, ImageType};
 use fitsio::tables::{ColumnDataType, ColumnDescription, FitsRow};
 use fitsio::FitsFile;
+use fitsio_derive::FitsRow;
 
 fn run() -> Result<(), Box<dyn Error>> {
     /* Create a temporary directory to work from */

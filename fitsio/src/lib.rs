@@ -1078,7 +1078,7 @@ pub mod threadsafe_fitsfile;
 pub mod errors;
 
 // Re-exports
-pub use fitsfile::FitsFile;
+pub use crate::fitsfile::FitsFile;
 
 // For custom derive purposes
 // pub use tables::FitsRow;

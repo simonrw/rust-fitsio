@@ -11,7 +11,7 @@ use std::ops::Range;
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 use std::sync;
-use stringutils::status_to_string;
+use crate::stringutils::status_to_string;
 
 /// Enumeration of all error types
 #[derive(Debug)]
@@ -115,7 +115,7 @@ impl ::std::convert::From<IntoStringError> for Error {
     }
 }
 
-use fitsfile::FitsFile;
+use crate::fitsfile::FitsFile;
 type PoisonError<'a> = sync::PoisonError<sync::MutexGuard<'a, FitsFile>>;
 
 impl<'a> ::std::convert::From<PoisonError<'a>> for Error {

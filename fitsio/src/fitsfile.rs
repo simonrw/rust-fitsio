@@ -8,18 +8,18 @@
  * similar architectures).
  */
 
-use errors::{check_status, Error, Result};
+use crate::errors::{check_status, Error, Result};
 use fitsio_sys::fitsfile;
-use hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
-use images::{ImageDescription, ImageType};
+use crate::hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
+use crate::images::{ImageDescription, ImageType};
 use libc;
-use longnam::*;
+use crate::longnam::*;
 use std::ffi;
 use std::io::{self, Write};
 use std::path::Path;
 use std::ptr;
-use stringutils::{self, status_to_string};
-use tables::{ColumnDataDescription, ConcreteColumnDescription};
+use crate::stringutils::{self, status_to_string};
+use crate::tables::{ColumnDataDescription, ConcreteColumnDescription};
 
 /// Main entry point to the FITS file format
 pub struct FitsFile {
@@ -1038,14 +1038,14 @@ mod test {
 
     extern crate tempdir;
 
-    use errors::Error;
-    use fitsfile::FitsFile;
-    use fitsfile::{FileOpenMode, ImageDescription};
-    use hdu::{FitsHdu, HduInfo};
-    use images::ImageType;
+    use crate::errors::Error;
+    use crate::fitsfile::FitsFile;
+    use crate::fitsfile::{FileOpenMode, ImageDescription};
+    use crate::hdu::{FitsHdu, HduInfo};
+    use crate::images::ImageType;
     use std::path::Path;
-    use tables::{ColumnDataType, ColumnDescription};
-    use testhelpers::{duplicate_test_file, with_temp_file};
+    use crate::tables::{ColumnDataType, ColumnDescription};
+    use crate::testhelpers::{duplicate_test_file, with_temp_file};
 
     #[test]
     fn test_opening_an_existing_file() {
