@@ -3,7 +3,7 @@
 // Disable clippy warnings as C uses long argument lists
 #![allow(clippy::too_many_arguments)]
 
-pub(crate) use crate::fitsio_sys::{
+pub(crate) use crate::sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
     ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd,
     ffgkye, ffgkyj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd,

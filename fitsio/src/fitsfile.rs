@@ -8,20 +8,13 @@
  * similar architectures).
  */
 
-// If we are using the `bindgen` feature then import `fitsio_sys_bindgen` with a new name
-#[cfg(feature = "default")]
-use fitsio_sys;
-#[cfg(feature = "bindgen")]
-use fitsio_sys_bindgen as fitsio_sys;
-
-use self::fitsio_sys::fitsfile;
 use crate::errors::{check_status, Error, Result};
 use crate::hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
 use crate::images::{ImageDescription, ImageType};
 use crate::longnam::*;
 use crate::stringutils::{self, status_to_string};
+use crate::sys::fitsfile;
 use crate::tables::{ColumnDataDescription, ConcreteColumnDescription};
-use libc;
 use std::ffi;
 use std::io::{self, Write};
 use std::path::Path;
@@ -1521,7 +1514,7 @@ mod test {
 
     #[test]
     fn test_access_fptr_unsafe() {
-        use crate::fitsio_sys::fitsfile;
+        use crate::sys::fitsfile;
 
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let fptr: *const fitsfile = unsafe { f.as_raw() };

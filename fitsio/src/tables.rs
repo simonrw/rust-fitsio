@@ -2,14 +2,13 @@
 use crate::errors::{check_status, Error, FitsError, IndexError, Result};
 use crate::fitsfile::FitsFile;
 use crate::hdu::{FitsHdu, HduInfo};
-use libc;
 use crate::longnam::*;
+use crate::stringutils::status_to_string;
+use crate::types::DataType;
 use std::ffi;
 use std::ops::Range;
 use std::ptr;
 use std::str::FromStr;
-use crate::stringutils::status_to_string;
-use crate::types::DataType;
 
 /// Trait for reading a fits column
 pub trait ReadsCol {
@@ -761,7 +760,9 @@ impl<'a> Iterator for ColumnIterator<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::testhelpers::{duplicate_test_file, floats_close_f32, floats_close_f64, with_temp_file};
+    use crate::testhelpers::{
+        duplicate_test_file, floats_close_f32, floats_close_f64, with_temp_file,
+    };
 
     #[test]
     fn test_parsing() {
