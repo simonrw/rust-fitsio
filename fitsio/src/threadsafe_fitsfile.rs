@@ -1,7 +1,7 @@
 /*! Thread-safe FitsFile struct */
 
-use errors::Result;
-use fitsfile::FitsFile;
+use crate::errors::Result;
+use crate::fitsfile::FitsFile;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 /** Thread-safe [`FitsFile`][fits-file] representation.

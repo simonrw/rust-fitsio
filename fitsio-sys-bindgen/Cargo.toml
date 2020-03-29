@@ -1,5 +1,6 @@
 [package]
 name = "fitsio-sys-bindgen"
+edition = "2018"
 version = "0.0.2"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "FFI wrapper around cfitsio"

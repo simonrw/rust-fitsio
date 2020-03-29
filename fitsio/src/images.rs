@@ -1,11 +1,11 @@
 //! Image related code
-use errors::{check_status, Result};
-use fitsfile::FitsFile;
-use hdu::{FitsHdu, HduInfo};
-use longnam::*;
+use crate::errors::{check_status, Result};
+use crate::fitsfile::FitsFile;
+use crate::hdu::{FitsHdu, HduInfo};
+use crate::longnam::*;
 use std::ops::Range;
 use std::ptr;
-use types::DataType;
+use crate::types::DataType;
 
 /// Reading fits images
 pub trait ReadImage: Sized {
@@ -370,8 +370,8 @@ imagetype_into_impl!(i64);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fitsfile::FitsFile;
-    use testhelpers::with_temp_file;
+    use crate::fitsfile::FitsFile;
+    use crate::testhelpers::with_temp_file;
 
     #[test]
     fn test_read_image_data() {

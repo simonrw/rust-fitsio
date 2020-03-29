@@ -1,14 +1,8 @@
-#[macro_use]
-extern crate criterion;
-#[macro_use]
-extern crate fitsio_derive;
-extern crate fitsio;
-extern crate tempdir;
-
 use criterion::Criterion;
 use fitsio::images::{ImageDescription, ImageType};
 use fitsio::tables::{ColumnDataType, ColumnDescription, FitsRow};
 use fitsio::FitsFile;
+use fitsio_derive::FitsRow;
 use tempdir::TempDir;
 
 fn opening_files(c: &mut Criterion) {
@@ -165,5 +159,5 @@ fn full_example(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, opening_files, full_example);
-criterion_main!(benches);
+criterion::criterion_group!(benches, opening_files, full_example);
+criterion::criterion_main!(benches);
