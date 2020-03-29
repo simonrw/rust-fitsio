@@ -83,9 +83,6 @@ let f = fitsio::FitsFile::open("test.fits");
 Accessing the underlying `fitsfile` object
 
 ```rust
-extern crate fitsio;
-extern crate fitsio_sys;
-
 fn main() {
     let filename = "../testdata/full_example.fits";
     let fptr = fitsio::FitsFile::open(filename).unwrap();

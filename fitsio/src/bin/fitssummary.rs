@@ -1,5 +1,3 @@
-extern crate fitsio;
-
 use std::env;
 use std::process;
 

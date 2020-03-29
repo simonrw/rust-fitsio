@@ -1,6 +1,3 @@
-extern crate bindgen;
-extern crate pkg_config;
-
 use bindgen::RustTarget;
 use pkg_config::Error;
 use std::env;

@@ -59,8 +59,6 @@ Alternatively a new file can be created on disk with the companion method
 [`create`][fits-file-create]:
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
@@ -88,8 +86,6 @@ example of not adding a custom primary HDU is shown above. Below we see an examp
 [`with_custom_primary`][new-fits-file-with-custom-primary]:
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
@@ -171,11 +167,10 @@ HDU information belongs to the [`FitsHdu`][fits-hdu] object. HDUs can be fetched
 object contains information about the current HDU:
 
 ```rust
-# extern crate fitsio;
 # #[cfg(feature = "default")]
-# extern crate fitsio_sys as sys;
+# use fitsio_sys as sys;
 # #[cfg(feature = "bindgen")]
-# extern crate fitsio_sys_bindgen as sys;
+# use fitsio_sys_bindgen as sys;
 # use fitsio::FitsFile;
 #
 # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -213,8 +208,6 @@ method. This method requires the extension name, and an
 the desired image:
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
@@ -242,8 +235,6 @@ Similar to creating new images, new tables are created with the
 name, and a slice of [`ColumnDescription`][column-description]s:
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
@@ -280,7 +271,6 @@ For the common case of a scalar column, a `ColumnDataDescription` object can be 
 with the `scalar` method:
 
 ```rust
-# extern crate fitsio;
 # fn main() {
 use fitsio::tables::{ColumnDescription, ColumnDataDescription, ColumnDataType};
 
@@ -293,7 +283,6 @@ assert_eq!(desc.width, 1);
 Vector columns can be constructed with the `vector` method:
 
 ```rust
-# extern crate fitsio;
 # fn main() {
 use fitsio::tables::{ColumnDataDescription, ColumnDescription, ColumnDataType};
 
@@ -307,7 +296,6 @@ These impl `From<...> for String` such that the traditional fits column descript
 be obtained:
 
 ```rust
-# extern crate fitsio;
 # fn main() {
 use fitsio::tables::{ColumnDataDescription, ColumnDescription, ColumnDataType};
 
@@ -322,8 +310,6 @@ A HDU can be copied to another open file with the [`copy_to`][fits-hdu-copy-to] 
 requires another open [`FitsFile`][fits-file] object to copy to:
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut src_fptr = fitsio::FitsFile::open(filename)?;
@@ -347,8 +333,6 @@ takes ownership of `self`, and as such the [`FitsHdu`][fits-hdu] object cannot b
 this is called.
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # use fitsio::images::{ImageType, ImageDescription};
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -374,7 +358,6 @@ hdu.delete(&mut fptr)?;
 The [`iter`][fits-hdu-iter] method allows for iteration over the HDUs of a fits file.
 
 ```rust
-# extern crate fitsio;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 #     let mut fptr = fitsio::FitsFile::open("../testdata/full_example.fits")?;
 for hdu in fptr.iter() {
@@ -396,8 +379,6 @@ Header keys are read through the [`read_key`][fits-hdu-read-key] function,
 and is generic over types that implement the [`ReadsKey`][reads-key] trait:
 
 ```rust
-# extern crate fitsio;
-#
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = fitsio::FitsFile::open(filename)?;
@@ -421,8 +402,6 @@ Header cards can be written through the method
 `WritesKey`][writes-key] trait for supported data types.
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
 # let tdir_path = tdir.path();
@@ -451,8 +430,6 @@ between a start index and end index, or
 the image.
 
 ```rust
-# extern crate fitsio;
-#
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = fitsio::FitsFile::open(filename)?;
@@ -476,8 +453,6 @@ Some convenience methods are available for reading rows of the image. This is
 typically useful as it's an efficient access method:
 
 ```rust
-# extern crate fitsio;
-#
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = fitsio::FitsFile::open(filename)?;
@@ -496,8 +471,6 @@ assert_eq!(first_few_rows.len(), 1000);
 The whole image can also be read into memory:
 
 ```rust
-# extern crate fitsio;
-#
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = fitsio::FitsFile::open(filename)?;
@@ -517,10 +490,6 @@ When `fitsio` is compiled with the `array` feature, images can be read into
 the [`ndarray::ArrayD`][arrayd] type:
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
-#
 # #[cfg(feature = "array")]
 # fn main() {
 use fitsio::FitsFile;
@@ -551,8 +520,6 @@ which can convert data types on the fly. See the [`ReadsCol`][reads-col] trait f
 supported data types.
 
 ```rust
-# extern crate fitsio;
-#
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = fitsio::FitsFile::open(filename)?;
@@ -568,7 +535,6 @@ let integer_data: Vec<i32> = hdu.and_then(|hdu| hdu.read_col(&mut fptr, "intcol"
 Individual cell values can be read from FITS tables:
 
 ```rust
-# extern crate fitsio;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits[TESTEXT]";
 # let mut f = fitsio::FitsFile::open(filename)?;
@@ -589,10 +555,8 @@ Single rows can be read from a fits table with the [`row`][fits-hdu-row] method.
 use of the [`fitsio-derive`][fitsio-derive] crate.
 
 ```rust
-#[macro_use]
-extern crate fitsio_derive;
-extern crate fitsio;
 use fitsio::tables::FitsRow;
+use fitsio_derive::FitsRow;
 
 #[derive(Default, FitsRow)]
 struct Row {
@@ -621,8 +585,6 @@ assert_eq!(row.foobar, "value4");
 Iterate over the columns with [`columns`][fits-hdu-columns].
 
 ```rust
-# extern crate fitsio;
-#
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = fitsio::FitsFile::open(filename)?;
@@ -651,8 +613,6 @@ end index and data to write. The data parameter needs to be a slice, meaning any
 memory storage method (e.g. `Vec`) can be passed.
 
 ```rust
-# extern crate fitsio;
-# extern crate tempdir;
 # use fitsio::images::{ImageType, ImageDescription};
 #
 # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -676,8 +636,6 @@ hdu.write_section(&mut fptr, 0, data_to_write.len(), &data_to_write)?;
 the data is to be written, and the data to write.
 
 ```rust
-# extern crate fitsio;
-# extern crate tempdir;
 # use fitsio::images::{ImageType, ImageDescription};
 #
 # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -705,8 +663,6 @@ _Unlike cfitsio, the order of the ranges follows the C convention, i.e.
 image. If more data is passed than pixels in the image, the method returns with an error.
 
 ```rust
-# extern crate fitsio;
-# extern crate tempdir;
 # use fitsio::images::{ImageType, ImageDescription};
 #
 # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -737,8 +693,6 @@ currently `fitsio` only supports slices with length 2, i.e. a 2D image.
 again. This ensures the image changes are reflected in the hew HDU object.
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # use std::fs::copy;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let tdir = tempdir::TempDir::new("fitsio-")?;
@@ -780,8 +734,6 @@ not check how many rows are in the file, but extends the table if the length of 
 than the table length.
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # use std::fs::copy;
 # use fitsio::hdu::HduInfo;
 # use fitsio::tables::{ColumnDescription, ColumnDataType};
@@ -811,8 +763,6 @@ assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
 range is inclusive of both the upper and lower bounds, so `0..4` writes 5 elements.
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
 # use std::fs::copy;
 # use fitsio::hdu::HduInfo;
 # use fitsio::tables::{ColumnDescription, ColumnDataType};
@@ -846,8 +796,6 @@ generally
 preferred as it does not require shifting of data within the file.
 
 ```rust
-# extern crate fitsio;
-# extern crate tempdir;
 use fitsio::tables::{ColumnDescription, ColumnDataType};
 
 # fn try_main() -> Result<(), Box<std::error::Error>> {
@@ -876,8 +824,6 @@ The HDU object has the method [`delete_column`][fits-hdu-delete-column] which re
 The column can either be accessed by integer or name
 
 ```rust
-# extern crate fitsio;
-# extern crate tempdir;
 # use fitsio::tables::{ColumnDescription, ColumnDataType};
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # {
@@ -918,11 +864,10 @@ If this library does not support the particular use case that is needed, the raw
 pointer can be accessed:
 
 ```rust
-# extern crate fitsio;
 # #[cfg(not(feature="bindgen"))]
-extern crate fitsio_sys;
+# use fitsio_sys;
 # #[cfg(feature="bindgen")]
-# extern crate fitsio_sys_bindgen as fitsio_sys;
+# use fitsio_sys_bindgen as fitsio_sys;
 
 use fitsio::FitsFile;
 
@@ -966,7 +911,6 @@ subject to OS level limits, such as the maximum number of open files.
 ## Example
 
 ```rust
-# extern crate fitsio;
 # use fitsio::FitsFile;
 # use std::thread;
 # let fptr = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -1049,13 +993,11 @@ let _hdu = t.hdu(hdu_num).unwrap();
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
+// If we are using the `bindgen` feature then import `fitsio_sys_bindgen` with a new name
 #[cfg(feature = "default")]
-extern crate fitsio_sys;
+use fitsio_sys;
 #[cfg(feature = "bindgen")]
-extern crate fitsio_sys_bindgen as fitsio_sys;
-extern crate libc;
-#[cfg(feature = "array")]
-extern crate ndarray;
+use fitsio_sys_bindgen as fitsio_sys;
 
 #[macro_use]
 mod macros;

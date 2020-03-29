@@ -1,5 +1,3 @@
-extern crate tempdir;
-
 use std::{f32, f64};
 
 /// Function to allow access to a temporary file

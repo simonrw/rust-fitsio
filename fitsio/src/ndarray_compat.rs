@@ -17,9 +17,6 @@ Data is read into the [`ndarray::ArrayD`][arrayd] type. The following methods fr
 ## `read_image`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 # #[cfg(feature = "array")]
 use ndarray::ArrayD;
@@ -44,9 +41,6 @@ assert_eq!(data[[20, 5]], 152);
 ## `read_region`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 # #[cfg(feature = "array")]
 use ndarray::ArrayD;
@@ -71,9 +65,6 @@ assert_eq!(data[[5, 10]], 177);
 ## `read_row`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 # #[cfg(feature = "array")]
 use ndarray::ArrayD;
@@ -95,9 +86,6 @@ assert_eq!(data[20], 156);
 ## `read_rows`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 # #[cfg(feature = "array")]
 use ndarray::ArrayD;
@@ -122,9 +110,6 @@ assert_eq!(data[[1, 52]], 184);
 ## `read_section`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 use fitsio::errors::Error;
 # #[cfg(feature = "array")]

@@ -17,30 +17,30 @@
 //! ## Examples
 //!
 //! ```rust
-//! # extern crate fitsio_sys_bindgen as fitsio_sys;
 //! use std::ptr;
 //! use std::ffi;
-//! # use fitsio_sys::{ffinit, ffphps, ffclos};
+//! # use fitsio_sys_bindgen as fitsio_sys;
 //!
-//! # fn main() {
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let filename = ffi::CString::new("!/tmp/test.fits").unwrap();
 //! let mut fptr = ptr::null_mut();
 //! let mut status = 0;
 //!
 //! unsafe {
 //!     // Create a new file, clobbering any pre-existing file
-//!     ffinit(&mut fptr as *mut *mut _,
+//!     fitsio_sys::ffinit(&mut fptr as *mut *mut _,
 //!         filename.as_ptr(),
 //!         &mut status);
 //!
 //!     // Add an empty primary HDU
-//!     ffphps(fptr, 8, 0, ptr::null_mut(), &mut status);
+//!     fitsio_sys::ffphps(fptr, 8, 0, ptr::null_mut(), &mut status);
 //!
 //!     // Finally close the file
-//!     ffclos(fptr, &mut status);
+//!     fitsio_sys::ffclos(fptr, &mut status);
 //! }
 //!
 //! assert_eq!(status, 0);
+//! # Ok(())
 //! # }
 //! ```
 //!
@@ -65,14 +65,11 @@
     clippy::too_many_arguments,
     clippy::should_implement_trait
 )]
-extern crate libc;
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(test)]
 mod test {
-    extern crate tempdir;
-
     use super::*;
     use libc::c_char;
     use std::ffi;

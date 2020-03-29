@@ -17,12 +17,11 @@
 //! ## Examples
 //!
 //! ```rust
-//! # extern crate fitsio_sys;
 //! use std::ptr;
 //! use std::ffi;
 //! # use fitsio_sys::{ffinit, ffphps, ffclos};
 //!
-//! # fn main() {
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let filename = ffi::CString::new("!/tmp/test.fits").unwrap();
 //! let mut fptr = ptr::null_mut();
 //! let mut status = 0;
@@ -41,6 +40,7 @@
 //! }
 //!
 //! assert_eq!(status, 0);
+//! # Ok(())
 //! # }
 //! ```
 //!

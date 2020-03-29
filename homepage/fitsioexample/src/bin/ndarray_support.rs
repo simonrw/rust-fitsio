@@ -1,6 +1,3 @@
-extern crate fitsio;
-extern crate ndarray;
-
 use fitsio::FitsFile;
 use ndarray::ArrayD;
 use std::error::Error;

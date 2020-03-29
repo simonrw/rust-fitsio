@@ -3,8 +3,6 @@
  *
  *
  */
-extern crate fitsio;
-
 use fitsio::hdu::HduInfo;
 use fitsio::images::ImageType;
 use fitsio::FitsFile;
