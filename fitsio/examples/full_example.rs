@@ -1,8 +1,3 @@
-extern crate fitsio;
-#[macro_use]
-extern crate fitsio_derive;
-extern crate tempdir;
-
 /* This example docuents the following things:
  *
  * creating a new file
@@ -17,15 +12,16 @@ extern crate tempdir;
  */
 
 use std::error::Error;
-use tempdir::TempDir;
 
 use fitsio::images::{ImageDescription, ImageType};
 use fitsio::tables::{ColumnDataType, ColumnDescription, FitsRow};
 use fitsio::FitsFile;
+use fitsio_derive::FitsRow;
+use tempfile::Builder;
 
 fn run() -> Result<(), Box<dyn Error>> {
     /* Create a temporary directory to work from */
-    let tmp_dir = TempDir::new("fitsio")?;
+    let tmp_dir = Builder::new().prefix("fitsio-").tempdir()?;
     let file_path = tmp_dir.path().join("example.fits");
 
     // creating a new file with 512 rows and 1024 columns

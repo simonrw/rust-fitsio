@@ -1,11 +1,8 @@
 /* Custom derives
 */
-extern crate fitsio;
-#[macro_use]
-extern crate fitsio_derive;
-
 use fitsio::tables::FitsRow;
 use fitsio::FitsFile;
+use fitsio_derive::FitsRow;
 
 #[derive(Default, FitsRow)]
 struct Row {

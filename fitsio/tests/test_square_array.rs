@@ -1,5 +1,3 @@
-extern crate fitsio;
-
 use fitsio::FitsFile;
 
 #[test]

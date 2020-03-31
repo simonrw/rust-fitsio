@@ -17,9 +17,6 @@ Data is read into the [`ndarray::ArrayD`][arrayd] type. The following methods fr
 ## `read_image`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 # #[cfg(feature = "array")]
 use ndarray::ArrayD;
@@ -44,9 +41,6 @@ assert_eq!(data[[20, 5]], 152);
 ## `read_region`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 # #[cfg(feature = "array")]
 use ndarray::ArrayD;
@@ -71,9 +65,6 @@ assert_eq!(data[[5, 10]], 177);
 ## `read_row`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 # #[cfg(feature = "array")]
 use ndarray::ArrayD;
@@ -95,9 +86,6 @@ assert_eq!(data[20], 156);
 ## `read_rows`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 # #[cfg(feature = "array")]
 use ndarray::ArrayD;
@@ -122,9 +110,6 @@ assert_eq!(data[[1, 52]], 184);
 ## `read_section`
 
 ```rust
-# extern crate fitsio;
-# #[cfg(feature = "array")]
-# extern crate ndarray;
 use fitsio::FitsFile;
 use fitsio::errors::Error;
 # #[cfg(feature = "array")]
@@ -167,10 +152,10 @@ assert_eq!(data[[0, 10]], 160);
 [read-section]: images/struct.FitsHdu.html#method.read_section
 */
 
-use errors::Result;
-use fitsfile::FitsFile;
-use hdu::{FitsHdu, HduInfo};
-use images::ReadImage;
+use crate::errors::Result;
+use crate::fitsfile::FitsFile;
+use crate::hdu::{FitsHdu, HduInfo};
+use crate::images::ReadImage;
 use ndarray::{Array, ArrayD};
 use std::ops::Range;
 
@@ -217,7 +202,7 @@ where
         num_rows: usize,
     ) -> Result<Self> {
         let data: Vec<T> = ReadImage::read_rows(fits_file, hdu, start_row, num_rows)?;
-        let arr = Array::from_vec(data);
+        let arr = Array::from(data);
         let row_length = arr.len() / num_rows;
         Ok(arr.into_shape(vec![num_rows, row_length]).unwrap())
     }

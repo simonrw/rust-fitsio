@@ -1,5 +1,3 @@
-extern crate pkg_config;
-
 use pkg_config::Error;
 use std::io::Write;
 

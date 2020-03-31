@@ -1,5 +1,6 @@
 [package]
 name = "fitsio-derive"
+edition = "2018"
 version = "0.1.0"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "Custom derive macros for the fitsio crate"

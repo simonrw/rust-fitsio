@@ -1,13 +1,12 @@
-extern crate tempdir;
-
 use std::{f32, f64};
+use tempfile::Builder;
 
 /// Function to allow access to a temporary file
 pub(crate) fn with_temp_file<F>(callback: F)
 where
     F: for<'a> Fn(&'a str),
 {
-    let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+    let tdir = Builder::new().prefix("fitsio-").tempdir().unwrap();
     let tdir_path = tdir.path();
     let filename = tdir_path.join("test.fits");
 

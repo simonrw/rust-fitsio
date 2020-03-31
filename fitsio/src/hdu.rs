@@ -1,17 +1,17 @@
 //! Fits HDU related code
 
-use errors::{check_status, Result};
-use fitsfile::CaseSensitivity;
-use fitsfile::FitsFile;
-use headers::{ReadsKey, WritesKey};
-use images::{ImageType, ReadImage, WriteImage};
-use longnam::*;
-use std::ffi;
-use std::ops::Range;
-use tables::{
+use crate::errors::{check_status, Result};
+use crate::fitsfile::CaseSensitivity;
+use crate::fitsfile::FitsFile;
+use crate::headers::{ReadsKey, WritesKey};
+use crate::images::{ImageType, ReadImage, WriteImage};
+use crate::longnam::*;
+use crate::tables::{
     ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation, FitsRow, ReadsCol,
     WritesCol,
 };
+use std::ffi;
+use std::ops::Range;
 
 /// Struct representing a FITS HDU
 #[derive(Debug, PartialEq)]
@@ -50,9 +50,7 @@ impl FitsHdu {
     # Example
 
     ```rust
-    # extern crate fitsio;
-    #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut fptr = fitsio::FitsFile::open(filename)?;
     # let hdu = fptr.primary_hdu()?;
@@ -61,7 +59,6 @@ impl FitsHdu {
     # }
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     */
     pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
         fits_file.make_current(self)?;
@@ -74,10 +71,8 @@ impl FitsHdu {
     # Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # {
@@ -87,7 +82,6 @@ impl FitsHdu {
     # Ok(())
     # }
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn write_key<T: WritesKey>(
@@ -109,9 +103,7 @@ impl FitsHdu {
     # Example
 
     ```rust
-    # extern crate fitsio;
-    #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut fptr = fitsio::FitsFile::open(filename)?;
     # let hdu = fptr.hdu(0)?;
@@ -119,7 +111,6 @@ impl FitsHdu {
     let first_row: Vec<i32> = hdu.read_section(&mut fptr, 0, 100)?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn read_section<T: ReadImage>(
@@ -136,9 +127,7 @@ impl FitsHdu {
     # Example
 
     ```rust
-    # extern crate fitsio;
-    #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut fptr = fitsio::FitsFile::open(filename)?;
     # let hdu = fptr.hdu(0)?;
@@ -150,7 +139,6 @@ impl FitsHdu {
     assert_eq!(first_few_rows.len(), 1000);
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn read_rows<T: ReadImage>(
@@ -169,9 +157,7 @@ impl FitsHdu {
     # Example
 
     ```rust
-    # extern crate fitsio;
-    #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut fptr = fitsio::FitsFile::open(filename)?;
     # let hdu = fptr.hdu(0)?;
@@ -182,7 +168,6 @@ impl FitsHdu {
     assert_eq!(row.len(), 100);
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn read_row<T: ReadImage>(&self, fits_file: &mut FitsFile, row: usize) -> Result<T> {
@@ -200,9 +185,7 @@ impl FitsHdu {
     # Example
 
     ```rust
-    # extern crate fitsio;
-    #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut fptr = fitsio::FitsFile::open(filename)?;
     # let hdu = fptr.hdu(0)?;
@@ -212,7 +195,6 @@ impl FitsHdu {
     let chunk: Vec<i32> = hdu.read_region(&mut fptr, &[&ycoord, &xcoord])?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn read_region<T: ReadImage>(
@@ -232,9 +214,7 @@ impl FitsHdu {
     # Example
 
     ```rust
-    # extern crate fitsio;
-    #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut fptr = fitsio::FitsFile::open(filename)?;
     # let hdu = fptr.hdu(0)?;
@@ -244,7 +224,6 @@ impl FitsHdu {
     assert_eq!(image_data.len(), 10_000);
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn read_image<T: ReadImage>(&self, fits_file: &mut FitsFile) -> Result<T> {
@@ -263,12 +242,10 @@ impl FitsHdu {
     # Example
 
     ```rust
-    # extern crate fitsio;
-    # extern crate tempdir;
     # use fitsio::images::{ImageDescription, ImageType};
     #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -281,7 +258,6 @@ impl FitsHdu {
     hdu.write_section(&mut fptr, 0, data_to_write.len(), &data_to_write)?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn write_section<T: WriteImage>(
@@ -307,12 +283,10 @@ impl FitsHdu {
     # Example
 
     ```rust
-    # extern crate fitsio;
-    # extern crate tempdir;
     # use fitsio::images::{ImageDescription, ImageType};
     #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -326,7 +300,6 @@ impl FitsHdu {
     hdu.write_region(&mut fptr, &ranges, &data_to_write)?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn write_region<T: WriteImage>(
@@ -349,12 +322,10 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate fitsio;
-    # extern crate tempdir;
     # use fitsio::images::{ImageType, ImageDescription};
     #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -368,7 +339,6 @@ impl FitsHdu {
     assert!(hdu.write_image(&mut fptr, &[1.0, 2.0, 3.0, 4.0]).is_err());
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn write_image<T: WriteImage>(&self, fits_file: &mut FitsFile, data: &[T]) -> Result<()> {
@@ -387,17 +357,15 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     # use std::fs::copy;
     use fitsio::hdu::HduInfo;
 
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # copy("../testdata/full_example.fits", &filename)?;
-    # let filename = filename.to_str().unwrap();
+    # let filename = filename.to_str().expect("creating string from filename");
     # let mut fptr = fitsio::FitsFile::edit(filename)?;
     # let hdu = fptr.hdu(0)?;
     hdu.resize(&mut fptr, &[1024, 1024])?;
@@ -412,7 +380,6 @@ impl FitsHdu {
     }
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn resize(self, fits_file: &mut FitsFile, new_size: &[usize]) -> Result<FitsHdu> {
@@ -447,13 +414,11 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut src_fptr = fitsio::FitsFile::open(filename)?;
     #
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut dest_fptr = fitsio::FitsFile::create(filename).open()?;
@@ -462,7 +427,6 @@ impl FitsHdu {
     hdu.copy_to(&mut src_fptr, &mut dest_fptr)?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn copy_to(
@@ -492,12 +456,10 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate fitsio;
-    # extern crate tempdir;
     use fitsio::tables::{ColumnDescription, ColumnDataType};
 
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -513,7 +475,6 @@ impl FitsHdu {
     hdu.insert_column(&mut fptr, 1, &column_description)?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn insert_column(
@@ -549,12 +510,10 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate fitsio;
-    # extern crate tempdir;
     use fitsio::tables::{ColumnDescription, ColumnDataType};
 
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -570,7 +529,6 @@ impl FitsHdu {
     hdu.append_column(&mut fptr, &column_description)?;
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn append_column(
@@ -608,14 +566,12 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate fitsio;
-    # extern crate tempdir;
     # use fitsio::FitsFile;
     # use fitsio::tables::{ColumnDescription, ColumnDataType};
 
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = FitsFile::create(filename).open()?;
@@ -628,7 +584,7 @@ impl FitsHdu {
     let newhdu = hdu.delete_column(&mut fptr, "bar")?;
     # }
     # {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -643,7 +599,6 @@ impl FitsHdu {
     # }
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn delete_column<T: DescribesColumnLocation>(
@@ -708,13 +663,11 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     # use std::fs::copy;
     # use fitsio::hdu::HduInfo;
     # use fitsio::tables::{ColumnDescription, ColumnDataType};
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -730,7 +683,6 @@ impl FitsHdu {
     assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn read_col<T: ReadsCol>(&self, fits_file: &mut FitsFile, name: &str) -> Result<Vec<T>> {
@@ -746,13 +698,11 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     # use std::fs::copy;
     # use fitsio::hdu::HduInfo;
     # use fitsio::tables::{ColumnDescription, ColumnDataType};
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -768,7 +718,6 @@ impl FitsHdu {
     assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn read_col_range<T: ReadsCol>(
@@ -789,13 +738,11 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     # use std::fs::copy;
     # use fitsio::hdu::HduInfo;
     # use fitsio::tables::{ColumnDescription, ColumnDataType};
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -811,7 +758,6 @@ impl FitsHdu {
     # assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn write_col_range<T: WritesCol, N: Into<String>>(
@@ -836,13 +782,11 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     # use std::fs::copy;
     # use fitsio::hdu::HduInfo;
     # use fitsio::tables::{ColumnDescription, ColumnDataType};
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -860,7 +804,6 @@ impl FitsHdu {
     # assert_eq!(data, vec![10101, 10101, 10101, 10101, 10101]);
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn write_col<T: WritesCol, N: Into<String>>(
@@ -880,9 +823,7 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate fitsio;
-    #
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
     # let mut fptr = fitsio::FitsFile::open(filename)?;
     # let hdu = fptr.hdu("TESTEXT")?;
@@ -891,7 +832,6 @@ impl FitsHdu {
     }
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn columns<'a>(&self, fits_file: &'a mut FitsFile) -> ColumnIterator<'a> {
@@ -910,11 +850,9 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     # use fitsio::images::{ImageDescription, ImageType};
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -929,7 +867,6 @@ impl FitsHdu {
     // Cannot use hdu after this
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn delete(self, fits_file: &mut FitsFile) -> Result<()> {
@@ -951,8 +888,7 @@ impl FitsHdu {
     ## Example
 
     ```rust
-    # extern crate fitsio;
-    # fn try_main() -> Result<(), Box<std::error::Error>> {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits[TESTEXT]";
     # let mut f = fitsio::FitsFile::open(filename)?;
     # let tbl_hdu = f.hdu("TESTEXT")?;
@@ -963,7 +899,6 @@ impl FitsHdu {
     assert_eq!(result, "value4".to_string());
     # Ok(())
     # }
-    # fn main() { try_main().unwrap(); }
     ```
     */
     pub fn read_cell_value<T>(&self, fits_file: &mut FitsFile, name: &str, idx: usize) -> Result<T>
@@ -984,10 +919,8 @@ impl FitsHdu {
     # Example
 
     ```rust
-    #[macro_use]
-    extern crate fitsio_derive;
-    extern crate fitsio;
     use fitsio::tables::FitsRow;
+    use fitsio_derive::FitsRow;
 
     #[derive(Default, FitsRow)]
     struct Row {
@@ -997,15 +930,16 @@ impl FitsHdu {
         foobar: String,
     }
     #
-    # fn main() {
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # let filename = "../testdata/full_example.fits[TESTEXT]";
-    # let mut f = fitsio::FitsFile::open(filename).unwrap();
-    # let hdu = f.hdu("TESTEXT").unwrap();
+    # let mut f = fitsio::FitsFile::open(filename)?;
+    # let hdu = f.hdu("TESTEXT")?;
 
     // Pick the 4th row
-    let row: Row = hdu.row(&mut f, 4).unwrap();
+    let row: Row = hdu.row(&mut f, 4)?;
     assert_eq!(row.intfoo, 16);
     assert_eq!(row.foobar, "value4");
+    # Ok(())
     # }
     ```
     */
@@ -1130,8 +1064,8 @@ hduinfo_into_impl!(i64);
 #[cfg(test)]
 mod tests {
     use super::FitsFile;
-    use hdu::{FitsHdu, HduInfo};
-    use testhelpers::duplicate_test_file;
+    use crate::hdu::{FitsHdu, HduInfo};
+    use crate::testhelpers::duplicate_test_file;
 
     #[test]
     fn test_manually_creating_a_fits_hdu() {

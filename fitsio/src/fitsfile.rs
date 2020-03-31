@@ -8,18 +8,17 @@
  * similar architectures).
  */
 
-use errors::{check_status, Error, Result};
-use fitsio_sys::fitsfile;
-use hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
-use images::{ImageDescription, ImageType};
-use libc;
-use longnam::*;
+use crate::errors::{check_status, Error, Result};
+use crate::hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
+use crate::images::{ImageDescription, ImageType};
+use crate::longnam::*;
+use crate::stringutils::{self, status_to_string};
+use crate::sys::fitsfile;
+use crate::tables::{ColumnDataDescription, ConcreteColumnDescription};
 use std::ffi;
 use std::io::{self, Write};
 use std::path::Path;
 use std::ptr;
-use stringutils::{self, status_to_string};
-use tables::{ColumnDataDescription, ConcreteColumnDescription};
 
 /// Main entry point to the FITS file format
 pub struct FitsFile {
@@ -128,10 +127,8 @@ impl FitsFile {
     # Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     # fn main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     use fitsio::FitsFile;
@@ -207,11 +204,10 @@ impl FitsFile {
     # Example
 
     ```rust
-    # extern crate fitsio;
     # #[cfg(feature = "default")]
-    # extern crate fitsio_sys as sys;
+    # use fitsio_sys as sys;
     # #[cfg(feature = "bindgen")]
-    # extern crate fitsio_sys_bindgen as sys;
+    # use fitsio_sys_bindgen as sys;
     # use fitsio::FitsFile;
     use fitsio::hdu::HduInfo;
     #
@@ -247,11 +243,10 @@ impl FitsFile {
     # Example
 
     ```rust
-    # extern crate fitsio;
     # #[cfg(feature = "default")]
-    # extern crate fitsio_sys as sys;
+    # use fitsio_sys as sys;
     # #[cfg(feature = "bindgen")]
-    # extern crate fitsio_sys_bindgen as sys;
+    # use fitsio_sys_bindgen as sys;
     # use fitsio::FitsFile;
     # use fitsio::hdu::HduInfo;
     #
@@ -424,12 +419,10 @@ impl FitsFile {
     # Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     use fitsio::tables::{ColumnDataType, ColumnDescription};
 
     # fn main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -507,12 +500,10 @@ impl FitsFile {
     # Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     use fitsio::images::{ImageDescription, ImageType};
 
     # fn main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -584,7 +575,6 @@ impl FitsFile {
     # Example
 
     ```rust
-    # extern crate fitsio;
     # fn main() -> Result<(), Box<std::error::Error>> {
     #     let mut fptr = fitsio::FitsFile::open("../testdata/full_example.fits")?;
     for hdu in fptr.iter() {
@@ -726,11 +716,10 @@ impl FitsFile {
     /// # Example
     ///
     /// ```rust
-    /// # extern crate fitsio;
     /// # #[cfg(not(feature="bindgen"))]
-    /// extern crate fitsio_sys;
+    /// use fitsio_sys;
     /// # #[cfg(feature="bindgen")]
-    /// # extern crate fitsio_sys_bindgen as fitsio_sys;
+    /// # use fitsio_sys_bindgen as fitsio_sys;
     ///
     /// use fitsio::FitsFile;
     ///
@@ -789,10 +778,7 @@ custom primary HDU.
 # Example
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
-# fn main() {
-# let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let _filename = tdir_path.join("test.fits");
 # let filename = _filename.to_str().unwrap();
@@ -808,7 +794,6 @@ let fptr = FitsFile::create(filename)
     .with_custom_primary(&description)
     .open()
     .unwrap();
-# }
 ```
 
 The [`open`][new-fits-file-open] method actually creates a `Result<FitsFile>` from this
@@ -817,10 +802,7 @@ temporary representation.
 # Example
 
 ```rust
-# extern crate tempdir;
-# extern crate fitsio;
-# fn main() {
-# let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let _filename = tdir_path.join("test.fits");
 # let filename = _filename.to_str().unwrap();
@@ -828,7 +810,6 @@ use fitsio::FitsFile;
 
 // let filename = ...;
 let fptr = FitsFile::create(filename).open().unwrap();
-# }
 ```
 [new-fits-file]: struct.NewFitsFile.html
 [new-fits-file-open]: struct.NewFitsFile.html#method.open
@@ -903,10 +884,8 @@ where
     # Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     use fitsio::FitsFile;
@@ -946,10 +925,8 @@ where
     # Example
 
     ```rust
-    # extern crate tempdir;
-    # extern crate fitsio;
     # fn main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     use fitsio::FitsFile;
@@ -1031,21 +1008,14 @@ casesensitivity_into_impl!(i64);
 
 #[cfg(test)]
 mod test {
-    #[cfg(feature = "default")]
-    extern crate fitsio_sys as sys;
-    #[cfg(feature = "bindgen")]
-    extern crate fitsio_sys_bindgen as sys;
-
-    extern crate tempdir;
-
-    use errors::Error;
-    use fitsfile::FitsFile;
-    use fitsfile::{FileOpenMode, ImageDescription};
-    use hdu::{FitsHdu, HduInfo};
-    use images::ImageType;
+    use crate::errors::Error;
+    use crate::fitsfile::FitsFile;
+    use crate::fitsfile::{FileOpenMode, ImageDescription};
+    use crate::hdu::{FitsHdu, HduInfo};
+    use crate::images::ImageType;
+    use crate::tables::{ColumnDataType, ColumnDescription};
+    use crate::testhelpers::{duplicate_test_file, with_temp_file};
     use std::path::Path;
-    use tables::{ColumnDataType, ColumnDescription};
-    use testhelpers::{duplicate_test_file, with_temp_file};
 
     #[test]
     fn test_opening_an_existing_file() {
@@ -1544,7 +1514,7 @@ mod test {
 
     #[test]
     fn test_access_fptr_unsafe() {
-        use fitsio_sys::fitsfile;
+        use crate::sys::fitsfile;
 
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let fptr: *const fitsfile = unsafe { f.as_raw() };

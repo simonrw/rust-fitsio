@@ -3,23 +3,23 @@
 // Disable clippy warnings as C uses long argument lists
 #![allow(clippy::too_many_arguments)]
 
-pub use fitsio_sys::{
+pub(crate) use crate::sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
     ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd,
     ffgkye, ffgkyj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd,
-    ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkyj, ffpkys, ffppr, ffpss, ffrsim,
-    ffthdu, fitsfile, LONGLONG,
+    ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim, ffthdu,
+    fitsfile, LONGLONG,
 };
 #[cfg(feature = "default")]
 use libc::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
 #[cfg(feature = "bindgen")]
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
 
-pub unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut c_int) -> c_int {
+pub(crate) unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut c_int) -> c_int {
     ffclos(fptr, status)
 }
 
-pub unsafe fn fits_copy_hdu(
+pub(crate) unsafe fn fits_copy_hdu(
     infptr: *mut fitsfile,
     outfptr: *mut fitsfile,
     morekeys: c_int,
@@ -28,7 +28,7 @@ pub unsafe fn fits_copy_hdu(
     ffcopy(infptr, outfptr, morekeys, status)
 }
 
-pub unsafe fn fits_create_img(
+pub(crate) unsafe fn fits_create_img(
     fptr: *mut fitsfile,
     bitpix: c_int,
     naxis: c_int,
@@ -38,7 +38,7 @@ pub unsafe fn fits_create_img(
     ffcrim(fptr, bitpix, naxis, naxes, status)
 }
 
-pub unsafe fn fits_create_tbl(
+pub(crate) unsafe fn fits_create_tbl(
     fptr: *mut fitsfile,
     tbltype: c_int,
     naxis2: LONGLONG,
@@ -54,11 +54,15 @@ pub unsafe fn fits_create_tbl(
     )
 }
 
-pub unsafe fn fits_delete_col(fptr: *mut fitsfile, numcol: c_int, status: *mut c_int) -> c_int {
+pub(crate) unsafe fn fits_delete_col(
+    fptr: *mut fitsfile,
+    numcol: c_int,
+    status: *mut c_int,
+) -> c_int {
     ffdcol(fptr, numcol, status)
 }
 
-pub unsafe fn fits_delete_hdu(
+pub(crate) unsafe fn fits_delete_hdu(
     fptr: *mut fitsfile,
     hdutype: *mut c_int,
     status: *mut c_int,
@@ -66,7 +70,7 @@ pub unsafe fn fits_delete_hdu(
     ffdhdu(fptr, hdutype, status)
 }
 
-pub unsafe fn fits_file_mode(
+pub(crate) unsafe fn fits_file_mode(
     fptr: *mut fitsfile,
     filemode: *mut c_int,
     status: *mut c_int,
@@ -74,7 +78,7 @@ pub unsafe fn fits_file_mode(
     ffflmd(fptr, filemode, status)
 }
 
-pub unsafe fn fits_get_bcolparms(
+pub(crate) unsafe fn fits_get_bcolparms(
     fptr: *mut fitsfile,
     colnum: c_int,
     ttype: *mut c_char,
@@ -92,7 +96,7 @@ pub unsafe fn fits_get_bcolparms(
     )
 }
 
-pub unsafe fn fits_get_col_display_width(
+pub(crate) unsafe fn fits_get_col_display_width(
     fptr: *mut fitsfile,
     colnum: c_int,
     width: *mut c_int,
@@ -101,7 +105,7 @@ pub unsafe fn fits_get_col_display_width(
     ffgcdw(fptr, colnum, width, status)
 }
 
-pub unsafe fn fits_get_colnum(
+pub(crate) unsafe fn fits_get_colnum(
     fptr: *mut fitsfile,
     casesen: c_int,
     templt: *mut c_char,
@@ -111,7 +115,7 @@ pub unsafe fn fits_get_colnum(
     ffgcno(fptr, casesen, templt, colnum, status)
 }
 
-pub unsafe fn fits_read_col_str(
+pub(crate) unsafe fn fits_read_col_str(
     fptr: *mut fitsfile,
     colnum: c_int,
     firstrow: LONGLONG,
@@ -127,7 +131,7 @@ pub unsafe fn fits_read_col_str(
     )
 }
 
-pub unsafe fn fits_read_col_int(
+pub(crate) unsafe fn fits_read_col_int(
     fptr: *mut fitsfile,
     colnum: c_int,
     firstrow: LONGLONG,
@@ -143,7 +147,7 @@ pub unsafe fn fits_read_col_int(
     )
 }
 
-pub unsafe fn fits_read_col_uint(
+pub(crate) unsafe fn fits_read_col_uint(
     fptr: *mut fitsfile,
     colnum: c_int,
     firstrow: LONGLONG,
@@ -159,7 +163,7 @@ pub unsafe fn fits_read_col_uint(
     )
 }
 
-pub unsafe fn fits_read_col_flt(
+pub(crate) unsafe fn fits_read_col_flt(
     fptr: *mut fitsfile,
     colnum: c_int,
     firstrow: LONGLONG,
@@ -175,7 +179,7 @@ pub unsafe fn fits_read_col_flt(
     )
 }
 
-pub unsafe fn fits_read_col_dbl(
+pub(crate) unsafe fn fits_read_col_dbl(
     fptr: *mut fitsfile,
     colnum: c_int,
     firstrow: LONGLONG,
@@ -191,7 +195,7 @@ pub unsafe fn fits_read_col_dbl(
     )
 }
 
-pub unsafe fn fits_read_col_lng(
+pub(crate) unsafe fn fits_read_col_lng(
     fptr: *mut fitsfile,
     colnum: c_int,
     firstrow: LONGLONG,
@@ -207,7 +211,7 @@ pub unsafe fn fits_read_col_lng(
     )
 }
 
-pub unsafe fn fits_read_col_ulng(
+pub(crate) unsafe fn fits_read_col_ulng(
     fptr: *mut fitsfile,
     colnum: c_int,
     firstrow: LONGLONG,
@@ -223,7 +227,7 @@ pub unsafe fn fits_read_col_ulng(
     )
 }
 
-pub unsafe fn fits_read_key_log(
+pub(crate) unsafe fn fits_read_key_log(
     fptr: *mut fitsfile,
     keyname: *const c_char,
     value: *mut c_int,
@@ -233,7 +237,7 @@ pub unsafe fn fits_read_key_log(
     ffgkyl(fptr, keyname, value, comm, status)
 }
 
-pub unsafe fn fits_read_key_lng(
+pub(crate) unsafe fn fits_read_key_lng(
     fptr: *mut fitsfile,
     keyname: *const c_char,
     value: *mut c_long,
@@ -243,7 +247,7 @@ pub unsafe fn fits_read_key_lng(
     ffgkyj(fptr, keyname, value, comm, status)
 }
 
-pub unsafe fn fits_read_key_flt(
+pub(crate) unsafe fn fits_read_key_flt(
     fptr: *mut fitsfile,
     keyname: *const c_char,
     value: *mut c_float,
@@ -253,7 +257,7 @@ pub unsafe fn fits_read_key_flt(
     ffgkye(fptr, keyname, value, comm, status)
 }
 
-pub unsafe fn fits_read_key_dbl(
+pub(crate) unsafe fn fits_read_key_dbl(
     fptr: *mut fitsfile,
     keyname: *const c_char,
     value: *mut c_double,
@@ -263,11 +267,11 @@ pub unsafe fn fits_read_key_dbl(
     ffgkyd(fptr, keyname, value, comm, status)
 }
 
-pub unsafe fn fits_get_hdu_num(fptr: *mut fitsfile, chdunum: *mut c_int) -> c_int {
+pub(crate) unsafe fn fits_get_hdu_num(fptr: *mut fitsfile, chdunum: *mut c_int) -> c_int {
     ffghdn(fptr, chdunum)
 }
 
-pub unsafe fn fits_get_hdu_type(
+pub(crate) unsafe fn fits_get_hdu_type(
     fptr: *mut fitsfile,
     exttype: *mut c_int,
     status: *mut c_int,
@@ -275,7 +279,7 @@ pub unsafe fn fits_get_hdu_type(
     ffghdt(fptr, exttype, status)
 }
 
-pub unsafe fn fits_get_img_dim(
+pub(crate) unsafe fn fits_get_img_dim(
     fptr: *mut fitsfile,
     naxis: *mut c_int,
     status: *mut c_int,
@@ -283,7 +287,7 @@ pub unsafe fn fits_get_img_dim(
     ffgidm(fptr, naxis, status)
 }
 
-pub unsafe fn fits_get_img_equivtype(
+pub(crate) unsafe fn fits_get_img_equivtype(
     fptr: *mut fitsfile,
     imgtype: *mut c_int,
     status: *mut c_int,
@@ -291,7 +295,7 @@ pub unsafe fn fits_get_img_equivtype(
     ffgiet(fptr, imgtype, status)
 }
 
-pub unsafe fn fits_get_img_size(
+pub(crate) unsafe fn fits_get_img_size(
     fptr: *mut fitsfile,
     nlen: c_int,
     naxes: *mut c_long,
@@ -300,7 +304,7 @@ pub unsafe fn fits_get_img_size(
     ffgisz(fptr, nlen, naxes, status)
 }
 
-pub unsafe fn fits_read_key_str(
+pub(crate) unsafe fn fits_read_key_str(
     fptr: *mut fitsfile,
     keyname: *const c_char,
     value: *mut c_char,
@@ -310,7 +314,7 @@ pub unsafe fn fits_read_key_str(
     ffgkys(fptr, keyname, value, comm, status)
 }
 
-pub unsafe fn fits_get_num_cols(
+pub(crate) unsafe fn fits_get_num_cols(
     fptr: *mut fitsfile,
     ncols: *mut c_int,
     status: *mut c_int,
@@ -318,7 +322,7 @@ pub unsafe fn fits_get_num_cols(
     ffgncl(fptr, ncols, status)
 }
 
-pub unsafe fn fits_get_num_rows(
+pub(crate) unsafe fn fits_get_num_rows(
     fptr: *mut fitsfile,
     nrows: *mut c_long,
     status: *mut c_int,
@@ -326,7 +330,7 @@ pub unsafe fn fits_get_num_rows(
     ffgnrw(fptr, nrows, status)
 }
 
-pub unsafe fn fits_read_img(
+pub(crate) unsafe fn fits_read_img(
     fptr: *mut fitsfile,
     datatype: c_int,
     firstelem: LONGLONG,
@@ -341,7 +345,7 @@ pub unsafe fn fits_read_img(
     )
 }
 
-pub unsafe fn fits_read_subset(
+pub(crate) unsafe fn fits_read_subset(
     fptr: *mut fitsfile,
     datatype: c_int,
     blc: *mut c_long,
@@ -355,7 +359,7 @@ pub unsafe fn fits_read_subset(
     ffgsv(fptr, datatype, blc, trc, inc, nulval, array, anynul, status)
 }
 
-pub unsafe fn fits_insert_col(
+pub(crate) unsafe fn fits_insert_col(
     fptr: *mut fitsfile,
     numcol: c_int,
     ttype: *mut c_char,
@@ -365,7 +369,7 @@ pub unsafe fn fits_insert_col(
     fficol(fptr, numcol, ttype, tform, status)
 }
 
-pub unsafe fn fits_movabs_hdu(
+pub(crate) unsafe fn fits_movabs_hdu(
     fptr: *mut fitsfile,
     hdunum: c_int,
     exttype: *mut c_int,
@@ -374,7 +378,7 @@ pub unsafe fn fits_movabs_hdu(
     ffmahd(fptr, hdunum, exttype, status)
 }
 
-pub unsafe fn fits_movnam_hdu(
+pub(crate) unsafe fn fits_movnam_hdu(
     fptr: *mut fitsfile,
     exttype: c_int,
     hduname: *mut c_char,
@@ -384,7 +388,7 @@ pub unsafe fn fits_movnam_hdu(
     ffmnhd(fptr, exttype, hduname, hduvers, status)
 }
 
-pub unsafe fn fits_create_file(
+pub(crate) unsafe fn fits_create_file(
     fptr: *mut *mut fitsfile,
     filename: *const c_char,
     status: *mut c_int,
@@ -392,7 +396,7 @@ pub unsafe fn fits_create_file(
     ffinit(fptr, filename, status)
 }
 
-pub unsafe fn fits_write_col(
+pub(crate) unsafe fn fits_write_col(
     fptr: *mut fitsfile,
     datatype: c_int,
     colnum: c_int,
@@ -407,7 +411,7 @@ pub unsafe fn fits_write_col(
     )
 }
 
-pub unsafe fn fits_write_col_str(
+pub(crate) unsafe fn fits_write_col_str(
     fptr: *mut fitsfile,
     colnum: c_int,
     firstrow: LONGLONG,
@@ -419,7 +423,7 @@ pub unsafe fn fits_write_col_str(
     ffpcls(fptr, colnum, firstrow, firstelem, nelem, array, status)
 }
 
-pub unsafe fn fits_write_imghdr(
+pub(crate) unsafe fn fits_write_imghdr(
     fptr: *mut fitsfile,
     bitpix: c_int,
     naxis: c_int,
@@ -429,7 +433,7 @@ pub unsafe fn fits_write_imghdr(
     ffphps(fptr, bitpix, naxis, naxes, status)
 }
 
-pub unsafe fn fits_write_key_flt(
+pub(crate) unsafe fn fits_write_key_flt(
     fptr: *mut fitsfile,
     keyname: *const c_char,
     value: c_float,
@@ -440,7 +444,7 @@ pub unsafe fn fits_write_key_flt(
     ffpkye(fptr, keyname, value, decim, comm, status)
 }
 
-pub unsafe fn fits_write_key_dbl(
+pub(crate) unsafe fn fits_write_key_dbl(
     fptr: *mut fitsfile,
     keyname: *const c_char,
     value: c_double,
@@ -450,7 +454,7 @@ pub unsafe fn fits_write_key_dbl(
 ) -> c_int {
     ffpkyd(fptr, keyname, value, decim, comm, status)
 }
-pub unsafe fn fits_write_key_str(
+pub(crate) unsafe fn fits_write_key_str(
     fptr: *mut fitsfile,
     keyname: *const c_char,
     value: *const c_char,
@@ -460,7 +464,7 @@ pub unsafe fn fits_write_key_str(
     ffpkys(fptr, keyname, value, comm, status)
 }
 
-pub unsafe fn fits_write_img(
+pub(crate) unsafe fn fits_write_img(
     fptr: *mut fitsfile,
     datatype: c_int,
     firstelem: LONGLONG,
@@ -471,7 +475,7 @@ pub unsafe fn fits_write_img(
     ffppr(fptr, datatype, firstelem, nelem, array, status)
 }
 
-pub unsafe fn fits_write_subset(
+pub(crate) unsafe fn fits_write_subset(
     fptr: *mut fitsfile,
     datatype: c_int,
     fpixel: *mut c_long,
@@ -482,7 +486,7 @@ pub unsafe fn fits_write_subset(
     ffpss(fptr, datatype, fpixel, lpixel, array, status)
 }
 
-pub unsafe fn fits_resize_img(
+pub(crate) unsafe fn fits_resize_img(
     fptr: *mut fitsfile,
     bitpix: c_int,
     naxis: c_int,
@@ -492,7 +496,7 @@ pub unsafe fn fits_resize_img(
     ffrsim(fptr, bitpix, naxis, naxes, status)
 }
 
-pub unsafe fn fits_get_num_hdus(
+pub(crate) unsafe fn fits_get_num_hdus(
     fptr: *mut fitsfile,
     nhdu: *mut c_int,
     status: *mut c_int,
@@ -500,7 +504,7 @@ pub unsafe fn fits_get_num_hdus(
     ffthdu(fptr, nhdu, status)
 }
 
-pub unsafe fn fits_open_file(
+pub(crate) unsafe fn fits_open_file(
     fptr: *mut *mut fitsfile,
     filename: *const c_char,
     iomode: c_int,
@@ -509,7 +513,7 @@ pub unsafe fn fits_open_file(
     ffopen(fptr, filename, iomode, status)
 }
 
-pub unsafe fn fits_write_key(
+pub(crate) unsafe fn fits_write_key(
     fptr: *mut fitsfile,
     datatype: c_int,
     keyname: *const c_char,

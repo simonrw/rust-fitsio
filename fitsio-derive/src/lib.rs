@@ -1,8 +1,3 @@
-extern crate proc_macro;
-#[macro_use]
-extern crate quote;
-extern crate syn;
-
 use proc_macro::TokenStream;
 use syn::DeriveInput;
 
@@ -20,7 +15,7 @@ pub fn read_row(input: TokenStream) -> TokenStream {
                     let ident = &field.ident.as_ref().unwrap();
                     let ident_str = ident.to_string();
                     if field.attrs.is_empty() {
-                        let src = quote! {
+                        let src = quote::quote! {
                             out.#ident = tbl.read_cell_value(fits_file, #ident_str, idx)?;
                         };
                         tokens.push(src);
@@ -39,7 +34,7 @@ pub fn read_row(input: TokenStream) -> TokenStream {
 
                                                 match lit {
                                                     syn::Lit::Str(ls) => {
-                                                        tokens.push(quote! {
+                                                        tokens.push(quote::quote! {
                                                             out.#ident = tbl.read_cell_value(
                                                                 fits_file,
                                                                 #ls,
@@ -68,7 +63,7 @@ pub fn read_row(input: TokenStream) -> TokenStream {
         _ => panic!("derive only possible for structs"),
     }
 
-    let expanded = quote! {
+    let expanded = quote::quote! {
         impl FitsRow for #name {
             fn from_table(
                 tbl: &::fitsio::hdu::FitsHdu,
