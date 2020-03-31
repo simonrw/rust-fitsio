@@ -97,7 +97,10 @@ mod test {
     #[test]
     fn raw_creating_a_new_file() {
         // Set up the test filename
-        let tdir = tempdir::TempDir::new("rust-fitsio-").unwrap();
+        let tdir = tempfile::Builder::new()
+            .prefix("fitsio-")
+            .tempdir()
+            .unwrap();
         let filename = tdir.path().join("test.fits");
         assert!(!filename.exists());
 
