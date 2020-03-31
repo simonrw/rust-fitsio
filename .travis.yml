@@ -1,7 +1,5 @@
 language: rust
 sudo: false
-install: rustup component add clippy
-script: bash ./bin/test
 
 jobs:
   allow_failures:
