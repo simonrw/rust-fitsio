@@ -3,7 +3,7 @@ use fitsio::images::{ImageDescription, ImageType};
 use fitsio::tables::{ColumnDataType, ColumnDescription, FitsRow};
 use fitsio::FitsFile;
 use fitsio_derive::FitsRow;
-use tempdir::TempDir;
+use tempfile::Builder;
 
 fn opening_files(c: &mut Criterion) {
     let filename = "../testdata/full_example.fits";

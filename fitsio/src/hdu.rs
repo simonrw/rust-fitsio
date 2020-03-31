@@ -72,7 +72,7 @@ impl FitsHdu {
 
     ```rust
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # {
@@ -245,7 +245,7 @@ impl FitsHdu {
     # use fitsio::images::{ImageDescription, ImageType};
     #
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -286,7 +286,7 @@ impl FitsHdu {
     # use fitsio::images::{ImageDescription, ImageType};
     #
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -325,7 +325,7 @@ impl FitsHdu {
     # use fitsio::images::{ImageType, ImageDescription};
     #
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -361,7 +361,7 @@ impl FitsHdu {
     use fitsio::hdu::HduInfo;
 
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # copy("../testdata/full_example.fits", &filename)?;
@@ -418,7 +418,7 @@ impl FitsHdu {
     # let filename = "../testdata/full_example.fits";
     # let mut src_fptr = fitsio::FitsFile::open(filename)?;
     #
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut dest_fptr = fitsio::FitsFile::create(filename).open()?;
@@ -459,7 +459,7 @@ impl FitsHdu {
     use fitsio::tables::{ColumnDescription, ColumnDataType};
 
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -513,7 +513,7 @@ impl FitsHdu {
     use fitsio::tables::{ColumnDescription, ColumnDataType};
 
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -571,7 +571,7 @@ impl FitsHdu {
 
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
     # {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = FitsFile::create(filename).open()?;
@@ -584,7 +584,7 @@ impl FitsHdu {
     let newhdu = hdu.delete_column(&mut fptr, "bar")?;
     # }
     # {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -667,7 +667,7 @@ impl FitsHdu {
     # use fitsio::hdu::HduInfo;
     # use fitsio::tables::{ColumnDescription, ColumnDataType};
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -702,7 +702,7 @@ impl FitsHdu {
     # use fitsio::hdu::HduInfo;
     # use fitsio::tables::{ColumnDescription, ColumnDataType};
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -742,7 +742,7 @@ impl FitsHdu {
     # use fitsio::hdu::HduInfo;
     # use fitsio::tables::{ColumnDescription, ColumnDataType};
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -786,7 +786,7 @@ impl FitsHdu {
     # use fitsio::hdu::HduInfo;
     # use fitsio::tables::{ColumnDescription, ColumnDataType};
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -852,7 +852,7 @@ impl FitsHdu {
     ```rust
     # use fitsio::images::{ImageDescription, ImageType};
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
