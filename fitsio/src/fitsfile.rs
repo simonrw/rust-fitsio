@@ -128,7 +128,7 @@ impl FitsFile {
 
     ```rust
     # fn main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     use fitsio::FitsFile;
@@ -422,7 +422,7 @@ impl FitsFile {
     use fitsio::tables::{ColumnDataType, ColumnDescription};
 
     # fn main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -503,7 +503,7 @@ impl FitsFile {
     use fitsio::images::{ImageDescription, ImageType};
 
     # fn main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -778,7 +778,7 @@ custom primary HDU.
 # Example
 
 ```rust
-# let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let _filename = tdir_path.join("test.fits");
 # let filename = _filename.to_str().unwrap();
@@ -802,7 +802,7 @@ temporary representation.
 # Example
 
 ```rust
-# let tdir = tempdir::TempDir::new("fitsio-").unwrap();
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let _filename = tdir_path.join("test.fits");
 # let filename = _filename.to_str().unwrap();
@@ -885,7 +885,7 @@ where
 
     ```rust
     # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     use fitsio::FitsFile;
@@ -926,7 +926,7 @@ where
 
     ```rust
     # fn main() -> Result<(), Box<std::error::Error>> {
-    # let tdir = tempdir::TempDir::new("fitsio-")?;
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
     # let tdir_path = tdir.path();
     # let filename = tdir_path.join("test.fits");
     use fitsio::FitsFile;

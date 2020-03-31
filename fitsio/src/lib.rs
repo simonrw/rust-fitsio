@@ -60,7 +60,7 @@ Alternatively a new file can be created on disk with the companion method
 
 ```rust
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 use fitsio::FitsFile;
@@ -87,7 +87,7 @@ example of not adding a custom primary HDU is shown above. Below we see an examp
 
 ```rust
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 use fitsio::FitsFile;
@@ -209,7 +209,7 @@ the desired image:
 
 ```rust
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -236,7 +236,7 @@ name, and a slice of [`ColumnDescription`][column-description]s:
 
 ```rust
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -314,7 +314,7 @@ requires another open [`FitsFile`][fits-file] object to copy to:
 # let filename = "../testdata/full_example.fits";
 # let mut src_fptr = fitsio::FitsFile::open(filename)?;
 #
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut dest_fptr = fitsio::FitsFile::create(filename).open()?;
@@ -335,7 +335,7 @@ this is called.
 ```rust
 # use fitsio::images::{ImageType, ImageDescription};
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -403,7 +403,7 @@ Header cards can be written through the method
 
 ```rust
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # {
@@ -616,7 +616,7 @@ memory storage method (e.g. `Vec`) can be passed.
 # use fitsio::images::{ImageType, ImageDescription};
 #
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -639,7 +639,7 @@ the data is to be written, and the data to write.
 # use fitsio::images::{ImageType, ImageDescription};
 #
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -666,7 +666,7 @@ image. If more data is passed than pixels in the image, the method returns with 
 # use fitsio::images::{ImageType, ImageDescription};
 #
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -695,7 +695,7 @@ again. This ensures the image changes are reflected in the hew HDU object.
 ```rust
 # use std::fs::copy;
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # copy("../testdata/full_example.fits", &filename)?;
@@ -738,7 +738,7 @@ than the table length.
 # use fitsio::hdu::HduInfo;
 # use fitsio::tables::{ColumnDescription, ColumnDataType};
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -767,7 +767,7 @@ range is inclusive of both the upper and lower bounds, so `0..4` writes 5 elemen
 # use fitsio::hdu::HduInfo;
 # use fitsio::tables::{ColumnDescription, ColumnDataType};
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -799,7 +799,7 @@ preferred as it does not require shifting of data within the file.
 use fitsio::tables::{ColumnDescription, ColumnDataType};
 
 # fn try_main() -> Result<(), Box<std::error::Error>> {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -827,7 +827,7 @@ The column can either be accessed by integer or name
 # use fitsio::tables::{ColumnDescription, ColumnDataType};
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
@@ -840,7 +840,7 @@ The column can either be accessed by integer or name
 let newhdu = hdu.delete_column(&mut fptr, "bar")?;
 # }
 # {
-# let tdir = tempdir::TempDir::new("fitsio-")?;
+# let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
