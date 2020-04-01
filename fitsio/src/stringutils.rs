@@ -39,6 +39,20 @@ impl StringList {
     }
 }
 
+impl Drop for StringList {
+    // TODO: IS THIS SOUND?
+    // Free the memory of this string list
+    fn drop(&mut self) {
+        for ptr in &self.mem {
+            if ptr.is_null() {
+                continue;
+            }
+
+            let _ = unsafe { CString::from_raw(*ptr) };
+        }
+    }
+}
+
 /// Internal function to get the fits error description from a status code
 pub fn status_to_string(status: c_int) -> Result<Option<String>> {
     match status {

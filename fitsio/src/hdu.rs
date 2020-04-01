@@ -495,8 +495,8 @@ impl FitsHdu {
             fits_insert_col(
                 fits_file.fptr.as_mut() as *mut _,
                 (position + 1) as _,
-                c_name.into_raw(),
-                c_type.into_raw(),
+                c_name.as_ptr() as *mut _,
+                c_type.as_ptr() as *mut _,
                 &mut status,
             );
         }
@@ -1010,7 +1010,7 @@ impl<'a> DescribesHdu for &'a str {
             fits_movnam_hdu(
                 f.fptr.as_mut() as *mut _,
                 HduInfo::AnyInfo.into(),
-                c_hdu_name.into_raw(),
+                c_hdu_name.as_ptr() as *mut _,
                 0,
                 &mut status,
             );

@@ -341,6 +341,8 @@ impl WritesCol for String {
                 let mut ptr_array = Vec::with_capacity(n_elements);
 
                 let rows = rows.clone();
+
+                // Have to free the memory for these pointers at the end
                 for i in rows {
                     let s = ffi::CString::new(col_data[i].clone())?;
                     ptr_array.push(s.into_raw());
@@ -357,7 +359,16 @@ impl WritesCol for String {
                         &mut status,
                     );
                 }
-                check_status(status).and_then(|_| fits_file.current_hdu())
+
+                let hdu = check_status(status).and_then(|_| fits_file.current_hdu());
+
+                // Free the memory in ptr_array
+                for ptr in ptr_array {
+                    assert!(!ptr.is_null());
+                    let _ = unsafe { ffi::CString::from_raw(ptr) };
+                }
+
+                hdu
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
             Ok(HduInfo::AnyInfo { .. }) => {

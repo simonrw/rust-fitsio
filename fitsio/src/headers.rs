@@ -41,7 +41,7 @@ macro_rules! reads_key_impl {
                 unsafe {
                     $func(
                         f.fptr.as_mut() as *mut _,
-                        c_name.into_raw(),
+                        c_name.as_ptr(),
                         &mut value,
                         ptr::null_mut(),
                         &mut status,
@@ -71,7 +71,7 @@ impl ReadsKey for String {
         unsafe {
             fits_read_key_str(
                 f.fptr.as_mut() as *mut _,
-                c_name.into_raw(),
+                c_name.as_ptr(),
                 value.as_mut_ptr(),
                 ptr::null_mut(),
                 &mut status,
@@ -104,7 +104,7 @@ macro_rules! writes_key_impl_int {
                     fits_write_key(
                         f.fptr.as_mut() as *mut _,
                         datatype as _,
-                        c_name.into_raw(),
+                        c_name.as_ptr(),
                         &value as *const $t as *mut c_void,
                         ptr::null_mut(),
                         &mut status,
@@ -135,7 +135,7 @@ macro_rules! writes_key_impl_flt {
                 unsafe {
                     $func(
                         f.fptr.as_mut() as *mut _,
-                        c_name.into_raw(),
+                        c_name.as_ptr(),
                         value,
                         9,
                         ptr::null_mut(),
@@ -160,13 +160,14 @@ impl WritesKey for String {
 impl<'a> WritesKey for &'a str {
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
         let c_name = ffi::CString::new(name)?;
+        let c_value = ffi::CString::new(value)?;
         let mut status = 0;
 
         unsafe {
             fits_write_key_str(
                 f.fptr.as_mut() as *mut _,
-                c_name.into_raw(),
-                ffi::CString::new(value)?.into_raw(),
+                c_name.as_ptr(),
+                c_value.as_ptr(),
                 ptr::null_mut(),
                 &mut status,
             );

@@ -1,18 +1,31 @@
 language: rust
-install: |
-  rustup component add clippy
-script: |
-  bash ./bin/test
 sudo: false
+install: rustup component add clippy
+script: bash ./bin/test
+
+jobs:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+  include:
+    - stage: test
+      install: rustup component add clippy
+      script: bash ./bin/test
+
+    - stage: sanitize
+      script: bash ./bin/run_sanitizers.sh
+      rust: nightly
+
+stages:
+  - test
+  - sanitize
 
 rust:
   - stable
   - beta
   - nightly
 
-cache:
-  directories:
-    - $HOME/.cargo
+cache: cargo
 
 addons:
   apt:

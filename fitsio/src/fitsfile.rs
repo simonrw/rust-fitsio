@@ -483,7 +483,7 @@ impl FitsFile {
                 tfields.as_ptr(),
                 ttype.as_ptr(),
                 ptr::null_mut(),
-                c_extname.into_raw(),
+                c_extname.as_ptr(),
                 &mut status,
             );
         }
