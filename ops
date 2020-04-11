@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1486416719,"metadata":{"github-id":"MDU6SXNzdWUyMDU3MTM4OTE=","github-url":"https://github.com/mindriot101/rust-fitsio/issues/16","origin":"github"},"title":"Create hdu should return hdu object","message":"Currently it does not","files":null}]}
