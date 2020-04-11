@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1520107894,"metadata":{"github-id":"MDU6SXNzdWUzMDIwMjg0MTg=","github-url":"https://github.com/mindriot101/rust-fitsio/issues/68","origin":"github"},"title":"Implement `WritesKey` for u{8,16,32,64}?","message":"","files":null}]}
