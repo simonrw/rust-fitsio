@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1488839812,"metadata":{"github-id":"MDU6SXNzdWUyMTIyNzIxNTA=","github-url":"https://github.com/mindriot101/rust-fitsio/issues/23","origin":"github"},"title":"Column description should take `data_type` as enum not String","message":"This feels very un-rusty","files":null}]}
