@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1520108488,"metadata":{"github-id":"MDU6SXNzdWUzMDIwMjkxMDE=","github-url":"https://github.com/mindriot101/rust-fitsio/issues/73","origin":"github"},"title":"Pretty print fits file structure","message":"Add a nice method to print the layout of a fits file","files":null}]}
