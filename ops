@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1487078049,"metadata":{"github-id":"MDU6SXNzdWUyMDc1MTE4MzM=","github-url":"https://github.com/mindriot101/rust-fitsio/issues/18","origin":"github"},"title":"HduInfo::ImageInfo shape by definition contains dimensions value","message":"`dimensions == shape.len()`","files":null}]}
