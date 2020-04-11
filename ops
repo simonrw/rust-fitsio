@@ -1,1 +1,1 @@
-{"version":1,"ops":[{"type":1,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1520107980,"metadata":{"github-id":"MDU6SXNzdWUzMDIwMjg1MDg=","github-url":"https://github.com/mindriot101/rust-fitsio/issues/70","origin":"github"},"title":"Documentation for `write_image` is missing in the main crate documentation","message":"","files":null}]}
+{"version":1,"ops":[{"type":4,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1520199324,"metadata":{"github-id":"MDExOkNsb3NlZEV2ZW50MTUwMzA5OTIwMw=="},"status":2}]}
