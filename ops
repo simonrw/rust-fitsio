@@ -1,1 +1,1 @@
-{"version":1,"ops":[{"type":1,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1522793263,"metadata":{"github-id":"MDU6SXNzdWUzMTEwMTU3MDI=","github-url":"https://github.com/mindriot101/rust-fitsio/issues/93","origin":"github"},"title":"Include way of overwriting existing files","message":"Currently fitsio will complain if a file is being overwritten","files":null}]}
+{"version":1,"ops":[{"type":4,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1523127320,"metadata":{"github-id":"MDExOkNsb3NlZEV2ZW50MTU2MjMwMDUyNQ=="},"status":2}]}
