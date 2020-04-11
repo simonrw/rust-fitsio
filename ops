@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"b83e8b4dfca7ebd9aba65d02ac0e5e24f95b7802"},"timestamp":1520107870,"metadata":{"github-id":"MDU6SXNzdWUzMDIwMjgzOTM=","github-url":"https://github.com/mindriot101/rust-fitsio/issues/67","origin":"github"},"title":"Implement `WritesKey` for `\u0026str` and `String`","message":"`AsRef\u003cstr\u003e`?","files":null}]}
