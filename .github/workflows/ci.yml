@@ -43,7 +43,41 @@ jobs:
         #   os: macos-latest
         #   rust: stable
     steps:
-    - run: choco install msys2
+      - name: Cache msys2
+        id: cache-msys2
+        uses: actions/cache@v1
+        with:
+          path: msys64
+          key: msys2-x64
+      - name: Install msys2
+        if: steps.cache-msys2.outputs.cache-hit != 'true'
+        run: |
+          (New-Object net.webclient).DownloadFile("http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20190524.tar.xz","msys2.tar.xz")
+          tar xf msys2.tar.xz -C $env:GITHUB_WORKSPACE.Replace("\", "/")
+      - run: |
+          $env:MSYSTEM = "MINGW64"
+          $env:MSYS2_PATH_TYPE = "strict"
+          $script = @'
+            uname -m
+            uname -a
+            echo $PATH
+          '@
+          & "$env:GITHUB_WORKSPACE\msys64\usr\bin\bash" -c -l $script
+      - name: Pacman
+        run: |
+          $env:MSYSTEM = "MINGW64"
+          $env:MSYS2_PATH_TYPE = "strict"
+          $script = @'
+            # pacman --noconfirm -Syu
+            pacman --noconfirm -S msys/gcc
+            if [ "$MSYSTEM" = "MINGW32" ]; then
+              pacman --noconfirm -S mingw32/mingw-w64-i686-gcc
+            else
+              pacman --noconfirm -S mingw64/mingw-w64-x86_64-gcc
+            fi
+            pacman --noconfirm -S make
+          '@
+          & "$env:GITHUB_WORKSPACE\msys64\usr\bin\bash" -c -l $script
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
@@ -52,9 +86,9 @@ jobs:
       uses: hecrj/setup-rust-action@v1
       with:
         rust-version: ${{ matrix.rust }}
-    - run: cargo build --manifest-path fitsio/Cargo.toml --verbose
-    - run: cargo doc --manifest-path fitsio/Cargo.toml --verbose
-    - run: cargo test --manifest-path fitsio/Cargo.toml --verbose
+    # - run: cargo build --manifest-path fitsio/Cargo.toml --verbose
+    # - run: cargo doc --manifest-path fitsio/Cargo.toml --verbose
+    # - run: cargo test --manifest-path fitsio/Cargo.toml --verbose
 
   # rustfmt:
   #   name: rustfmt
