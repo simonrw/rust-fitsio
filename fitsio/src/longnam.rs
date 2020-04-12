@@ -5,13 +5,21 @@
 
 pub(crate) use crate::sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
-    ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd,
-    ffgkye, ffgkyj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd,
+    ffgcvjj, ffgcvk, ffgcvs, ffgcvujj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd,
+    ffgkye, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd,
     ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim, ffthdu,
-    fitsfile, LONGLONG,
+    fitsfile, LONGLONG, ULONGLONG,
 };
+#[cfg(not(windows))]
+pub(crate) use crate::sys::{ffgcvj, ffgcvuj, ffgkyj};
+
+#[cfg(all(feature = "default", not(windows)))]
+use libc::c_ulong;
 #[cfg(feature = "default")]
-use libc::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
+use libc::{c_char, c_double, c_float, c_int, c_long, c_uint, c_void};
+
+#[cfg(all(feature = "bindgen", not(windows)))]
+use std::os::raw::c_ulong;
 #[cfg(feature = "bindgen")]
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
 
@@ -195,6 +203,7 @@ pub(crate) unsafe fn fits_read_col_dbl(
     )
 }
 
+#[allow(dead_code)]
 pub(crate) unsafe fn fits_read_col_lng(
     fptr: *mut fitsfile,
     colnum: c_int,
@@ -211,6 +220,24 @@ pub(crate) unsafe fn fits_read_col_lng(
     )
 }
 
+#[allow(dead_code)]
+pub(crate) unsafe fn fits_read_col_lnglng(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: LONGLONG,
+    array: *mut LONGLONG,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvjj(
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
+    )
+}
+
+#[cfg(not(windows))]
 pub(crate) unsafe fn fits_read_col_ulng(
     fptr: *mut fitsfile,
     colnum: c_int,
@@ -227,6 +254,23 @@ pub(crate) unsafe fn fits_read_col_ulng(
     )
 }
 
+#[allow(dead_code)]
+pub(crate) unsafe fn fits_read_col_ulnglng(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: ULONGLONG,
+    array: *mut ULONGLONG,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvujj(
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
+    )
+}
+
 pub(crate) unsafe fn fits_read_key_log(
     fptr: *mut fitsfile,
     keyname: *const c_char,
@@ -237,6 +281,7 @@ pub(crate) unsafe fn fits_read_key_log(
     ffgkyl(fptr, keyname, value, comm, status)
 }
 
+#[allow(dead_code)]
 pub(crate) unsafe fn fits_read_key_lng(
     fptr: *mut fitsfile,
     keyname: *const c_char,
@@ -245,6 +290,17 @@ pub(crate) unsafe fn fits_read_key_lng(
     status: *mut c_int,
 ) -> c_int {
     ffgkyj(fptr, keyname, value, comm, status)
+}
+
+#[allow(dead_code)]
+pub(crate) unsafe fn fits_read_key_lnglng(
+    fptr: *mut fitsfile,
+    keyname: *const c_char,
+    value: *mut LONGLONG,
+    comm: *mut c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffgkyjj(fptr, keyname, value, comm, status)
 }
 
 pub(crate) unsafe fn fits_read_key_flt(
