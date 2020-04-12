@@ -43,7 +43,7 @@ jobs:
         #   os: macos-latest
         #   rust: stable
     steps:
-    - run: pacman -S mingw-w64-x86_64-pkg-config cfitsio
+    - run: choco install msys2
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
