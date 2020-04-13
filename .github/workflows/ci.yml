@@ -51,11 +51,13 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 1
-    - name: Install Rust
-      uses: hecrj/setup-rust-action@v1
-      with:
-        rust-version: ${{ matrix.rust }}
-    - run: cargo build --manifest-path fitsio/Cargo.toml --verbose
+    # - name: Install Rust
+    #   uses: hecrj/setup-rust-action@v1
+    #   with:
+    #     rust-version: ${{ matrix.rust }}
+    - run: msys2do curl --proto '=https' --tlsv1.2 -LO https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-gnu/rustup-init.exe
+    - run: msys2do ./rustup-init.exe --default-toolchain stable --profile default
+    - run: msys2do cargo build --manifest-path fitsio/Cargo.toml --verbose
     # - run: cargo doc --manifest-path fitsio/Cargo.toml --verbose
     # - run: cargo test --manifest-path fitsio/Cargo.toml --verbose
 
