@@ -46,7 +46,7 @@ jobs:
     - name: Install msys2
       id: install-msys2
       uses: numworks/setup-msys2@v1
-    - run: msys2do pacman --noconfirm -S mingw-w64-x86_64-pkg-config cfitsio
+    - run: msys2do pacman --noconfirm -S mingw-w64-x86_64-pkg-config mingw-w64-x86_64-cfitsio
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
