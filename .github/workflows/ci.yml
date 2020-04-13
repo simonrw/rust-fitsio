@@ -55,7 +55,7 @@ jobs:
       uses: hecrj/setup-rust-action@v1
       with:
         rust-version: ${{ matrix.rust }}
-    # - run: cargo build --manifest-path fitsio/Cargo.toml --verbose
+    - run: cargo build --manifest-path fitsio/Cargo.toml --verbose
     # - run: cargo doc --manifest-path fitsio/Cargo.toml --verbose
     # - run: cargo test --manifest-path fitsio/Cargo.toml --verbose
 
