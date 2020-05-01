@@ -3,15 +3,15 @@
 // Disable clippy warnings as C uses long argument lists
 #![allow(clippy::too_many_arguments)]
 
+#[cfg(not(windows))]
+pub(crate) use crate::sys::ffgcvuj;
 pub(crate) use crate::sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
-    ffgcvjj, ffgcvk, ffgcvs, ffgcvujj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd,
-    ffgkye, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd,
-    ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim, ffthdu,
-    fitsfile, LONGLONG, ULONGLONG,
+    ffgcvj, ffgcvjj, ffgcvk, ffgcvs, ffgcvujj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz,
+    ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit,
+    ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss,
+    ffrsim, ffthdu, fitsfile, LONGLONG, ULONGLONG,
 };
-#[cfg(not(windows))]
-pub(crate) use crate::sys::{ffgcvj, ffgcvuj, ffgkyj};
 
 #[cfg(all(feature = "default", not(windows)))]
 use libc::c_ulong;
