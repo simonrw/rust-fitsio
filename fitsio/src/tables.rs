@@ -604,6 +604,7 @@ impl FromStr for ColumnDataDescription {
         };
 
         let data_type = match data_type_char {
+            'X' => ColumnDataType::Bool,
             'B' => ColumnDataType::Bool,
             'E' => ColumnDataType::Float,
             'J' => ColumnDataType::Int,
