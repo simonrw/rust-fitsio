@@ -533,6 +533,7 @@ impl From<ColumnDataDescription> for String {
 #[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColumnDataType {
+    Bit,
     Bool,
     Int,
     Float,
@@ -548,6 +549,7 @@ impl From<ColumnDataType> for String {
         use self::ColumnDataType::*;
 
         match orig {
+            Bit => "X",
             Bool => "B",
             Int => "J",
             Float => "E",
@@ -604,7 +606,7 @@ impl FromStr for ColumnDataDescription {
         };
 
         let data_type = match data_type_char {
-            'X' => ColumnDataType::Bool,
+            'X' => ColumnDataType::Bit,
             'B' => ColumnDataType::Bool,
             'E' => ColumnDataType::Float,
             'J' => ColumnDataType::Int,
