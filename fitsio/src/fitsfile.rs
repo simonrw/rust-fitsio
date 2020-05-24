@@ -288,7 +288,7 @@ impl FitsFile {
     }
 
     pub(crate) fn make_current(&mut self, hdu: &FitsHdu) -> Result<()> {
-        self.change_hdu(hdu.hdu_num)
+        self.change_hdu(hdu.number)
     }
 
     pub(crate) fn hdu_number(&mut self) -> usize {
