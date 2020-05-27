@@ -18,7 +18,8 @@ use std::ops::Range;
 pub struct FitsHdu {
     /// Information about the current HDU
     pub info: HduInfo,
-    pub(crate) hdu_num: usize,
+    /// The HDU number within the fits file. Zero indexed.
+    pub number: usize,
 }
 
 impl FitsHdu {
@@ -30,7 +31,7 @@ impl FitsHdu {
         match fits_file.fetch_hdu_info() {
             Ok(hdu_info) => Ok(FitsHdu {
                 info: hdu_info,
-                hdu_num: fits_file.hdu_number(),
+                number: fits_file.hdu_number(),
             }),
             Err(e) => Err(e),
         }
