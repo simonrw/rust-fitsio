@@ -13,9 +13,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Added
 
-* (`fitsio`) Supporting the `X` column type, mapping to packed bit arrays. For the time being this maps to a `u32` so the caller must perform the bit shifts required (or transmutations) to use the individual bits.
+* (`fitsio`) expose the HDU number (`number`) in the `FitsHdu` struct
+* (`fitsio`) handle the 'X' fits column data type. This may not match the
+  behaviour with cfitsio, but that behaviour is also seemingly complicated and
+  suboptimal; see [#122](https://github.com/mindriot101/rust-fitsio/pull/122)
+  for discussion.
 
 ### Changed
+
+* (`fitsio`) many small things, including using Rust 2018 edition.
+
 ### Removed
 
 ## [0.15.0]
