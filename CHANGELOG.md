@@ -9,6 +9,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 ### Removed
 
+## [0.16.0]
+
+### Added
+
+* (`fitsio`) expose the HDU number (`number`) in the `FitsHdu` struct
+* (`fitsio`) handle the 'X' fits column data type. This may not match the
+  behaviour with cfitsio, but that behaviour is also seemingly complicated and
+  suboptimal; see [#122](https://github.com/mindriot101/rust-fitsio/pull/122)
+  for discussion.
+
+### Changed
+
+* (`fitsio`) many small things, including using Rust 2018 edition.
+
+### Removed
+
+
 ## [0.15.0]
 
 ### Added
@@ -169,6 +186,7 @@ Nothing
 [0.14.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.13.0...v0.14.0
 [0.14.1]: https://github.com/mindriot101/rust-fitsio/compare/v0.14.0...v0.14.1
 [0.15.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.14.1...v0.15.0
+[0.16.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.15.0...v0.16.0
 
 ---
 
