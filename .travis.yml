@@ -12,7 +12,7 @@ jobs:
       install: rustup component add clippy
       before_script: |
         if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
-          cargo install cargo tarpaulin
+          cargo install cargo-tarpaulin
         fi
       script: bash ./bin/test
       after_success: |
