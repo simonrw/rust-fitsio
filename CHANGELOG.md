@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 ### Added
 ### Changed
+
+* (`fitsio-derive`) corrected path to `FitsHdu`, release v0.2.0
+
 ### Removed
 
 ## [0.16.0]
