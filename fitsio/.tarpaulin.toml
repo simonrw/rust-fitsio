@@ -1,5 +1,5 @@
 [report]
-out = ["Xml"]
+out = ["Xml", "Html"]
 
 [ndarray_coverage]
 features = "ndarray"
