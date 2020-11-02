@@ -702,6 +702,7 @@ impl FitsFile {
         Ok(())
     }
 
+    #[cfg(feature = "raw")]
     /// Return a pointer to the underlying C `fitsfile` object representing the current file.
     ///
     /// Any changes to the underlying fits file will not be updated in existing [`FitsHdu`]
@@ -1512,6 +1513,7 @@ mod test {
         });
     }
 
+    #[cfg(feature = "raw")]
     #[test]
     fn test_access_fptr_unsafe() {
         use crate::sys::fitsfile;

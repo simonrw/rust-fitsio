@@ -861,9 +861,9 @@ let newhdu = hdu.delete_column(&mut fptr, 0)?;
 # Raw fits file access
 
 If this library does not support the particular use case that is needed, the raw `fitsfile`
-pointer can be accessed:
+pointer can be accessed. This functionality requires opting in to the `raw` feature.
 
-```rust
+```rust,ignore
 # #[cfg(not(feature="bindgen"))]
 # use fitsio_sys;
 # #[cfg(feature="bindgen")]
