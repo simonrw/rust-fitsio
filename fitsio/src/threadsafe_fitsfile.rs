@@ -38,7 +38,7 @@ impl ThreadsafeFitsFile {
     /**
     Lock the underlying mutex to return exclusive access to the FitsFile.
     */
-    pub fn lock<'a>(&'a self) -> Result<MutexGuard<'a, FitsFile>> {
+    pub fn lock(&self) -> Result<MutexGuard<'_, FitsFile>> {
         self.0.lock().map_err(From::from)
     }
 }
