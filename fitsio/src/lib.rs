@@ -918,7 +918,7 @@ let f = fptr.threadsafe();
 
 /* Spawn loads of threads... */
 # let mut handles = Vec::new();
-for i in 0..10_000 {
+for i in 0..100 {
 let mut f1 = f.clone();
 
 /* Send the cloned ThreadsafeFitsFile to another thread */
