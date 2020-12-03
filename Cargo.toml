@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "fitsio",
+    "fitsio-sys",
+    "fitsio-derive",
+    "fitsio-sys-bindgen",
+]
