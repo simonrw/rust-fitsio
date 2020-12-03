@@ -18,7 +18,11 @@ To get a [`ThreadsafeFitsfile`][threadsafe-fitsfile] from a [`FitsFile`][fits-fi
 #[derive(Clone)]
 pub struct ThreadsafeFitsFile(Arc<Mutex<FitsFile>>);
 
-/* Ensure that the new struct is safe to send to other threads */
+// Ensure that the new struct is safe to send to other threads. Note: we cannot let the user wrap
+// the type with a, Arc<Mutex<...>> as Rust will not let them.
+//
+// Safety: we explicitly wrap the type in an Arc::Mutex which is threadsafe. The Mutex ensures that
+// only one thread can be modifying the file at once.
 unsafe impl Send for ThreadsafeFitsFile {}
 
 impl FitsFile {
@@ -48,6 +52,18 @@ mod tests {
     use super::*;
     use std::thread;
 
+    // arm (at least the raspberry pi) doesn't seem to be able to cope with spawning so many
+    // threads. We therefore reduce the number of threads for arm platforms.
+    #[cfg(target_arch = "arm")]
+    fn num_threads() -> usize {
+        100
+    }
+
+    #[cfg(not(target_arch = "arm"))]
+    fn num_threads() -> usize {
+        10_000
+    }
+
     #[test]
     fn test_using_other_threads() {
         let f = FitsFile::open("../testdata/full_example.fits").unwrap();
@@ -55,7 +71,7 @@ mod tests {
 
         /* Spawn loads of threads... */
         let mut handles = Vec::new();
-        for i in 0..10_000 {
+        for i in 0..num_threads() {
             let f1 = f.clone();
             let handle = thread::spawn(move || {
                 /* Get the underlyng fits file back */
