@@ -188,9 +188,7 @@ where
                 let n_rows = n_pixels_requested / width;
                 ReadImage::read_rows(fits_file, hdu, start_pixel, n_rows)
             }
-            HduInfo::TableInfo { .. } => {
-                return Err("Cannot read image data from a FITS table".into());
-            }
+            HduInfo::TableInfo { .. } => Err("Cannot read image data from a FITS table".into()),
             _ => unreachable!(),
         }
     }
