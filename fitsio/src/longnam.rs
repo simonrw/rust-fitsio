@@ -3,16 +3,19 @@
 // Disable clippy warnings as C uses long argument lists
 #![allow(clippy::too_many_arguments)]
 
+#[allow(unused_imports)]
 pub(crate) use crate::sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
-    ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd,
-    ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd,
-    ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim,
-    ffthdu, fitsfile, LONGLONG,
+    ffgcvj, ffgcvjj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz,
+    ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit,
+    ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss,
+    ffrsim, ffthdu, fitsfile, LONGLONG,
 };
 #[cfg(feature = "default")]
+#[allow(unused_imports)]
 use libc::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
 #[cfg(feature = "bindgen")]
+#[allow(unused_imports)]
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
 
 pub(crate) unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut c_int) -> c_int {
@@ -195,6 +198,7 @@ pub(crate) unsafe fn fits_read_col_dbl(
     )
 }
 
+#[cfg(not(target_pointer_width = "32"))]
 pub(crate) unsafe fn fits_read_col_lng(
     fptr: *mut fitsfile,
     colnum: c_int,
@@ -211,6 +215,27 @@ pub(crate) unsafe fn fits_read_col_lng(
     )
 }
 
+// int CFITS_API ffgcvjj(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
+//            LONGLONG nelem, LONGLONG nulval, LONGLONG *array, int *anynul,
+//                       int *status);
+#[cfg(target_pointer_width = "32")]
+pub(crate) unsafe fn fits_read_col_lnglng(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: LONGLONG,
+    array: *mut LONGLONG,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvjj(
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
+    )
+}
+
+#[cfg(not(target_pointer_width = "32"))]
 pub(crate) unsafe fn fits_read_col_ulng(
     fptr: *mut fitsfile,
     colnum: c_int,
@@ -237,6 +262,7 @@ pub(crate) unsafe fn fits_read_key_log(
     ffgkyl(fptr, keyname, value, comm, status)
 }
 
+#[cfg(not(target_pointer_width = "32"))]
 pub(crate) unsafe fn fits_read_key_lng(
     fptr: *mut fitsfile,
     keyname: *const c_char,
@@ -248,6 +274,7 @@ pub(crate) unsafe fn fits_read_key_lng(
 }
 
 // int CFITS_API ffgkyjj(fitsfile *fptr, const char *keyname, LONGLONG *value, char *comm, int *status);
+#[cfg(target_pointer_width = "32")]
 pub(crate) unsafe fn fits_read_key_lnglng(
     fptr: *mut fitsfile,
     keyname: *const c_char,
