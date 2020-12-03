@@ -6,9 +6,9 @@
 pub(crate) use crate::sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
     ffgcvj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd,
-    ffgkye, ffgkyj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd,
-    ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim, ffthdu,
-    fitsfile, LONGLONG,
+    ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd,
+    ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim,
+    ffthdu, fitsfile, LONGLONG,
 };
 #[cfg(feature = "default")]
 use libc::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
@@ -245,6 +245,17 @@ pub(crate) unsafe fn fits_read_key_lng(
     status: *mut c_int,
 ) -> c_int {
     ffgkyj(fptr, keyname, value, comm, status)
+}
+
+// int CFITS_API ffgkyjj(fitsfile *fptr, const char *keyname, LONGLONG *value, char *comm, int *status);
+pub(crate) unsafe fn fits_read_key_lnglng(
+    fptr: *mut fitsfile,
+    keyname: *const c_char,
+    value: *mut LONGLONG,
+    comm: *mut c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffgkyjj(fptr, keyname, value, comm, status)
 }
 
 pub(crate) unsafe fn fits_read_key_flt(
