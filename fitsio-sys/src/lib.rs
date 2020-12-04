@@ -59,4 +59,7 @@
     clippy::should_implement_trait
 )]
 
-include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/bindings.rs"));
+#[cfg(target_pointer_width = "64")]
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/bindings_64.rs"));
+#[cfg(target_pointer_width = "32")]
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/bindings_32.rs"));
