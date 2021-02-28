@@ -2,3 +2,12 @@ target
 Cargo.lock
 .vagrant
 *.rs.bk
+fitsio-sys/ext/cfitsio/docs/*
+cfitsio.xcodeproj
+/fitsio-sys/ext/cfitsio/*.a
+/fitsio-sys/ext/cfitsio/*.o
+/fitsio-sys/ext/cfitsio/Makefile
+/fitsio-sys/ext/cfitsio/cfitsio.pc
+/fitsio-sys/ext/cfitsio/config.log
+/fitsio-sys/ext/cfitsio/config.status
+/fitsio-sys/ext/cfitsio/zlib/*.o

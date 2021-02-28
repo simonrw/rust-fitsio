@@ -21,6 +21,15 @@ For example on a mac with homebrew, install `cfitsio` with:
 brew install cfitsio --with-reentrant
 ```
 
+Alternatively, it is possible to automatically have `cargo` automatically
+compile `cfitsio` from source. To do this, you are required to have a C
+compiler, autotools (to run the `configure` script) and make (to run the
+`Makefile`). This functionality is made available with the `static` feature:
+
+```sh
+cargo build --features static
+```
+
 For the time being, it's best to stick to the development version from
 github.  The code is tested before being pushed and is relatively
 stable. Add this to your `Cargo.toml` file:

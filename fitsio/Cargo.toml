@@ -32,6 +32,7 @@ criterion = "0.3.0"
 default = ["fitsio-sys"]
 bindgen = ["fitsio-sys-bindgen"]
 array = ["ndarray"]
+static = ["fitsio-sys/static"]
 
 [[bench]]
 name = "benchmarks"
