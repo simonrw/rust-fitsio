@@ -19,7 +19,13 @@ export CARGO_TARGET_DIR=target
 for toml in $(find . -maxdepth 2 -name "Cargo.toml"); do
     run_cargo clean --manifest-path $toml
     # Run clippy
-    cargo clippy --manifest-path $toml -- -D warnings
+    # only convert warnings to errors if the project is not fitsio-sys-bindgen,
+    # as this contains converted code (from bindgen) which we do not control.
+    grep -q fitsio-sys $toml && {
+        run_cargo clippy --manifest-path $toml
+    } || {
+        run_cargo clippy --manifest-path $toml -- -D warnings
+    }
     run_cargo test --manifest-path $toml
 done
 
