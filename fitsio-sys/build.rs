@@ -83,8 +83,9 @@ fn bind_cfitsio() {
         .wait()
         .expect("Failed to wait on child");
 
-    std::process::Command::new("./configure")
+    std::process::Command::new("sh")
         .args(&[
+            "./configure",
             &format!("--prefix={}", dst.display()),
             // cfitsio should always be built with reentrant support.
             "--enable-reentrant",
