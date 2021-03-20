@@ -56,7 +56,6 @@
 )]
 // Prevent clippy from throwing errors in generated code
 #![allow(
-    clippy::upper_case_acronyms,
     clippy::unreadable_literal,
     clippy::transmute_ptr_to_ptr,
     clippy::redundant_static_lifetimes,
