@@ -1,0 +1,35 @@
+name: Test the package
+
+on: [push, pull_request]
+
+jobs:
+  ci-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rust: stable }
+          - { rust: nightly }
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Install ubuntu dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install --no-install-recommends -y \
+            llvm-dev \
+            libcfitsio-dev \
+            pkg-config \
+            libssl-dev
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{matrix.rust}}
+          override: true
+          components: rustfmt, clippy
+
+      - name: Test the code
+        run: bash ./bin/test
