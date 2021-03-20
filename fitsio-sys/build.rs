@@ -1,4 +1,4 @@
-#[cfg(not(feature = "static"))]
+#[cfg(not(feature = "fitsio-src"))]
 fn bind_cfitsio() {
     use pkg_config::Error;
     use std::io::Write;
@@ -35,90 +35,89 @@ PKG_CONFIG_PATH=<blah> cargo build
     };
 }
 
-fn main() {
-    #[cfg(not(feature = "static"))]
-    bind_cfitsio();
+#[cfg(feature = "fitsio-src")]
+fn bind_cfitsio() {
+    use std::env::var;
+    use std::path::PathBuf;
 
-    #[cfg(feature = "static")]
-    {
-        use std::env::var;
-        use std::path::PathBuf;
-
-        let cfitsio_project_dir = PathBuf::from("ext/cfitsio");
-        if !cfitsio_project_dir.exists() {
-            panic!(
-                "Expected to find cfitsio source directory {}",
-                cfitsio_project_dir.display()
-            );
-        }
-        // Make sure the source directory isn't empty.
-        match std::fs::read_dir(&cfitsio_project_dir) {
-            Ok(mut d) => {
-                if let None = d.next() {
-                    panic!("cfitsio source directory ext/cfitsio is empty!");
-                }
-            }
-            _ => panic!("Could not read from cfitsio source directory ext/cfitsio !"),
-        }
-
-        // Translate rustc optimisation levels to things a C compiler can
-        // understand. I don't know if all C compilers agree here, but it should
-        // at least work for gcc.
-        let opt_level: String = match var("OPT_LEVEL").as_ref().map(|o| o.as_str()) {
-            Err(_) => panic!("Something wrong with OPT_LEVEL"),
-            // gcc doesn't handle 'z'. Just set it to 's', which also optimises
-            // for size.
-            Ok("z") => "s",
-            Ok(o) => o,
-        }
-        .to_string();
-
-        // Run the contigure script. I'd use the autotools crate here, but it
-        // always outputs two of --{enable,disable}-{shared,static}, none of
-        // which is supported by the cfitsio configure script! So, just run the
-        // script manually.
-        let dst = PathBuf::from(var("OUT_DIR").unwrap());
-
-        std::process::Command::new("make")
-            .arg("clean")
-            .current_dir(&cfitsio_project_dir)
-            .spawn()
-            .expect("Couldn't run cfitsio make clean")
-            .wait()
-            .expect("Failed to wait on child");
-
-        std::process::Command::new("./configure")
-            .args(&[
-                &format!("--prefix={}", dst.display()),
-                // cfitsio should always be built with reentrant support.
-                "--enable-reentrant",
-                // The user's reference guide states that using SSSE3 and SSE2
-                // can make reading or writing FITS images 20-30% faster(!).
-                // Enabling SSSE3 and SSE2 could cause portability problems, but
-                // it's unlikely that anyone is using such a CPU...
-                // https://stackoverflow.com/questions/52858556/most-recent-processor-without-support-of-ssse3-instructions
-                "--enable-ssse3",
-                "--enable-sse2",
-                // Don't link against curl.
-                "--disable-curl",
-            ])
-            .env("CFLAGS", &format!("-Wall -O{} -fPIE", opt_level))
-            .current_dir(&cfitsio_project_dir)
-            .spawn()
-            .expect("Couldn't run cfitsio configure script")
-            .wait()
-            .expect("Failed to wait on child");
-
-        std::process::Command::new("make")
-            .arg("-j4")
-            .arg("install")
-            .current_dir(&cfitsio_project_dir)
-            .spawn()
-            .expect("Couldn't run cfitsio makefile")
-            .wait()
-            .expect("Failed to wait on child");
-
-        println!("cargo:rustc-link-search=native={}/lib", dst.display());
-        println!("cargo:rustc-link-lib=static=cfitsio");
+    let cfitsio_project_dir = PathBuf::from("ext/cfitsio");
+    if !cfitsio_project_dir.exists() {
+        panic!(
+            "Expected to find cfitsio source directory {}",
+            cfitsio_project_dir.display()
+        );
     }
+    // Make sure the source directory isn't empty.
+    match std::fs::read_dir(&cfitsio_project_dir) {
+        Ok(mut d) => {
+            if let None = d.next() {
+                panic!("cfitsio source directory ext/cfitsio is empty!");
+            }
+        }
+        _ => panic!("Could not read from cfitsio source directory ext/cfitsio !"),
+    }
+
+    // Translate rustc optimisation levels to things a C compiler can
+    // understand. I don't know if all C compilers agree here, but it should
+    // at least work for gcc.
+    let opt_level: String = match var("OPT_LEVEL").as_ref().map(|o| o.as_str()) {
+        Err(_) => panic!("Something wrong with OPT_LEVEL"),
+        // gcc doesn't handle 'z'. Just set it to 's', which also optimises
+        // for size.
+        Ok("z") => "s",
+        Ok(o) => o,
+    }
+    .to_string();
+
+    // Run the contigure script. I'd use the autotools crate here, but it
+    // always outputs two of --{enable,disable}-{shared,static}, none of
+    // which is supported by the cfitsio configure script! So, just run the
+    // script manually.
+    let dst = PathBuf::from(var("OUT_DIR").unwrap());
+
+    std::process::Command::new("make")
+        .arg("clean")
+        .current_dir(&cfitsio_project_dir)
+        .spawn()
+        .expect("Couldn't run cfitsio make clean")
+        .wait()
+        .expect("Failed to wait on child");
+
+    std::process::Command::new("./configure")
+        .args(&[
+            &format!("--prefix={}", dst.display()),
+            // cfitsio should always be built with reentrant support.
+            "--enable-reentrant",
+            // The user's reference guide states that using SSSE3 and SSE2
+            // can make reading or writing FITS images 20-30% faster(!).
+            // Enabling SSSE3 and SSE2 could cause portability problems, but
+            // it's unlikely that anyone is using such a CPU...
+            // https://stackoverflow.com/questions/52858556/most-recent-processor-without-support-of-ssse3-instructions
+            "--enable-ssse3",
+            "--enable-sse2",
+            // Don't link against curl.
+            "--disable-curl",
+        ])
+        .env("CFLAGS", &format!("-Wall -O{} -fPIE", opt_level))
+        .current_dir(&cfitsio_project_dir)
+        .spawn()
+        .expect("Couldn't run cfitsio configure script")
+        .wait()
+        .expect("Failed to wait on child");
+
+    std::process::Command::new("make")
+        .arg("-j4")
+        .arg("install")
+        .current_dir(&cfitsio_project_dir)
+        .spawn()
+        .expect("Couldn't run cfitsio makefile")
+        .wait()
+        .expect("Failed to wait on child");
+
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    println!("cargo:rustc-link-lib=static=cfitsio");
+}
+
+fn main() {
+    bind_cfitsio();
 }

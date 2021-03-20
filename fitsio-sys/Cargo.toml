@@ -14,7 +14,7 @@ categories = ["external-ffi-bindings", "science"]
 links = "cfitsio"
 
 [features]
-static = []
+fitsio-src = []
 
 [dependencies]
 libc = "0"
