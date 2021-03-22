@@ -89,6 +89,8 @@ fn bind_cfitsio() {
             &format!("--prefix={}", dst.display()),
             // cfitsio should always be built with reentrant support.
             "--enable-reentrant",
+            // curl functionality is not used through rust-fitsio.
+            "--disable-curl",
         ])
         .env(
             "CFLAGS",
