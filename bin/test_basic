@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -euo pipefail
+
+RUST_VERSION=${RUST_VERSION:-stable}
+
+run_cargo() {
+    cargo +${RUST_VERSION} $*
+}
+
+# Test workspace
+run_cargo clean
+run_cargo test

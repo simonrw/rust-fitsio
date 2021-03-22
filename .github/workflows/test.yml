@@ -13,8 +13,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { rust: stable }
-          - { rust: nightly }
+          - { test: basic, rust: stable }
+          - { test: bindgen, rust: stable }
+          - { test: full_example, rust: stable }
+          - { test: feature_array, rust: stable }
+          - { test: feature_fitsio_src, rust: stable }
+          - { test: book_examples, rust: stable }
+          - { test: basic, rust: nightly }
+          - { test: bindgen, rust: nightly }
+          - { test: full_example, rust: nightly }
+          - { test: feature_array, rust: nightly }
+          - { test: feature_fitsio_src, rust: nightly }
+          - { test: book_examples, rust: nightly }
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
@@ -39,6 +49,7 @@ jobs:
         run: bash ./bin/test
         env:
           RUST_VERSION: ${{matrix.rust}}
+          TEST_TO_RUN: ${{matrix.test}}
 
   macos-test:
     runs-on: macos-latest
@@ -46,8 +57,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { rust: stable }
-          - { rust: nightly }
+          - { test: basic, rust: stable }
+          - { test: bindgen, rust: stable }
+          - { test: full_example, rust: stable }
+          - { test: feature_array, rust: stable }
+          - { test: feature_fitsio_src, rust: stable }
+          - { test: book_examples, rust: stable }
+          - { test: basic, rust: nightly }
+          - { test: bindgen, rust: nightly }
+          - { test: full_example, rust: nightly }
+          - { test: feature_array, rust: nightly }
+          - { test: feature_fitsio_src, rust: nightly }
+          - { test: book_examples, rust: nightly }
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
@@ -68,3 +89,4 @@ jobs:
         run: bash ./bin/test
         env:
           RUST_VERSION: ${{matrix.rust}}
+          TEST_TO_RUN: ${{matrix.test}}

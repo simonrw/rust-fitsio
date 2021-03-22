@@ -5,46 +5,20 @@ set -x
 RUST_VERSION=${RUST_VERSION:-stable}
 
 run_cargo() {
-    if [ -z $TRAVIS ]; then
-        # Not running on travis
-        cargo +${RUST_VERSION} $*
-    else
-        # Running on travis
-        cargo $*
+    cargo +${RUST_VERSION} $*
+}
+
+TEST_TO_RUN=${TEST_TO_RUN:all}
+
+run_test() {
+    if [ "${TEST_TO_RUN}" = "$1" ] || [ "{TEST_TO_RUN}" = "all" ]; then
+        bash "./bin/test_$1"
     fi
 }
 
-export CARGO_TARGET_DIR=target
-
-for toml in $(find . -maxdepth 2 -name "Cargo.toml"); do
-    run_cargo clean --manifest-path $toml
-    # Run clippy
-    # only convert warnings to errors if the project is not fitsio-sys-bindgen,
-    # as this contains converted code (from bindgen) which we do not control.
-    grep -q fitsio-sys $toml && {
-        run_cargo clippy --manifest-path $toml
-    } || {
-        run_cargo clippy --manifest-path $toml -- -D warnings
-    }
-    run_cargo test --manifest-path $toml
-done
-
-# Test the bindgen feature
-run_cargo clean --manifest-path fitsio/Cargo.toml
-run_cargo test --manifest-path fitsio/Cargo.toml --features bindgen --no-default-features
-
-# Test the full example
-run_cargo clean --manifest-path fitsio/Cargo.toml
-run_cargo run --manifest-path fitsio/Cargo.toml --example full_example
-
-# Test the array feature
-run_cargo clean --manifest-path fitsio/Cargo.toml
-run_cargo test --manifest-path fitsio/Cargo.toml --features array
-
-# Test the fitsio-src feature
-run_cargo clean --manifest-path fitsio/Cargo.toml
-run_cargo test --manifest-path fitsio/Cargo.toml --features fitsio-src
-
-# Compile the book examples
-run_cargo clean --manifest-path homepage/fitsioexample/Cargo.toml
-run_cargo build --manifest-path homepage/fitsioexample/Cargo.toml --bins
+run_test basic
+run_test bindgen
+run_test full_example
+run_test feature_array
+run_test feature_fitsio_src
+run_test book_examples

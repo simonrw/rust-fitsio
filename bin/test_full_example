@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -euo pipefail
+
+RUST_VERSION=${RUST_VERSION:-stable}
+
+run_cargo() {
+    cargo +${RUST_VERSION} $*
+}
+
+# Test the full example
+run_cargo clean --manifest-path fitsio/Cargo.toml
+run_cargo run --manifest-path fitsio/Cargo.toml --example full_example
+
