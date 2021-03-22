@@ -12,7 +12,6 @@ export CARGO_TARGET_DIR=target
 
 # Test workspace
 run_cargo clean
-run_cargo clippy -- -D warnings
 run_cargo test
 
 # Test the bindgen feature
