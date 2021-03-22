@@ -8,28 +8,17 @@ run_cargo() {
     cargo +${RUST_VERSION} $*
 }
 
-export CARGO_TARGET_DIR=target
+TEST_TO_RUN=${TEST_TO_RUN:all}
 
-# Test workspace
-run_cargo clean
-run_cargo test
+run_test() {
+    if [ "${TEST_TO_RUN}" = "$1" ] || [ "{TEST_TO_RUN}" = "all" ]; then
+        bash "./bin/test_$1"
+    fi
+}
 
-# Test the bindgen feature
-run_cargo clean --manifest-path fitsio/Cargo.toml
-run_cargo test --manifest-path fitsio/Cargo.toml --features bindgen --no-default-features
-
-# Test the full example
-run_cargo clean --manifest-path fitsio/Cargo.toml
-run_cargo run --manifest-path fitsio/Cargo.toml --example full_example
-
-# Test the array feature
-run_cargo clean --manifest-path fitsio/Cargo.toml
-run_cargo test --manifest-path fitsio/Cargo.toml --features array
-
-# Test the fitsio-src feature
-run_cargo clean --manifest-path fitsio/Cargo.toml
-run_cargo test --manifest-path fitsio/Cargo.toml --features fitsio-src
-
-# Compile the book examples
-run_cargo clean --manifest-path homepage/fitsioexample/Cargo.toml
-run_cargo build --manifest-path homepage/fitsioexample/Cargo.toml --bins
+run_test basic
+run_test bindgen
+run_test full_example
+run_test feature_array
+run_test feature_fitsio_src
+run_test book_examples
