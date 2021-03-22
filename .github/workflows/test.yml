@@ -37,6 +37,8 @@ jobs:
 
       - name: Test the code
         run: bash ./bin/test
+        env:
+          RUST_VERSION: ${{matrix.rust}}
 
   macos-test:
     runs-on: macos-latest
@@ -64,3 +66,5 @@ jobs:
 
       - name: Test the code
         run: bash ./bin/test
+        env:
+          RUST_VERSION: ${{matrix.rust}}
