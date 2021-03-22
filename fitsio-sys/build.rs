@@ -89,17 +89,11 @@ fn bind_cfitsio() {
             &format!("--prefix={}", dst.display()),
             // cfitsio should always be built with reentrant support.
             "--enable-reentrant",
-            // The user's reference guide states that using SSSE3 and SSE2
-            // can make reading or writing FITS images 20-30% faster(!).
-            // Enabling SSSE3 and SSE2 could cause portability problems, but
-            // it's unlikely that anyone is using such a CPU...
-            // https://stackoverflow.com/questions/52858556/most-recent-processor-without-support-of-ssse3-instructions
-            "--enable-ssse3",
-            "--enable-sse2",
-            // Don't link against curl.
-            "--disable-curl",
         ])
-        .env("CFLAGS", &format!("-Wall -O{} -fPIE", opt_level))
+        .env(
+            "CFLAGS",
+            &format!("-Wall -O{} -march=native -fPIE", opt_level),
+        )
         .current_dir(&cfitsio_project_dir)
         .spawn()
         .expect("Couldn't run cfitsio configure script")
@@ -107,7 +101,7 @@ fn bind_cfitsio() {
         .expect("Failed to wait on child");
 
     std::process::Command::new("make")
-        .arg("-j4")
+        .arg("-j")
         .arg("install")
         .current_dir(&cfitsio_project_dir)
         .spawn()
