@@ -21,7 +21,7 @@ tempfile = "3.1.0"
 
 [build-dependencies]
 pkg-config = "0"
-bindgen = "0.57"
+bindgen = "0.58"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
