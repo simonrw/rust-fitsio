@@ -1,7 +1,7 @@
 //! Long name wrappers of fitsio functions
 
 // Disable clippy warnings as C uses long argument lists
-#![allow(clippy::too_many_arguments)]
+#![allow(clippy::too_many_arguments, clippy::upper_case_acronyms)]
 
 #[allow(unused_imports)]
 pub(crate) use crate::sys::{

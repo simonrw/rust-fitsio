@@ -1,7 +1,7 @@
 //! Data types used within `fitsio`
 
 /// Enumeration of different data types used for column and key types
-#[allow(missing_docs)]
+#[allow(missing_docs, clippy::upper_case_acronyms)]
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DataType {

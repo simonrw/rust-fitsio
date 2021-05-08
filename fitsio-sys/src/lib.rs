@@ -56,7 +56,8 @@
     clippy::transmute_ptr_to_ptr,
     clippy::redundant_static_lifetimes,
     clippy::missing_safety_doc,
-    clippy::should_implement_trait
+    clippy::should_implement_trait,
+    clippy::upper_case_acronyms
 )]
 
 #[cfg(target_pointer_width = "64")]

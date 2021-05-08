@@ -3,6 +3,8 @@
 // These tests will make sure the version numbers in the readme and main crate documentation stay
 // in sync with the crate version number
 
+#![allow(non_fmt_panic)]
+
 #[test]
 fn test_readme_deps() {
     version_sync::assert_markdown_deps_updated!("../README.md");
