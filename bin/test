@@ -1,6 +1,6 @@
 #!/bin/bash
-set -e
-set -x
+
+set -xeou pipefail
 
 RUST_VERSION=${RUST_VERSION:-stable}
 
@@ -13,22 +13,17 @@ rustc +${RUST_VERSION} --version
 run_cargo --version
 
 # Test workspace
-run_cargo clean
 cargo clippy -- -D warnings
 run_cargo test
 
 # Test the bindgen feature
-run_cargo clean --manifest-path fitsio/Cargo.toml
 run_cargo test --manifest-path fitsio/Cargo.toml --features bindgen --no-default-features
 
 # Test the full example
-run_cargo clean --manifest-path fitsio/Cargo.toml
 run_cargo run --manifest-path fitsio/Cargo.toml --example full_example
 
 # Test the array feature
-run_cargo clean --manifest-path fitsio/Cargo.toml
 run_cargo test --manifest-path fitsio/Cargo.toml --features array
 
 # Compile the book examples
-run_cargo clean --manifest-path homepage/fitsioexample/Cargo.toml
 run_cargo build --manifest-path homepage/fitsioexample/Cargo.toml --bins
