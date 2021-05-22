@@ -1,29 +1,118 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-set -xeou pipefail
 
-RUST_VERSION=${RUST_VERSION:-stable}
+import subprocess as sp
+import argparse
+import sys
+import os
 
-run_cargo() {
-    cargo +${RUST_VERSION} $*
-}
 
-export CARGO_TARGET_DIR=target
-rustc +${RUST_VERSION} --version
-run_cargo --version
+class TestRunner:
+    def __init__(self, rust_version):
+        self.rust_version = rust_version
 
-# Test workspace
-cargo clippy -- -D warnings
-run_cargo test
+    def print_preamble(self):
+        print("Rust version:")
+        sp.check_call(["rustc", f"+{self.rust_version}", "--version"])
+        print("Cargo version:")
+        sp.check_call(["cargo", f"+{self.rust_version}", "--version"])
+        print()
 
-# Test the bindgen feature
-run_cargo test --manifest-path fitsio/Cargo.toml --features bindgen --no-default-features
+    def run(self, test):
+        method = getattr(self, f"_run_test_{test.replace('-', '_')}", None)
+        if not method:
+            raise NotImplementedError(test)
+        method()
 
-# Test the full example
-run_cargo run --manifest-path fitsio/Cargo.toml --example full_example
+    def _run_cargo(self, *args):
+        cmd = ["cargo", f"+{self.rust_version}"] + list(args)
+        print(f"Running {' '.join(cmd)}")
+        try:
+            sp.check_call(cmd)
+        except sp.CalledProcessError as e:
+            print(f"test failed with exit code {e.returncode}", file=sys.stderr)
+            sys.exit(e.returncode)
+        print()
 
-# Test the array feature
-run_cargo test --manifest-path fitsio/Cargo.toml --features array
+    def _run_test_workspace(self):
+        self._run_cargo("test")
 
-# Compile the book examples
-run_cargo build --manifest-path homepage/fitsioexample/Cargo.toml --bins
+    def _run_test_clippy(self):
+        self._run_cargo("clippy", "--", "-D", "warnings")
+
+    def _run_test_full_example(self):
+        self._run_cargo(
+            "run", "--manifest-path", "fitsio/Cargo.toml", "--example", "full_example"
+        )
+
+    def _run_test_array(self):
+        self._run_cargo(
+            "test", "--manifest-path", "fitsio/Cargo.toml", "--features", "array"
+        )
+
+    def _run_test_book_examples(self):
+        self._run_cargo(
+            "build", "--manifest-path", "homepage/fitsioexample/Cargo.toml", "--bins"
+        )
+
+    def _run_test_fitsio_src(self):
+        self._run_cargo(
+            "test",
+            "--manifest-path",
+            "fitsio/Cargo.toml",
+            "--features",
+            "fitsio-src",
+        )
+
+    def _run_test_bindgen(self):
+        self._run_cargo(
+            "test",
+            "--manifest-path",
+            "fitsio/Cargo.toml",
+            "--features",
+            "bindgen",
+            "--no-default-features",
+        )
+
+    def _run_test_all(self):
+        for attr in dir(self):
+            if attr.startswith("_run_test_"):
+                test = attr.replace("_run_test_", "").replace("_", "-")
+                if test == "all":
+                    continue
+
+                print(f"Running test '{test}'")
+                method = getattr(self, attr)
+                method()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-r",
+        "--rust-version",
+        required=False,
+        default="stable",
+        choices=["stable", "nightly", "beta"],
+    )
+    parser.add_argument(
+        "-t",
+        "--test",
+        required=False,
+        default="all",
+        choices=[
+            "all",
+            "workspace",
+            "full-example",
+            "array",
+            "fitsio-src",
+            "book-examples",
+            "clippy",
+            "bindgen",
+        ],
+    )
+    args = parser.parse_args()
+
+    runner = TestRunner(args.rust_version)
+    runner.print_preamble()
+    runner.run(test=args.test)
