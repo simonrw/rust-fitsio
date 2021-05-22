@@ -56,7 +56,11 @@
     clippy::transmute_ptr_to_ptr,
     clippy::redundant_static_lifetimes,
     clippy::missing_safety_doc,
-    clippy::should_implement_trait
+    clippy::should_implement_trait,
+    clippy::upper_case_acronyms
 )]
 
-include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/bindings.rs"));
+#[cfg(target_pointer_width = "64")]
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/bindings_64.rs"));
+#[cfg(target_pointer_width = "32")]
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/bindings_32.rs"));

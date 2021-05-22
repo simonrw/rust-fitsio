@@ -949,7 +949,7 @@ where
 }
 
 /// Enumeration of file open modes
-#[allow(missing_docs)]
+#[allow(missing_docs, clippy::upper_case_acronyms)]
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum FileOpenMode {
@@ -978,7 +978,7 @@ fileopenmode_into_impl!(i32);
 fileopenmode_into_impl!(i64);
 
 /// Enumeration of options for case sensitivity
-#[allow(missing_docs)]
+#[allow(missing_docs, clippy::upper_case_acronyms)]
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum CaseSensitivity {

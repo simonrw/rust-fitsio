@@ -1,14 +1,14 @@
 //! Header-related code
 use crate::errors::{check_status, Result};
 use crate::fitsfile::FitsFile;
+use crate::longnam::*;
+use crate::types::DataType;
 #[cfg(not(feature = "bindgen"))]
 use libc::*;
-use crate::longnam::*;
 use std::ffi;
 #[cfg(feature = "bindgen")]
 use std::os::raw::*;
 use std::ptr;
-use crate::types::DataType;
 
 const MAX_VALUE_LENGTH: usize = 71;
 

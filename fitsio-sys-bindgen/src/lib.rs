@@ -63,7 +63,8 @@
     clippy::useless_transmute,
     clippy::trivially_copy_pass_by_ref,
     clippy::too_many_arguments,
-    clippy::should_implement_trait
+    clippy::should_implement_trait,
+    clippy::upper_case_acronyms
 )]
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
