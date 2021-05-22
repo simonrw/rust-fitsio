@@ -7,6 +7,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 ### Added
 ### Changed
+### Removed
+
+* Added support for arm32 architectures (armv7-unknown-linux-gnueabihf - e.g. Raspberry Pi). This is not tested on CI so it's not maintained as such.
+
+## [0.17.0]
+
+### Added
+
+* Added support for compiling `cfitsio` from source rather than using the
+  bundled version. This requires the installer needing to include the
+  dependencies that are required for installing `cfitsio`, namely `make` and
+  `gcc`. [#130](https://github.com/mindriot101/rust-fitsio/pull/130)
+
+### Changed
 
 * (`fitsio-derive`) corrected path to `FitsHdu`, release v0.2.0
 
@@ -189,6 +203,8 @@ Nothing
 [0.14.1]: https://github.com/mindriot101/rust-fitsio/compare/v0.14.0...v0.14.1
 [0.15.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.14.1...v0.15.0
 [0.16.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.15.0...v0.16.0
+[0.17.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.16.0...v0.17.0
+[0.18.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.17.0...v0.18.0
 
 ---
 
