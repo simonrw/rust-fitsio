@@ -6,10 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [Unreleased]
 ### Added
-### Changed
-### Removed
 
 * Added support for arm32 architectures (armv7-unknown-linux-gnueabihf - e.g. Raspberry Pi). This is not tested on CI so it's not maintained as such.
+
+### Changed
+### Removed
 
 ## [0.17.0]
 
@@ -18,7 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 * Added support for compiling `cfitsio` from source rather than using the
   bundled version. This requires the installer needing to include the
   dependencies that are required for installing `cfitsio`, namely `make` and
-  `gcc`. [#130](https://github.com/mindriot101/rust-fitsio/pull/130)
+  `gcc`, thanks @cjordan. [#130](https://github.com/mindriot101/rust-fitsio/pull/130)
 
 ### Changed
 
