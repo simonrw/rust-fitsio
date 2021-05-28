@@ -105,3 +105,26 @@ jobs:
       - name: Test the code
         run: python3 ./bin/test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
         continue-on-error: ${{matrix.allow_failures}}
+
+  linux-armv7:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          target: armv7-unknown-linux-gnueabihf
+
+      - name: Test the code
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: test
+          args: --target armv7-unknown-linux-gnueabihf --manifest-path fitsio/Cargo.toml
