@@ -1,0 +1,7 @@
+fitsio-derive/target
+fitsio-sys-bindgen/target
+fitsio-sys/target
+homepage/fitsioexample/target
+target
+homepage
+.git
