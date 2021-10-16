@@ -3,6 +3,7 @@
 // These tests will make sure the version numbers in the readme and main crate documentation stay
 // in sync with the crate version number
 
+#![allow(renamed_and_removed_lints)]
 #![allow(non_fmt_panic)]
 
 #[test]
