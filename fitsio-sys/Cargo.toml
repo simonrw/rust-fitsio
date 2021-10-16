@@ -19,9 +19,6 @@ fitsio-src = []
 [dependencies]
 libc = "0"
 
-[dev-dependencies]
-tempdir = "0"
-
 [build-dependencies]
 pkg-config = "0"
 
