@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 ### Added
 
+
+### Changed
+### Removed
+
+## [0.18.0]
+### Added
+
 * Added support for arm32 architectures (armv7-unknown-linux-gnueabihf - e.g. Raspberry Pi). This is not tested on CI so it's not maintained as such.
 
 ### Changed
