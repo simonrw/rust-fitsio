@@ -584,63 +584,134 @@ mod tests {
         });
     }
 
+    // helper macro to write a file with an image and table of a specific
+    // type, using the low level `fitsio-sys`.
+    macro_rules! example_file {
+        ($type:ty, $image_type:expr, $data_type:expr, $cb:expr) => {
+            use crate::stringutils::StringList;
+
+            with_temp_file(|filename| {
+                let dimensions = vec![5i64, 5];
+                let image_data: Vec<$type> =
+                    (0..(dimensions[0] * dimensions[1]) as $type).collect();
+                let column: Vec<_> = (0..10).into_iter().map(|i| i + 200).collect();
+                {
+                    let mut fptr = std::ptr::null_mut();
+                    let mut status = 0;
+                    let c_filename = std::ffi::CString::new(filename).unwrap();
+
+                    unsafe {
+                        crate::longnam::fits_create_file(
+                            &mut fptr as *mut *mut crate::sys::fitsfile,
+                            c_filename.as_ptr(),
+                            &mut status,
+                        );
+                    }
+                    let _ = crate::errors::check_status(status).unwrap();
+
+                    // write the primary u16 image
+                    let naxis = dimensions.len();
+                    unsafe {
+                        crate::longnam::fits_create_img(
+                            fptr as *mut _,
+                            $image_type,
+                            naxis as _,
+                            dimensions.as_ptr() as *mut _,
+                            &mut status,
+                        );
+                    }
+                    let _ = crate::errors::check_status(status).unwrap();
+
+                    unsafe {
+                        crate::longnam::fits_write_img(
+                            fptr as *mut _,
+                            $data_type,
+                            1,
+                            image_data.len() as _,
+                            image_data.as_ptr() as *mut _,
+                            &mut status,
+                        );
+                    }
+                    let _ = crate::errors::check_status(status).unwrap();
+
+                    // write the table
+                    let ttype = StringList::from_slice(&["example".to_string()]).unwrap();
+                    let tform = StringList::from_slice(&["1I".to_string()]).unwrap();
+                    let tunit = StringList::from_slice(&["".to_string()]).unwrap();
+                    unsafe {
+                        crate::longnam::fits_create_tbl(
+                            fptr as *mut _,
+                            crate::sys::BINARY_TBL as _,
+                            0,
+                            1,
+                            ttype.as_ptr(),
+                            tform.as_ptr(),
+                            tunit.as_ptr(),
+                            std::ptr::null_mut(),
+                            &mut status,
+                        );
+                    }
+
+                    unsafe {
+                        crate::longnam::fits_write_col(
+                            fptr as *mut _,
+                            $data_type,
+                            1,
+                            1,
+                            1,
+                            10,
+                            column.as_ptr() as *mut _,
+                            &mut status,
+                        );
+                    }
+
+                    unsafe {
+                        crate::longnam::fits_close_file(fptr as *mut _, &mut status);
+                    }
+                    let _ = crate::errors::check_status(status).unwrap();
+                }
+                $cb(filename, image_data, column);
+            });
+        };
+    }
+
     #[test]
     fn i16_image() {
-        with_temp_file(|filename| {
-            let dimensions = vec![5i64, 5];
-            let image_data: Vec<i16> = (0..(dimensions[0] * dimensions[1]) as i16).collect();
-            let naxis = dimensions.len();
-            {
-                // create a u16 fits image using `fitsio-sys`
-                let mut fptr = std::ptr::null_mut();
-                let mut status = 0;
-                let c_filename = std::ffi::CString::new(filename).unwrap();
+        example_file!(
+            i16,
+            crate::images::ImageType::Short.into(),
+            crate::images::DataType::TSHORT.into(),
+            |filename, image_data, column| {
+                // now read the file and check the output
+                let mut f = FitsFile::open(filename).unwrap();
+                let hdu = f.primary_hdu().unwrap();
+                let data: Vec<i16> = hdu.read_image(&mut f).unwrap();
+                assert_eq!(data, image_data);
 
-                unsafe {
-                    crate::longnam::fits_create_file(
-                        &mut fptr as *mut *mut fitsio_sys::fitsfile,
-                        c_filename.as_ptr(),
-                        &mut status,
-                    );
-                }
-                let _ = crate::errors::check_status(status).unwrap();
-
-                // write the primary u16 image
-
-                unsafe {
-                    crate::longnam::fits_create_img(
-                        fptr as *mut _,
-                        crate::images::ImageType::Short.into(),
-                        naxis as _,
-                        dimensions.as_ptr() as *mut _,
-                        &mut status,
-                    );
-                }
-                let _ = crate::errors::check_status(status).unwrap();
-
-                unsafe {
-                    crate::longnam::fits_write_img(
-                        fptr as *mut _,
-                        crate::images::DataType::TSHORT.into(),
-                        1,
-                        image_data.len() as _,
-                        image_data.as_ptr() as *mut _,
-                        &mut status,
-                    );
-                }
-                let _ = crate::errors::check_status(status).unwrap();
-
-                unsafe {
-                    crate::longnam::fits_close_file(fptr as *mut _, &mut status);
-                }
-                let _ = crate::errors::check_status(status).unwrap();
+                let hdu = f.hdu(1).unwrap();
+                let data: Vec<i16> = hdu.read_col(&mut f, "example").unwrap();
+                assert_eq!(data, column);
             }
+        );
+    }
 
-            // now read the file and check the output
-            let mut f = FitsFile::open(filename).unwrap();
-            let hdu = f.primary_hdu().unwrap();
-            let data: Vec<i16> = hdu.read_image(&mut f).unwrap();
-            assert_eq!(data, image_data);
-        });
+    #[test]
+    fn u16_image() {
+        example_file!(
+            u16,
+            crate::images::ImageType::UnsignedShort.into(),
+            crate::images::DataType::TUSHORT.into(),
+            |filename, image_data, column| {
+                // now read the file and check the output
+                let mut f = FitsFile::open(filename).unwrap();
+                let hdu = f.primary_hdu().unwrap();
+                let data: Vec<u16> = hdu.read_image(&mut f).unwrap();
+                assert_eq!(data, image_data);
+
+                let hdu = f.hdu(1).unwrap();
+                let data: Vec<u16> = hdu.read_col(&mut f, "example").unwrap();
+                assert_eq!(data, column);
+            }
+        );
     }
 }
