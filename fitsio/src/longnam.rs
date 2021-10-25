@@ -6,17 +6,19 @@
 #[allow(unused_imports)]
 pub(crate) use crate::sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
-    ffgcvj, ffgcvjj, ffgcvk, ffgcvs, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz,
-    ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit,
-    ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss,
-    ffrsim, ffthdu, fitsfile, LONGLONG,
+    ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvs, ffgcvui, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm,
+    ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv,
+    fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys,
+    ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
 };
 #[cfg(feature = "default")]
 #[allow(unused_imports)]
-use libc::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
+use libc::{c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ushort, c_void};
 #[cfg(feature = "bindgen")]
 #[allow(unused_imports)]
-use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_uint, c_ulong, c_void};
+use std::os::raw::{
+    c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ushort, c_void,
+};
 
 pub(crate) unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut c_int) -> c_int {
     ffclos(fptr, status)
@@ -130,6 +132,38 @@ pub(crate) unsafe fn fits_read_col_str(
     status: *mut c_int,
 ) -> c_int {
     ffgcvs(
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
+    )
+}
+
+pub(crate) unsafe fn fits_read_col_sht(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_short,
+    array: *mut c_short,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvi(
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
+    )
+}
+
+pub(crate) unsafe fn fits_read_col_usht(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_ushort,
+    array: *mut c_ushort,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvui(
         fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }

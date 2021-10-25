@@ -287,26 +287,30 @@ macro_rules! write_image_impl {
     };
 }
 
-read_image_impl_vec!(i8, i8::default(), DataType::TSHORT);
+read_image_impl_vec!(i8, i8::default(), DataType::TSBYTE);
+read_image_impl_vec!(i16, i16::default(), DataType::TSHORT);
 read_image_impl_vec!(i32, i32::default(), DataType::TINT);
 #[cfg(target_pointer_width = "64")]
 read_image_impl_vec!(i64, i64::default(), DataType::TLONG);
 #[cfg(target_pointer_width = "32")]
 read_image_impl_vec!(i64, i64::default(), DataType::TLONGLONG);
-read_image_impl_vec!(u8, u8::default(), DataType::TUSHORT);
+read_image_impl_vec!(u8, u8::default(), DataType::TBYTE);
+read_image_impl_vec!(u16, u16::default(), DataType::TUSHORT);
 read_image_impl_vec!(u32, u32::default(), DataType::TUINT);
 #[cfg(target_pointer_width = "64")]
 read_image_impl_vec!(u64, u64::default(), DataType::TULONG);
 read_image_impl_vec!(f32, f32::default(), DataType::TFLOAT);
 read_image_impl_vec!(f64, f64::default(), DataType::TDOUBLE);
 
-write_image_impl!(i8, i8::default(), DataType::TSHORT);
+write_image_impl!(i8, i8::default(), DataType::TSBYTE);
+write_image_impl!(i16, i16::default(), DataType::TSHORT);
 write_image_impl!(i32, i32::default(), DataType::TINT);
 #[cfg(target_pointer_width = "64")]
 write_image_impl!(i64, i64::default(), DataType::TLONG);
 #[cfg(target_pointer_width = "32")]
 write_image_impl!(i64, i64::default(), DataType::TLONGLONG);
-write_image_impl!(u8, u8::default(), DataType::TUSHORT);
+write_image_impl!(u8, u8::default(), DataType::TBYTE);
+write_image_impl!(u16, u16::default(), DataType::TUSHORT);
 write_image_impl!(u32, u32::default(), DataType::TUINT);
 #[cfg(target_pointer_width = "64")]
 write_image_impl!(u64, u64::default(), DataType::TULONG);
@@ -364,6 +368,7 @@ macro_rules! imagetype_into_impl {
 }
 
 imagetype_into_impl!(i8);
+imagetype_into_impl!(i16);
 imagetype_into_impl!(i32);
 imagetype_into_impl!(i64);
 
@@ -576,6 +581,66 @@ mod tests {
                     _ => panic!("Unexpected hdu type"),
                 }
             }
+        });
+    }
+
+    #[test]
+    fn i16_image() {
+        with_temp_file(|filename| {
+            let dimensions = vec![5i64, 5];
+            let image_data: Vec<i16> = (0..(dimensions[0] * dimensions[1]) as i16).collect();
+            let naxis = dimensions.len();
+            {
+                // create a u16 fits image using `fitsio-sys`
+                let mut fptr = std::ptr::null_mut();
+                let mut status = 0;
+                let c_filename = std::ffi::CString::new(filename).unwrap();
+
+                unsafe {
+                    crate::longnam::fits_create_file(
+                        &mut fptr as *mut *mut fitsio_sys::fitsfile,
+                        c_filename.as_ptr(),
+                        &mut status,
+                    );
+                }
+                let _ = crate::errors::check_status(status).unwrap();
+
+                // write the primary u16 image
+
+                unsafe {
+                    crate::longnam::fits_create_img(
+                        fptr as *mut _,
+                        crate::images::ImageType::Short.into(),
+                        naxis as _,
+                        dimensions.as_ptr() as *mut _,
+                        &mut status,
+                    );
+                }
+                let _ = crate::errors::check_status(status).unwrap();
+
+                unsafe {
+                    crate::longnam::fits_write_img(
+                        fptr as *mut _,
+                        crate::images::DataType::TSHORT.into(),
+                        1,
+                        image_data.len() as _,
+                        image_data.as_ptr() as *mut _,
+                        &mut status,
+                    );
+                }
+                let _ = crate::errors::check_status(status).unwrap();
+
+                unsafe {
+                    crate::longnam::fits_close_file(fptr as *mut _, &mut status);
+                }
+                let _ = crate::errors::check_status(status).unwrap();
+            }
+
+            // now read the file and check the output
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.primary_hdu().unwrap();
+            let data: Vec<i16> = hdu.read_image(&mut f).unwrap();
+            assert_eq!(data, image_data);
         });
     }
 }
