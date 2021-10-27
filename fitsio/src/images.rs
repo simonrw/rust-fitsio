@@ -591,7 +591,7 @@ mod tests {
             use crate::stringutils::StringList;
 
             with_temp_file(|filename| {
-                let dimensions = vec![5i64, 5];
+                let dimensions = vec![5usize, 5];
                 let image_data: Vec<$type> =
                     (0..(dimensions[0] * dimensions[1]) as $type).collect();
                 let column: Vec<_> = (0..10).into_iter().map(|i| i + 200).collect();
@@ -636,6 +636,7 @@ mod tests {
 
                     // write the table
                     let ttype = StringList::from_slice(&["example".to_string()]).unwrap();
+                    // TODO(srw): this form string should be different depending on the type
                     let tform = StringList::from_slice(&["1I".to_string()]).unwrap();
                     let tunit = StringList::from_slice(&["".to_string()]).unwrap();
                     unsafe {
