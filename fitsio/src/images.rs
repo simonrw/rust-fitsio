@@ -287,26 +287,30 @@ macro_rules! write_image_impl {
     };
 }
 
-read_image_impl_vec!(i8, i8::default(), DataType::TSHORT);
+read_image_impl_vec!(i8, i8::default(), DataType::TSBYTE);
+read_image_impl_vec!(i16, i16::default(), DataType::TSHORT);
 read_image_impl_vec!(i32, i32::default(), DataType::TINT);
 #[cfg(target_pointer_width = "64")]
 read_image_impl_vec!(i64, i64::default(), DataType::TLONG);
 #[cfg(target_pointer_width = "32")]
 read_image_impl_vec!(i64, i64::default(), DataType::TLONGLONG);
-read_image_impl_vec!(u8, u8::default(), DataType::TUSHORT);
+read_image_impl_vec!(u8, u8::default(), DataType::TBYTE);
+read_image_impl_vec!(u16, u16::default(), DataType::TUSHORT);
 read_image_impl_vec!(u32, u32::default(), DataType::TUINT);
 #[cfg(target_pointer_width = "64")]
 read_image_impl_vec!(u64, u64::default(), DataType::TULONG);
 read_image_impl_vec!(f32, f32::default(), DataType::TFLOAT);
 read_image_impl_vec!(f64, f64::default(), DataType::TDOUBLE);
 
-write_image_impl!(i8, i8::default(), DataType::TSHORT);
+write_image_impl!(i8, i8::default(), DataType::TSBYTE);
+write_image_impl!(i16, i16::default(), DataType::TSHORT);
 write_image_impl!(i32, i32::default(), DataType::TINT);
 #[cfg(target_pointer_width = "64")]
 write_image_impl!(i64, i64::default(), DataType::TLONG);
 #[cfg(target_pointer_width = "32")]
 write_image_impl!(i64, i64::default(), DataType::TLONGLONG);
-write_image_impl!(u8, u8::default(), DataType::TUSHORT);
+write_image_impl!(u8, u8::default(), DataType::TBYTE);
+write_image_impl!(u16, u16::default(), DataType::TUSHORT);
 write_image_impl!(u32, u32::default(), DataType::TUINT);
 #[cfg(target_pointer_width = "64")]
 write_image_impl!(u64, u64::default(), DataType::TULONG);
@@ -364,6 +368,7 @@ macro_rules! imagetype_into_impl {
 }
 
 imagetype_into_impl!(i8);
+imagetype_into_impl!(i16);
 imagetype_into_impl!(i32);
 imagetype_into_impl!(i64);
 
@@ -577,5 +582,137 @@ mod tests {
                 }
             }
         });
+    }
+
+    // helper macro to write a file with an image and table of a specific
+    // type, using the low level `fitsio-sys`.
+    macro_rules! example_file {
+        ($type:ty, $image_type:expr, $data_type:expr, $cb:expr) => {
+            use crate::stringutils::StringList;
+
+            with_temp_file(|filename| {
+                let dimensions = vec![5usize, 5];
+                let image_data: Vec<$type> =
+                    (0..(dimensions[0] * dimensions[1]) as $type).collect();
+                let column: Vec<_> = (0..10).into_iter().map(|i| i + 200).collect();
+                {
+                    let mut fptr = std::ptr::null_mut();
+                    let mut status = 0;
+                    let c_filename = std::ffi::CString::new(filename).unwrap();
+
+                    unsafe {
+                        crate::longnam::fits_create_file(
+                            &mut fptr as *mut *mut crate::sys::fitsfile,
+                            c_filename.as_ptr(),
+                            &mut status,
+                        );
+                    }
+                    let _ = crate::errors::check_status(status).unwrap();
+
+                    // write the primary u16 image
+                    let naxis = dimensions.len();
+                    unsafe {
+                        crate::longnam::fits_create_img(
+                            fptr as *mut _,
+                            $image_type,
+                            naxis as _,
+                            dimensions.as_ptr() as *mut _,
+                            &mut status,
+                        );
+                    }
+                    let _ = crate::errors::check_status(status).unwrap();
+
+                    unsafe {
+                        crate::longnam::fits_write_img(
+                            fptr as *mut _,
+                            $data_type,
+                            1,
+                            image_data.len() as _,
+                            image_data.as_ptr() as *mut _,
+                            &mut status,
+                        );
+                    }
+                    let _ = crate::errors::check_status(status).unwrap();
+
+                    // write the table
+                    let ttype = StringList::from_slice(&["example".to_string()]).unwrap();
+                    // TODO(srw): this form string should be different depending on the type
+                    let tform = StringList::from_slice(&["1I".to_string()]).unwrap();
+                    let tunit = StringList::from_slice(&["".to_string()]).unwrap();
+                    unsafe {
+                        crate::longnam::fits_create_tbl(
+                            fptr as *mut _,
+                            crate::sys::BINARY_TBL as _,
+                            0,
+                            1,
+                            ttype.as_ptr(),
+                            tform.as_ptr(),
+                            tunit.as_ptr(),
+                            std::ptr::null_mut(),
+                            &mut status,
+                        );
+                    }
+
+                    unsafe {
+                        crate::longnam::fits_write_col(
+                            fptr as *mut _,
+                            $data_type,
+                            1,
+                            1,
+                            1,
+                            10,
+                            column.as_ptr() as *mut _,
+                            &mut status,
+                        );
+                    }
+
+                    unsafe {
+                        crate::longnam::fits_close_file(fptr as *mut _, &mut status);
+                    }
+                    let _ = crate::errors::check_status(status).unwrap();
+                }
+                $cb(filename, image_data, column);
+            });
+        };
+    }
+
+    #[test]
+    fn i16_image() {
+        example_file!(
+            i16,
+            crate::images::ImageType::Short.into(),
+            crate::images::DataType::TSHORT.into(),
+            |filename, image_data, column| {
+                // now read the file and check the output
+                let mut f = FitsFile::open(filename).unwrap();
+                let hdu = f.primary_hdu().unwrap();
+                let data: Vec<i16> = hdu.read_image(&mut f).unwrap();
+                assert_eq!(data, image_data);
+
+                let hdu = f.hdu(1).unwrap();
+                let data: Vec<i16> = hdu.read_col(&mut f, "example").unwrap();
+                assert_eq!(data, column);
+            }
+        );
+    }
+
+    #[test]
+    fn u16_image() {
+        example_file!(
+            u16,
+            crate::images::ImageType::UnsignedShort.into(),
+            crate::images::DataType::TUSHORT.into(),
+            |filename, image_data, column| {
+                // now read the file and check the output
+                let mut f = FitsFile::open(filename).unwrap();
+                let hdu = f.primary_hdu().unwrap();
+                let data: Vec<u16> = hdu.read_image(&mut f).unwrap();
+                assert_eq!(data, image_data);
+
+                let hdu = f.hdu(1).unwrap();
+                let data: Vec<u16> = hdu.read_col(&mut f, "example").unwrap();
+                assert_eq!(data, column);
+            }
+        );
     }
 }

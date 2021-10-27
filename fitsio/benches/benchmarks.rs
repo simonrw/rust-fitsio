@@ -20,7 +20,7 @@ fn opening_files(c: &mut Criterion) {
 /* Benchmark the example code */
 fn full_example(c: &mut Criterion) {
     /* Create a temporary directory to work from */
-    let tmp_dir = TempDir::new("fitsio").unwrap();
+    let tmp_dir = Builder::new().prefix("fitsio").tempfile().unwrap();
     let file_path = tmp_dir.path().join("example.fits");
 
     c.bench_function("full example", move |b| {

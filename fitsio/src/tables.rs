@@ -146,6 +146,8 @@ macro_rules! reads_col_impl {
     };
 }
 
+reads_col_impl!(i16, fits_read_col_sht, 0);
+reads_col_impl!(u16, fits_read_col_usht, 0);
 reads_col_impl!(i32, fits_read_col_int, 0);
 reads_col_impl!(u32, fits_read_col_uint, 0);
 reads_col_impl!(f32, fits_read_col_flt, 0.0);
