@@ -6,9 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [Unreleased]
 ### Added
+### Changed
+### Removed
 
+## [0.19.0]
+### Added
+
+* Added support for 16 bit images and tables thanks @emaadparacha
+  [#148](https://github.com/mindriot101/rust-fitsio/pull/148).
 
 ### Changed
+
+* arm32 architectures are tested on CI so consider arm32 a tier 1 platform -
+  `fitsio` will not release a new version without arm32 tests passing on CI.
+
 ### Removed
 
 ## [0.18.0]
@@ -213,6 +224,7 @@ Nothing
 [0.16.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.15.0...v0.16.0
 [0.17.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.16.0...v0.17.0
 [0.18.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.17.0...v0.18.0
+[0.19.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.18.0...v0.19.0
 
 ---
 
