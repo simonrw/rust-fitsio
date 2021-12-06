@@ -7,10 +7,16 @@ use std::path::PathBuf;
 fn main() {
     let package_name = "cfitsio";
     match pkg_config::probe_library(package_name) {
-        Ok(_) => {
+        Ok(lib) => {
+            let include_args: Vec<_> = lib
+                .include_paths
+                .into_iter()
+                .map(|p| format!("-I{}", p.to_str().unwrap()))
+                .collect();
             let bindings = bindgen::builder()
                 .header("wrapper.h")
                 .block_extern_crate(true)
+                .clang_args(include_args)
                 .opaque_type("fitsfile")
                 .opaque_type("FITSfile")
                 .rust_target(RustTarget::Stable_1_0)

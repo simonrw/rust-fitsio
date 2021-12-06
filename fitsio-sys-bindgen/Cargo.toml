@@ -1,7 +1,7 @@
 [package]
 name = "fitsio-sys-bindgen"
 edition = "2018"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "FFI wrapper around cfitsio"
 homepage = "https://github.com/mindriot101/rust-fitsio"
