@@ -38,7 +38,9 @@ class TestRunner:
         self._run_cargo("test")
 
     def _run_test_clippy(self):
-        self._run_cargo("clippy", "--", "-D", "warnings")
+        self._run_cargo(
+            "clippy", "--", "-D", "warnings", "-A", "clippy::non-send-fields-in-send-ty"
+        )
 
     def _run_test_full_example(self):
         self._run_cargo(
