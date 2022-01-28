@@ -152,12 +152,14 @@ reads_col_impl!(i32, fits_read_col_int, 0);
 reads_col_impl!(u32, fits_read_col_uint, 0);
 reads_col_impl!(f32, fits_read_col_flt, 0.0);
 reads_col_impl!(f64, fits_read_col_dbl, 0.0);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 reads_col_impl!(i64, fits_read_col_lng, 0);
-#[cfg(target_pointer_width = "32")]
+#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
 reads_col_impl!(i64, fits_read_col_lnglng, 0);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 reads_col_impl!(u64, fits_read_col_ulng, 0);
+#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
+reads_col_impl!(u64, fits_read_col_ulnglng, 0);
 
 impl ReadsCol for String {
     fn read_col_range<T: Into<String>>(
@@ -314,12 +316,14 @@ macro_rules! writes_col_impl {
 }
 
 writes_col_impl!(u32, DataType::TUINT);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 writes_col_impl!(u64, DataType::TULONG);
+#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
+writes_col_impl!(u64, DataType::TLONGLONG);
 writes_col_impl!(i32, DataType::TINT);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 writes_col_impl!(i64, DataType::TLONG);
-#[cfg(target_pointer_width = "32")]
+#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
 writes_col_impl!(i64, DataType::TLONGLONG);
 writes_col_impl!(f32, DataType::TFLOAT);
 writes_col_impl!(f64, DataType::TDOUBLE);

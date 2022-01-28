@@ -5,13 +5,13 @@ This mostly concerns converting to and from the main error type defined
 in this crate: [`Error`](enum.Error.html)
 */
 
+use crate::stringutils::status_to_string;
 use std::ffi::{IntoStringError, NulError};
 use std::io;
 use std::ops::Range;
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 use std::sync;
-use crate::stringutils::status_to_string;
 
 /// Enumeration of all error types
 #[derive(Debug)]
