@@ -387,7 +387,7 @@ impl FitsHdu {
         fits_file.make_current(&self)?;
         fits_check_readwrite!(fits_file);
 
-        let mut new_size = new_size.to_vec();
+        let mut new_size: Vec<c_long> = new_size.iter().map(|d| *d as c_long).collect();
         new_size.reverse();
 
         match self.info {
