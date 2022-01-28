@@ -615,12 +615,13 @@ mod tests {
 
                     // write the primary u16 image
                     let naxis = dimensions.len();
+                    let long_dimensions: Vec<c_long> = dimensions.iter().map(|d| *d as c_long).collect();
                     unsafe {
                         crate::longnam::fits_create_img(
                             fptr as *mut _,
                             $image_type,
                             naxis as _,
-                            dimensions.as_ptr() as *mut _,
+                            long_dimensions.as_ptr() as *mut _,
                             &mut status,
                         );
                     }
