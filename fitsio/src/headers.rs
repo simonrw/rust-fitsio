@@ -3,11 +3,7 @@ use crate::errors::{check_status, Result};
 use crate::fitsfile::FitsFile;
 use crate::longnam::*;
 use crate::types::DataType;
-#[cfg(not(feature = "bindgen"))]
-use libc::*;
 use std::ffi;
-#[cfg(feature = "bindgen")]
-use std::os::raw::*;
 use std::ptr;
 
 const MAX_VALUE_LENGTH: usize = 71;

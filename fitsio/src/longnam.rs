@@ -12,10 +12,14 @@ pub(crate) use crate::sys::{
     ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
 };
 #[cfg(feature = "default")]
-use libc::{c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ulonglong, c_ushort, c_void};
+pub use libc::{
+    c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ulonglong, c_ushort,
+    c_void,
+};
 #[cfg(feature = "bindgen")]
-use std::os::raw::{
-    c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ulonglong, c_ushort, c_void,
+pub use std::os::raw::{
+    c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ulonglong, c_ushort,
+    c_void,
 };
 
 pub(crate) unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut c_int) -> c_int {
