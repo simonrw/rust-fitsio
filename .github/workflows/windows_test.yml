@@ -39,5 +39,5 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Test the code
-        run: C:\Users\runneradmin\.cargo\bin\cargo.exe test -p fitsio
+        run: C:/Users/runneradmin/.cargo/bin/cargo.exe test -p fitsio
         continue-on-error: false
