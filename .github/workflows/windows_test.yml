@@ -1,0 +1,30 @@
+name: Test on windows
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  ci-test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            base-devel
+            mingw-w64-x86_64-cfitsio
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-clang
+
+      - name: Checkout sources
+        uses: actions/checkout@v1
