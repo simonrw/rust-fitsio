@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Test the code
-        run: C:/Users/runneradmin/.cargo/bin/cargo.exe test -p fitsio --target x86_64-pc-windows-gnu
+        run: C:/Users/runneradmin/.cargo/bin/cargo.exe --verbose test -p fitsio --target x86_64-pc-windows-gnu
         continue-on-error: false
         env:
           PKG_CONFIG_SYSROOT_DIR: /mingw64
