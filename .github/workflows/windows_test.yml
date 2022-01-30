@@ -26,5 +26,19 @@ jobs:
             mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-clang
 
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+          target: x86_64-pc-windows-gnu
+          default: true
+
       - name: Checkout sources
         uses: actions/checkout@v1
+
+      - name: Test the code
+        run: cargo test -p fitsio
+        continue-on-error: false
