@@ -24,7 +24,6 @@ jobs:
             base-devel
             mingw-w64-x86_64-cfitsio
             mingw-w64-x86_64-pkg-config
-            mingw-w64-x86_64-clang
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
