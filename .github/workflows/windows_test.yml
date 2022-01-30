@@ -27,19 +27,14 @@ jobs:
             mingw-w64-x86_64-pkg-config
 
       - name: Install toolchain
-        run: |
-          curl -Lo rustup-init.exe https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-gnu/rustup-init.exe
-          yes 1 |  ./rustup-init.exe --default-host x86_64-pc-windows-gnu --profile minimal --no-modify-path 
-
-      # - name: Install toolchain
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     profile: minimal
-      #     toolchain: stable
-      #     override: true
-      #     components: rustfmt, clippy
-      #     target: x86_64-pc-windows-gnu
-      #     default: true
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+          target: x86_64-pc-windows-gnu
+          default: true
 
       - name: Checkout sources
         uses: actions/checkout@v1
@@ -47,3 +42,8 @@ jobs:
       - name: Test the code
         run: C:/Users/runneradmin/.cargo/bin/cargo.exe test -p fitsio --target x86_64-pc-windows-gnu
         continue-on-error: false
+        env:
+          PKG_CONFIG_SYSROOT_DIR: /mingw64
+          PKG_CONFIG_PATH: /mingw64/lib/pkgconfig
+          PKG_CONFIG: /mingw64/bin/pkg-config
+          PATH: /mingw64/bin:$PATH
