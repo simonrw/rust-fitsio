@@ -75,13 +75,15 @@ fn bind_cfitsio() {
     // script manually.
     let dst = PathBuf::from(var("OUT_DIR").unwrap());
 
-    std::process::Command::new("make")
-        .arg("clean")
-        .current_dir(&cfitsio_project_dir)
-        .spawn()
-        .expect("Couldn't run cfitsio make clean")
-        .wait()
-        .expect("Failed to wait on child");
+    if cfitsio_project_dir.join("Makefile").is_file() {
+        std::process::Command::new("make")
+            .arg("clean")
+            .current_dir(&cfitsio_project_dir)
+            .spawn()
+            .expect("Couldn't run cfitsio make clean")
+            .wait()
+            .expect("Failed to wait on child");
+    }
 
     std::process::Command::new("sh")
         .args(&[
@@ -92,10 +94,7 @@ fn bind_cfitsio() {
             // curl functionality is not used through rust-fitsio.
             "--disable-curl",
         ])
-        .env(
-            "CFLAGS",
-            &format!("-Wall -O{} -march=native -fPIE", opt_level),
-        )
+        .env("CFLAGS", &format!("-Wall -O{} -fPIE", opt_level))
         .current_dir(&cfitsio_project_dir)
         .spawn()
         .expect("Couldn't run cfitsio configure script")
