@@ -15,6 +15,8 @@ jobs:
     steps:
       # - name: Checkout sources
       #   uses: actions/checkout@v1
+      - name: Install required dependencies
+        run: c:/mingw64/usr/bin/pacman.exe -S curl base-devel mingw-w64-x86_64-cfitsio mingw-w64.x86_64-pkg-config
 
       - name: Install rust target
         run: rustup target add x86_64-pc-windows-gnu
