@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 ### Added
 ### Changed
+
+* Specify version dependencies more specifically which should make installations more reliable, see [this post](https://users.rust-lang.org/t/psa-please-specify-precise-dependency-versions-in-cargo-toml/71277/9) [#151](https://github.com/mindriot101/rust-fitsio/pull/151)
+
 ### Removed
 
 ## [0.19.0]
