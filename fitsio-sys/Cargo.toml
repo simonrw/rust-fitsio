@@ -16,11 +16,8 @@ links = "cfitsio"
 [features]
 fitsio-src = []
 
-[dependencies]
-libc = "0"
-
 [build-dependencies]
-pkg-config = "0"
+pkg-config = "0.3.7"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
