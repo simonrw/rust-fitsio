@@ -13,12 +13,6 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      # - name: Checkout sources
-      #   uses: actions/checkout@v1
-
-      # - name: Install rust target
-      #   run: rustup target add x86_64-pc-windows-gnu
-
       - uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
@@ -29,18 +23,18 @@ jobs:
             mingw-w64-x86_64-cfitsio
             mingw-w64-x86_64-pkg-config
 
-      # - name: Install toolchain
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     profile: minimal
-      #     toolchain: stable
-      #     override: true
-      #     components: rustfmt, clippy
-      #     target: x86_64-pc-windows-gnu
-      #     default: true
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+          target: x86_64-pc-windows-gnu
+          default: true
 
-      # - name: Checkout sources
-      #   uses: actions/checkout@v1
+      - name: Checkout sources
+        uses: actions/checkout@v1
 
 #       - name: Test the code
 #         run: C:/Users/runneradmin/.cargo/bin/cargo.exe --verbose test -p fitsio --target x86_64-pc-windows-gnu
