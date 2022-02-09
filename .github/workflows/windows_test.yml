@@ -16,21 +16,18 @@ jobs:
       # - name: Checkout sources
       #   uses: actions/checkout@v1
 
-      - name: Install required dependencies
-        run: pacman -S curl base-devel mingw-w64-x86_64-cfitsio mingw-w64.x86_64-pkg-config
-
       # - name: Install rust target
       #   run: rustup target add x86_64-pc-windows-gnu
 
-      # - uses: msys2/setup-msys2@v2
-      #   with:
-      #     msystem: MINGW64
-      #     update: false
-      #     install: >-
-      #       curl
-      #       base-devel
-      #       mingw-w64-x86_64-cfitsio
-      #       mingw-w64-x86_64-pkg-config
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: false
+          install: >-
+            curl
+            base-devel
+            mingw-w64-x86_64-cfitsio
+            mingw-w64-x86_64-pkg-config
 
       # - name: Install toolchain
       #   uses: actions-rs/toolchain@v1
