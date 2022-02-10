@@ -23,6 +23,9 @@ jobs:
             mingw-w64-x86_64-cfitsio
             mingw-w64-x86_64-pkg-config
 
+      - name: Remove default toolchain
+        run: rustup toolchain uninstall stable-x86_64-pc-windows-msvc
+
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -35,6 +38,13 @@ jobs:
 
       - name: Checkout sources
         uses: actions/checkout@v1
+
+      - name: Set default rust toolchain
+        run: >-
+          rustup -V
+          rustup target list
+          rustc -V
+          rustup default stable-gnu
 
 #       - name: Test the code
 #         run: C:/Users/runneradmin/.cargo/bin/cargo.exe --verbose test -p fitsio --target x86_64-pc-windows-gnu
