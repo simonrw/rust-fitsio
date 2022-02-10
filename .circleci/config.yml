@@ -38,8 +38,9 @@ jobs:
           command: |
             export PATH=/c/Users/circleci/.cargo/bin:/mingw64/bin:${PATH:-}
             export MSYSTEM=MINGW64
+            export CARGO_NET_GIT_FETCH_WITH_CLI=true
             cd /c/Users/circleci/project
-            CARGO_NET_GIT_FETCH_WITH_CLI=true /c/Users/circleci/.cargo/bin/cargo test -p fitsio'
+            cargo test -p fitsio
           shell: C:/msys64/usr/bin/bash.exe -l
 
   say-hello:
