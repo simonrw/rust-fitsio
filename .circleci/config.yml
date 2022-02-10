@@ -19,8 +19,11 @@ jobs:
           command: "echo Hello, World!"
 
   test:
+    parameters:
+      version:
+        type: string
     docker:
-      - image: cimg/rust:1.58
+      - image: cimg/rust:<< parameters.version >>
     steps:
       - run:
           name: Install dependencies
@@ -34,7 +37,7 @@ jobs:
       - checkout
       - run: 
           name: Run tests
-          command: python3 ./bin/test --test all --rust-version stable
+          command: python3 ./bin/test --test << parameters.version >> --rust-version stable
 
 
 
@@ -43,4 +46,8 @@ jobs:
 workflows:
   say-hello-workflow:
     jobs:
-      - test
+      - test:
+        matrix:
+          parameters:
+            version:
+              - 1.58.1
