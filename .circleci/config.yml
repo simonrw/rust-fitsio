@@ -18,6 +18,18 @@ jobs:
           name: "Say hello"
           command: "echo Hello, World!"
 
+  test:
+    parameters:
+      test:
+        type: string
+    docker:
+      - image: cimg/rust:stable
+    steps:
+      - checkout
+      - run: python3 ./bin/test --test << parameters.test >> --rust-version stable
+
+
+
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
