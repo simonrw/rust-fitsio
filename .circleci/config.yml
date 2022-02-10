@@ -17,7 +17,7 @@ jobs:
     steps:
       - checkout
       - run: Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-gnu/rustup-init.exe -OutFile rustup-init.exe
-      - run: .\rustup-init.exe --no-modify-path --default-host x86_64-pc-windows-gnu --default-toolchain stable
+      - run: .\rustup-init.exe --no-modify-path --default-host x86_64-pc-windows-gnu --default-toolchain stable -y
       - run: systeminfo
 
   say-hello:
