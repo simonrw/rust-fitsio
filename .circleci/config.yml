@@ -37,7 +37,7 @@ jobs:
       - checkout
       - run: 
           name: Run tests
-          command: python3 ./bin/test --test all --rust-version << parameters.version >>
+          command: cargo test -p fitsio
 
 
 # Invoke jobs via workflows
