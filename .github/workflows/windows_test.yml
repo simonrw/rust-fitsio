@@ -22,7 +22,7 @@ jobs:
           override: true
           components: rustfmt, clippy
           target: x86_64-pc-windows-gnu
-          default: true
+          default: stable-gnu
 
       - name: Checkout sources
         uses: actions/checkout@v1
