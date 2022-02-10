@@ -16,7 +16,8 @@ jobs:
       shell: powershell.exe
     steps:
       - checkout
-      - rust/install
+      - run: Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-gnu/rustup-init.exe -OutFile rustup-init.exe
+      - run: .\rustup-init.exe --no-modify-path --default-host x86_64-pc-windows-gnu --default-toolchain stable
       - run: systeminfo
 
   say-hello:
@@ -59,9 +60,9 @@ jobs:
 workflows:
   say-hello-workflow:
     jobs:
-      - test:
-          matrix:
-            parameters:
-              version:
-                - 1.58.1
+      # - test:
+      #     matrix:
+      #       parameters:
+      #         version:
+      #           - 1.58.1
       - win-test
