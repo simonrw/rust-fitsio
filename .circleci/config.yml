@@ -35,7 +35,7 @@ jobs:
 
       - run:
           name: Run the tests
-          command: >-
+          command: |
             export PATH=/c/Users/circleci/.cargo/bin:/mingw64/bin:${PATH:-} &&
             export MSYSTEM=MINGW64 &&
             cd /c/Users/circleci/project &&
