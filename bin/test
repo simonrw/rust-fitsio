@@ -95,7 +95,6 @@ if __name__ == "__main__":
         "--rust-version",
         required=False,
         default="stable",
-        choices=["stable", "nightly", "beta"],
     )
     parser.add_argument(
         "-t",
