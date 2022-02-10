@@ -47,7 +47,7 @@ workflows:
   say-hello-workflow:
     jobs:
       - test:
-        matrix:
-          parameters:
-            version:
-              - 1.58.1
+          matrix:
+            parameters:
+              version:
+                - 1.58.1
