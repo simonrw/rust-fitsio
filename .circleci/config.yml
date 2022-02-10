@@ -30,13 +30,15 @@ jobs:
             Remove-Item msys2.exe
       - run:
           name: Install msys2 dependencies
-          command: C:/msys64/usr/bin/bash.exe -lc 'pacman --noconfirm -S curl base-devel mingw-w64-x86_64-cfitsio mingw-w64-x86_64-pkg-config'
+          command: pacman --noconfirm -S curl base-devel mingw-w64-x86_64-cfitsio mingw-w64-x86_64-pkg-config
+          shell: C:/msys64/usr/bin/bash.exe -l
+
       - run:
           name: Run the tests
           command: >-
-            export PATH=/c/Users/circleci/.cargo/bin:/mingw64/bin:${PATH:-}
-            export MSYSTEM=MINGW64
-            cd /c/Users/circleci/project
+            export PATH=/c/Users/circleci/.cargo/bin:/mingw64/bin:${PATH:-} &&
+            export MSYSTEM=MINGW64 &&
+            cd /c/Users/circleci/project &&
             CARGO_NET_GIT_FETCH_WITH_CLI=true /c/Users/circleci/.cargo/bin/cargo test -p fitsio'
           shell: C:/msys64/usr/bin/bash.exe -l
 
