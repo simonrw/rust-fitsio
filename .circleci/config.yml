@@ -30,12 +30,13 @@ jobs:
             Remove-Item msys2.exe
       - run:
           name: Install msys2 dependencies
-          command: >-
-            pacman --noconfirm -S curl base-devel mingw-w64-x86_64-cfitsio mingw-w64-x86_64-pkg-config
-          shell: C:/msys64/usr/bin/bash.exe
+          command: C:/msys64/usr/bin/bash.exe -lc 'pacman --noconfirm -S curl base-devel mingw-w64-x86_64-cfitsio mingw-w64-x86_64-pkg-config'
       - run:
-          command: ~/.cargo/bin/cargo test -p fitsio
-          shell: C:/msys64/usr/bin/bash.exe
+          name: Debug the cwd
+          command: C:/msys64/usr/bin/bash.exe -lc 'pwd'
+      - run:
+          name: Run the tests
+          command: C:/msys64/usr/bin/bash.exe -lc '~/.cargo/bin/cargo test -p fitsio'
 
   say-hello:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
