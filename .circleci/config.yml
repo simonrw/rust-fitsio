@@ -16,9 +16,30 @@ jobs:
       shell: powershell.exe
     steps:
       - checkout
-      - run: Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-gnu/rustup-init.exe -OutFile rustup-init.exe
-      - run: .\rustup-init.exe --no-modify-path --default-host x86_64-pc-windows-gnu --default-toolchain stable -y
-      - run: systeminfo
+      - run:
+          name: Fetch rustup-init.exe
+          command: Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-gnu/rustup-init.exe -OutFile rustup-init.exe
+      - run:
+          name: Install rust
+          command: .\rustup-init.exe --no-modify-path --default-host x86_64-pc-windows-gnu --default-toolchain stable --profile minimal -y
+      - run:
+          name: Install msys2
+          command: >-
+            (New-Object System.Net.WebClient).DownloadFile('https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe', 'msys2.exe')
+            .\msys2.exe -y -oC:\
+            Remove-Item msys2.exe
+      - run:
+          name: Install msys2 dependencies
+          command: >-
+            pacman --noconfirm -S \
+              curl \
+              base-devel \
+              mingw-w64-x86_64-cfitsio \
+              mingw-w64-x86_64-pkg-config
+          shell: C:\msys64\usr\bin\bash.exe
+      - run:
+          command: ~/.cargo/bin/cargo test -p fitsio
+          shell: C:\msys64\usr\bin\bash.exe
 
   say-hello:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
