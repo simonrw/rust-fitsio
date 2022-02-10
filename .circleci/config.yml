@@ -36,9 +36,9 @@ jobs:
       - run:
           name: Run the tests
           command: |
-            export PATH=/c/Users/circleci/.cargo/bin:/mingw64/bin:${PATH:-} &&
-            export MSYSTEM=MINGW64 &&
-            cd /c/Users/circleci/project &&
+            export PATH=/c/Users/circleci/.cargo/bin:/mingw64/bin:${PATH:-}
+            export MSYSTEM=MINGW64
+            cd /c/Users/circleci/project
             CARGO_NET_GIT_FETCH_WITH_CLI=true /c/Users/circleci/.cargo/bin/cargo test -p fitsio'
           shell: C:/msys64/usr/bin/bash.exe -l
 
