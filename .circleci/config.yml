@@ -37,8 +37,7 @@ jobs:
       - checkout
       - run: 
           name: Run tests
-          command: python3 ./bin/test --test << parameters.version >> --rust-version stable
-
+          command: python3 ./bin/test --test all --rust-version << parameters.version >>
 
 
 # Invoke jobs via workflows
