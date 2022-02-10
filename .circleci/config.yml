@@ -15,13 +15,13 @@ jobs:
       name: win/default
       shell: powershell.exe
     steps:
-      - checkout
-      - run:
-          name: Fetch rustup-init.exe
-          command: Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-gnu/rustup-init.exe -OutFile rustup-init.exe
-      - run:
-          name: Install rust
-          command: .\rustup-init.exe --no-modify-path --default-host x86_64-pc-windows-gnu --default-toolchain stable --profile minimal -y
+      # - checkout
+      # - run:
+      #     name: Fetch rustup-init.exe
+      #     command: Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-gnu/rustup-init.exe -OutFile rustup-init.exe
+      # - run:
+      #     name: Install rust
+      #     command: .\rustup-init.exe --no-modify-path --default-host x86_64-pc-windows-gnu --default-toolchain stable --profile minimal -y
       - run:
           name: Install msys2
           command: >-
@@ -32,11 +32,14 @@ jobs:
           name: Install msys2 dependencies
           command: C:/msys64/usr/bin/bash.exe -lc 'pacman --noconfirm -S curl base-devel mingw-w64-x86_64-cfitsio mingw-w64-x86_64-pkg-config'
       - run:
-          name: Debug the cwd
-          command: C:/msys64/usr/bin/bash.exe -lc 'pwd'
-      - run:
-          name: Run the tests
-          command: C:/msys64/usr/bin/bash.exe -lc '~/.cargo/bin/cargo test -p fitsio'
+          command: pwd
+          shell: C:/msys64/usr/bin/bash.exe -lc
+      # - run:
+      #     name: Debug the cwd
+      #     command: C:/msys64/usr/bin/bash.exe -lc 'pwd'
+      # - run:
+      #     name: Run the tests
+      #     command: C:/msys64/usr/bin/bash.exe -lc 'cd /c/Users/circleci/project && CARGO_NET_GIT_FETCH_WITH_CLI=true /c/Users/circleci/.cargo/bin/cargo test -p fitsio'
 
   say-hello:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
