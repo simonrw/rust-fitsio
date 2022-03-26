@@ -6,4 +6,4 @@ authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 
 [dependencies]
 fitsio = { path = "../../fitsio", features = ["array"] }
-ndarray = ">=0.8"
+ndarray = "0.15.0"
