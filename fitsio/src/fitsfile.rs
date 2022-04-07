@@ -354,7 +354,7 @@ impl FitsFile {
                     64 => ImageType::LongLong,
                     -32 => ImageType::Float,
                     -64 => ImageType::Double,
-                    _ => unreachable!(&format!("Unhandled image bitpix type: {}", bitpix)),
+                    _ => unreachable!("{}", format!("Unhandled image bitpix type: {}", bitpix)),
                 };
 
                 HduInfo::ImageInfo {
