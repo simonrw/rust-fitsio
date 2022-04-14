@@ -5,7 +5,6 @@ RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
         libcfitsio-dev \
         pkg-config \
-        libclang-3.8-dev \
         build-essential \
         clang \
         gdb \
