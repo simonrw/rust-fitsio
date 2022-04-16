@@ -20,7 +20,7 @@ RUN rustup update && \
     rustup component add clippy --toolchain stable-x86_64-unknown-linux-gnu
 
 VOLUME ["/project"]
-WORKDIR "/project/fitsio"
+WORKDIR "/project"
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
