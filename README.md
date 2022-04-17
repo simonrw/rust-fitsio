@@ -71,7 +71,6 @@ or use from your `Cargo.toml` as such:
 fitsio = { version = "0.19.0", default-features = false, features = ["bindgen"] }
 ```
 
-
 ## Documentation
 
 `fitsio` [![`fitsio` documentation](https://docs.rs/fitsio/badge.svg)](https://docs.rs/fitsio/)<br />
@@ -111,3 +110,7 @@ fn main() {
     assert_eq!(num_hdus, 2);
 }
 ```
+
+## Development
+
+See [./CONTRIBUTING.md](./CONTRIBUTING.md)

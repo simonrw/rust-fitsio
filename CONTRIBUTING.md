@@ -2,6 +2,20 @@
 
 Many thanks for your interest in `rust-fitsio`. I appreciate any suggestions or help!
 
+## Local development setup
+
+Either follow the instructions in the [README](./README.md) to support installing locally, otherwise see the [Docker](#docker) instructions.
+
+### Docker
+
+We supply a [Dockerfile](./Dockerfile) which sets up a linux environment that has all packages required for development (i.e. it should be able to run `./bin/test -t all` as the CI tests do). For development on non-Linux platforms this may be more convenient.
+
+```
+# change directory into the rust-fitsio root directory
+docker build -t <tag> .
+docker run --rm -it -v $(pwd):/project <tag> bash
+```
+
 ## PR checklist
 
 Before submitting a completed PR, make sure the following items have been addressed:
