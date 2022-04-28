@@ -6,7 +6,7 @@ use crate::images::ImageType;
 use crate::longnam;
 use crate::stringutils::error_to_string;
 use crate::sys::fitsfile;
-use crate::tables::ConcreteColumnDescription;
+use crate::tables::{ConcreteColumnDescription};
 
 /** Convenience wrappers around longnam functions
 */
@@ -119,6 +119,18 @@ pub(crate) fn create_table(
             &mut status,
         )
     } != 0
+    {
+        return Err(status.into());
+    }
+
+    Ok(())
+}
+
+pub(crate) fn delete_column(mut src: FitsFile, column: usize) -> Result<()> {
+    let mut status = 0;
+
+    if unsafe { longnam::fits_delete_col(src.as_mut() as *mut _, (column + 1) as _, &mut status) }
+        != 0
     {
         return Err(status.into());
     }

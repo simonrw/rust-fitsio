@@ -602,17 +602,11 @@ impl FitsHdu {
         fits_check_readwrite!(fits_file);
 
         let colno = T::get_column_no(&col_identifier, &self, fits_file)?;
-        let mut status = 0;
 
-        unsafe {
-            fits_delete_col(
-                fits_file.fptr.as_mut() as *mut _,
-                (colno + 1) as _,
-                &mut status,
-            );
-        }
+        longnam_con::delete_column(fits_file.fptr, colno as _)?;
 
-        check_status(status).and_then(|_| fits_file.current_hdu())
+        let current_hdu = fits_file.current_hdu()?;
+        Ok(current_hdu)
     }
 
     /**
