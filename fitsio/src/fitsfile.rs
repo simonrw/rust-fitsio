@@ -17,13 +17,13 @@ use crate::sys::fitsfile;
 use crate::tables::{ColumnDataDescription, ConcreteColumnDescription};
 use std::ffi;
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::ptr;
 
 /// Main entry point to the FITS file format
 pub struct FitsFile {
     /// Name of the file
-    pub filename: String,
+    pub filename: PathBuf,
     open_mode: FileOpenMode,
     pub(crate) fptr: ptr::NonNull<fitsfile>,
 }
@@ -49,7 +49,8 @@ impl FitsFile {
     pub fn open<T: AsRef<Path>>(filename: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
-        let filename = filename.as_ref().to_str().expect("converting filename");
+        let file_path = filename.as_ref();
+        let filename = file_path.to_str().expect("converting filename");
         let c_filename = ffi::CString::new(filename)?;
 
         unsafe {
@@ -65,7 +66,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READONLY,
-                filename: filename.to_string(),
+                filename: file_path.to_path_buf(),
             },
             None => unimplemented!(),
         })
@@ -90,7 +91,8 @@ impl FitsFile {
     pub fn edit<T: AsRef<Path>>(filename: T) -> Result<Self> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
-        let filename = filename.as_ref().to_str().expect("converting filename");
+        let file_path = filename.as_ref();
+        let filename = file_path.to_str().expect("converting filename");
         let c_filename = ffi::CString::new(filename)?;
 
         unsafe {
@@ -106,7 +108,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READWRITE,
-                filename: filename.to_string(),
+                filename: file_path.to_path_buf(),
             },
             None => unimplemented!(),
         })
@@ -653,7 +655,7 @@ impl FitsFile {
     where
         W: Write,
     {
-        writeln!(w, "\n  file: {}", self.filename)?;
+        writeln!(w, "\n  file: {:?}", self.filename)?;
         match self.open_mode {
             FileOpenMode::READONLY => writeln!(w, "  mode: READONLY")?,
             FileOpenMode::READWRITE => writeln!(w, "  mode: READWRITE")?,
@@ -836,7 +838,8 @@ where
     pub fn open(self) -> Result<FitsFile> {
         let mut fptr = ptr::null_mut();
         let mut status = 0;
-        let path = self.path.as_ref().to_str().expect("converting filename");
+        let file_path = self.path.as_ref();
+        let path = file_path.to_str().expect("converting filename");
         let c_filename = ffi::CString::new(path)?;
 
         // Check if there is an existing file already with the given filename
@@ -862,7 +865,7 @@ where
                 Some(p) => FitsFile {
                     fptr: p,
                     open_mode: FileOpenMode::READWRITE,
-                    filename: path.to_string(),
+                    filename: file_path.to_path_buf(),
                 },
                 None => unimplemented!(),
             };
