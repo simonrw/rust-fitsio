@@ -5,11 +5,11 @@ use crate::fitsfile::CaseSensitivity;
 use crate::fitsfile::FitsFile;
 use crate::headers::{ReadsKey, WritesKey};
 use crate::images::{ImageType, ReadImage, WriteImage};
-use crate::longnam::*;
 use crate::tables::{
     ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation, FitsRow, ReadsCol,
     WritesCol,
 };
+use crate::{longnam::*, longnam_con};
 use std::ffi;
 use std::ops::Range;
 
@@ -435,17 +435,8 @@ impl FitsHdu {
         src_fits_file: &mut FitsFile,
         dest_fits_file: &mut FitsFile,
     ) -> Result<()> {
-        let mut status = 0;
-        unsafe {
-            fits_copy_hdu(
-                src_fits_file.fptr.as_mut() as *mut _,
-                dest_fits_file.fptr.as_mut() as *mut _,
-                0,
-                &mut status,
-            );
-        }
-
-        check_status(status).map(|_| ())
+        longnam_con::copy_hdu(src_fits_file.fptr, dest_fits_file.fptr)?;
+        Ok(())
     }
 
     /**

@@ -11,8 +11,15 @@ use crate::sys::fitsfile;
 
 type FitsFile = ptr::NonNull<fitsfile>;
 
-pub(crate) struct Error {
+#[derive(Debug)]
+pub struct Error {
     message: String,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
 }
 
 impl From<c_int> for Error {

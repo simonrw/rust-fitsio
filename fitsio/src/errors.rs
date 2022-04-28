@@ -5,13 +5,13 @@ This mostly concerns converting to and from the main error type defined
 in this crate: [`Error`](enum.Error.html)
 */
 
+use crate::stringutils::status_to_string;
 use std::ffi::{IntoStringError, NulError};
 use std::io;
 use std::ops::Range;
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 use std::sync;
-use crate::stringutils::status_to_string;
 
 /// Enumeration of all error types
 #[derive(Debug)]
@@ -42,6 +42,9 @@ pub enum Error {
 
     /// Error unlocking a mutex
     UnlockError,
+
+    /// Wrapper from convenience functions
+    ConvenienceError(crate::longnam_con::Error),
 }
 
 /// Error raised when the user requests invalid indexes for data
@@ -115,6 +118,12 @@ impl ::std::convert::From<IntoStringError> for Error {
     }
 }
 
+impl ::std::convert::From<crate::longnam_con::Error> for Error {
+    fn from(e: crate::longnam_con::Error) -> Self {
+        Error::ConvenienceError(e)
+    }
+}
+
 use crate::fitsfile::FitsFile;
 type PoisonError<'a> = sync::PoisonError<sync::MutexGuard<'a, FitsFile>>;
 
@@ -136,6 +145,9 @@ impl ::std::fmt::Display for Error {
             Error::IntoString(ref e) => e.fmt(f),
             Error::ExistingFile(ref filename) => write!(f, "File {} already exists", filename),
             Error::UnlockError => write!(f, "Invalid concurrent access to fits file"),
+            Error::ConvenienceError(ref e) => {
+                write!(f, "FITS error: {}", e)
+            }
         }
     }
 }
