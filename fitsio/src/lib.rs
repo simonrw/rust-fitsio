@@ -1003,6 +1003,7 @@ use fitsio_sys_bindgen as sys;
 mod macros;
 mod fitsfile;
 mod longnam;
+mod longnam_con;
 #[cfg(feature = "array")]
 mod ndarray_compat;
 mod stringutils;

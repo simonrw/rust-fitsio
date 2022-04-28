@@ -11,10 +11,10 @@
 use crate::errors::{check_status, Error, Result};
 use crate::hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
 use crate::images::{ImageDescription, ImageType};
-use crate::longnam::*;
 use crate::stringutils::{self, status_to_string};
 use crate::sys::fitsfile;
 use crate::tables::{ColumnDataDescription, ConcreteColumnDescription};
+use crate::{longnam::*, longnam_con};
 use std::ffi;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -761,10 +761,7 @@ impl Drop for FitsFile {
     [`FitsFile`]: struct.FitsFile.html
     */
     fn drop(&mut self) {
-        let mut status = 0;
-        unsafe {
-            fits_close_file(self.fptr.as_mut() as *mut _, &mut status);
-        }
+        let _ = longnam_con::close_file(self.fptr);
     }
 }
 
