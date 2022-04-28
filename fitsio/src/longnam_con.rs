@@ -2,6 +2,7 @@ use std::ptr;
 
 use libc::c_int;
 
+use crate::images::ImageType;
 use crate::longnam;
 use crate::stringutils::error_to_string;
 use crate::sys::fitsfile;
@@ -52,5 +53,33 @@ pub(crate) fn copy_hdu(mut src: FitsFile, mut dst: FitsFile) -> Result<()> {
     {
         return Err(status.into());
     }
+    Ok(())
+}
+
+pub(crate) fn create_image(
+    mut src: FitsFile,
+    image_type: ImageType,
+    shape: &[usize],
+) -> Result<()> {
+    let mut status = 0;
+
+    // fitsio dimensions are in reverse order to c dimensions, so copy the dimensions to reverse
+    // them.
+    let mut dimensions: Vec<_> = shape.to_vec();
+    dimensions.reverse();
+
+    if unsafe {
+        longnam::fits_create_img(
+            src.as_mut() as *mut _,
+            image_type.into(),
+            shape.len() as i32,
+            dimensions.as_ptr() as *mut _,
+            &mut status,
+        )
+    } != 0
+    {
+        return Err(status.into());
+    }
+
     Ok(())
 }

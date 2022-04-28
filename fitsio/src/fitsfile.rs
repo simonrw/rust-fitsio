@@ -11,7 +11,7 @@
 use crate::errors::{check_status, Error, Result};
 use crate::hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
 use crate::images::{ImageDescription, ImageType};
-use crate::stringutils::{self, status_to_string};
+use crate::stringutils;
 use crate::sys::fitsfile;
 use crate::tables::{ColumnDataDescription, ConcreteColumnDescription};
 use crate::{longnam::*, longnam_con};
@@ -530,45 +530,17 @@ impl FitsFile {
     {
         fits_check_readwrite!(self);
 
-        let naxis = image_description.dimensions.len();
-        let mut status = 0;
-
-        if status != 0 {
-            return Err(FitsError {
-                status,
-                // unwrap guaranteed to succesed as status > 0
-                message: status_to_string(status)?.unwrap(),
-            }
-            .into());
-        }
-
-        let mut dimensions: Vec<_> = image_description.dimensions.to_vec();
-        dimensions.reverse();
-
-        unsafe {
-            fits_create_img(
-                self.fptr.as_mut() as *mut _,
-                image_description.data_type.into(),
-                naxis as i32,
-                dimensions.as_ptr() as *mut libc::c_long,
-                &mut status,
-            );
-        }
-
-        if status != 0 {
-            return Err(FitsError {
-                status,
-                // unwrap guaranteed to succesed as status > 0
-                message: status_to_string(status)?.unwrap(),
-            }
-            .into());
-        }
+        longnam_con::create_image(
+            self.fptr,
+            image_description.data_type,
+            image_description.dimensions,
+        )?;
 
         // Current HDU should be at the new HDU
         let current_hdu = self.current_hdu()?;
         current_hdu.write_key(self, "EXTNAME", extname.into())?;
 
-        check_status(status).and_then(|_| self.current_hdu())
+        Ok(current_hdu)
     }
 
     /**
