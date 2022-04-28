@@ -1078,7 +1078,7 @@ mod test {
             {
                 // Test with existing file
                 let mut f = File::create(filename).unwrap();
-                f.write(b"Hello world").unwrap();
+                f.write_all(b"Hello world").unwrap();
             }
 
             match FitsFile::create(filename).open() {
@@ -1091,7 +1091,7 @@ mod test {
             {
                 // Test with existing file
                 let mut f = File::create(filename).unwrap();
-                f.write(b"Hello world").unwrap();
+                f.write_all(b"Hello world").unwrap();
             }
 
             FitsFile::create(filename).overwrite().open().unwrap();
@@ -1120,7 +1120,7 @@ mod test {
                 .with_type(ColumnDataType::Int)
                 .create()
                 .unwrap();
-            match f.create_table("FOO".to_string(), &vec![bar_column_description]) {
+            match f.create_table("FOO".to_string(), &[bar_column_description]) {
                 Err(Error::Fits(e)) => {
                     assert_eq!(e.status, 602);
                 }
@@ -1203,7 +1203,7 @@ mod test {
                 assert_eq!(
                     column_descriptions
                         .iter()
-                        .map(|ref desc| desc.data_type.typ.clone())
+                        .map(|desc| desc.data_type.typ)
                         .collect::<Vec<ColumnDataType>>(),
                     vec![
                         ColumnDataType::Int,
@@ -1258,7 +1258,7 @@ mod test {
                                 .collect::<Vec<String>>();
                             let column_types = column_descriptions
                                 .iter()
-                                .map(|desc| desc.data_type.typ.clone())
+                                .map(|desc| desc.data_type.typ)
                                 .collect::<Vec<_>>();
                             assert_eq!(column_names, vec!["bar".to_string()]);
                             assert_eq!(column_types, vec![ColumnDataType::Int]);
@@ -1330,7 +1330,7 @@ mod test {
             let zcoord = 3..7;
 
             let read_data: Vec<i64> = hdu
-                .read_region(&mut f, &vec![&xcoord, &ycoord, &zcoord])
+                .read_region(&mut f, &[&xcoord, &ycoord, &zcoord])
                 .unwrap();
 
             assert_eq!(read_data.len(), (6 - 2) * (17 - 11) * (7 - 3));
@@ -1452,7 +1452,7 @@ mod test {
     fn test_read_image_region_from_table() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu("TESTEXT").unwrap();
-        match hdu.read_region::<Vec<i32>>(&mut f, &vec![&(0..10), &(0..10)]) {
+        match hdu.read_region::<Vec<i32>>(&mut f, &[&(0..10), &(0..10)]) {
             Err(Error::Message(msg)) => {
                 assert!(msg.contains("cannot read image data from a table hdu"))
             }
@@ -1560,7 +1560,7 @@ mod test {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::edit(filename).unwrap();
             let hdu = f.hdu(0).unwrap();
-            let newhdu = hdu.resize(&mut f, &vec![1024, 1024]).unwrap();
+            let newhdu = hdu.resize(&mut f, &[1024, 1024]).unwrap();
 
             match newhdu.info {
                 HduInfo::ImageInfo { shape, .. } => {
