@@ -1,5 +1,4 @@
-use crate::errors::Result;
-use crate::sys::ffgerr;
+use crate::{errors::Result, longnam::fits_get_error};
 use libc::{c_char, c_int, size_t};
 use std::ffi::{CStr, CString};
 
@@ -54,18 +53,23 @@ impl Drop for StringList {
 }
 
 /// Internal function to get the fits error description from a status code
-pub fn status_to_string(status: c_int) -> Result<Option<String>> {
+pub(crate) fn status_to_string(status: c_int) -> Result<Option<String>> {
     match status {
         0 => Ok(None),
         status => {
-            let mut buffer: Vec<c_char> = vec![0; 31];
-            unsafe {
-                ffgerr(status, buffer.as_mut_ptr());
-            }
-            let result_str = buf_to_string(&buffer)?;
+            let result_str = error_to_string(status)?;
             Ok(Some(result_str))
         }
     }
+}
+
+pub(crate) fn error_to_string(status: c_int) -> Result<String> {
+    let mut buffer: Vec<c_char> = vec![0; 31];
+    unsafe {
+        fits_get_error(status, buffer.as_mut_ptr());
+    }
+    let result_str = buf_to_string(&buffer)?;
+    Ok(result_str)
 }
 
 #[cfg(test)]

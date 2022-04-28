@@ -6,10 +6,10 @@
 #[allow(unused_imports)]
 pub(crate) use crate::sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
-    ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvs, ffgcvui, ffgcvuj, ffgcvuk, ffghdn, ffghdt, ffgidm,
-    ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv,
-    fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye, ffpkys,
-    ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
+    ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvs, ffgcvui, ffgcvuj, ffgcvuk, ffgerr, ffghdn, ffghdt,
+    ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv,
+    ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye,
+    ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
 };
 #[cfg(feature = "default")]
 #[allow(unused_imports)]
@@ -19,6 +19,10 @@ use libc::{c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c
 use std::os::raw::{
     c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ushort, c_void,
 };
+
+pub(crate) unsafe fn fits_get_error(status: c_int, buf: *mut c_char) {
+    ffgerr(status, buf);
+}
 
 pub(crate) unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut c_int) -> c_int {
     ffclos(fptr, status)
