@@ -448,49 +448,14 @@ impl FitsFile {
         table_description: &[ConcreteColumnDescription],
     ) -> Result<FitsHdu>
     where
-        T: Into<String>,
+        T: AsRef<str>,
     {
         fits_check_readwrite!(self);
 
-        let tfields = {
-            let stringlist: Vec<_> = table_description
-                .iter()
-                .map(|desc| desc.name.clone())
-                .collect();
-            stringutils::StringList::from_slice(stringlist.as_slice())?
-        };
+        longnam_con::create_table(self.fptr, extname, table_description)?;
 
-        let ttype = {
-            let stringlist: Vec<_> = table_description
-                .iter()
-                .map(|desc| String::from(desc.clone().data_type))
-                .collect();
-            stringutils::StringList::from_slice(stringlist.as_slice())?
-        };
-
-        let c_extname = ffi::CString::new(extname.into())?;
-
-        let hdu_info = HduInfo::TableInfo {
-            column_descriptions: table_description.to_vec(),
-            num_rows: 0,
-        };
-
-        let mut status: libc::c_int = 0;
-        unsafe {
-            fits_create_tbl(
-                self.fptr.as_mut() as *mut _,
-                hdu_info.into(),
-                0,
-                tfields.len as libc::c_int,
-                tfields.as_ptr(),
-                ttype.as_ptr(),
-                ptr::null_mut(),
-                c_extname.as_ptr(),
-                &mut status,
-            );
-        }
-
-        check_status(status).and_then(|_| self.current_hdu())
+        let current_hdu = self.current_hdu()?;
+        Ok(current_hdu)
     }
 
     /**

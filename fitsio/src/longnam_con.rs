@@ -1,4 +1,4 @@
-use std::ptr;
+use std::{ffi, ptr};
 
 use libc::c_int;
 
@@ -6,6 +6,7 @@ use crate::images::ImageType;
 use crate::longnam;
 use crate::stringutils::error_to_string;
 use crate::sys::fitsfile;
+use crate::tables::ConcreteColumnDescription;
 
 /** Convenience wrappers around longnam functions
 */
@@ -74,6 +75,47 @@ pub(crate) fn create_image(
             image_type.into(),
             shape.len() as i32,
             dimensions.as_ptr() as *mut _,
+            &mut status,
+        )
+    } != 0
+    {
+        return Err(status.into());
+    }
+
+    Ok(())
+}
+
+pub(crate) fn create_table(
+    mut src: FitsFile,
+    name: impl AsRef<str>,
+    description: &[ConcreteColumnDescription],
+) -> Result<()> {
+    let tfields = {
+        let stringlist: Vec<_> = description.iter().map(|desc| desc.name.clone()).collect();
+        crate::stringutils::StringList::from_slice(stringlist.as_slice()).unwrap()
+    };
+
+    let ttype = {
+        let stringlist: Vec<_> = description
+            .iter()
+            .map(|desc| String::from(desc.clone().data_type))
+            .collect();
+        crate::stringutils::StringList::from_slice(stringlist.as_slice()).unwrap()
+    };
+
+    let c_extname = ffi::CString::new(name.as_ref()).expect("invalid hdu name; non utf-8");
+
+    let mut status: libc::c_int = 0;
+    if unsafe {
+        longnam::fits_create_tbl(
+            src.as_mut() as *mut _,
+            2,
+            0,
+            tfields.len as libc::c_int,
+            tfields.as_ptr(),
+            ttype.as_ptr(),
+            ptr::null_mut(),
+            c_extname.as_ptr(),
             &mut status,
         )
     } != 0
