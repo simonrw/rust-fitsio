@@ -100,7 +100,6 @@ macro_rules! reads_col_impl {
                 }
             }
 
-            #[doc(hidden)]
             fn read_cell_value<T>(fits_file: &mut FitsFile, name: T, idx: usize) -> Result<Self>
             where
                 T: Into<String>,
@@ -224,7 +223,6 @@ impl ReadsCol for String {
         }
     }
 
-    #[doc(hidden)]
     fn read_cell_value<T>(fits_file: &mut FitsFile, name: T, idx: usize) -> Result<Self>
     where
         T: Into<String>,
@@ -577,7 +575,7 @@ impl FromStr for ColumnDataDescription {
         let mut repeat_str = Vec::new();
         let mut last_position = 0;
         for c in &chars {
-            if c.is_digit(10) {
+            if c.is_ascii_digit() {
                 repeat_str.push(c);
                 last_position += 1;
             } else {
@@ -597,7 +595,7 @@ impl FromStr for ColumnDataDescription {
 
         let mut width_str = Vec::new();
         for c in chars.iter().skip(last_position) {
-            if c.is_digit(10) {
+            if c.is_ascii_digit() {
                 width_str.push(c);
             } else {
                 break;
