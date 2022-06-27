@@ -6,6 +6,25 @@ FFI wrapper around cfitsio in Rust
 [![Build Status](https://travis-ci.org/mindriot101/rust-fitsio.svg?branch=master)](https://travis-ci.org/mindriot101/rust-fitsio)
 [![Coverage Status](https://coveralls.io/repos/github/mindriot101/rust-fitsio/badge.svg?branch=master)](https://coveralls.io/github/mindriot101/rust-fitsio?branch=master)
 
+## Platform support
+
+| Platform | Support level |
+| --- | --- |
+| Linux arm | Tier 1 |
+| Linux x86_64 | Tier 1 |
+| macos x86_64 | Tier 1 |
+| Linux arm64 | Tier 2 |
+| Linux i386 | Tier 2 |
+| macos arm64 | Tier 2 |
+| Windows msys2 | Tier 3 |
+| Windows msvc | - |
+
+Where the tiers refer to:
+
+* Tier 1: guaranteed to work, tested in CI
+* Tier 2: should work but not tested by CI
+* Tier 3: may work, and not tested by CI
+
 ## Installation
 
 `fitsio` supports versions of `cfitsio >= 3.08`.
