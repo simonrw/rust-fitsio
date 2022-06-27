@@ -290,30 +290,34 @@ macro_rules! write_image_impl {
 read_image_impl_vec!(i8, i8::default(), DataType::TSBYTE);
 read_image_impl_vec!(i16, i16::default(), DataType::TSHORT);
 read_image_impl_vec!(i32, i32::default(), DataType::TINT);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 read_image_impl_vec!(i64, i64::default(), DataType::TLONG);
-#[cfg(target_pointer_width = "32")]
+#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
 read_image_impl_vec!(i64, i64::default(), DataType::TLONGLONG);
 read_image_impl_vec!(u8, u8::default(), DataType::TBYTE);
 read_image_impl_vec!(u16, u16::default(), DataType::TUSHORT);
 read_image_impl_vec!(u32, u32::default(), DataType::TUINT);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 read_image_impl_vec!(u64, u64::default(), DataType::TULONG);
+#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
+read_image_impl_vec!(u64, u64::default(), DataType::TLONGLONG);
 read_image_impl_vec!(f32, f32::default(), DataType::TFLOAT);
 read_image_impl_vec!(f64, f64::default(), DataType::TDOUBLE);
 
 write_image_impl!(i8, i8::default(), DataType::TSBYTE);
 write_image_impl!(i16, i16::default(), DataType::TSHORT);
 write_image_impl!(i32, i32::default(), DataType::TINT);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 write_image_impl!(i64, i64::default(), DataType::TLONG);
-#[cfg(target_pointer_width = "32")]
+#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
 write_image_impl!(i64, i64::default(), DataType::TLONGLONG);
 write_image_impl!(u8, u8::default(), DataType::TBYTE);
 write_image_impl!(u16, u16::default(), DataType::TUSHORT);
 write_image_impl!(u32, u32::default(), DataType::TUINT);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 write_image_impl!(u64, u64::default(), DataType::TULONG);
+#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
+write_image_impl!(u64, u64::default(), DataType::TLONGLONG);
 write_image_impl!(f32, f32::default(), DataType::TFLOAT);
 write_image_impl!(f64, f64::default(), DataType::TDOUBLE);
 
@@ -611,12 +615,14 @@ mod tests {
 
                     // write the primary u16 image
                     let naxis = dimensions.len();
+                    let long_dimensions: Vec<c_long> =
+                        dimensions.iter().map(|d| *d as c_long).collect();
                     unsafe {
                         crate::longnam::fits_create_img(
                             fptr as *mut _,
                             $image_type,
                             naxis as _,
-                            dimensions.as_ptr() as *mut _,
+                            long_dimensions.as_ptr() as *mut _,
                             &mut status,
                         );
                     }

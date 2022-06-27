@@ -542,7 +542,11 @@ impl FitsFile {
             .into());
         }
 
-        let mut dimensions: Vec<_> = image_description.dimensions.to_vec();
+        let mut dimensions: Vec<libc::c_long> = image_description
+            .dimensions
+            .iter()
+            .map(|d| *d as c_long)
+            .collect();
         dimensions.reverse();
 
         unsafe {

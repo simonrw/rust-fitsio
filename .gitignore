@@ -11,3 +11,4 @@ cfitsio.xcodeproj
 /fitsio-sys/ext/cfitsio/config.log
 /fitsio-sys/ext/cfitsio/config.status
 /fitsio-sys/ext/cfitsio/zlib/*.o
+*.swp

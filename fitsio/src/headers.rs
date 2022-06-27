@@ -3,11 +3,7 @@ use crate::errors::{check_status, Result};
 use crate::fitsfile::FitsFile;
 use crate::longnam::*;
 use crate::types::DataType;
-#[cfg(not(feature = "bindgen"))]
-use libc::*;
 use std::ffi;
-#[cfg(feature = "bindgen")]
-use std::os::raw::*;
 use std::ptr;
 
 const MAX_VALUE_LENGTH: usize = 71;
@@ -55,9 +51,9 @@ macro_rules! reads_key_impl {
 }
 
 reads_key_impl!(i32, fits_read_key_log);
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 reads_key_impl!(i64, fits_read_key_lng);
-#[cfg(target_pointer_width = "32")]
+#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
 reads_key_impl!(i64, fits_read_key_lnglng);
 reads_key_impl!(f32, fits_read_key_flt);
 reads_key_impl!(f64, fits_read_key_dbl);
