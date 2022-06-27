@@ -7,12 +7,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 ### Added
 ### Changed
+### Removed
+
+## [0.20.0]
+### Added
+
+* Initial support for windows msys2 [#150](https://github.com/mindriot101/rust-fitsio/pull/150)
+
+### Changed
 
 * Specify version dependencies more specifically which should make installations more reliable, see [this post](https://users.rust-lang.org/t/psa-please-specify-precise-dependency-versions-in-cargo-toml/71277/9) [#151](https://github.com/mindriot101/rust-fitsio/pull/151)
 * Pin `ndarray` against versions 0.15.*. This prevents downstream users from
   having interoperability problems when `ndarray` updates to 0.16.0.
-
-### Removed
 
 ## [0.19.0]
 ### Added
@@ -230,6 +236,7 @@ Nothing
 [0.17.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.16.0...v0.17.0
 [0.18.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.17.0...v0.18.0
 [0.19.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.18.0...v0.19.0
+[0.20.0]: https://github.com/mindriot101/rust-fitsio/compare/v0.19.0...v0.20.0
 
 ---
 
