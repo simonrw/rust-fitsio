@@ -44,11 +44,11 @@ jobs:
           rustc -V
           rustup default stable-gnu
 
-      - name: Test the code
-        run: C:/Users/runneradmin/.cargo/bin/cargo.exe --verbose test -p fitsio --target x86_64-pc-windows-gnu
-        env:
-          PKG_CONFIG_SYSROOT_DIR: /mingw64
-          PKG_CONFIG_PATH: /mingw64/lib/pkgconfig
-          PKG_CONFIG: /mingw64/bin/pkg-config
-          PATH: /mingw64/bin:$PATH
-        shell: msys2 {0}
+#       - name: Test the code
+#         run: C:/Users/runneradmin/.cargo/bin/cargo.exe --verbose test -p fitsio --target x86_64-pc-windows-gnu
+#         env:
+#           PKG_CONFIG_SYSROOT_DIR: /mingw64
+#           PKG_CONFIG_PATH: /mingw64/lib/pkgconfig
+#           PKG_CONFIG: /mingw64/bin/pkg-config
+#           PATH: /mingw64/bin:$PATH
+#         shell: msys2 {0}
