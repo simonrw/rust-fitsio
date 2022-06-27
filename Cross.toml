@@ -1,2 +1,6 @@
 [target.armv7-unknown-linux-gnueabihf]
-image = "srwalker101/cross-arm"
+pre-build = [
+    "dpkg --add-architecture armhf",
+    "apt-get update",
+    "apt-get install --assume-yes libcfitsio-dev:armhf",
+]
