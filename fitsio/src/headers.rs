@@ -263,4 +263,23 @@ mod tests {
 
         assert!(res);
     }
+
+    #[test]
+    #[ignore]
+    fn different_types_have_same_value() {
+        // https://github.com/mindriot101/rust-fitsio/issues/167
+
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.primary_hdu().unwrap();
+
+        let float_val = dbg!(hdu.read_key::<f32>(&mut f, "INTTEST").unwrap());
+        let double_val = dbg!(hdu.read_key::<f64>(&mut f, "INTTEST").unwrap());
+        let int_val = dbg!(hdu.read_key::<i32>(&mut f, "INTTEST").unwrap());
+        let long_val = dbg!(hdu.read_key::<i64>(&mut f, "INTTEST").unwrap());
+
+        assert_eq!(float_val, 42.0_f32);
+        assert_eq!(double_val, 42.0_f64);
+        assert_eq!(int_val, 42i32);
+        assert_eq!(long_val, 42i64);
+    }
 }
