@@ -3,7 +3,7 @@ name: Test the package
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
