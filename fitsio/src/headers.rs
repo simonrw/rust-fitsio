@@ -58,6 +58,16 @@ reads_key_impl!(i64, fits_read_key_lnglng);
 reads_key_impl!(f32, fits_read_key_flt);
 reads_key_impl!(f64, fits_read_key_dbl);
 
+impl ReadsKey for bool {
+    fn read_key(f: &mut FitsFile, name: &str) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let int_value = i32::read_key(f, name)?;
+        Ok(int_value > 0)
+    }
+}
+
 impl ReadsKey for String {
     fn read_key(f: &mut FitsFile, name: &str) -> Result<Self> {
         let c_name = ffi::CString::new(name)?;
@@ -242,5 +252,15 @@ mod tests {
             hdu.write_key(&mut f, "UTHREE", 1u32).unwrap();
             hdu.write_key(&mut f, "UFOUR", 1u64).unwrap();
         });
+    }
+
+    #[test]
+    fn boolean_header_values() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.primary_hdu().unwrap();
+
+        let res = dbg!(hdu.read_key::<bool>(&mut f, "SIMPLE").unwrap());
+
+        assert!(res);
     }
 }
