@@ -52,11 +52,6 @@ class TestRunner:
             "test", "--manifest-path", "fitsio/Cargo.toml", "--features", "array"
         )
 
-    def _run_test_book_examples(self):
-        self._run_cargo(
-            "build", "--manifest-path", "homepage/fitsioexample/Cargo.toml", "--bins"
-        )
-
     def _run_test_fitsio_src(self):
         self._run_cargo(
             "test",
@@ -108,7 +103,6 @@ if __name__ == "__main__":
             "full-example",
             "array",
             "fitsio-src",
-            "book-examples",
             "clippy",
             "bindgen",
         ],
