@@ -420,7 +420,7 @@ pub struct ColumnDescription {
 }
 
 /// Concrete representation of the description of a column
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConcreteColumnDescription {
     /// Name of the column
     pub name: String,

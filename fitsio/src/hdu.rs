@@ -14,7 +14,7 @@ use std::ffi;
 use std::ops::Range;
 
 /// Struct representing a FITS HDU
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FitsHdu {
     /// Information about the current HDU
     pub info: HduInfo,
@@ -1031,7 +1031,7 @@ Otherwise the variant is `HduInfo::TableInfo`.
 [fetch-hdu-info]: ../fitsfile/struct.FitsFile.html#method.fetch_hdu_info
 */
 #[allow(missing_docs)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum HduInfo {
     ImageInfo {
         shape: Vec<usize>,
