@@ -75,7 +75,7 @@ impl ReadsKey for bool {
     where
         Self: Sized,
     {
-        let int_value = i32::read_key(f, name)?;
+        let int_value = i64::read_key(f, name)?;
         Ok(int_value > 0)
     }
 }
