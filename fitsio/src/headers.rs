@@ -13,6 +13,7 @@ Trait applied to types which can be read from a FITS header
 
 This is currently:
 
+* bool
 * i32
 * i64
 * f32
