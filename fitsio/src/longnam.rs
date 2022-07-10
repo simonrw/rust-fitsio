@@ -9,7 +9,7 @@ pub(crate) use crate::sys::{
     ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvs, ffgcvui, ffgcvuj, ffgcvujj, ffgcvuk, ffghdn, ffghdt,
     ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv,
     ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye,
-    ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
+    ffpkyl, ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
 };
 #[cfg(feature = "default")]
 pub use libc::{
@@ -546,6 +546,16 @@ pub(crate) unsafe fn fits_write_key_str(
     status: *mut c_int,
 ) -> c_int {
     ffpkys(fptr, keyname, value, comm, status)
+}
+
+pub(crate) unsafe fn fits_write_key_log(
+    fptr: *mut fitsfile,
+    keyname: *const c_char,
+    value: c_int,
+    comm: *const c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffpkyl(fptr, keyname, value, comm, status)
 }
 
 pub(crate) unsafe fn fits_write_img(

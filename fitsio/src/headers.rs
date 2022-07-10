@@ -104,6 +104,15 @@ impl ReadsKey for String {
 }
 
 /// Writing a fits keyword
+/// This is currently limited to types:
+///
+/// * bool
+/// * i32
+/// * i64
+/// * f32
+/// * f64
+/// * String
+/// * &'_ str
 pub trait WritesKey {
     #[doc(hidden)]
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()>;
@@ -168,6 +177,23 @@ macro_rules! writes_key_impl_flt {
 
 writes_key_impl_flt!(f32, fits_write_key_flt);
 writes_key_impl_flt!(f64, fits_write_key_dbl);
+
+impl WritesKey for bool {
+    fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+        let c_name = ffi::CString::new(name)?;
+        let mut status = 0;
+        unsafe {
+            fits_write_key_log(
+                f.fptr.as_mut() as *mut _,
+                c_name.as_ptr(),
+                value as i32,
+                ptr::null_mut(),
+                &mut status,
+            );
+        }
+        check_status(status)
+    }
+}
 
 impl WritesKey for String {
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
@@ -268,12 +294,22 @@ mod tests {
 
     #[test]
     fn boolean_header_values() {
-        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
-        let hdu = f.primary_hdu().unwrap();
+        duplicate_test_file(|filename| {
+            // add some boolean headers
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.primary_hdu().unwrap();
+                hdu.write_key(&mut f, "TVAL", true).unwrap();
+                hdu.write_key(&mut f, "FVAL", false).unwrap();
+            }
 
-        let res = dbg!(hdu.read_key::<bool>(&mut f, "SIMPLE").unwrap());
+            // now assert the values read back the same
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.primary_hdu().unwrap();
 
-        assert!(res);
+            assert_eq!(hdu.read_key::<bool>(&mut f, "TVAL").unwrap(), true);
+            assert_eq!(hdu.read_key::<bool>(&mut f, "FVAL").unwrap(), false);
+        });
     }
 
     #[test]
