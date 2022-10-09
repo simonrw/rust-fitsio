@@ -4,7 +4,10 @@ fn bind_cfitsio() {
     use std::io::Write;
 
     let package_name = "cfitsio";
-    match pkg_config::probe_library(package_name) {
+    let mut config = pkg_config::Config::new();
+    config.print_system_libs(true);
+    config.print_system_cflags(true);
+    match config.probe(package_name) {
         Ok(_) => {}
         Err(Error::Failure { output, .. }) => {
             // Handle the case where the user has not installed cfitsio, and thusly it is not on
