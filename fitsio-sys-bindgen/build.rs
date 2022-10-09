@@ -6,7 +6,10 @@ use std::path::PathBuf;
 
 fn main() {
     let package_name = "cfitsio";
-    match pkg_config::probe_library(package_name) {
+    let mut config = pkg_config::Config::new();
+    config.print_system_libs(true);
+    config.print_system_cflags(true);
+    match config.probe(package_name) {
         Ok(lib) => {
             let include_args: Vec<_> = lib
                 .include_paths
