@@ -3,7 +3,7 @@ fn bind_cfitsio() {
     use pkg_config::Error;
     use std::io::Write;
 
-    let package_name = "cfitsio >= 3.47";
+    let package_name = "cfitsio >= 3.37";
     let mut config = pkg_config::Config::new();
     config.print_system_libs(true);
     config.print_system_cflags(true);
