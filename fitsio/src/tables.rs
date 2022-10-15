@@ -179,13 +179,12 @@ impl ReadsCol for String {
                     .ok_or_else(|| Error::Message(format!("Cannot find column {:?}", test_name)))?;
 
                 /* Set up the storage arrays for the column string values */
-                let mut raw_char_data: Vec<*mut libc::c_char> =
-                    Vec::with_capacity(num_output_rows as usize);
+                let mut raw_char_data: Vec<*mut libc::c_char> = Vec::with_capacity(num_output_rows);
 
                 let mut status = 0;
                 let width = column_display_width(fits_file, column_number)?;
 
-                let mut vecs: Vec<Vec<libc::c_char>> = Vec::with_capacity(num_output_rows as usize);
+                let mut vecs: Vec<Vec<libc::c_char>> = Vec::with_capacity(num_output_rows);
                 for _ in 0..num_output_rows {
                     let mut data: Vec<libc::c_char> = vec![0; width as _];
                     let data_p = data.as_mut_ptr();
