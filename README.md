@@ -31,7 +31,7 @@ The minimal version of rust we support is 1.57.0.
 
 ## Installation
 
-`fitsio` supports versions of `cfitsio >= 3.08`.
+`fitsio` supports versions of `cfitsio >= 3.37`.
 
 `cfitsio` must be compiled with `reentrant` support (making it
 thread-safe) if it is to be compiled with the `--enable-reentrant` flag

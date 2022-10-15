@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 * Some more types are deriving `Eq` thanks to a clippy lint
 * Fixed broken tests on m1 macos [#174](https://github.com/mindriot101/rust-fitsio/pull/174)
+* Minimum cfitsio version of 3.37 specified for compilation [#184](https://github.com/mindriot101/rust-fitsio/pull/184)
 
 ### Removed
 

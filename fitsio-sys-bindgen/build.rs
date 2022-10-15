@@ -5,7 +5,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 fn main() {
-    let package_name = "cfitsio";
+    let package_name = "cfitsio >= 3.37";
     let mut config = pkg_config::Config::new();
     config.print_system_libs(true);
     config.print_system_cflags(true);
