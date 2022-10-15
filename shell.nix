@@ -1,6 +1,7 @@
 { pkgs ? import <nixpkgs> { } }:
+with pkgs;
 pkgs.mkShell rec {
-  buildInputs = with pkgs; [
+  buildInputs = [
     rustup
     libiconv
     cfitsio
@@ -8,4 +9,5 @@ pkgs.mkShell rec {
     # for bin/test
     python3
   ];
+  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
 }

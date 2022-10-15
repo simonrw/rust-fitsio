@@ -13,24 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { test: workspace, rust: stable, allow_failures: false }
-          - { test: full-example, rust: stable, allow_failures: false }
-          - { test: array, rust: stable, allow_failures: false }
-          - { test: fitsio-src, rust: stable, allow_failures: false }
-          - { test: clippy, rust: stable, allow_failures: false }
-          - { test: bindgen, rust: stable, allow_failures: false }
-          - { test: workspace, rust: beta, allow_failures: false }
-          - { test: full-example, rust: beta, allow_failures: false }
-          - { test: array, rust: beta, allow_failures: false }
-          - { test: fitsio-src, rust: beta, allow_failures: false }
-          - { test: clippy, rust: beta, allow_failures: false }
-          - { test: bindgen, rust: beta, allow_failures: false }
-          - { test: workspace, rust: nightly, allow_failures: true }
-          - { test: full-example, rust: nightly, allow_failures: true }
-          - { test: array, rust: nightly, allow_failures: true }
-          - { test: fitsio-src, rust: nightly, allow_failures: true }
-          - { test: clippy, rust: nightly, allow_failures: true }
-          - { test: bindgen, rust: nightly, allow_failures: true }
+          - { rust: beta, allow_failures: false }
+          - { rust: nightly, allow_failures: true }
+          - { rust: stable, allow_failures: false }
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
@@ -53,7 +38,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
+        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
         continue-on-error: ${{matrix.allow_failures}}
 
   macos-test:
@@ -62,24 +47,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { test: workspace, rust: stable, allow_failures: false }
-          - { test: full-example, rust: stable, allow_failures: false }
-          - { test: array, rust: stable, allow_failures: false }
-          - { test: fitsio-src, rust: stable, allow_failures: false }
-          - { test: clippy, rust: stable, allow_failures: false }
-          - { test: bindgen, rust: stable, allow_failures: false }
-          - { test: workspace, rust: beta, allow_failures: false }
-          - { test: full-example, rust: beta, allow_failures: false }
-          - { test: array, rust: beta, allow_failures: false }
-          - { test: fitsio-src, rust: beta, allow_failures: false }
-          - { test: clippy, rust: beta, allow_failures: false }
-          - { test: bindgen, rust: beta, allow_failures: false }
-          - { test: workspace, rust: nightly, allow_failures: true }
-          - { test: full-example, rust: nightly, allow_failures: true }
-          - { test: array, rust: nightly, allow_failures: true }
-          - { test: fitsio-src, rust: nightly, allow_failures: true }
-          - { test: clippy, rust: nightly, allow_failures: true }
-          - { test: bindgen, rust: nightly, allow_failures: true }
+          - { rust: beta, allow_failures: false }
+          - { rust: nightly, allow_failures: true }
+          - { rust: stable, allow_failures: false }
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
@@ -97,8 +67,49 @@ jobs:
           components: rustfmt, clippy
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
+        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
         continue-on-error: ${{matrix.allow_failures}}
+
+  minimal:
+    runs-on: ubuntu-latest
+    name: minimal versions check
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Install ubuntu dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install --no-install-recommends -y \
+            llvm-dev \
+            libcfitsio-dev \
+            pkg-config \
+            libssl-dev \
+            python3
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          components: rustfmt, clippy
+
+      - name: Install nightly for -Zminimal-versions
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+
+      - name: cargo update -Zminimal-versions
+        uses: actions-rs/cargo@v1
+        with:
+          command: update
+          toolchain: nightly
+          args: -Zminimal-versions
+
+      - name: Test the code
+        run: python3 ./bin/test --rust-version stable --test all
+        continue-on-error: false
 
   linux-armv7:
     runs-on: ubuntu-latest
