@@ -25,6 +25,10 @@ Where the tiers refer to:
 * Tier 2: should work but not tested by CI
 * Tier 3: may work, and not tested by CI
 
+## MSRV
+
+The minimal version of rust we support is 1.57.0.
+
 ## Installation
 
 `fitsio` supports versions of `cfitsio >= 3.08`.
