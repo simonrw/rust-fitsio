@@ -1,8 +1,11 @@
+name: check
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-name: check
+
 jobs:
   # completely stolen from https://github.com/jonhoo/inferno/blob/8c0a28cab440fd00cd42cfbca403dde895cc67e3/.github/workflows/check.yml#L86-L107
   msrv:
@@ -26,7 +29,7 @@ jobs:
             libssl-dev \
             python3
 
-      - name: "Install toolchain: ${{ matrix.toolchain }}"
+      - name: "Install toolchain: ${{ matrix.msrv }}"
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -78,4 +81,3 @@ jobs:
 
       - name: Test the code
         run: python3 ./bin/test --rust-version stable --test all
-        continue-on-error: false
