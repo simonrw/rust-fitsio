@@ -1,0 +1,83 @@
+name: check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  # completely stolen from https://github.com/jonhoo/inferno/blob/8c0a28cab440fd00cd42cfbca403dde895cc67e3/.github/workflows/check.yml#L86-L107
+  msrv:
+    runs-on: ubuntu-latest
+    # we use a matrix here just because env can't be used in job names
+    # https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
+    strategy:
+      matrix:
+        msrv: [1.57.0]
+    name: ubuntu / ${{ matrix.msrv }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Install ubuntu dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install --no-install-recommends -y \
+            llvm-dev \
+            libcfitsio-dev \
+            pkg-config \
+            libssl-dev \
+            python3
+
+      - name: "Install toolchain: ${{ matrix.msrv }}"
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{matrix.msrv}}
+          defualt: true
+          components: rustfmt, clippy
+
+      - name: cargo +${{ matrix.msrv }} check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+  minimal:
+    runs-on: ubuntu-latest
+    name: minimal versions check
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Install ubuntu dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install --no-install-recommends -y \
+            llvm-dev \
+            libcfitsio-dev \
+            pkg-config \
+            libssl-dev \
+            python3
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          components: rustfmt, clippy
+
+      - name: Install nightly for -Zminimal-versions
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+
+      - name: cargo update -Zminimal-versions
+        uses: actions-rs/cargo@v1
+        with:
+          command: update
+          toolchain: nightly
+          args: -Zminimal-versions
+
+      - name: Test the code
+        run: python3 ./bin/test --rust-version stable --test all

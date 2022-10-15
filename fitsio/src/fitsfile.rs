@@ -382,7 +382,7 @@ impl FitsFile {
                     unsafe {
                         fits_get_bcolparms(
                             self.fptr.as_mut() as *mut _,
-                            (i + 1) as i32,
+                            i + 1,
                             name_buffer.as_mut_ptr(),
                             ptr::null_mut(),
                             type_buffer.as_mut_ptr(),

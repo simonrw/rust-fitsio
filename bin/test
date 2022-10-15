@@ -39,7 +39,13 @@ class TestRunner:
 
     def _run_test_clippy(self):
         self._run_cargo(
-            "clippy", "--", "-D", "warnings", "-A", "clippy::non-send-fields-in-send-ty"
+            "clippy",
+            "--",
+            "-D",
+            "warnings",
+            # specific allow of clippy lints
+            "-A",
+            "clippy::non-send-fields-in-send-ty",
         )
 
     def _run_test_full_example(self):
@@ -73,14 +79,16 @@ class TestRunner:
 
     def _run_test_all(self):
         for attr in dir(self):
-            if attr.startswith("_run_test_"):
-                test = attr.replace("_run_test_", "").replace("_", "-")
-                if test == "all":
-                    continue
+            if not attr.startswith("_run_test_"):
+                continue
 
-                print(f"Running test '{test}'")
-                method = getattr(self, attr)
-                method()
+            test = attr.replace("_run_test_", "").replace("_", "-")
+            if test == "all":
+                continue
+
+            print(f"Running test '{test}'")
+            method = getattr(self, attr)
+            method()
 
 
 if __name__ == "__main__":
@@ -90,7 +98,6 @@ if __name__ == "__main__":
         "--rust-version",
         required=False,
         default="stable",
-        choices=["stable", "nightly", "beta"],
     )
     parser.add_argument(
         "-t",

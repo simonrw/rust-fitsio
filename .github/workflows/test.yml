@@ -13,9 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { rust: beta, allow_failures: false }
-          - { rust: nightly, allow_failures: true }
-          - { rust: stable, allow_failures: false }
+          - rust: stable
+          - rust: beta
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
@@ -39,7 +38,6 @@ jobs:
 
       - name: Test the code
         run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
-        continue-on-error: ${{matrix.allow_failures}}
 
   macos-test:
     runs-on: macos-latest
@@ -47,9 +45,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { rust: beta, allow_failures: false }
-          - { rust: nightly, allow_failures: true }
-          - { rust: stable, allow_failures: false }
+          - rust: stable
+          - rust: beta
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
@@ -68,48 +65,6 @@ jobs:
 
       - name: Test the code
         run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
-        continue-on-error: ${{matrix.allow_failures}}
-
-  minimal:
-    runs-on: ubuntu-latest
-    name: minimal versions check
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v1
-
-      - name: Install ubuntu dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install --no-install-recommends -y \
-            llvm-dev \
-            libcfitsio-dev \
-            pkg-config \
-            libssl-dev \
-            python3
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
-          components: rustfmt, clippy
-
-      - name: Install nightly for -Zminimal-versions
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-
-      - name: cargo update -Zminimal-versions
-        uses: actions-rs/cargo@v1
-        with:
-          command: update
-          toolchain: nightly
-          args: -Zminimal-versions
-
-      - name: Test the code
-        run: python3 ./bin/test --rust-version stable --test all
-        continue-on-error: false
 
   linux-armv7:
     runs-on: ubuntu-latest

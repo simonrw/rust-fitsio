@@ -10,6 +10,7 @@ name = "fitsio"
 readme = "README.md"
 repository = "https://github.com/mindriot101/rust-fitsio"
 version = "0.20.0"
+rust-version = "1.57.0"
 
 [package.metadata.docs.rs]
 features = ["array"]
