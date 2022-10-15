@@ -5,5 +5,7 @@ pkgs.mkShell rec {
     libiconv
     cfitsio
     pkg-config
+    # for bin/test
+    python3
   ];
 }
