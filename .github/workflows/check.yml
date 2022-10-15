@@ -14,15 +14,26 @@ jobs:
         msrv: [1.57.0]
     name: ubuntu / ${{ matrix.msrv }}
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
-      - name: Install ${{ matrix.toolchain }}
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Install ubuntu dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install --no-install-recommends -y \
+            llvm-dev \
+            libcfitsio-dev \
+            pkg-config \
+            libssl-dev \
+            python3
+
+      - name: "Install toolchain: ${{ matrix.toolchain }}"
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ matrix.msrv }}
-          default: true
+          toolchain: ${{matrix.msrv}}
+          defualt: true
+          components: rustfmt, clippy
+
       - name: cargo +${{ matrix.msrv }} check
         uses: actions-rs/cargo@v1
         with:
