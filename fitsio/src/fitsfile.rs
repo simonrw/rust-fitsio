@@ -1574,4 +1574,17 @@ mod test {
             }
         });
     }
+
+    #[test]
+    fn non_ascii_filenames() {
+        use tempfile::Builder;
+
+        let tdir = Builder::new().prefix("fitsio-").tempdir().unwrap();
+        let tdir_path = tdir.path();
+        let filename = tdir_path.join("Имя_файла.fits");
+
+        std::fs::copy("../testdata/full_example.fits", &filename)
+            .expect("could not copy test file");
+        let _ = FitsFile::open(filename).unwrap();
+    }
 }
