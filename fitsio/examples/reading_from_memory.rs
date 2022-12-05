@@ -9,6 +9,7 @@ use fitsio_sys as sys;
 use fitsio_sys_bindgen as sys;
 use std::io::Read;
 
+#[cfg(all(target_pointer_width = "64", target_os = "linux"))]
 fn main() {
     // read the bytes into memory and return a pointer and length to the file
     let (bytes, mut ptr_size) = {
@@ -49,3 +50,6 @@ fn main() {
         unsafe { FitsFile::from_raw("full_example.fits", fptr, FileOpenMode::READONLY) }.unwrap();
     f.pretty_print().expect("pretty printing fits file");
 }
+
+#[cfg(not(all(target_pointer_width = "64", target_os = "linux")))]
+fn main() {}
