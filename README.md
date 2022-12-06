@@ -27,7 +27,7 @@ Where the tiers refer to:
 
 ## MSRV
 
-The minimal version of rust we support is 1.57.0.
+The minimal version of rust we support is 1.58.0.
 
 ## Installation
 
