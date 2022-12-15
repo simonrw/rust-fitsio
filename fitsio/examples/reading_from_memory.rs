@@ -9,7 +9,7 @@ use std::io::Read;
 fn main() {
     // read the bytes into memory and return a pointer and length to the file
     let (bytes, mut ptr_size) = {
-        let filename = "../testdata/full_example.fits";
+        let filename = "./testdata/full_example.fits";
         let mut f = std::fs::File::open(filename).unwrap();
         let mut bytes = Vec::new();
         let num_bytes = f.read_to_end(&mut bytes).unwrap();
