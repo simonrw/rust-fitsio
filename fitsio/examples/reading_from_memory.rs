@@ -2,11 +2,7 @@
 // can use `Fitsfile::from_raw` to load a `FitsFile` from a file that was opened via
 // `fits_open_memfile` in `cfitsio`.
 
-use fitsio::{FileOpenMode, FitsFile};
-#[cfg(feature = "default")]
-use fitsio_sys as sys;
-#[cfg(feature = "bindgen")]
-use fitsio_sys_bindgen as sys;
+use fitsio::{sys, FileOpenMode, FitsFile};
 use std::io::Read;
 
 #[cfg(all(target_pointer_width = "64", target_os = "linux"))]

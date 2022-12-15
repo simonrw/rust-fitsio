@@ -1036,9 +1036,9 @@ let _hdu = t.hdu(hdu_num).unwrap();
 
 // If we are using the `bindgen` feature then import `fitsio_sys_bindgen` with a new name
 #[cfg(feature = "default")]
-use fitsio_sys as sys;
+pub use fitsio_sys as sys;
 #[cfg(feature = "bindgen")]
-use fitsio_sys_bindgen as sys;
+pub use fitsio_sys_bindgen as sys;
 
 #[macro_use]
 mod macros;
