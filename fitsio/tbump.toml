@@ -1,5 +1,5 @@
 # Uncomment this if your project is hosted on GitHub:
-github_url = "https://github.com/mindriot101/rust-fitsio"
+github_url = "https://github.com/simonrw/rust-fitsio"
 
 [version]
 current = "0.19.0"

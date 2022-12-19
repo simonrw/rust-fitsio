@@ -27,7 +27,7 @@ Before submitting a completed PR, make sure the following items have been addres
 * **update the features tracking issue** - if relevant, update the [features tracking issue][features-tracking-issue]
 * **update the full example** - if new features have been added, or changes made, update the `full_example.rs` example
 
-[features-tracking-issue]: https://github.com/mindriot101/rust-fitsio/issues/15
+[features-tracking-issue]: https://github.com/simonrw/rust-fitsio/issues/15
 
 ---
 

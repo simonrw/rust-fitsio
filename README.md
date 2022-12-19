@@ -2,9 +2,9 @@
 
 FFI wrapper around cfitsio in Rust
 
-[![Join the chat at https://gitter.im/mindriot101/rust-fitsio](https://badges.gitter.im/mindriot101/rust-fitsio.svg)](https://gitter.im/rust-fitsio/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
-[![Build Status](https://travis-ci.org/mindriot101/rust-fitsio.svg?branch=master)](https://travis-ci.org/mindriot101/rust-fitsio)
-[![Coverage Status](https://coveralls.io/repos/github/mindriot101/rust-fitsio/badge.svg?branch=master)](https://coveralls.io/github/mindriot101/rust-fitsio?branch=master)
+[![Join the chat at https://gitter.im/simonrw/rust-fitsio](https://badges.gitter.im/simonrw/rust-fitsio.svg)](https://gitter.im/rust-fitsio/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
+[![Build Status](https://travis-ci.org/simonrw/rust-fitsio.svg?branch=master)](https://travis-ci.org/simonrw/rust-fitsio)
+[![Coverage Status](https://coveralls.io/repos/github/simonrw/rust-fitsio/badge.svg?branch=master)](https://coveralls.io/github/simonrw/rust-fitsio?branch=master)
 
 ## Platform support
 
@@ -59,7 +59,7 @@ stable. Add this to your `Cargo.toml` file:
 
 ```toml,no_sync
 [dependencies]
-fitsio = { git = "https://github.com/mindriot101/rust-fitsio" }
+fitsio = { git = "https://github.com/simonrw/rust-fitsio" }
 ```
 
 If you want the latest release from `crates.io` then add the following:
@@ -102,7 +102,7 @@ fitsio = { version = "0.21.0", default-features = false, features = ["bindgen"] 
 
 ## Feature support
 
-Supported features of the underlying `cfitsio` library that _are_ available in `fitsio` are detailed in [this tracking issue](https://github.com/mindriot101/rust-fitsio/issues/15). If a particular function is not implemented in `fitsio`, then the underlying `fitsfile` pointer can be accessed through an unsafe API.
+Supported features of the underlying `cfitsio` library that _are_ available in `fitsio` are detailed in [this tracking issue](https://github.com/simonrw/rust-fitsio/issues/15). If a particular function is not implemented in `fitsio`, then the underlying `fitsfile` pointer can be accessed through an unsafe API.
 
 ## Examples
 

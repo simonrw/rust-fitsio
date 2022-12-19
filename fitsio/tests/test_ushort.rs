@@ -1,5 +1,5 @@
 /* Reading unsupported data types throws error
- * See issue 35: https://github.com/mindriot101/rust-fitsio/issues/35
+ * See issue 35: https://github.com/simonrw/rust-fitsio/issues/35
  *
  *
  */
