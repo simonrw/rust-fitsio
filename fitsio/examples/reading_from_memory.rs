@@ -44,8 +44,7 @@ fn main() {
         panic!("bad status");
     }
 
-    let mut f =
-        unsafe { FitsFile::from_raw("full_example.fits", fptr, FileOpenMode::READONLY) }.unwrap();
+    let mut f = unsafe { FitsFile::from_raw(fptr, FileOpenMode::READONLY) }.unwrap();
     f.pretty_print().expect("pretty printing fits file");
 }
 

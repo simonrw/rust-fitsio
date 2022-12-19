@@ -23,7 +23,7 @@ use std::ptr;
 /// Main entry point to the FITS file format
 pub struct FitsFile {
     /// Name of the file
-    pub filename: PathBuf,
+    pub filename: Option<PathBuf>,
     open_mode: FileOpenMode,
     pub(crate) fptr: ptr::NonNull<fitsfile>,
 }
@@ -66,7 +66,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READONLY,
-                filename: file_path.to_path_buf(),
+                filename: Some(file_path.to_path_buf()),
             },
             None => unimplemented!(),
         })
@@ -108,7 +108,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READWRITE,
-                filename: file_path.to_path_buf(),
+                filename: Some(file_path.to_path_buf()),
             },
             None => unimplemented!(),
         })
@@ -659,7 +659,9 @@ impl FitsFile {
     where
         W: Write,
     {
-        writeln!(w, "\n  file: {:?}", self.filename)?;
+        if let Some(ref filename) = self.filename {
+            writeln!(w, "\n  file: {:?}", filename)?;
+        }
         match self.open_mode {
             FileOpenMode::READONLY => writeln!(w, "  mode: READONLY")?,
             FileOpenMode::READWRITE => writeln!(w, "  mode: READWRITE")?,
@@ -796,19 +798,13 @@ impl FitsFile {
     /// }
     /// assert_eq!(status, 0);
     ///
-    /// let mut f = unsafe { FitsFile::from_raw(filename, fptr, FileOpenMode::READONLY) }.unwrap();
+    /// let mut f = unsafe { FitsFile::from_raw(fptr, FileOpenMode::READONLY) }.unwrap();
     /// # Ok(())
     /// # }
     /// ```
-    pub unsafe fn from_raw(
-        filename: impl AsRef<Path>,
-        fptr: *mut fitsfile,
-        mode: FileOpenMode,
-    ) -> Result<FitsFile> {
-        let filename = filename.as_ref().to_path_buf();
-
+    pub unsafe fn from_raw(fptr: *mut fitsfile, mode: FileOpenMode) -> Result<FitsFile> {
         Ok(Self {
-            filename,
+            filename: None,
             open_mode: mode,
             fptr: ptr::NonNull::new(fptr).ok_or(Error::NullPointer)?,
         })
@@ -929,7 +925,7 @@ where
                 Some(p) => FitsFile {
                     fptr: p,
                     open_mode: FileOpenMode::READWRITE,
-                    filename: file_path.to_path_buf(),
+                    filename: Some(file_path.to_path_buf()),
                 },
                 None => unimplemented!(),
             };

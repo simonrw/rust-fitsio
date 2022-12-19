@@ -930,7 +930,7 @@ unsafe {
 }
 assert_eq!(status, 0);
 
-let mut f = unsafe { FitsFile::from_raw(filename, fptr, FileOpenMode::READONLY) }.unwrap();
+let mut f = unsafe { FitsFile::from_raw(fptr, FileOpenMode::READONLY) }.unwrap();
 # Ok(())
 # }
 ```

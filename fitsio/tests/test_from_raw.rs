@@ -23,7 +23,7 @@ fn from_raw() {
     }
     assert_eq!(status, 0);
 
-    let mut f = unsafe { FitsFile::from_raw(filename, fptr, FileOpenMode::READONLY) }.unwrap();
+    let mut f = unsafe { FitsFile::from_raw(fptr, FileOpenMode::READONLY) }.unwrap();
 
     // the rest of this test is taken from the `images.rs::test_read_image_data` test.
     let hdu = f.hdu(0).unwrap();
