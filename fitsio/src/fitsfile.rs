@@ -22,8 +22,7 @@ use std::ptr;
 
 /// Main entry point to the FITS file format
 pub struct FitsFile {
-    /// Name of the file
-    pub filename: Option<PathBuf>,
+    filename: Option<PathBuf>,
     open_mode: FileOpenMode,
     pub(crate) fptr: ptr::NonNull<fitsfile>,
 }
