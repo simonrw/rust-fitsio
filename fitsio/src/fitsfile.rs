@@ -22,8 +22,7 @@ use std::ptr;
 
 /// Main entry point to the FITS file format
 pub struct FitsFile {
-    /// Name of the file
-    pub filename: PathBuf,
+    filename: Option<PathBuf>,
     open_mode: FileOpenMode,
     pub(crate) fptr: ptr::NonNull<fitsfile>,
 }
@@ -66,7 +65,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READONLY,
-                filename: file_path.to_path_buf(),
+                filename: Some(file_path.to_path_buf()),
             },
             None => unimplemented!(),
         })
@@ -108,7 +107,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READWRITE,
-                filename: file_path.to_path_buf(),
+                filename: Some(file_path.to_path_buf()),
             },
             None => unimplemented!(),
         })
@@ -659,7 +658,9 @@ impl FitsFile {
     where
         W: Write,
     {
-        writeln!(w, "\n  file: {:?}", self.filename)?;
+        if let Some(ref filename) = self.filename {
+            writeln!(w, "\n  file: {:?}", filename)?;
+        }
         match self.open_mode {
             FileOpenMode::READONLY => writeln!(w, "  mode: READONLY")?,
             FileOpenMode::READWRITE => writeln!(w, "  mode: READWRITE")?,
@@ -752,6 +753,60 @@ impl FitsFile {
     /// [`FitsHdu`]: hdu/struct.FitsHdu.html
     pub unsafe fn as_raw(&mut self) -> *mut fitsfile {
         self.fptr.as_mut() as *mut _
+    }
+
+    /// Load a `FitsFile` from a `fitsio_sys::fitsfile` pointer.
+    ///
+    /// # Safety
+    ///
+    /// This constructor is inherently unsafe - the Rust compiler cannot verify the validity of
+    /// the pointer supplied. It is therefore the responsibility of the caller to prove that the
+    /// pointer is a valid `fitsfile` by calling an `unsafe` function.
+    ///
+    /// it is up to the caller to guarantee that the pointer given was
+    ///
+    /// 1. created by `cfitsio` (or [`fitsio_sys`]), and
+    /// 2. it represents a valid FITS file.
+    ///
+    /// Given these two things, a [`FitsFile`] can be created.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # #[cfg(not(feature="bindgen"))]
+    /// # use fitsio_sys;
+    /// # #[cfg(feature="bindgen")]
+    /// # use fitsio_sys_bindgen as fitsio_sys;
+    ///
+    /// use fitsio_sys::ffopen;
+    /// use fitsio::{FileOpenMode, FitsFile};
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let filename = "../testdata/full_example.fits";
+    /// let mut fptr = std::ptr::null_mut();
+    /// let mut status = 0;
+    /// let c_filename = std::ffi::CString::new(filename).expect("filename is not a valid C-string");
+    ///
+    /// unsafe {
+    ///     ffopen(
+    ///         &mut fptr as *mut *mut _,
+    ///         c_filename.as_ptr(),
+    ///         0, // readonly
+    ///         &mut status,
+    ///     );
+    /// }
+    /// assert_eq!(status, 0);
+    ///
+    /// let mut f = unsafe { FitsFile::from_raw(fptr, FileOpenMode::READONLY) }.unwrap();
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub unsafe fn from_raw(fptr: *mut fitsfile, mode: FileOpenMode) -> Result<FitsFile> {
+        Ok(Self {
+            filename: None,
+            open_mode: mode,
+            fptr: ptr::NonNull::new(fptr).ok_or(Error::NullPointer)?,
+        })
     }
 }
 
@@ -869,7 +924,7 @@ where
                 Some(p) => FitsFile {
                     fptr: p,
                     open_mode: FileOpenMode::READWRITE,
-                    filename: file_path.to_path_buf(),
+                    filename: Some(file_path.to_path_buf()),
                 },
                 None => unimplemented!(),
             };

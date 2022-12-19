@@ -42,6 +42,9 @@ pub enum Error {
 
     /// Error unlocking a mutex
     UnlockError,
+
+    /// Null pointer error
+    NullPointer,
 }
 
 /// Error raised when the user requests invalid indexes for data
@@ -136,6 +139,7 @@ impl ::std::fmt::Display for Error {
             Error::IntoString(ref e) => e.fmt(f),
             Error::ExistingFile(ref filename) => write!(f, "File {} already exists", filename),
             Error::UnlockError => write!(f, "Invalid concurrent access to fits file"),
+            Error::NullPointer => write!(f, "Null pointer specified"),
         }
     }
 }

@@ -860,6 +860,8 @@ let newhdu = hdu.delete_column(&mut fptr, 0)?;
 
 # Raw fits file access
 
+## Converting a `FitsFile` to a raw `fitsio_sys::fitsfile` pointer
+
 If this library does not support the particular use case that is needed, the raw `fitsfile`
 pointer can be accessed:
 
@@ -880,11 +882,11 @@ let mut num_hdus = 0;
 let mut status = 0;
 
 unsafe {
-let fitsfile = fptr.as_raw();
+    let fitsfile = fptr.as_raw();
 
-/* Use the unsafe fitsio-sys low level library to call a function that is possibly not
-implemented in this crate */
-fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
+    /* Use the unsafe fitsio-sys low level library to call a function that is possibly not
+    implemented in this crate */
+    fitsio_sys::ffthdu(fitsfile, &mut num_hdus, &mut status);
 }
 assert_eq!(num_hdus, 2);
 # Ok(())
@@ -893,6 +895,45 @@ assert_eq!(num_hdus, 2);
 ```
 
 This (unsafe) pointer can then be used with the underlying [`fitsio-sys`][fitsio-sys] library directly.
+
+## Creating a `FitsFile` from a raw `fitsio_sys::fitsfile` pointer
+
+The inverse of the process described above can be performed. Note: calling this [`FitsFile`]
+constructor is _unsafe_ => it is up to the caller to guarantee that the pointer given was
+
+1. created by `cfitsio` (or [`fitsio_sys`]), and
+2. it represents a valid FITS file.
+
+Given these two things, a [`FitsFile`] can be created.
+
+```rust
+# #[cfg(not(feature="bindgen"))]
+# use fitsio_sys;
+# #[cfg(feature="bindgen")]
+# use fitsio_sys_bindgen as fitsio_sys;
+use fitsio_sys::ffopen;
+use fitsio::{FileOpenMode, FitsFile};
+
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
+let filename = "../testdata/full_example.fits";
+let mut fptr = std::ptr::null_mut();
+let mut status = 0;
+let c_filename = std::ffi::CString::new(filename).expect("filename is not a valid C-string");
+
+unsafe {
+    ffopen(
+        &mut fptr as *mut *mut _,
+        c_filename.as_ptr(),
+        0, // readonly
+        &mut status,
+    );
+}
+assert_eq!(status, 0);
+
+let mut f = unsafe { FitsFile::from_raw(fptr, FileOpenMode::READONLY) }.unwrap();
+# Ok(())
+# }
+```
 
 # Threadsafe access
 
@@ -995,9 +1036,9 @@ let _hdu = t.hdu(hdu_num).unwrap();
 
 // If we are using the `bindgen` feature then import `fitsio_sys_bindgen` with a new name
 #[cfg(feature = "default")]
-use fitsio_sys as sys;
+pub use fitsio_sys as sys;
 #[cfg(feature = "bindgen")]
-use fitsio_sys_bindgen as sys;
+pub use fitsio_sys_bindgen as sys;
 
 #[macro_use]
 mod macros;
@@ -1020,7 +1061,7 @@ pub mod threadsafe_fitsfile;
 pub mod errors;
 
 // Re-exports
-pub use crate::fitsfile::FitsFile;
+pub use crate::fitsfile::{FileOpenMode, FitsFile};
 
 // For custom derive purposes
 // pub use tables::FitsRow;
