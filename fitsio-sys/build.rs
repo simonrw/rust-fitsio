@@ -3,7 +3,14 @@ fn bind_cfitsio() {
     use pkg_config::Error;
     use std::io::Write;
 
-    let package_name = "cfitsio >= 3.37";
+    // `msys2` does not report the version of cfitsio correctly, so ignore the version specifier for now.
+    let package_name = if cfg!(windows) {
+        let msg = "No version specifier available for pkg-config on windows, so the version of cfitsio used when compiling this program is unspecified";
+        println!("cargo:warning={msg}");
+        "cfitsio"
+    } else {
+        "cfitsio >= 3.37"
+    };
     let mut config = pkg_config::Config::new();
     config.print_system_libs(true);
     config.print_system_cflags(true);
