@@ -88,3 +88,25 @@ jobs:
           use-cross: true
           command: test
           args: --target armv7-unknown-linux-gnueabihf --manifest-path fitsio/Cargo.toml
+
+  windows-test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Set up msys2
+        uses: msys2/setup-msys2@v2
+
+      - name: Install dependencies
+        shell: msys2 {0}
+        run: |
+          pacman -S --noconfirm \
+          mingw64/mingw-w64-x86_64-cfitsio \
+          mingw64/mingw-w64-x86_64-pkg-config \
+          mingw64/mingw-w64-x86_64-rust
+
+      - name: Run the tests
+        shell: msys2 {0}
+        run: |
+          cargo test -p fitsio
