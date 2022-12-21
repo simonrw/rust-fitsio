@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 ### Added
 ### Changed
+
+* `fitsio-sys`: do not specify the version for msys2 since it is not well represented
+
 ### Removed
 
 ## [0.21.0]
