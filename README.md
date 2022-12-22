@@ -4,7 +4,7 @@ FFI wrapper around cfitsio in Rust
 
 [![Join the chat at https://gitter.im/simonrw/rust-fitsio](https://badges.gitter.im/simonrw/rust-fitsio.svg)](https://gitter.im/rust-fitsio/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 [![Build Status](https://travis-ci.org/simonrw/rust-fitsio.svg?branch=master)](https://travis-ci.org/simonrw/rust-fitsio)
-[![Coverage Status](https://coveralls.io/repos/github/simonrw/rust-fitsio/badge.svg?branch=master)](https://coveralls.io/github/simonrw/rust-fitsio?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/simonrw/rust-fitsio/badge.svg?branch=main)](https://coveralls.io/github/simonrw/rust-fitsio?branch=main)
 
 ## Platform support
 
