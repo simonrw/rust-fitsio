@@ -3,6 +3,8 @@
 // `fits_open_memfile` in `cfitsio`.
 
 #[cfg(all(target_pointer_width = "64", target_os = "linux"))]
+use fitsio::errors::check_status;
+#[cfg(all(target_pointer_width = "64", target_os = "linux"))]
 use fitsio::{sys, FileOpenMode, FitsFile};
 #[cfg(all(target_pointer_width = "64", target_os = "linux"))]
 use std::io::Read;
@@ -10,6 +12,7 @@ use std::io::Read;
 #[cfg(all(target_pointer_width = "64", target_os = "linux"))]
 fn main() {
     // read the bytes into memory and return a pointer and length to the file
+
     let (bytes, mut ptr_size) = {
         let filename = "./testdata/full_example.fits";
         let mut f = std::fs::File::open(filename).unwrap();
@@ -39,10 +42,7 @@ fn main() {
         );
     }
 
-    if status != 0 {
-        unsafe { sys::ffrprt(sys::stderr, status) };
-        panic!("bad status");
-    }
+    check_status(status).unwrap();
 
     let mut f = unsafe { FitsFile::from_raw(fptr, FileOpenMode::READONLY) }.unwrap();
     f.pretty_print().expect("pretty printing fits file");
