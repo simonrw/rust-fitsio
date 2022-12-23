@@ -7,7 +7,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 ### Added
 ### Changed
+### Removed
 
+## [0.21.1]
+### Added
+### Changed
+
+* `fitsio`: update versions of `fitsio-sys` and `fitsio-sys-bindgen` to pick up latest changes
 * `fitsio-sys`: do not specify the version for msys2 since it is not well represented
 
 ### Removed
@@ -258,6 +264,7 @@ Nothing
 [0.19.0]: https://github.com/simonrw/rust-fitsio/compare/v0.18.0...v0.19.0
 [0.20.0]: https://github.com/simonrw/rust-fitsio/compare/v0.19.0...v0.20.0
 [0.21.0]: https://github.com/simonrw/rust-fitsio/compare/v0.20.0...v0.21.0
+[0.21.1]: https://github.com/simonrw/rust-fitsio/compare/v0.20.1...v0.21.1
 
 ---
 
