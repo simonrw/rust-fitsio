@@ -7,7 +7,17 @@
     flake-utils.lib.eachDefaultSystem (system:
       let pkgs = nixpkgs.legacyPackages.${system}; in
       {
-        devShells.default = import ./shell.nix { inherit pkgs; };
+        devShells.default = pkgs.mkShell {
+          buildInputs = [
+            pkgs.rustup
+            pkgs.libiconv
+            pkgs.cfitsio
+            pkgs.pkg-config
+            # for bin/test
+            pkgs.python3
+          ];
+          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+        };
       }
     );
 }
