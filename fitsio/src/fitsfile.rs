@@ -205,11 +205,7 @@ impl FitsFile {
     # Example
 
     ```rust
-    # #[cfg(feature = "default")]
-    # use fitsio_sys as sys;
-    # #[cfg(feature = "bindgen")]
-    # use fitsio_sys_bindgen as sys;
-    # use fitsio::FitsFile;
+    # use fitsio::{sys, FitsFile};
     use fitsio::hdu::HduInfo;
     #
     # fn main() -> Result<(), Box<std::error::Error>> {
@@ -244,12 +240,7 @@ impl FitsFile {
     # Example
 
     ```rust
-    # #[cfg(feature = "default")]
-    # use fitsio_sys as sys;
-    # #[cfg(feature = "bindgen")]
-    # use fitsio_sys_bindgen as sys;
-    # use fitsio::FitsFile;
-    # use fitsio::hdu::HduInfo;
+    # use fitsio::{sys, FitsFile, hdu::HduInfo};
     #
     # fn main() -> Result<(), Box<std::error::Error>> {
     # let filename = "../testdata/full_example.fits";
@@ -723,12 +714,7 @@ impl FitsFile {
     /// # Example
     ///
     /// ```rust
-    /// # #[cfg(not(feature="bindgen"))]
-    /// use fitsio_sys;
-    /// # #[cfg(feature="bindgen")]
-    /// # use fitsio_sys_bindgen as fitsio_sys;
-    ///
-    /// use fitsio::FitsFile;
+    /// use fitsio::{sys, FitsFile};
     ///
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let filename = "../testdata/full_example.fits";
@@ -773,13 +759,7 @@ impl FitsFile {
     /// # Example
     ///
     /// ```rust
-    /// # #[cfg(not(feature="bindgen"))]
-    /// # use fitsio_sys;
-    /// # #[cfg(feature="bindgen")]
-    /// # use fitsio_sys_bindgen as fitsio_sys;
-    ///
-    /// use fitsio_sys::ffopen;
-    /// use fitsio::{FileOpenMode, FitsFile};
+    /// use fitsio::{sys::ffopen, FileOpenMode, FitsFile};
     ///
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let filename = "../testdata/full_example.fits";

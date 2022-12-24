@@ -11,18 +11,12 @@ pub(crate) use crate::sys::{
     ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye,
     ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
 };
-#[cfg(feature = "default")]
 pub use libc::{
     c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ulonglong, c_ushort,
     c_void,
 };
-#[cfg(feature = "bindgen")]
-pub use std::os::raw::{
-    c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ulonglong, c_ushort,
-    c_void,
-};
 
-pub(crate) unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut c_int) -> c_int {
+pub(crate) unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut libc::c_int) -> c_int {
     ffclos(fptr, status)
 }
 

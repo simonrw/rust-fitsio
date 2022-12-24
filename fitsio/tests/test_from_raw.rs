@@ -1,9 +1,4 @@
-use fitsio::{FileOpenMode, FitsFile};
-#[cfg(not(feature = "bindgen"))]
-use fitsio_sys;
-use fitsio_sys::ffopen;
-#[cfg(feature = "bindgen")]
-use fitsio_sys_bindgen as fitsio_sys;
+use fitsio::{sys::ffopen, FileOpenMode, FitsFile};
 use std::ptr;
 
 #[test]

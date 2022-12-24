@@ -13,8 +13,12 @@ documentation = "https://docs.rs/fitsio-sys"
 categories = ["external-ffi-bindings", "science"]
 links = "cfitsio"
 
+[dependencies]
+fitsio-sys-bindgen = { version = "0.0.6", path = "../fitsio-sys-bindgen", optional = true }
+
 [features]
 fitsio-src = []
+bindgen = ["fitsio-sys-bindgen"]
 
 [build-dependencies]
 pkg-config = "0.3.16"
