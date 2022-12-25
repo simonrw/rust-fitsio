@@ -193,4 +193,12 @@ mod tests {
     fn test_check_status_with_err() {
         assert!(check_status(105).map(|_| 10i32).is_err());
     }
+
+    #[test]
+    fn test_message() {
+        assert_eq!(
+            format!("{}", Error::Message("bad".to_string())),
+            "Error: bad"
+        );
+    }
 }
