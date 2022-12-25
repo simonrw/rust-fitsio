@@ -398,6 +398,14 @@ mod tests {
     }
 
     #[test]
+    fn test_read_table_as_image() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        assert!(hdu.read_section::<Vec<i32>>(&mut f, 0, 100).is_err());
+        assert!(hdu.read_image::<Vec<i32>>(&mut f).is_err());
+    }
+
+    #[test]
     fn test_read_whole_image() {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
