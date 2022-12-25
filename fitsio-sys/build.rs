@@ -84,6 +84,7 @@ fn bind_cfitsio() {
         .forbid("--enable-static")
         .enable("reentrant", None)
         .cflag(opt_flag)
+        .cflag("-fPIE")
         .insource(true)
         .build();
 
