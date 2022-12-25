@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Removed
 
+* `fitsio-sys-bindgen` is no longer used. It has been merged with `fitsio-sys`.
+
 ## [0.21.1]
 ### Added
 ### Changed
