@@ -379,6 +379,7 @@ imagetype_into_impl!(i64);
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::errors::Error;
     use crate::fitsfile::FitsFile;
     use crate::testhelpers::with_temp_file;
 
@@ -395,6 +396,14 @@ mod tests {
         assert_eq!(second_row.len(), 100);
         assert_eq!(second_row[0], 177);
         assert_eq!(second_row[49], 168);
+    }
+
+    #[test]
+    fn test_read_table_as_image() {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let hdu = f.hdu(1).unwrap();
+        assert!(hdu.read_section::<Vec<i32>>(&mut f, 0, 100).is_err());
+        assert!(hdu.read_image::<Vec<i32>>(&mut f).is_err());
     }
 
     #[test]
@@ -516,6 +525,34 @@ mod tests {
         });
     }
 
+    #[test]
+    fn test_write_image_too_much_data() {
+        with_temp_file(|filename| {
+            let n = 2001;
+            let x = 100;
+            let y = 20;
+            assert!(x * y < n);
+
+            let data: Vec<i64> = (0..n).collect();
+
+            let mut f = FitsFile::create(filename).open().unwrap();
+            let image_description = ImageDescription {
+                data_type: ImageType::Long,
+                dimensions: &[100, 20],
+            };
+            let hdu = f
+                .create_image("foo".to_string(), &image_description)
+                .unwrap();
+
+            match hdu.write_image(&mut f, &data) {
+                Err(Error::Message(s)) => {
+                    let msg = format!("cannot write more data ({n} elements) to the current image (shape: [{x}, {y}])");
+                    assert_eq!(s, msg);
+                }
+                s => unreachable!("invalid output: {:?}", s),
+            }
+        });
+    }
     #[test]
     fn test_resizing_images() {
         with_temp_file(|filename| {
