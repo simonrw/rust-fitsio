@@ -1,13 +1,8 @@
-#[cfg(all(feature = "fitsio-src", feature = "bindgen"))]
-fn bind_cfitsio() {
-    todo!("bindgen and src")
-}
+use std::path::PathBuf;
 
-#[cfg(all(feature = "fitsio-src", not(feature = "bindgen")))]
-fn bind_cfitsio() {
+#[allow(dead_code)]
+fn compile_cfitsio() -> PathBuf {
     use autotools::Config;
-    use std::env::var;
-    use std::path::PathBuf;
 
     let cfitsio_project_dir = PathBuf::from("ext/cfitsio");
     if !cfitsio_project_dir.exists() {
@@ -29,7 +24,7 @@ fn bind_cfitsio() {
     // Translate rustc optimisation levels to things a C compiler can
     // understand. I don't know if all C compilers agree here, but it should
     // at least work for gcc.
-    let opt_level = match var("OPT_LEVEL").as_ref().map(|o| o.as_str()) {
+    let opt_level = match std::env::var("OPT_LEVEL").as_ref().map(|o| o.as_str()) {
         Err(_) => panic!("Something wrong with OPT_LEVEL"),
         // gcc doesn't handle 'z'. Just set it to 's', which also optimises
         // for size.
@@ -50,6 +45,36 @@ fn bind_cfitsio() {
         .cflag("-fPIE")
         .insource(true)
         .build();
+    dst
+}
+
+#[cfg(all(feature = "fitsio-src", feature = "bindgen"))]
+fn bind_cfitsio() {
+    use bindgen::RustTarget;
+    use std::env;
+
+    let dst = compile_cfitsio();
+    let include_args = vec![format!("-I{}", dst.display())];
+    let bindings = bindgen::builder()
+        .header("wrapper.h")
+        .block_extern_crate(true)
+        .clang_args(include_args)
+        .opaque_type("fitsfile")
+        .opaque_type("FITSfile")
+        .rust_target(RustTarget::Stable_1_0)
+        .generate()
+        .expect("Unable to generate bindings");
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    bindings
+        .write_to_file(out_path.join("bindings.rs"))
+        .expect("Couldn't write bindings");
+    println!("cargo:rustc-link-search=native={}", dst.display());
+    println!("cargo:rustc-link-lib=static=cfitsio");
+}
+
+#[cfg(all(feature = "fitsio-src", not(feature = "bindgen")))]
+fn bind_cfitsio() {
+    let dst = compile_cfitsio();
 
     println!("cargo:rustc-link-search=native={}", dst.display());
     println!("cargo:rustc-link-lib=static=cfitsio");
@@ -61,7 +86,6 @@ fn bind_cfitsio() {
     use pkg_config::Error;
     use std::env;
     use std::io::Write;
-    use std::path::PathBuf;
 
     // `msys2` does not report the version of cfitsio correctly, so ignore the version specifier for now.
     let package_name = if cfg!(windows) {
