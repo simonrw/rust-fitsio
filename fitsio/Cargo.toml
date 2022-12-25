@@ -29,7 +29,7 @@ version-sync = "0.9.0"
 
 [features]
 array = ["ndarray"]
-bindgen = ["fitsio-sys/bindgen"]
+bindgen = ["fitsio-sys/with-bindgen"]
 fitsio-src = ["fitsio-sys/fitsio-src"]
 
 [[bench]]

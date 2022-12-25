@@ -33,7 +33,9 @@ jobs:
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
-          args: --manifest-path fitsio/Cargo.toml --out Lcov
+          version: latest
+          args: --manifest-path fitsio/Cargo.toml
+          out-type: Lcov
 
       - name: Coveralls
         uses: coverallsapp/github-action@master

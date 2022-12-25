@@ -14,15 +14,15 @@ categories = ["external-ffi-bindings", "science"]
 links = "cfitsio"
 
 [dependencies]
-fitsio-sys-bindgen = { version = "0.0.6", path = "../fitsio-sys-bindgen", optional = true }
 
 [features]
 fitsio-src = []
-bindgen = ["fitsio-sys-bindgen"]
+with-bindgen = ["bindgen"]
 
 [build-dependencies]
 pkg-config = "0.3.16"
 autotools = ">= 0.2.5"
+bindgen = { version = "0.60.1", optional = true }
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
