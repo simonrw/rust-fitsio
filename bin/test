@@ -5,6 +5,7 @@ import subprocess as sp
 import argparse
 import sys
 
+
 def collect_test_options(cls):
 
     tests = []
@@ -15,6 +16,7 @@ def collect_test_options(cls):
 
     cls._tests = tests
     return cls
+
 
 @collect_test_options
 class TestRunner:
@@ -99,16 +101,12 @@ class TestRunner:
         )
 
     def _run_test_all(self):
-        for attr in dir(self):
-            if not attr.startswith("_run_test_"):
+        for test_name in self._tests:
+            if test_name == "all":
                 continue
 
-            test = attr.replace("_run_test_", "").replace("_", "-")
-            if test == "all":
-                continue
-
-            print(f"Running test '{test}'")
-            method = getattr(self, attr)
+            method_name = f"_run_test_{test_name}"
+            method = getattr(self, method_name)
             method()
 
 
