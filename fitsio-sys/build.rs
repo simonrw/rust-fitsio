@@ -14,7 +14,7 @@ fn compile_cfitsio() -> PathBuf {
     // Make sure the source directory isn't empty.
     match std::fs::read_dir(&cfitsio_project_dir) {
         Ok(mut d) => {
-            if let None = d.next() {
+            if d.next().is_none() {
                 panic!("cfitsio source directory ext/cfitsio is empty!");
             }
         }
