@@ -70,6 +70,26 @@ mod sys {
 }
 
 #[cfg(feature = "bindgen")]
-use fitsio_sys_bindgen as sys;
+mod sys {
+    #![allow(
+        non_upper_case_globals,
+        non_camel_case_types,
+        non_snake_case,
+        improper_ctypes
+    )]
+    // Prevent clippy from throwing errors in generated code
+    #![allow(
+        clippy::unreadable_literal,
+        clippy::transmute_ptr_to_ptr,
+        clippy::redundant_static_lifetimes,
+        clippy::missing_safety_doc,
+        clippy::useless_transmute,
+        clippy::trivially_copy_pass_by_ref,
+        clippy::too_many_arguments,
+        clippy::should_implement_trait,
+        clippy::upper_case_acronyms
+    )]
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+}
 
 pub use sys::*;
