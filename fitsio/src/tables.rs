@@ -982,6 +982,23 @@ mod test {
     }
 
     #[test]
+    fn test_write_to_image() {
+        duplicate_test_file(|filename| {
+            let data_to_write: Vec<i32> = vec![10101; 10];
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.primary_hdu().unwrap();
+                match hdu.write_col(&mut f, "bar", &data_to_write) {
+                    Err(Error::Message(s)) => {
+                        assert_eq!(s, "Cannot write column data to FITS image");
+                    }
+                    s => unreachable!("should error: {:?}", s),
+                }
+            }
+        });
+    }
+
+    #[test]
     fn test_write_column_data() {
         with_temp_file(|filename| {
             let data_to_write: Vec<i32> = vec![10101; 10];
