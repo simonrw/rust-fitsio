@@ -73,7 +73,7 @@ Or pin a specific version:
 
 ```toml
 [dependencies]
-fitsio = "0.21.0"
+fitsio = "0.21.1"
 ```
 
 This repository contains `fitsio-sys-bindgen` which generates the C
@@ -91,7 +91,7 @@ or use from your `Cargo.toml` as such:
 
 ```toml
 [dependencies]
-fitsio = { version = "0.21.0", default-features = false, features = ["bindgen"] }
+fitsio = { version = "0.21.1", default-features = false, features = ["bindgen"] }
 ```
 
 ## Documentation

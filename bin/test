@@ -4,9 +4,21 @@
 import subprocess as sp
 import argparse
 import sys
-import os
 
 
+def collect_test_options(cls):
+
+    tests = []
+    for method in dir(cls):
+        if method.startswith("_run_test_"):
+            test_option = method.replace("_run_test_", "").replace("_", "-")
+            tests.append(test_option)
+
+    cls._tests = tests
+    return cls
+
+
+@collect_test_options
 class TestRunner:
     def __init__(self, rust_version):
         self.rust_version = rust_version
@@ -67,6 +79,17 @@ class TestRunner:
             "fitsio-src",
         )
 
+    def _run_test_fitsio_src_and_bindgen(self):
+        self._run_cargo(
+            "test",
+            "--manifest-path",
+            "fitsio/Cargo.toml",
+            "--features",
+            "fitsio-src",
+            "--features",
+            "bindgen",
+        )
+
     def _run_test_bindgen(self):
         self._run_cargo(
             "test",
@@ -78,16 +101,12 @@ class TestRunner:
         )
 
     def _run_test_all(self):
-        for attr in dir(self):
-            if not attr.startswith("_run_test_"):
+        for test_name in self._tests:
+            if test_name == "all":
                 continue
 
-            test = attr.replace("_run_test_", "").replace("_", "-")
-            if test == "all":
-                continue
-
-            print(f"Running test '{test}'")
-            method = getattr(self, attr)
+            method_name = f"_run_test_{test_name.replace('-', '_')}"
+            method = getattr(self, method_name)
             method()
 
 
@@ -104,15 +123,7 @@ if __name__ == "__main__":
         "--test",
         required=False,
         default="all",
-        choices=[
-            "all",
-            "workspace",
-            "full-example",
-            "array",
-            "fitsio-src",
-            "clippy",
-            "bindgen",
-        ],
+        choices=TestRunner._tests,
     )
     args = parser.parse_args()
 
