@@ -57,9 +57,9 @@ jobs:
           arch: armv7
           distro: ubuntu_latest
           run: |
-            sudo apt-get update
+            apt-get update
 
-            sudo apt-get install --no-install-recommends -y \
+            apt-get install --no-install-recommends -y \
               libcfitsio-dev \
               pkg-config \
               libssl-dev \
