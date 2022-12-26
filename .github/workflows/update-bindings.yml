@@ -4,54 +4,55 @@ on:
   workflow_dispatch:
 
 jobs:
-  generate-amd-bindings:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v1
+  # generate-amd-bindings:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout sources
+  #       uses: actions/checkout@v1
 
-      - name: Install ubuntu dependencies
-        run: |
-          sudo apt-get update && \
-          sudo apt-get install --no-install-recommends -y \
-            libcfitsio-dev \
-            pkg-config \
-            libssl-dev \
-            python3
+  #     - name: Install ubuntu dependencies
+  #       run: |
+  #         sudo apt-get update && \
+  #         sudo apt-get install --no-install-recommends -y \
+  #           libcfitsio-dev \
+  #           pkg-config \
+  #           libssl-dev \
+  #           python3
 
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
+  #     - name: Install toolchain
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         profile: minimal
+  #         override: true
 
-      - name: Install bindgen
-        run: |
-          cargo install bindgen-cli
+  #     - name: Install bindgen
+  #       run: |
+  #         cargo install bindgen-cli
 
-      - name: Generate amd64 bindings
-        run: |
-          make -C fitsio-sys src/bindings_64.rs
+  #     - name: Generate amd64 bindings
+  #       run: |
+  #         make -C fitsio-sys src/bindings_64.rs
 
-      - name: Create the pull request
-        uses: peter-evans/create-pull-request@v4.2.3
-        with:
-          branch: update-bindings
-          delete-branch: true
-          title: Update bindgen static bindings
-          assignees: simonrw
-          base: main
+  #     - name: Create the pull request
+  #       uses: peter-evans/create-pull-request@v4.2.3
+  #       with:
+  #         branch: update-bindings
+  #         delete-branch: true
+  #         title: Update bindgen static bindings
+  #         assignees: simonrw
+  #         base: main
+  #         commit-message: Update amd64 bindings
 
   generate-arm-bindings:
-    needs: generate-amd-bindings
+    # needs: generate-amd-bindings
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
 
       - name: Add the armhf architecture
-        run: dpkg --add-architecture armhf
+        run: sudo dpkg --add-architecture armhf
 
       - name: Install ubuntu dependencies
         run: |
@@ -99,4 +100,4 @@ jobs:
           title: Update bindgen static bindings
           assignees: simonrw
           base: main
-
+          commit-message: Update armhf bindings
