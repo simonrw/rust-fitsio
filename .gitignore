@@ -12,3 +12,6 @@ cfitsio.xcodeproj
 /fitsio-sys/ext/cfitsio/config.status
 /fitsio-sys/ext/cfitsio/zlib/*.o
 *.swp
+fitsio-sys/ext/cfitsio/configure.prev
+fitsio-sys/ext/cfitsio/include
+fitsio-sys/ext/cfitsio/lib

@@ -167,11 +167,7 @@ HDU information belongs to the [`FitsHdu`][fits-hdu] object. HDUs can be fetched
 object contains information about the current HDU:
 
 ```rust
-# #[cfg(feature = "default")]
-# use fitsio_sys as sys;
-# #[cfg(feature = "bindgen")]
-# use fitsio_sys_bindgen as sys;
-# use fitsio::FitsFile;
+# use fitsio::{sys, FitsFile};
 #
 # fn try_main() -> Result<(), Box<std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
@@ -866,11 +862,7 @@ If this library does not support the particular use case that is needed, the raw
 pointer can be accessed:
 
 ```rust
-# #[cfg(not(feature="bindgen"))]
-# use fitsio_sys;
-# #[cfg(feature="bindgen")]
-# use fitsio_sys_bindgen as fitsio_sys;
-
+# use fitsio::sys as sys;
 use fitsio::FitsFile;
 
 # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
@@ -907,12 +899,7 @@ constructor is _unsafe_ => it is up to the caller to guarantee that the pointer 
 Given these two things, a [`FitsFile`] can be created.
 
 ```rust
-# #[cfg(not(feature="bindgen"))]
-# use fitsio_sys;
-# #[cfg(feature="bindgen")]
-# use fitsio_sys_bindgen as fitsio_sys;
-use fitsio_sys::ffopen;
-use fitsio::{FileOpenMode, FitsFile};
+use fitsio::{sys::ffopen, FileOpenMode, FitsFile};
 
 # fn main() -> Result<(), Box<dyn std::error::Error>> {
 let filename = "../testdata/full_example.fits";
@@ -1029,16 +1016,12 @@ let _hdu = t.hdu(hdu_num).unwrap();
 [threadsafe-fits-file]: threadsafe_fitsfile/struct.ThreadsafeFitsFile.html
 */
 
-#![doc(html_root_url = "https://docs.rs/fitsio/0.21.0")]
+#![doc(html_root_url = "https://docs.rs/fitsio/0.21.1")]
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
-// If we are using the `bindgen` feature then import `fitsio_sys_bindgen` with a new name
-#[cfg(feature = "default")]
 pub use fitsio_sys as sys;
-#[cfg(feature = "bindgen")]
-pub use fitsio_sys_bindgen as sys;
 
 #[macro_use]
 mod macros;
