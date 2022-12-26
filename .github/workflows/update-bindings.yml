@@ -84,3 +84,13 @@ jobs:
                 --rust-target "1.0" \
                     wrapper.h \
                 -- -target armv7-unknown-linux-gnueabihf)
+
+      - name: Update the pull request
+        uses: peter-evans/create-pull-request@v4.2.3
+        with:
+          branch: update-bindings
+          delete-branch: true
+          title: Update bindgen static bindings
+          assignees: simonrw
+          base: main
+          commit-message: Update armv7 bindings
