@@ -105,7 +105,7 @@ class TestRunner:
             if test_name == "all":
                 continue
 
-            method_name = f"_run_test_{test_name}"
+            method_name = f"_run_test_{test_name.replace('-', '_')}"
             method = getattr(self, method_name)
             method()
 
