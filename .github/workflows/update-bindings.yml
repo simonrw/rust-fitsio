@@ -57,56 +57,30 @@ jobs:
           arch: armv7
           distro: ubuntu_latest
           run: |
-            uname -a
+            sudo apt-get update
 
+            sudo apt-get install --no-install-recommends -y \
+              libcfitsio-dev \
+              pkg-config \
+              libssl-dev \
+              libclang-dev \
+              ca-certificates \
+              gcc \
+              curl
 
-      # - name: Add the armhf architecture
-      #   run: sudo dpkg --add-architecture armhf
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+            source ~/.cargo/env
 
-      # - name: Install ubuntu dependencies
-      #   run: |
-      #     sudo apt-get update && \
-      #     sudo apt-get install --no-install-recommends -y \
-      #       libcfitsio-dev \
-      #       pkg-config \
-      #       libssl-dev \
-      #       libclang-dev \
-      #       ca-certificates \
-      #       gcc \
-      #       gcc-11-arm-linux-gnueabihf \
-      #       libc6-dev:armhf \
-      #       curl
+            rustup component add rustfmt
 
-      # - name: Install toolchain
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: stable
-      #     profile: minimal
-      #     override: true
-      #     components: rustfmt
+            cargo install bindgen-cli
 
-      # - name: Install bindgen
-      #   run: |
-      #     cargo install bindgen-cli
-
-      # - name: Generate the bindings
-      #   run:
-      #     (cd fitsio-sys && \
-      #         bindgen \
-      #         -o src/bindings_32.rs \
-      #         --block-extern-crate \
-      #         --opaque-type fitsfile \
-      #         --opaque-type FITSfile \
-      #         --rust-target "1.0" \
-      #             wrapper.h \
-      #         -- -target armv7-unknown-linux-gnueabihf)
-
-      # - name: Update the pull request
-      #   uses: peter-evans/create-pull-request@v4.2.3
-      #   with:
-      #     branch: update-bindings
-      #     delete-branch: true
-      #     title: Update bindgen static bindings
-      #     assignees: simonrw
-      #     base: main
-      #     commit-message: Update armhf bindings
+            (cd fitsio-sys && \
+                bindgen \
+                -o src/bindings_32.rs \
+                --block-extern-crate \
+                --opaque-type fitsfile \
+                --opaque-type FITSfile \
+                --rust-target "1.0" \
+                    wrapper.h \
+                -- -target armv7-unknown-linux-gnueabihf)
