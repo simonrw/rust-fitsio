@@ -16,7 +16,7 @@ fn main() {
         let mut bytes = Vec::new();
         let num_bytes = f.read_to_end(&mut bytes).unwrap();
 
-        (bytes, num_bytes as u64)
+        (bytes, num_bytes)
     };
 
     let mut ptr = bytes.as_ptr();
@@ -32,7 +32,7 @@ fn main() {
             c_filename.as_ptr(),
             sys::READONLY as _,
             &mut ptr as *const _ as *mut *mut libc::c_void,
-            &mut ptr_size as *mut u64,
+            &mut ptr_size as *mut _,
             0,
             None,
             &mut status,
