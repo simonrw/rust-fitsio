@@ -8,7 +8,7 @@ ifeq ($(shell uname -m),x86_64)
 		--block-extern-crate \
 		--opaque-type fitsfile \
 		--opaque-type FITSfile \
-		--rust-target "1.0" \
+		--rust-target "1.47" \
 		wrapper.h
 else
 	@echo "bindings_64.rs must be generated on a 64 bit processor"
@@ -22,7 +22,7 @@ ifeq ($(shell uname -m),armv7l)
 		--block-extern-crate \
 		--opaque-type fitsfile \
 		--opaque-type FITSfile \
-		--rust-target "1.0" \
+		--rust-target "1.47" \
 		wrapper.h
 else
 	@echo "bindings_32.rs must be generated on a 32 bit processor"
