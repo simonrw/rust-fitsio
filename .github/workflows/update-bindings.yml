@@ -44,53 +44,43 @@ jobs:
           base: main
           commit-message: Update amd64 bindings
 
-  # generate-arm-bindings:
-  #   # needs: generate-amd-bindings
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout sources
-  #       uses: actions/checkout@v1
+  generate-arm-bindings:
+    needs: generate-amd-bindings
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
 
-  #     - name: Run commands
-  #       uses: uraimo/run-on-arch-action@v2
-  #       with:
-  #         arch: armv7
-  #         distro: ubuntu_latest
-  #         run: |
-  #           apt-get update
+      - name: Install ubuntu dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install --no-install-recommends -y \
+            libcfitsio-dev \
+            pkg-config \
+            libssl-dev \
+            python3
 
-  #           apt-get install --no-install-recommends -y \
-  #             libcfitsio-dev \
-  #             pkg-config \
-  #             libssl-dev \
-  #             libclang-dev \
-  #             ca-certificates \
-  #             gcc \
-  #             curl
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
 
-  #           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
-  #           source ~/.cargo/env
+      - name: Install bindgen
+        run: |
+          cargo install bindgen-cli
 
-  #           rustup component add rustfmt
+      - name: Generate amd64 bindings
+        run: |
+          make -C fitsio-sys src/bindings_32.rs
 
-  #           cargo install bindgen-cli
-
-  #           (cd fitsio-sys && \
-  #               bindgen \
-  #               -o src/bindings_32.rs \
-  #               --block-extern-crate \
-  #               --opaque-type fitsfile \
-  #               --opaque-type FITSfile \
-  #               --rust-target "1.0" \
-  #                   wrapper.h \
-  #               -- -target armv7-unknown-linux-gnueabihf)
-
-  #     - name: Update the pull request
-  #       uses: peter-evans/create-pull-request@v4.2.3
-  #       with:
-  #         branch: update-bindings
-  #         delete-branch: true
-  #         title: Update bindgen static bindings
-  #         assignees: simonrw
-  #         base: main
-  #         commit-message: Update armv7 bindings
+      - name: Update the pull request
+        uses: peter-evans/create-pull-request@v4.2.3
+        with:
+          branch: update-bindings
+          delete-branch: true
+          title: Update bindgen static bindings
+          assignees: simonrw
+          base: main
+          commit-message: Update armv7 bindings
