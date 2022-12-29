@@ -58,6 +58,7 @@ jobs:
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
+            gcc-multilib \
             python3
 
       - name: Install toolchain
