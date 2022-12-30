@@ -48,6 +48,8 @@
 //! [2]: https://crates.io/crates/fitsio
 //! [3]: http://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/cfitsio.html
 
+#![allow(improper_ctypes)]
+
 #[cfg(not(feature = "bindgen"))]
 mod sys {
 
