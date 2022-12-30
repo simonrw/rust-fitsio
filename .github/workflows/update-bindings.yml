@@ -51,6 +51,8 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
+        with:
+          ref: update-bindings
 
       - name: Install ubuntu dependencies
         run: |
