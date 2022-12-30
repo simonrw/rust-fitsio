@@ -43,6 +43,7 @@ jobs:
           assignees: simonrw
           base: main
           commit-message: Update amd64 bindings
+          token: ${{ secrets.PIPELINE_TOKEN }}
 
   generate-arm-bindings:
     needs: generate-amd-bindings
@@ -77,11 +78,8 @@ jobs:
           make -C fitsio-sys src/bindings_32.rs
 
       - name: Update the pull request
-        uses: peter-evans/create-pull-request@v4.2.3
-        with:
-          branch: update-bindings
-          delete-branch: true
-          title: Update bindgen static bindings
-          assignees: simonrw
-          base: main
-          commit-message: Update armv7 bindings
+        run: |
+          git config user.name Automated
+          git config user.email actions@users.noreply.github.com
+          git commit -m "Update 32-bit bindings"
+          git push origin update-bindings
