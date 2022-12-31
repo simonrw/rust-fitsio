@@ -1020,6 +1020,7 @@ let _hdu = t.hdu(hdu_num).unwrap();
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
+#![allow(clippy::uninlined_format_args)]
 
 pub use fitsio_sys as sys;
 

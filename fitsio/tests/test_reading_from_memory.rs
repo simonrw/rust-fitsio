@@ -2,24 +2,20 @@
 // can use `Fitsfile::from_raw` to load a `FitsFile` from a file that was opened via
 // `fits_open_memfile` in `cfitsio`.
 
-#[cfg(all(target_pointer_width = "64", target_os = "linux"))]
-use fitsio::errors::check_status;
-#[cfg(all(target_pointer_width = "64", target_os = "linux"))]
-use fitsio::{sys, FileOpenMode, FitsFile};
-#[cfg(all(target_pointer_width = "64", target_os = "linux"))]
+use fitsio::{errors::check_status, sys, FileOpenMode, FitsFile};
 use std::io::Read;
 
-#[cfg(all(target_pointer_width = "64", target_os = "linux"))]
-fn main() {
+#[test]
+fn reading_from_memory() {
     // read the bytes into memory and return a pointer and length to the file
 
     let (bytes, mut ptr_size) = {
-        let filename = "./testdata/full_example.fits";
+        let filename = "../testdata/full_example.fits";
         let mut f = std::fs::File::open(filename).unwrap();
         let mut bytes = Vec::new();
         let num_bytes = f.read_to_end(&mut bytes).unwrap();
 
-        (bytes, num_bytes as u64)
+        (bytes, num_bytes)
     };
 
     let mut ptr = bytes.as_ptr();
@@ -35,7 +31,7 @@ fn main() {
             c_filename.as_ptr(),
             sys::READONLY as _,
             &mut ptr as *const _ as *mut *mut libc::c_void,
-            &mut ptr_size as *mut u64,
+            &mut ptr_size as *mut _,
             0,
             None,
             &mut status,
@@ -47,6 +43,3 @@ fn main() {
     let mut f = unsafe { FitsFile::from_raw(fptr, FileOpenMode::READONLY) }.unwrap();
     f.pretty_print().expect("pretty printing fits file");
 }
-
-#[cfg(not(all(target_pointer_width = "64", target_os = "linux")))]
-fn main() {}

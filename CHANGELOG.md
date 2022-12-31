@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Added
 ### Changed
 
+* Updated `bindgen` to version 0.63.0
 * The `bindgen` feature is now implemented in `fitsio-sys` rather than `fitsio`. This is done as the bindings generation is really part of `fitsio-sys` rather than `fitsio`. There should be no external difference noticed.
 
 ### Removed
