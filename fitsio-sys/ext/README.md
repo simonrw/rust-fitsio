@@ -15,3 +15,9 @@ At the time of writing, the source code here is version 3.49.
 To update the source code, the "cfitsio" directory's contents should be replaced
 with the new tarball's contents, and the docs directory within should also be
 removed to help keep the size of the rust-fitsio git repo down.
+
+## Patches
+
+Any patches that are to be made against the source code are kept in the
+`patches` subdirectory. These are to be applied at the root level of the
+project after unpacking.
