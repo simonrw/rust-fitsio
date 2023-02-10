@@ -7,16 +7,21 @@
     flake-utils.lib.eachDefaultSystem (system:
       let pkgs = nixpkgs.legacyPackages.${system}; in
       {
-        devShells.default = pkgs.mkShell {
+        devShells.default = pkgs.mkShell rec {
           buildInputs = [
             pkgs.rustup
             pkgs.libiconv
             pkgs.cfitsio
+            pkgs.bzip2
             pkgs.pkg-config
             pkgs.cargo-release
+            pkgs.rust-analyzer
             # for bin/test
             pkgs.python3
           ];
+
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath buildInputs;
+
           shellHook = ''
             # From: https://github.com/NixOS/nixpkgs/blob/1fab95f5190d087e66a3502481e34e15d62090aa/pkgs/applications/networking/browsers/firefox/common.nix#L247-L253
             # Set C flags for Rust's bindgen program. Unlike ordinary C
