@@ -228,7 +228,7 @@ where
         match hdu.info {
             HduInfo::ImageInfo { ref shape, .. } => {
                 let data: Vec<T> = ReadImage::read_image(fits_file, hdu)?;
-                let shape: Vec<usize> = (0..2).map(|i| shape[i]).collect();
+                let shape: Vec<usize> = (0..shape.len()).map(|i| shape[i]).collect();
                 let arr = Array::from_shape_vec(shape, data).unwrap();
                 Ok(arr)
             }
