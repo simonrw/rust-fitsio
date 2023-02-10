@@ -12,6 +12,12 @@ repository = "https://github.com/simonrw/rust-fitsio"
 version = "0.21.1"
 rust-version = "1.58.0"
 
+[package.metadata.release]
+pre-release-replacements = [
+    {file="../README.md", search="fitsio = .*", replace="{{crate_name}} = \"{{version}}\""},
+    {file="src/lib.rs", search="https://docs.rs/fitsio/.*", replace="https://docs.rs/fitsio/{{version}}\")]"},
+]
+
 [package.metadata.docs.rs]
 features = ["array"]
 targets = ["x86_64-unknown-linux-gnu"]
