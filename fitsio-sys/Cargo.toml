@@ -22,7 +22,7 @@ with-bindgen = ["bindgen"]
 [build-dependencies]
 pkg-config = "0.3.16"
 autotools = ">= 0.2.5"
-bindgen = { version = "0.63", optional = true }
+bindgen = { version = "0.64", optional = true }
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
