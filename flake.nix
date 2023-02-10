@@ -13,6 +13,7 @@
             pkgs.libiconv
             pkgs.cfitsio
             pkgs.pkg-config
+            pkgs.cargo-release
             # for bin/test
             pkgs.python3
           ];
