@@ -15,6 +15,7 @@
             pkgs.bzip2
             pkgs.pkg-config
             pkgs.cargo-release
+            pkgs.cargo-tarpaulin
             pkgs.rust-analyzer
             # for bin/test
             pkgs.python3
