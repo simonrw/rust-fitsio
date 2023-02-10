@@ -9,7 +9,6 @@ on:
         options:
           - fitsio
           - fitsio-sys
-          - fitsio-sys-bindgen
           - fitsio-derive
       version:
         description: Version to release
@@ -40,7 +39,7 @@ jobs:
             python3
       - uses: cargo-bins/release-pr@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PIPELINE_TOKEN }}
           version: ${{ inputs.version }}
           crate-name: ${{ inputs.crate }}
           pr-merge-strategy: merge
