@@ -313,4 +313,101 @@ mod tests {
         assert_eq!(dim[1], 100);
         assert_eq!(data[[0, 10]], 160);
     }
+
+    // Testing ndarray integration
+    // Creation of data in Python:
+    // >>> import numpy as np
+    // >>> from astropy.io import fits
+    // >>> nums = np.arange(36)
+    // >>> image = nums.reshape(6,6)
+    // >>> cube = nums.reshape(2,3,6)
+    // >>> hyper = nums.reshape(2,3,3,2)
+    // >>> fits.writeto("image.fits", image)
+    // >>> fits.writeto("cube.fits", cube)
+    // >>> fits.writeto("hyper.fits", hyper)
+
+    // Image:
+    // [ 0,  1,  2,  3,  4,  5],
+    // [ 6,  7,  8,  9, 10, 11],
+    // [12, 13, 14, 15, 16, 17],
+    // [18, 19, 20, 21, 22, 23],
+    // [24, 25, 26, 27, 28, 29],
+    // [30, 31, 32, 33, 34, 35]]
+
+    #[test]
+    fn test_2d_array() {
+        let filename = "../testdata/image.fits";
+        let mut f = FitsFile::open(filename).unwrap();
+        let phdu = f.primary_hdu().unwrap();
+
+        let data: ArrayD<f64> = phdu.read_image(&mut f).unwrap();
+        let dim = data.dim();
+        assert_eq!(data.ndim(), 2);
+        assert_eq!(data.shape(), &[6, 6]);
+        assert_eq!(dim[0], 6);
+        assert_eq!(dim[1], 6);
+        assert_eq!(data[[0, 0]], 0.0);
+        assert_eq!(data[[5, 5]], 35.0);
+    }
+
+    // Cube:
+    // [[[ 0,  1,  2,  3,  4,  5],
+    //   [ 6,  7,  8,  9, 10, 11],
+    //   [12, 13, 14, 15, 16, 17]],
+
+    //  [[18, 19, 20, 21, 22, 23],
+    //   [24, 25, 26, 27, 28, 29],
+    //   [30, 31, 32, 33, 34, 35]]]
+
+    #[test]
+    fn test_3d_array() {
+        let filename = "../testdata/cube.fits";
+        let mut f = FitsFile::open(filename).unwrap();
+        let phdu = f.primary_hdu().unwrap();
+
+        let data: ArrayD<f64> = phdu.read_image(&mut f).unwrap();
+        let dim = data.dim();
+        assert_eq!(data.ndim(), 3);
+        assert_eq!(data.shape(), &[2, 3, 6]);
+        assert_eq!(data[[1, 1, 0]], 24.0);
+    }
+
+    // Hypercube:
+    // [[[[ 0,  1],
+    //    [ 2,  3],
+    //    [ 4,  5]],
+
+    //   [[ 6,  7],
+    //    [ 8,  9],
+    //    [10, 11]],
+
+    //   [[12, 13],
+    //    [14, 15],
+    //    [16, 17]]],
+
+
+    //  [[[18, 19],
+    //    [20, 21],
+    //    [22, 23]],
+
+    //   [[24, 25],
+    //    [26, 27],
+    //    [28, 29]],
+
+    //   [[30, 31],
+    //    [32, 33],
+    //    [34, 35]]]]
+
+    #[test]
+    fn test_4d_array() {
+        let filename = "../testdata/hyper.fits";
+        let mut f = FitsFile::open(filename).unwrap();
+        let phdu = f.primary_hdu().unwrap();
+
+        let data: ArrayD<f64> = phdu.read_image(&mut f).unwrap();
+        let dim = data.dim();
+        assert_eq!(data.ndim(), 4);
+        assert_eq!(data.shape(), &[2, 3, 3, 2]);
+        assert_eq!(data[[1, 1, 2, 1]], 29.0);
+    }
 }
