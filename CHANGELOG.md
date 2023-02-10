@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 ### Added
 ### Changed
+### Removed
+
+## [0.21.2]
+### Added
+
+* Support for n-d arrays (rather than just 2-d arrays) [#233](https://github.com/simonrw/rust-fitsio/pull/233)
+
+### Changed
 
 * Updated `bindgen` to version 0.63.0
 * The `bindgen` feature is now implemented in `fitsio-sys` rather than `fitsio`. This is done as the bindings generation is really part of `fitsio-sys` rather than `fitsio`. There should be no external difference noticed.
@@ -246,7 +254,7 @@ Nothing
 
 Nothing
 
-[Unreleased]: https://github.com/simonrw/rust-fitsio/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/simonrw/rust-fitsio/compare/v0.21.2...HEAD
 [0.9.0]: https://github.com/simonrw/rust-fitsio/compare/v0.8.0...v0.9.0
 [pull-34]: https://github.com/simonrw/rust-fitsio/pull/34
 [pull-32]: https://github.com/simonrw/rust-fitsio/pull/32
@@ -270,7 +278,8 @@ Nothing
 [0.19.0]: https://github.com/simonrw/rust-fitsio/compare/v0.18.0...v0.19.0
 [0.20.0]: https://github.com/simonrw/rust-fitsio/compare/v0.19.0...v0.20.0
 [0.21.0]: https://github.com/simonrw/rust-fitsio/compare/v0.20.0...v0.21.0
-[0.21.1]: https://github.com/simonrw/rust-fitsio/compare/v0.20.1...v0.21.1
+[0.21.1]: https://github.com/simonrw/rust-fitsio/compare/v0.21.0...v0.21.1
+[0.21.2]: https://github.com/simonrw/rust-fitsio/compare/v0.21.1...v0.21.2
 
 ---
 
