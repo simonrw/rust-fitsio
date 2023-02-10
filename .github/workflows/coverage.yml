@@ -19,11 +19,9 @@ jobs:
 
       - name: Install ubuntu dependencies
         run: |
-          sudo apt-get update && sudo apt-get install --no-install-recommends -y \
+          apt-get update && apt-get install --no-install-recommends -y \
             build-essential \
             llvm-dev \
-            linux-libc-dev \
-            libclang-dev \
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
