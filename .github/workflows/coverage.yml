@@ -10,6 +10,9 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout sources
         uses: actions/checkout@v1
@@ -17,25 +20,18 @@ jobs:
       - name: Install ubuntu dependencies
         run: |
           sudo apt-get update && sudo apt-get install --no-install-recommends -y \
+            build-essential \
             llvm-dev \
+            linux-libc-dev \
+            libclang-dev \
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
             python3
 
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
-
       - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        with:
-          version: latest
-          args: --manifest-path fitsio/Cargo.toml
-          out-type: Lcov
+        run: |
+          cargo +nightly tarpaulin --manifest-path fitsio/Cargo.toml --verbose --timeout 120 --out Lcov
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
