@@ -1,15 +1,30 @@
 {
   description = "Flake utils demo";
 
-  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+    rust-overlay.inputs.flake-utils.follows = "flake-utils";
+  };
 
-  outputs = { nixpkgs, flake-utils, ... }:
+  outputs = { nixpkgs, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = nixpkgs.legacyPackages.${system}; in
+      let
+        overlays = [
+          rust-overlay.overlays.default
+        ];
+        pkgs = import nixpkgs {
+          inherit overlays system;
+        };
+      in
       {
         devShells.default = pkgs.mkShell rec {
           buildInputs = [
-            pkgs.rustup
+            pkgs.rust-bin.beta.latest.default
+            pkgs.clippy
+            pkgs.rustfmt
             pkgs.libiconv
             pkgs.cfitsio
             pkgs.bzip2
@@ -23,6 +38,7 @@
           ];
 
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath buildInputs;
+          RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
 
           shellHook = ''
             # From: https://github.com/NixOS/nixpkgs/blob/1fab95f5190d087e66a3502481e34e15d62090aa/pkgs/applications/networking/browsers/firefox/common.nix#L247-L253
