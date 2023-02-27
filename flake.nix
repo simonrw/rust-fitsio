@@ -12,8 +12,34 @@
   outputs = { nixpkgs, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        python-overlay = self: super: {
+          python310 = super.python310.override {
+            packageOverrides = pyself: pysuper: {
+              fitsio = pysuper.buildPythonPackage rec {
+                pname = "fitsio";
+                version = "1.1.8";
+                src = pysuper.fetchPypi {
+                  inherit pname version;
+                  hash = "sha256-YfVpsmgqDK3OUsllPwybgflR0ABSLO9kXOHLSfeDAPk=";
+                };
+                propagatedBuildInputs = [
+                  pyself.setuptools
+                  pyself.ipython
+                ];
+                buildInputs = [
+                  pyself.numpy
+                  self.pkg-config
+                  self.bzip2
+                ];
+                MAKEFLAGS = "-j";
+              };
+            };
+          };
+        };
+
         overlays = [
           rust-overlay.overlays.default
+          python-overlay
         ];
         pkgs = import nixpkgs {
           inherit overlays system;
@@ -32,7 +58,11 @@
             pkgs.cargo-release
             pkgs.rust-analyzer
             # for bin/test
-            pkgs.python3
+            (pkgs.python310.withPackages
+              (ps: with ps; [
+                numpy
+                fitsio
+              ]))
           ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
             pkgs.cargo-tarpaulin
           ];
