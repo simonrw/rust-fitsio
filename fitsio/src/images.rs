@@ -46,6 +46,17 @@ pub trait ReadImage: Sized {
     }
 }
 
+/// Reading image data into buffers
+pub trait ReadImageInto: Sized {
+    #[doc(hidden)]
+    fn read_section_into(
+        fits_file: &mut FitsFile,
+        hdu: &FitsHdu,
+        start: usize,
+        buf: &mut [Self],
+    ) -> Result<()>;
+}
+
 /// Reading fits images
 pub trait WriteImage: Sized {
     #[doc(hidden)]
@@ -287,6 +298,43 @@ macro_rules! write_image_impl {
     };
 }
 
+macro_rules! read_image_into_impl {
+    ($t:ty, $data_type:expr) => {
+        impl ReadImageInto for $t {
+            fn read_section_into(
+                fits_file: &mut FitsFile,
+                hdu: &FitsHdu,
+                start: usize,
+                buf: &mut [Self],
+            ) -> Result<()> {
+                match hdu.info {
+                    HduInfo::ImageInfo { .. } => {
+                        let nelements = buf.len();
+                        let mut status = 0;
+                        unsafe {
+                            fits_read_img(
+                                fits_file.fptr.as_mut() as *mut _,
+                                $data_type.into(),
+                                (start + 1) as _,
+                                nelements as i64,
+                                ptr::null_mut(),
+                                buf.as_mut_ptr() as *mut _,
+                                ptr::null_mut(),
+                                &mut status,
+                            );
+                        }
+                        check_status(status).map(|_| ())
+                    }
+                    HduInfo::TableInfo { .. } => {
+                        Err("cannot read image data from a table hdu".into())
+                    }
+                    HduInfo::AnyInfo => unreachable!(),
+                }
+            }
+        }
+    };
+}
+
 read_image_impl_vec!(i8, i8::default(), DataType::TSBYTE);
 read_image_impl_vec!(i16, i16::default(), DataType::TSHORT);
 read_image_impl_vec!(i32, i32::default(), DataType::TINT);
@@ -320,6 +368,8 @@ write_image_impl!(u64, u64::default(), DataType::TULONG);
 write_image_impl!(u64, u64::default(), DataType::TLONGLONG);
 write_image_impl!(f32, f32::default(), DataType::TFLOAT);
 write_image_impl!(f64, f64::default(), DataType::TDOUBLE);
+
+read_image_into_impl!(u32, DataType::TUINT);
 
 /// Description of a new image
 #[derive(Clone)]

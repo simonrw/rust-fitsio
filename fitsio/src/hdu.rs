@@ -4,7 +4,7 @@ use crate::errors::{check_status, Result};
 use crate::fitsfile::CaseSensitivity;
 use crate::fitsfile::FitsFile;
 use crate::headers::{ReadsKey, WritesKey};
-use crate::images::{ImageType, ReadImage, WriteImage};
+use crate::images::{ImageType, ReadImage, ReadImageInto, WriteImage};
 use crate::longnam::*;
 use crate::tables::{
     ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation, FitsRow, ReadsCol,
@@ -122,6 +122,17 @@ impl FitsHdu {
     ) -> Result<T> {
         fits_file.make_current(self)?;
         T::read_section(fits_file, self, start..end)
+    }
+
+    /// Read a section of an image into a pre-existing buffer
+    pub fn read_section_into<T: ReadImageInto>(
+        &self,
+        fits_file: &mut FitsFile,
+        start: usize,
+        buf: &mut [T],
+    ) -> Result<()> {
+        fits_file.make_current(self)?;
+        T::read_section_into(fits_file, self, start, buf)
     }
 
     /**
