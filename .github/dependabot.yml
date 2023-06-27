@@ -28,3 +28,7 @@ updates:
   - dependency-name: bindgen
     versions:
     - 0.56.0
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: daily
