@@ -50,6 +50,9 @@
 
 #![allow(improper_ctypes)]
 
+mod aliases;
+pub use aliases::*;
+
 #[cfg(not(feature = "bindgen"))]
 mod sys {
 
