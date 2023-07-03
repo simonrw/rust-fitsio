@@ -4,33 +4,22 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    rust-overlay.url = "github:oxalica/rust-overlay";
-    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
-    rust-overlay.inputs.flake-utils.follows = "flake-utils";
   };
 
-  outputs = { nixpkgs, flake-utils, rust-overlay, ... }:
+  outputs = { nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        overlays = [
-          rust-overlay.overlays.default
-        ];
-        pkgs = import nixpkgs {
-          inherit overlays system;
-        };
+        pkgs = nixpkgs.legacyPackages.${system};
       in
       {
         devShells.default = pkgs.mkShell rec {
           buildInputs = [
-            pkgs.rust-bin.beta.latest.default
-            pkgs.clippy
-            pkgs.rustfmt
+            pkgs.rustup
             pkgs.libiconv
             pkgs.cfitsio
             pkgs.bzip2
             pkgs.pkg-config
             pkgs.cargo-release
-            pkgs.rust-analyzer
             # for bin/test
             pkgs.python3
           ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
