@@ -3,11 +3,11 @@
 
 import subprocess as sp
 import argparse
+import shlex
 import sys
 
 
 def collect_test_options(cls):
-
     tests = []
     for method in dir(cls):
         if method.startswith("_run_test_"):
@@ -30,11 +30,14 @@ class TestRunner:
         sp.check_call(["cargo", f"+{self.rust_version}", "--version"])
         print()
 
-    def run(self, test):
+    def run(self, test: str, extra_clippy_flags: str):
         method = getattr(self, f"_run_test_{test.replace('-', '_')}", None)
         if not method:
             raise NotImplementedError(test)
-        method()
+        if test in {"clippy", "all"}:
+            method(extra_clippy_flags)
+        else:
+            method()
 
     def _run_cargo(self, *args):
         cmd = ["cargo", f"+{self.rust_version}"] + list(args)
@@ -49,8 +52,8 @@ class TestRunner:
     def _run_test_workspace(self):
         self._run_cargo("test")
 
-    def _run_test_clippy(self):
-        self._run_cargo(
+    def _run_test_clippy(self, extra_clippy_flags: str):
+        args = [
             "clippy",
             "--",
             "-D",
@@ -58,17 +61,15 @@ class TestRunner:
             # specific allow of clippy lints
             "-A",
             "clippy::non-send-fields-in-send-ty",
-        )
+        ] + shlex.split(extra_clippy_flags)
+        print(args)
+        self._run_cargo(*args)
 
     def _run_test_full_example(self):
-        self._run_cargo(
-            "run", "--manifest-path", "fitsio/Cargo.toml", "--example", "full_example"
-        )
+        self._run_cargo("run", "--manifest-path", "fitsio/Cargo.toml", "--example", "full_example")
 
     def _run_test_array(self):
-        self._run_cargo(
-            "test", "--manifest-path", "fitsio/Cargo.toml", "--features", "array"
-        )
+        self._run_cargo("test", "--manifest-path", "fitsio/Cargo.toml", "--features", "array")
 
     def _run_test_fitsio_src(self):
         self._run_cargo(
@@ -100,14 +101,17 @@ class TestRunner:
             "--no-default-features",
         )
 
-    def _run_test_all(self):
+    def _run_test_all(self, extra_clippy_flags: str):
         for test_name in self._tests:
             if test_name == "all":
                 continue
 
             method_name = f"_run_test_{test_name.replace('-', '_')}"
             method = getattr(self, method_name)
-            method()
+            if test_name == "clippy":
+                method(extra_clippy_flags)
+            else:
+                method()
 
 
 if __name__ == "__main__":
@@ -125,8 +129,11 @@ if __name__ == "__main__":
         default="all",
         choices=TestRunner._tests,
     )
+    parser.add_argument(
+        "--extra-clippy-flags", required=False, default="", help="Extra flags to run to clippy command"
+    )
     args = parser.parse_args()
 
     runner = TestRunner(args.rust_version)
     runner.print_preamble()
-    runner.run(test=args.test)
+    runner.run(test=args.test, extra_clippy_flags=args.extra_clippy_flags)
