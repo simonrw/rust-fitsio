@@ -617,6 +617,7 @@ impl FromStr for ColumnDataDescription {
             'I' => ColumnDataType::Short,
             'K' => ColumnDataType::Long,
             'A' => ColumnDataType::String,
+            'L' => ColumnDataType::Bool,
             _ => panic!(
                 "Have not implemented str -> ColumnDataType for {}",
                 data_type_char
