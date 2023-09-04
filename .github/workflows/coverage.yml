@@ -15,7 +15,7 @@ jobs:
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install ubuntu dependencies
         run: |
