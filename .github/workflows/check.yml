@@ -18,7 +18,7 @@ jobs:
     name: ubuntu / ${{ matrix.msrv }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install ubuntu dependencies
         run: |
@@ -47,7 +47,7 @@ jobs:
     name: minimal versions check
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install ubuntu dependencies
         run: |
