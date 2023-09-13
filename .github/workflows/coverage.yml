@@ -29,7 +29,7 @@ jobs:
 
       - name: Run cargo-tarpaulin
         run: |
-          cargo +nightly tarpaulin --manifest-path fitsio/Cargo.toml --verbose --timeout 120 --out Lcov
+          cargo +nightly tarpaulin --manifest-path fitsio/Cargo.toml --verbose --timeout 120 --out lcov
 
       - name: Coveralls
         uses: coverallsapp/github-action@master

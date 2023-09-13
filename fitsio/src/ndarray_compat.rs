@@ -366,7 +366,7 @@ mod tests {
         let phdu = f.primary_hdu().unwrap();
 
         let data: ArrayD<f64> = phdu.read_image(&mut f).unwrap();
-        let dim = data.dim();
+        let _dim = data.dim();
         assert_eq!(data.ndim(), 3);
         assert_eq!(data.shape(), &[2, 3, 6]);
         assert_eq!(data[[1, 1, 0]], 24.0);
@@ -405,7 +405,7 @@ mod tests {
         let phdu = f.primary_hdu().unwrap();
 
         let data: ArrayD<f64> = phdu.read_image(&mut f).unwrap();
-        let dim = data.dim();
+        let _dim = data.dim();
         assert_eq!(data.ndim(), 4);
         assert_eq!(data.shape(), &[2, 3, 3, 2]);
         assert_eq!(data[[1, 1, 2, 1]], 29.0);
