@@ -6,6 +6,9 @@ on:
   workflow_dispatch: # allows manual triggering
   schedule:
     - cron: '5 4 * * 5' # runs weekly on Friday morning at 04:05
+  pull_request:
+    branches:
+      - main
 
 jobs:
   lockfile:
