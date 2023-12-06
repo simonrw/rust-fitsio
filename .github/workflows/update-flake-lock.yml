@@ -28,4 +28,5 @@ jobs:
             dependencies
             automated
           token: ${{ secrets.PIPELINE_TOKEN }}
+          base: main
 
