@@ -13,7 +13,6 @@ use crate::hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
 use crate::images::{ImageDescription, ImageType};
 use crate::longnam::*;
 use crate::stringutils::{self, status_to_string};
-use crate::sys::fitsfile;
 use crate::tables::{ColumnDataDescription, ConcreteColumnDescription};
 use std::ffi;
 use std::io::{self, Write};
