@@ -32,12 +32,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Removed
 
+* (`fitsio`) **BREAKING CHANGE** Removed the ability to read `i32` and `f32` header values. Instead, please use the `i64` and `f64` equivalents. This is because there is a bug in reading `i32` values in that they are read as "logical" i.e. 0 or 1. This led me to decide that we don't need to differentiate between `x32` and `x64` types for header values. See the [conversation here](https://github.com/simonrw/rust-fitsio/issues/167) [#170](https://github.com/simonrw/rust-fitsio/pull/170)
+
 ## [0.21.0]
 ### Added
 
 * The abillity to create a `FitsFile` struct from a `fitsio_sys::fitsfile` pointer [#195](https://github.com/simonrw/rust-fitsio/pull/195)
-* Support for boolean header card values
 * `fitsio-sys` (whichever feature is used) is exposed as `fitsio::sys` to make sure that only one crate that links to the system library exists [#195](https://github.com/simonrw/rust-fitsio/pull/174)
+* (`fitsio`) Support for boolean header card values
 
 ### Changed
 
@@ -48,6 +50,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 * Some more types are deriving `Eq` thanks to a clippy lint
 * Fixed broken tests on m1 macos [#174](https://github.com/simonrw/rust-fitsio/pull/174)
 * Minimum cfitsio version of 3.37 specified for compilation [#184](https://github.com/simonrw/rust-fitsio/pull/184)
+* (`fitsio`) Some more types are deriving `Eq` thanks to a clippy lint
+
+### Removed
 
 ## [0.20.0]
 ### Added
