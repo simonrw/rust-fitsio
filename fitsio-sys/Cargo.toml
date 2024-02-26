@@ -1,6 +1,6 @@
 [package]
 name = "fitsio-sys"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2018"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "FFI wrapper around cfitsio"
