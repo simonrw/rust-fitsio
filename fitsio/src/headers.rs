@@ -13,6 +13,7 @@ Trait applied to types which can be read from a FITS header
 
 This is currently:
 
+* bool
 * i32
 * i64
 * f32
@@ -50,7 +51,6 @@ macro_rules! reads_key_impl {
     };
 }
 
-reads_key_impl!(i32, fits_read_key_log);
 #[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 reads_key_impl!(i64, fits_read_key_lng);
 #[cfg(any(target_pointer_width = "32", target_os = "windows"))]
@@ -58,12 +58,25 @@ reads_key_impl!(i64, fits_read_key_lnglng);
 reads_key_impl!(f32, fits_read_key_flt);
 reads_key_impl!(f64, fits_read_key_dbl);
 
+// Special case reading i32 values, because cfitsio does not have a function for reading "short int"
+// keys, only "int" keys i.e. there is no cfitsio function that reads a 32 bit integer key from a
+// header.
+impl ReadsKey for i32 {
+    fn read_key(f: &mut FitsFile, name: &str) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let i64_value = i64::read_key(f, name)?;
+        Ok(i64_value as _)
+    }
+}
+
 impl ReadsKey for bool {
     fn read_key(f: &mut FitsFile, name: &str) -> Result<Self>
     where
         Self: Sized,
     {
-        let int_value = i32::read_key(f, name)?;
+        let int_value = i64::read_key(f, name)?;
         Ok(int_value > 0)
     }
 }
@@ -92,6 +105,15 @@ impl ReadsKey for String {
 }
 
 /// Writing a fits keyword
+/// This is currently limited to types:
+///
+/// * bool
+/// * i32
+/// * i64
+/// * f32
+/// * f64
+/// * String
+/// * &'_ str
 pub trait WritesKey {
     #[doc(hidden)]
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()>;
@@ -156,6 +178,23 @@ macro_rules! writes_key_impl_flt {
 
 writes_key_impl_flt!(f32, fits_write_key_flt);
 writes_key_impl_flt!(f64, fits_write_key_dbl);
+
+impl WritesKey for bool {
+    fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+        let c_name = ffi::CString::new(name)?;
+        let mut status = 0;
+        unsafe {
+            fits_write_key_log(
+                f.fptr.as_mut() as *mut _,
+                c_name.as_ptr(),
+                value as i32,
+                ptr::null_mut(),
+                &mut status,
+            );
+        }
+        check_status(status)
+    }
+}
 
 impl WritesKey for String {
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
@@ -256,11 +295,39 @@ mod tests {
 
     #[test]
     fn boolean_header_values() {
+        duplicate_test_file(|filename| {
+            // add some boolean headers
+            {
+                let mut f = FitsFile::edit(filename).unwrap();
+                let hdu = f.primary_hdu().unwrap();
+                hdu.write_key(&mut f, "TVAL", true).unwrap();
+                hdu.write_key(&mut f, "FVAL", false).unwrap();
+            }
+
+            // now assert the values read back the same
+            let mut f = FitsFile::open(filename).unwrap();
+            let hdu = f.primary_hdu().unwrap();
+
+            assert_eq!(hdu.read_key::<bool>(&mut f, "TVAL").unwrap(), true);
+            assert_eq!(hdu.read_key::<bool>(&mut f, "FVAL").unwrap(), false);
+        });
+    }
+
+    #[test]
+    fn different_types_have_same_value() {
+        // https://github.com/mindriot101/rust-fitsio/issues/167
+
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.primary_hdu().unwrap();
 
-        let res = dbg!(hdu.read_key::<bool>(&mut f, "SIMPLE").unwrap());
+        let float_val = dbg!(hdu.read_key::<f32>(&mut f, "INTTEST").unwrap());
+        let double_val = dbg!(hdu.read_key::<f64>(&mut f, "INTTEST").unwrap());
+        let int_val = dbg!(hdu.read_key::<i32>(&mut f, "INTTEST").unwrap());
+        let long_val = dbg!(hdu.read_key::<i64>(&mut f, "INTTEST").unwrap());
 
-        assert!(res);
+        assert_eq!(float_val, 42.0_f32);
+        assert_eq!(double_val, 42.0_f64);
+        assert_eq!(int_val, 42i32);
+        assert_eq!(long_val, 42i64);
     }
 }
