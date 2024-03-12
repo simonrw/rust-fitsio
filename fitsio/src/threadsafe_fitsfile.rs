@@ -34,6 +34,7 @@ impl FitsFile {
     [fits-file]: ../fitsfile/struct.FitsFile.html
      */
     pub fn threadsafe(self) -> ThreadsafeFitsFile {
+        #[allow(clippy::arc_with_non_send_sync)]
         ThreadsafeFitsFile(Arc::new(Mutex::new(self)))
     }
 }

@@ -17,7 +17,7 @@ jobs:
           - rust: beta
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install ubuntu dependencies
         run: |
@@ -49,7 +49,7 @@ jobs:
           - rust: beta
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -72,7 +72,7 @@ jobs:
       fail-fast: true
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -98,7 +98,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up msys2
         uses: msys2/setup-msys2@v2
