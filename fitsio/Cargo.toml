@@ -32,6 +32,8 @@ criterion = "0.5.1"
 fitsio-derive = { version = "0.2", path = "../fitsio-derive" }
 tempfile = "3.0.0"
 version-sync = "0.9.0"
+# transient dependency for ciborium
+serde = "1.0.178"
 
 [features]
 array = ["ndarray"]
