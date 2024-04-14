@@ -97,6 +97,37 @@ impl FitsHdu {
     }
 
     /**
+    Write a fits key to the current header with a comment
+
+    # Example
+
+    ```rust
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
+    # let tdir_path = tdir.path();
+    # let filename = tdir_path.join("test.fits");
+    # {
+    # let mut fptr = fitsio::FitsFile::create(filename).open()?;
+    fptr.primary_hdu()?.write_key_cmt(&mut fptr, "foo", 1i64, "FOO key")?;
+    assert_eq!(fptr.hdu(0)?.read_key::<i64>(&mut fptr, "foo")?, 1i64);
+    # Ok(())
+    # }
+    # }
+    ```
+    */
+    pub fn write_key_cmt<T: WritesKey>(
+        &self,
+        fits_file: &mut FitsFile,
+        name: &str,
+        value: T,
+        comment: &str,
+    ) -> Result<()> {
+        fits_file.make_current(self)?;
+        fits_check_readwrite!(fits_file);
+        T::write_key_cmt(fits_file, name, value, comment)
+    }
+
+    /**
     Read pixels from an image between a start index and end index
 
     The range is exclusive of the upper value

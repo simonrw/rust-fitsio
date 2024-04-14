@@ -95,6 +95,8 @@ impl ReadsKey for String {
 pub trait WritesKey {
     #[doc(hidden)]
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()>;
+    #[doc(hidden)]
+    fn write_key_cmt(f: &mut FitsFile, name: &str, value: Self, comment: &str) -> Result<()>;
 }
 
 macro_rules! writes_key_impl_int {
@@ -113,6 +115,31 @@ macro_rules! writes_key_impl_int {
                         c_name.as_ptr(),
                         &value as *const $t as *mut c_void,
                         ptr::null_mut(),
+                        &mut status,
+                    );
+                }
+                check_status(status)
+            }
+
+            fn write_key_cmt(
+                f: &mut FitsFile,
+                name: &str,
+                value: Self,
+                comment: &str,
+            ) -> Result<()> {
+                let c_name = ffi::CString::new(name)?;
+                let c_cmt = ffi::CString::new(comment)?;
+                let mut status = 0;
+
+                let datatype = u8::from($datatype);
+
+                unsafe {
+                    fits_write_key(
+                        f.fptr.as_mut() as *mut _,
+                        datatype as _,
+                        c_name.as_ptr(),
+                        &value as *const $t as *mut c_void,
+                        c_cmt.as_ptr(),
                         &mut status,
                     );
                 }
@@ -150,6 +177,29 @@ macro_rules! writes_key_impl_flt {
                 }
                 check_status(status)
             }
+
+            fn write_key_cmt(
+                f: &mut FitsFile,
+                name: &str,
+                value: Self,
+                comment: &str,
+            ) -> Result<()> {
+                let c_name = ffi::CString::new(name)?;
+                let c_cmt = ffi::CString::new(comment)?;
+                let mut status = 0;
+
+                unsafe {
+                    $func(
+                        f.fptr.as_mut() as *mut _,
+                        c_name.as_ptr(),
+                        value,
+                        9,
+                        c_cmt.as_ptr(),
+                        &mut status,
+                    );
+                }
+                check_status(status)
+            }
         }
     };
 }
@@ -160,6 +210,9 @@ writes_key_impl_flt!(f64, fits_write_key_dbl);
 impl WritesKey for String {
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
         WritesKey::write_key(f, name, value.as_str())
+    }
+    fn write_key_cmt(f: &mut FitsFile, name: &str, value: Self, comment: &str) -> Result<()> {
+        WritesKey::write_key_cmt(f, name, value.as_str(), comment)
     }
 }
 
@@ -175,6 +228,25 @@ impl<'a> WritesKey for &'a str {
                 c_name.as_ptr(),
                 c_value.as_ptr(),
                 ptr::null_mut(),
+                &mut status,
+            );
+        }
+
+        check_status(status)
+    }
+
+    fn write_key_cmt(f: &mut FitsFile, name: &str, value: Self, comment: &str) -> Result<()> {
+        let c_name = ffi::CString::new(name)?;
+        let c_value = ffi::CString::new(value)?;
+        let c_cmt = ffi::CString::new(comment)?;
+        let mut status = 0;
+
+        unsafe {
+            fits_write_key_str(
+                f.fptr.as_mut() as *mut _,
+                c_name.as_ptr(),
+                c_value.as_ptr(),
+                c_cmt.as_ptr(),
                 &mut status,
             );
         }
