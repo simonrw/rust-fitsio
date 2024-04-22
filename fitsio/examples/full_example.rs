@@ -49,8 +49,8 @@ fn run() -> Result<(), Box<dyn Error>> {
         /* Now we add the header keys */
         hdu.write_key(&mut fitsfile, "PROJECT", "My First Astronomy Project")?;
 
-        /* Now the exposure time */
-        hdu.write_key(&mut fitsfile, "EXPTIME", 15.2f32)?;
+        /* Now the exposure time, with a comment */
+        hdu.write_key_cmt(&mut fitsfile, "EXPTIME", 15.2f32, "Exposure time [s]")?;
 
         /* And finally the image id */
         hdu.write_key(&mut fitsfile, "IMAGE_ID", 20180101010005i64)?;

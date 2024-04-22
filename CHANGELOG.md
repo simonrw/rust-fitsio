@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [Unreleased]
 ### Added
+* `fitsio`: A `write_key_cmt` method to complement the `write_key` method, to add optional comments to the FITS HDU keys.
 ### Changed
 ### Removed
 
