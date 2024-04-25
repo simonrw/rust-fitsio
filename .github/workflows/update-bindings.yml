@@ -35,7 +35,7 @@ jobs:
           make -C fitsio-sys all
 
       - name: Create the pull request
-        uses: peter-evans/create-pull-request@v6.0.4
+        uses: peter-evans/create-pull-request@v6.0.5
         with:
           branch: update-bindings
           delete-branch: true
