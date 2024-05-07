@@ -39,6 +39,7 @@ serde = "1.0.178"
 array = ["ndarray"]
 bindgen = ["fitsio-sys/with-bindgen"]
 fitsio-src = ["fitsio-sys/fitsio-src"]
+clippy = []
 
 [[bench]]
 harness = false
