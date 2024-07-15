@@ -123,11 +123,11 @@ macro_rules! writes_key_impl_int {
 }
 
 writes_key_impl_int!(i8, DataType::TSBYTE);
-writes_key_impl_int!(i16, DataType::TINT);
+writes_key_impl_int!(i16, DataType::TSHORT);
 writes_key_impl_int!(i32, DataType::TINT);
 writes_key_impl_int!(i64, DataType::TLONG);
 writes_key_impl_int!(u8, DataType::TBYTE);
-writes_key_impl_int!(u16, DataType::TUINT);
+writes_key_impl_int!(u16, DataType::TUSHORT);
 writes_key_impl_int!(u32, DataType::TUINT);
 writes_key_impl_int!(u64, DataType::TULONG);
 
