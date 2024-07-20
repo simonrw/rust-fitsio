@@ -26,6 +26,7 @@ Before submitting a completed PR, make sure the following items have been addres
 * **format the code** - make sure the code has been formatted by `rustfmt` before submitting. I have a [git `pre-push` hook](https://gist.github.com/zofrex/4a5084c49e4aadd0a3fa0edda14b1fa8) which handles this for me.
 * **update the features tracking issue** - if relevant, update the [features tracking issue][features-tracking-issue]
 * **update the full example** - if new features have been added, or changes made, update the `full_example.rs` example
+* **satisfy clippy** - our Github CI will apply `cargo clippy` with warnings treated as errors.
 
 [features-tracking-issue]: https://github.com/simonrw/rust-fitsio/issues/15
 
