@@ -119,6 +119,37 @@ macro_rules! writes_key_impl_int {
                 check_status(status)
             }
         }
+
+        impl WritesKey for ($t, &str) {
+            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+                let (value, comment) = value;
+                let c_name = ffi::CString::new(name)?;
+                let c_comment = ffi::CString::new(comment)?;
+                let mut status = 0;
+
+                let datatype = u8::from($datatype);
+
+                unsafe {
+                    fits_write_key(
+                        f.fptr.as_mut() as *mut _,
+                        datatype as _,
+                        c_name.as_ptr(),
+                        &value as *const $t as *mut c_void,
+                        c_comment.as_ptr(),
+                        &mut status,
+                    );
+                }
+                check_status(status)
+            }
+        }
+
+        impl WritesKey for ($t, String) {
+            #[inline(always)]
+            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+                let (value, comment) = value;
+                WritesKey::write_key(f, name, (value, comment.as_str()))
+            }
+        }
     };
 }
 
@@ -151,6 +182,35 @@ macro_rules! writes_key_impl_flt {
                 check_status(status)
             }
         }
+
+        impl WritesKey for ($t, &str) {
+            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+                let (value, comment) = value;
+                let c_name = ffi::CString::new(name)?;
+                let c_comment = ffi::CString::new(comment)?;
+                let mut status = 0;
+
+                unsafe {
+                    $func(
+                        f.fptr.as_mut() as *mut _,
+                        c_name.as_ptr(),
+                        value,
+                        9,
+                        c_comment.as_ptr(),
+                        &mut status,
+                    );
+                }
+                check_status(status)
+            }
+        }
+
+        impl WritesKey for ($t, String) {
+            #[inline(always)]
+            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+                let (value, comment) = value;
+                WritesKey::write_key(f, name, (value, comment.as_str()))
+            }
+        }
     };
 }
 
@@ -175,6 +235,43 @@ impl<'a> WritesKey for &'a str {
                 c_name.as_ptr(),
                 c_value.as_ptr(),
                 ptr::null_mut(),
+                &mut status,
+            );
+        }
+
+        check_status(status)
+    }
+}
+
+impl WritesKey for (String, &str) {
+    fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+        let (value, comment) = value;
+        WritesKey::write_key(f, name, (value.as_str(), comment))
+    }
+}
+
+impl WritesKey for (String, String) {
+    #[inline(always)]
+    fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+        let (value, comment) = value;
+        WritesKey::write_key(f, name, (value.as_str(), comment.as_str()))
+    }
+}
+
+impl<'a> WritesKey for (&'a str, &'a str) {
+    fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+        let (value, comment) = value;
+        let c_name = ffi::CString::new(name)?;
+        let c_value = ffi::CString::new(value)?;
+        let c_comment = ffi::CString::new(comment)?;
+        let mut status = 0;
+
+        unsafe {
+            fits_write_key_str(
+                f.fptr.as_mut() as *mut _,
+                c_name.as_ptr(),
+                c_value.as_ptr(),
+                c_comment.as_ptr(),
                 &mut status,
             );
         }
@@ -223,6 +320,34 @@ mod tests {
                 f.hdu(0)
                     .unwrap()
                     .write_key(&mut f, "BAR", "baz".to_string())
+                    .unwrap();
+            }
+
+            FitsFile::open(filename)
+                .map(|mut f| {
+                    assert_eq!(f.hdu(0).unwrap().read_key::<i64>(&mut f, "foo").unwrap(), 1);
+                    assert_eq!(
+                        f.hdu(0).unwrap().read_key::<String>(&mut f, "bar").unwrap(),
+                        "baz".to_string()
+                    );
+                })
+                .unwrap();
+        });
+    }
+
+    #[test]
+    fn test_writing_with_comments() {
+        with_temp_file(|filename| {
+            // Scope ensures file is closed properly
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                f.hdu(0)
+                    .unwrap()
+                    .write_key(&mut f, "FOO", (1i64, "Foo value"))
+                    .unwrap();
+                f.hdu(0)
+                    .unwrap()
+                    .write_key(&mut f, "BAR", ("baz".to_string(), "baz value"))
                     .unwrap();
             }
 
