@@ -375,7 +375,7 @@ Header keys are read through the [`read_key`][fits-hdu-read-key] function,
 and is generic over types that implement the [`ReadsKey`][reads-key] trait:
 
 ```rust
-# fn try_main() -> Result<(), Box<std::error::Error>> {
+# fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = fitsio::FitsFile::open(filename)?;
 # {
