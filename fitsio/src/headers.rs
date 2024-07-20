@@ -59,7 +59,7 @@ where
         self.comment.as_ref()
     }
 
-    /// Map the _value_ of a `HeaderValue` to another form
+    /// Map the _value_ of a [`HeaderValue`] to another form
     pub fn map<U, F>(self, f: F) -> HeaderValue<U>
     where
         F: FnOnce(T) -> U,
@@ -67,6 +67,20 @@ where
         HeaderValue {
             value: f(self.value),
             comment: self.comment,
+        }
+    }
+
+    /// Monadic "bind" for [`HeaderValue`]
+    pub fn and_then<U, F>(self, f: F) -> Result<HeaderValue<U>>
+    where
+        F: FnOnce(T) -> Result<U>,
+    {
+        match f(self.value) {
+            Ok(value) => Ok(HeaderValue {
+                value,
+                comment: self.comment,
+            }),
+            Err(e) => Err(e),
         }
     }
 }
