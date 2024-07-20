@@ -7,7 +7,10 @@ use std::ffi;
 use std::fmt::Debug;
 use std::ptr;
 
+// FLEN_VALUE
 const MAX_VALUE_LENGTH: usize = 71;
+// FLEN_COMMENT
+const MAX_COMMENT_LENGTH: usize = 73;
 
 /// Struct representing a FITS header value
 pub struct HeaderValue<T> {
@@ -93,20 +96,27 @@ macro_rules! reads_key_impl {
                 let c_name = ffi::CString::new(name)?;
                 let mut status = 0;
                 let mut value: Self = Self::default();
+                let mut comment: Vec<c_char> = vec![0; MAX_COMMENT_LENGTH];
 
                 unsafe {
                     $func(
                         f.fptr.as_mut() as *mut _,
                         c_name.as_ptr(),
                         &mut value,
-                        ptr::null_mut(),
+                        comment.as_mut_ptr(),
                         &mut status,
                     );
                 }
 
+                let comment: Vec<u8> = comment
+                    .iter()
+                    .map(|&x| x as u8)
+                    .filter(|&x| x != 0)
+                    .collect();
+
                 check_status(status).map(|_| HeaderValue {
                     value,
-                    comment: None,
+                    comment: String::from_utf8(comment).ok(),
                 })
             }
         }
@@ -135,22 +145,28 @@ impl ReadsKey for String {
         let c_name = ffi::CString::new(name)?;
         let mut status = 0;
         let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
+        let mut comment: Vec<c_char> = vec![0; MAX_COMMENT_LENGTH];
 
         unsafe {
             fits_read_key_str(
                 f.fptr.as_mut() as *mut _,
                 c_name.as_ptr(),
                 value.as_mut_ptr(),
-                ptr::null_mut(),
+                comment.as_mut_ptr(),
                 &mut status,
             );
         }
 
         check_status(status).and_then(|_| {
             let value: Vec<u8> = value.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
+            let comment: Vec<u8> = comment
+                .iter()
+                .map(|&x| x as u8)
+                .filter(|&x| x != 0)
+                .collect();
             Ok(HeaderValue {
                 value: String::from_utf8(value)?,
-                comment: None,
+                comment: String::from_utf8(comment).ok(),
             })
         })
     }
@@ -429,22 +445,10 @@ mod tests {
 
             FitsFile::open(filename)
                 .map(|mut f| {
-                    assert_eq!(
-                        f.hdu(0)
-                            .unwrap()
-                            .read_key::<i64>(&mut f, "foo")
-                            .unwrap()
-                            .value,
-                        1
-                    );
-                    assert_eq!(
-                        f.hdu(0)
-                            .unwrap()
-                            .read_key::<String>(&mut f, "bar")
-                            .unwrap()
-                            .value,
-                        "baz".to_string()
-                    );
+                    let foo_header_value =
+                        f.hdu(0).unwrap().read_key::<i64>(&mut f, "foo").unwrap();
+                    assert_eq!(foo_header_value.value, 1);
+                    assert_eq!(foo_header_value.comment, Some("Foo value".to_string()));
                 })
                 .unwrap();
         });
