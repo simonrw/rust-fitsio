@@ -122,16 +122,20 @@ macro_rules! reads_key_impl {
                     );
                 }
 
-                let comment: Vec<u8> = comment
-                    .iter()
-                    .map(|&x| x as u8)
-                    .filter(|&x| x != 0)
-                    .collect();
+                let comment = {
+                    let comment: Vec<u8> = comment
+                        .iter()
+                        .map(|&x| x as u8)
+                        .filter(|&x| x != 0)
+                        .collect();
+                    if comment.is_empty() {
+                        None
+                    } else {
+                        String::from_utf8(comment).ok()
+                    }
+                };
 
-                check_status(status).map(|_| HeaderValue {
-                    value,
-                    comment: String::from_utf8(comment).ok(),
-                })
+                check_status(status).map(|_| HeaderValue { value, comment })
             }
         }
     };
@@ -173,14 +177,21 @@ impl ReadsKey for String {
 
         check_status(status).and_then(|_| {
             let value: Vec<u8> = value.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
-            let comment: Vec<u8> = comment
-                .iter()
-                .map(|&x| x as u8)
-                .filter(|&x| x != 0)
-                .collect();
+            let comment = {
+                let comment: Vec<u8> = comment
+                    .iter()
+                    .map(|&x| x as u8)
+                    .filter(|&x| x != 0)
+                    .collect();
+                if comment.is_empty() {
+                    None
+                } else {
+                    String::from_utf8(comment).ok()
+                }
+            };
             Ok(HeaderValue {
                 value: String::from_utf8(value)?,
-                comment: String::from_utf8(comment).ok(),
+                comment,
             })
         })
     }
@@ -463,6 +474,29 @@ mod tests {
                         f.hdu(0).unwrap().read_key::<i64>(&mut f, "foo").unwrap();
                     assert_eq!(foo_header_value.value, 1);
                     assert_eq!(foo_header_value.comment, Some("Foo value".to_string()));
+                })
+                .unwrap();
+        });
+    }
+
+    #[test]
+    fn test_writing_reading_empty_comment() {
+        with_temp_file(|filename| {
+            // Scope ensures file is closed properly
+            {
+                let mut f = FitsFile::create(filename).open().unwrap();
+                f.hdu(0)
+                    .unwrap()
+                    .write_key(&mut f, "FOO", (1i64, ""))
+                    .unwrap();
+            }
+
+            FitsFile::open(filename)
+                .map(|mut f| {
+                    let foo_header_value =
+                        f.hdu(0).unwrap().read_key::<i64>(&mut f, "foo").unwrap();
+                    assert_eq!(foo_header_value.value, 1);
+                    assert!(foo_header_value.comment.is_none());
                 })
                 .unwrap();
         });
