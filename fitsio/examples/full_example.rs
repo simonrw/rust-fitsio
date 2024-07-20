@@ -46,8 +46,12 @@ fn run() -> Result<(), Box<dyn Error>> {
         /* First we get the primary HDU */
         let hdu = fitsfile.primary_hdu()?;
 
-        /* Now we add the header keys */
-        hdu.write_key(&mut fitsfile, "PROJECT", "My First Astronomy Project")?;
+        /* Now we add the header keys, including a comment */
+        hdu.write_key(
+            &mut fitsfile,
+            "PROJECT",
+            ("My First Astronomy Project", "Project name"),
+        )?;
 
         /* Now the exposure time */
         hdu.write_key(&mut fitsfile, "EXPTIME", 15.2f32)?;

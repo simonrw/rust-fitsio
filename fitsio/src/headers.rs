@@ -4,9 +4,69 @@ use crate::fitsfile::FitsFile;
 use crate::longnam::*;
 use crate::types::DataType;
 use std::ffi;
+use std::fmt::Debug;
 use std::ptr;
 
 const MAX_VALUE_LENGTH: usize = 71;
+
+/// Struct representing a FITS header value
+pub struct HeaderValue<T> {
+    /// Value of the header card
+    pub value: T,
+
+    /// Optional comment of the header card
+    pub comment: Option<String>,
+}
+
+// Allow printing of `HeaderValue`s
+impl<T> std::fmt::Debug for HeaderValue<T>
+where
+    T: Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HeaderValue")
+            .field("value", &self.value)
+            .field("comment", &self.comment)
+            .finish()
+    }
+}
+
+// Allow comparing of `HeaderValue`'s where the `value` is equatable
+// so that e.g. `HeaderValue<f64>` can be compared to `f64`
+impl<T> PartialEq<T> for HeaderValue<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &T) -> bool {
+        self.value == *other
+    }
+}
+
+impl<T> HeaderValue<T>
+where
+    T: ReadsKey,
+{
+    /// Read the value from a header value
+    pub fn value(&self) -> &T {
+        &self.value
+    }
+
+    /// Read the comment for a header value, if present
+    pub fn comment(&self) -> Option<&String> {
+        self.comment.as_ref()
+    }
+
+    /// Map the _value_ of a `HeaderValue` to another form
+    pub fn map<U, F>(self, f: F) -> HeaderValue<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        HeaderValue {
+            value: f(self.value),
+            comment: self.comment,
+        }
+    }
+}
 
 /**
 Trait applied to types which can be read from a FITS header
@@ -21,7 +81,7 @@ This is currently:
 * */
 pub trait ReadsKey {
     #[doc(hidden)]
-    fn read_key(f: &mut FitsFile, name: &str) -> Result<Self>
+    fn read_key(f: &mut FitsFile, name: &str) -> Result<HeaderValue<Self>>
     where
         Self: Sized;
 }
@@ -29,7 +89,7 @@ pub trait ReadsKey {
 macro_rules! reads_key_impl {
     ($t:ty, $func:ident) => {
         impl ReadsKey for $t {
-            fn read_key(f: &mut FitsFile, name: &str) -> Result<Self> {
+            fn read_key(f: &mut FitsFile, name: &str) -> Result<HeaderValue<Self>> {
                 let c_name = ffi::CString::new(name)?;
                 let mut status = 0;
                 let mut value: Self = Self::default();
@@ -44,7 +104,10 @@ macro_rules! reads_key_impl {
                     );
                 }
 
-                check_status(status).map(|_| value)
+                check_status(status).map(|_| HeaderValue {
+                    value,
+                    comment: None,
+                })
             }
         }
     };
@@ -59,17 +122,16 @@ reads_key_impl!(f32, fits_read_key_flt);
 reads_key_impl!(f64, fits_read_key_dbl);
 
 impl ReadsKey for bool {
-    fn read_key(f: &mut FitsFile, name: &str) -> Result<Self>
+    fn read_key(f: &mut FitsFile, name: &str) -> Result<HeaderValue<Self>>
     where
         Self: Sized,
     {
-        let int_value = i32::read_key(f, name)?;
-        Ok(int_value > 0)
+        Ok(i32::read_key(f, name)?.map(|v| v > 0))
     }
 }
 
 impl ReadsKey for String {
-    fn read_key(f: &mut FitsFile, name: &str) -> Result<Self> {
+    fn read_key(f: &mut FitsFile, name: &str) -> Result<HeaderValue<Self>> {
         let c_name = ffi::CString::new(name)?;
         let mut status = 0;
         let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
@@ -86,7 +148,10 @@ impl ReadsKey for String {
 
         check_status(status).and_then(|_| {
             let value: Vec<u8> = value.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
-            Ok(String::from_utf8(value)?)
+            Ok(HeaderValue {
+                value: String::from_utf8(value)?,
+                comment: None,
+            })
         })
     }
 }
@@ -290,12 +355,12 @@ mod tests {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.hdu(0).unwrap();
         match hdu.read_key::<i64>(&mut f, "INTTEST") {
-            Ok(value) => assert_eq!(value, 42),
+            Ok(HeaderValue { value, .. }) => assert_eq!(value, 42),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
 
         match hdu.read_key::<f64>(&mut f, "DBLTEST") {
-            Ok(value) => assert!(
+            Ok(HeaderValue { value, .. }) => assert!(
                 floats_close_f64(value, 0.09375),
                 "{:?} != {:?}",
                 value,
@@ -305,7 +370,7 @@ mod tests {
         }
 
         match hdu.read_key::<String>(&mut f, "TEST") {
-            Ok(value) => assert_eq!(value, "value"),
+            Ok(HeaderValue { value, .. }) => assert_eq!(value, "value"),
             Err(e) => panic!("Error reading key: {:?}", e),
         }
     }
@@ -325,9 +390,20 @@ mod tests {
 
             FitsFile::open(filename)
                 .map(|mut f| {
-                    assert_eq!(f.hdu(0).unwrap().read_key::<i64>(&mut f, "foo").unwrap(), 1);
                     assert_eq!(
-                        f.hdu(0).unwrap().read_key::<String>(&mut f, "bar").unwrap(),
+                        f.hdu(0)
+                            .unwrap()
+                            .read_key::<i64>(&mut f, "foo")
+                            .unwrap()
+                            .value,
+                        1
+                    );
+                    assert_eq!(
+                        f.hdu(0)
+                            .unwrap()
+                            .read_key::<String>(&mut f, "bar")
+                            .unwrap()
+                            .value,
                         "baz".to_string()
                     );
                 })
@@ -353,9 +429,20 @@ mod tests {
 
             FitsFile::open(filename)
                 .map(|mut f| {
-                    assert_eq!(f.hdu(0).unwrap().read_key::<i64>(&mut f, "foo").unwrap(), 1);
                     assert_eq!(
-                        f.hdu(0).unwrap().read_key::<String>(&mut f, "bar").unwrap(),
+                        f.hdu(0)
+                            .unwrap()
+                            .read_key::<i64>(&mut f, "foo")
+                            .unwrap()
+                            .value,
+                        1
+                    );
+                    assert_eq!(
+                        f.hdu(0)
+                            .unwrap()
+                            .read_key::<String>(&mut f, "bar")
+                            .unwrap()
+                            .value,
                         "baz".to_string()
                     );
                 })
@@ -384,8 +471,23 @@ mod tests {
         let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
         let hdu = f.primary_hdu().unwrap();
 
-        let res = dbg!(hdu.read_key::<bool>(&mut f, "SIMPLE").unwrap());
+        let res = dbg!(hdu.read_key::<bool>(&mut f, "SIMPLE").unwrap().value);
 
         assert!(res);
+    }
+}
+
+#[cfg(test)]
+mod headervalue_tests {
+    use super::HeaderValue;
+
+    #[test]
+    fn equate_different_types() {
+        let v = HeaderValue {
+            value: 1i64,
+            comment: Some("".to_string()),
+        };
+
+        assert_eq!(v, 1i64);
     }
 }

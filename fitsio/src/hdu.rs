@@ -3,7 +3,7 @@
 use crate::errors::{check_status, Result};
 use crate::fitsfile::CaseSensitivity;
 use crate::fitsfile::FitsFile;
-use crate::headers::{ReadsKey, WritesKey};
+use crate::headers::{HeaderValue, ReadsKey, WritesKey};
 use crate::images::{ImageType, ReadImage, WriteImage};
 use crate::longnam::*;
 use crate::tables::{
@@ -41,6 +41,7 @@ impl FitsHdu {
     pub fn name(&self, fits_file: &mut FitsFile) -> Result<String> {
         let extname = self
             .read_key(fits_file, "EXTNAME")
+            .map(|hv| hv.value)
             .unwrap_or_else(|_| "".to_string());
         Ok(extname)
     }
@@ -56,12 +57,16 @@ impl FitsHdu {
     # let mut fptr = fitsio::FitsFile::open(filename)?;
     # let hdu = fptr.primary_hdu()?;
     # {
-    let int_value: i64 = hdu.read_key(&mut fptr, "INTTEST")?;
+    let int_value: i64 = hdu.read_key(&mut fptr, "INTTEST")?.value;
     # }
     # Ok(())
     # }
     */
-    pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
+    pub fn read_key<T: ReadsKey>(
+        &self,
+        fits_file: &mut FitsFile,
+        name: &str,
+    ) -> Result<HeaderValue<T>> {
         fits_file.make_current(self)?;
         T::read_key(fits_file, name)
     }
