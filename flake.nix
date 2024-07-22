@@ -20,6 +20,8 @@
             pkgs.bzip2
             pkgs.pkg-config
             pkgs.cargo-release
+            pkgs.cargo-nextest
+            pkgs.bacon
             # for bin/test
             pkgs.python3
           ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
