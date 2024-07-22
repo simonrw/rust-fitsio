@@ -45,6 +45,19 @@ where
     }
 }
 
+/// Allow `HeaderValue` to be clnned
+impl<T> Clone for HeaderValue<T>
+where
+    T: Clone,
+{
+    fn clone(&self) -> Self {
+        HeaderValue {
+            value: self.value.clone(),
+            comment: self.comment.clone(),
+        }
+    }
+}
+
 impl<T> HeaderValue<T>
 where
     T: ReadsKey,
