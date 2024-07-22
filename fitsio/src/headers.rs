@@ -49,16 +49,6 @@ impl<T> HeaderValue<T>
 where
     T: ReadsKey,
 {
-    /// Read the value from a header value
-    pub fn value(&self) -> &T {
-        &self.value
-    }
-
-    /// Read the comment for a header value, if present
-    pub fn comment(&self) -> Option<&String> {
-        self.comment.as_ref()
-    }
-
     /// Map the _value_ of a [`HeaderValue`] to another form
     pub fn map<U, F>(self, f: F) -> HeaderValue<U>
     where
