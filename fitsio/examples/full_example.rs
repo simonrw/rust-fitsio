@@ -120,7 +120,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let phdu = fitsfile.primary_hdu()?;
 
     /* Read some information from the header. Start with the project */
-    let project_value = phdu.read_key::<String>(&mut fitsfile, "PROJECT")?;
+    let project_value = phdu.read_key::<HeaderValue<String>>(&mut fitsfile, "PROJECT")?;
 
     /* `project_value` is a `HeaderValue` type, which has accessors for the value itself, as well
      * as the comment */
@@ -134,7 +134,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let HeaderValue {
         value: _unused_value,
         comment: _unused_comment,
-    } = phdu.read_key::<String>(&mut fitsfile, "PROJECT")?;
+    } = phdu.read_key::<HeaderValue<String>>(&mut fitsfile, "PROJECT")?;
 
     /* Let's say we have a region around a star that we want to extract. The star is at (25, 25,
      * 1-indexed) and we want to extract a 5x5 box around it. This means we want to read rows 19 to

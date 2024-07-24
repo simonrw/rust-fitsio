@@ -1076,7 +1076,7 @@ mod test {
 
                     // Ensure the empty primary has been written
                     let hdu = f.hdu(0).unwrap();
-                    let naxis: i64 = hdu.read_key(&mut f, "NAXIS").unwrap().value;
+                    let naxis: i64 = hdu.read_key(&mut f, "NAXIS").unwrap();
                     assert_eq!(naxis, 0);
                 })
                 .unwrap();
@@ -1396,7 +1396,7 @@ mod test {
         let hdu = f.current_hdu().unwrap();
 
         assert_eq!(
-            hdu.read_key::<String>(&mut f, "EXTNAME").unwrap().value,
+            hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
             "TESTEXT".to_string()
         );
     }
@@ -1438,7 +1438,7 @@ mod test {
                 .create_image("foo".to_string(), &image_description)
                 .unwrap();
             assert_eq!(
-                hdu.read_key::<String>(&mut f, "EXTNAME").unwrap().value,
+                hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
                 "foo".to_string()
             );
         });
@@ -1456,7 +1456,7 @@ mod test {
                 .create_table("foo".to_string(), &table_description)
                 .unwrap();
             assert_eq!(
-                hdu.read_key::<String>(&mut f, "EXTNAME").unwrap().value,
+                hdu.read_key::<String>(&mut f, "EXTNAME").unwrap(),
                 "foo".to_string()
             );
         });

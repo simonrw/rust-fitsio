@@ -379,7 +379,7 @@ and is generic over types that implement the [`ReadsKey`][reads-key] trait:
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = fitsio::FitsFile::open(filename)?;
 # {
-let int_value: i64 = fptr.hdu(0)?.read_key(&mut fptr, "INTTEST")?.value;
+let int_value: i64 = fptr.hdu(0)?.read_key(&mut fptr, "INTTEST")?;
 # }
 
 // Alternatively
@@ -398,14 +398,14 @@ Header cards can be written through the method
 `WritesKey`][writes-key] trait for supported data types.
 
 ```rust
-# fn try_main() -> Result<(), Box<std::error::Error>> {
+# fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
 # {
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
 fptr.hdu(0)?.write_key(&mut fptr, "foo", 1i64)?;
-assert_eq!(fptr.hdu(0)?.read_key::<i64>(&mut fptr, "foo")?.value, 1i64);
+assert_eq!(fptr.hdu(0)?.read_key::<i64>(&mut fptr, "foo")?, 1i64);
 # Ok(())
 # }
 # }
