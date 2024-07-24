@@ -122,22 +122,8 @@ macro_rules! reads_key_impl {
     ($t:ty, $func:ident) => {
         impl ReadsKey for $t {
             fn read_key(f: &mut FitsFile, name: &str) -> Result<Self> {
-                // TODO: use HeaderValue<Self> here
-                let c_name = ffi::CString::new(name)?;
-                let mut status = 0;
-                let mut value: Self = Default::default();
-
-                unsafe {
-                    $func(
-                        f.fptr.as_mut() as *mut _,
-                        c_name.as_ptr(),
-                        &mut value,
-                        ptr::null_mut(),
-                        &mut status,
-                    );
-                }
-
-                check_status(status).map(|_| value)
+                let hv: HeaderValue<$t> = ReadsKey::read_key(f, name)?;
+                Ok(hv.value)
             }
         }
         impl ReadsKey for HeaderValue<$t>
@@ -212,24 +198,8 @@ impl ReadsKey for HeaderValue<bool> {
 
 impl ReadsKey for String {
     fn read_key(f: &mut FitsFile, name: &str) -> Result<Self> {
-        let c_name = ffi::CString::new(name)?;
-        let mut status = 0;
-        let mut value: Vec<c_char> = vec![0; MAX_VALUE_LENGTH];
-
-        unsafe {
-            fits_read_key_str(
-                f.fptr.as_mut() as *mut _,
-                c_name.as_ptr(),
-                value.as_mut_ptr(),
-                ptr::null_mut(),
-                &mut status,
-            );
-        }
-
-        check_status(status).and_then(|_| {
-            let value: Vec<u8> = value.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
-            String::from_utf8(value).map_err(From::from)
-        })
+        let hv: HeaderValue<String> = ReadsKey::read_key(f, name)?;
+        Ok(hv.value)
     }
 }
 
