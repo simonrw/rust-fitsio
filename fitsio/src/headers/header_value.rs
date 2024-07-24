@@ -1,7 +1,6 @@
 //! Header values (values + comemnts)
 //!
 
-use crate::errors::Result;
 use std::fmt::Debug;
 
 use super::ReadsKey;
@@ -40,6 +39,18 @@ where
 }
 
 /// Allow `HeaderValue` to be clnned
+///
+/// ```rust
+/// # use fitsio::headers::HeaderValue;
+/// let mut hv = HeaderValue {
+///   value: 1u16,
+///   comment: None,
+/// };
+/// let hv2 = hv.clone();
+///
+/// hv.value = 10;
+/// assert_eq!(hv2.value, 1);
+/// ```
 impl<T> Clone for HeaderValue<T>
 where
     T: Clone,
@@ -52,6 +63,13 @@ where
     }
 }
 
+/// Default value of `HeaderValue<T>`
+///
+/// ```rust
+/// # use fitsio::headers::HeaderValue;
+/// let hv = HeaderValue::<i32>::default();
+/// assert_eq!(hv.value, 0);
+/// ```
 impl<T> Default for HeaderValue<T>
 where
     T: Default,
@@ -69,6 +87,12 @@ where
     T: ReadsKey,
 {
     /// Map the _value_ of a [`HeaderValue`] to another form
+    /// ```rust
+    /// # use fitsio::headers::HeaderValue;
+    /// let hv = HeaderValue { value: 1, comment: None };
+    /// let hv2 = hv.map(|value| value * 2);
+    /// assert_eq!(hv2.value, 2);
+    /// ```
     pub fn map<U, F>(self, f: F) -> HeaderValue<U>
     where
         F: FnOnce(T) -> U,
@@ -80,16 +104,20 @@ where
     }
 
     /// Monadic "bind" for [`HeaderValue`]
-    pub fn and_then<U, F>(self, f: F) -> Result<HeaderValue<U>>
+    /// ```rust
+    /// # use fitsio::headers::HeaderValue;
+    /// let hv = HeaderValue { value: 1, comment: None };
+    /// let hv2 = hv.and_then(|value| HeaderValue {
+    ///     value: value * 2,
+    ///     comment: Some("ok".to_string()),
+    /// });
+    /// assert_eq!(hv2.value, 2);
+    /// assert_eq!(hv2.comment, Some("ok".to_string()));
+    /// ```
+    pub fn and_then<U, F>(self, f: F) -> HeaderValue<U>
     where
-        F: FnOnce(T) -> Result<U>,
+        F: FnOnce(T) -> HeaderValue<U>,
     {
-        match f(self.value) {
-            Ok(value) => Ok(HeaderValue {
-                value,
-                comment: self.comment,
-            }),
-            Err(e) => Err(e),
-        }
+        f(self.value)
     }
 }
