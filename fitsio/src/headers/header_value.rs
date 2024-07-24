@@ -107,8 +107,8 @@ where
     /// ```rust
     /// # use fitsio::headers::HeaderValue;
     /// let hv = HeaderValue { value: 1, comment: None };
-    /// let hv2 = hv.and_then(|value| HeaderValue {
-    ///     value: value * 2,
+    /// let hv2 = hv.and_then(|v| HeaderValue {
+    ///     value: v * 2,
     ///     comment: Some("ok".to_string()),
     /// });
     /// assert_eq!(hv2.value, 2);
