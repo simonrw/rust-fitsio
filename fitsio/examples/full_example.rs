@@ -136,6 +136,10 @@ fn run() -> Result<(), Box<dyn Error>> {
         comment: _unused_comment,
     } = phdu.read_key::<HeaderValue<String>>(&mut fitsfile, "PROJECT")?;
 
+    /* Or primitive values can be read as well */
+    let image_id: i64 = phdu.read_key(&mut fitsfile, "IMAGE_ID")?;
+    assert_eq!(image_id, 20180101010005i64);
+
     /* Let's say we have a region around a star that we want to extract. The star is at (25, 25,
      * 1-indexed) and we want to extract a 5x5 box around it. This means we want to read rows 19 to
      * 19, and columns 19 to 29 (0-indexed). The range arguments are exclusive of the upper bound,
