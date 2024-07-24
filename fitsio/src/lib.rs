@@ -1046,6 +1046,7 @@ pub mod errors;
 
 // Re-exports
 pub use crate::fitsfile::{FileOpenMode, FitsFile};
+pub use crate::headers::HeaderValue;
 
 // For custom derive purposes
 // pub use tables::FitsRow;
