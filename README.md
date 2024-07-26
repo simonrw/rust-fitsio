@@ -8,22 +8,22 @@ FFI wrapper around cfitsio in Rust
 
 ## Platform support
 
-| Platform | Support level |
-| --- | --- |
-| Linux arm | Tier 1 |
-| Linux x86_64 | Tier 1 |
-| macos x86_64 | Tier 1 |
-| Linux arm64 | Tier 2 |
-| Linux i386 | Tier 2 |
-| macos arm64 | Tier 2 |
-| Windows msys2 | Tier 3 |
-| Windows msvc | - |
+| Platform      | Support level |
+| ------------- | ------------- |
+| Linux arm     | Tier 1        |
+| Linux x86_64  | Tier 1        |
+| macos x86_64  | Tier 1        |
+| Linux arm64   | Tier 2        |
+| Linux i386    | Tier 2        |
+| macos arm64   | Tier 2        |
+| Windows msys2 | Tier 3        |
+| Windows msvc  | -             |
 
 Where the tiers refer to:
 
-* Tier 1: guaranteed to work, tested in CI
-* Tier 2: should work but not tested by CI
-* Tier 3: may work, and not tested by CI
+- Tier 1: guaranteed to work, tested in CI
+- Tier 2: should work but not tested by CI
+- Tier 3: may work, and not tested by CI
 
 ## MSRV
 
@@ -54,26 +54,26 @@ cargo build --features fitsio-src
 ```
 
 For the time being, it's best to stick to the development version from
-github.  The code is tested before being pushed and is relatively
+github. The code is tested before being pushed and is relatively
 stable. Add this to your `Cargo.toml` file:
 
 ```toml,no_sync
 [dependencies]
-fitsio = "0.21.2"
+fitsio = "0.21.3"
 ```
 
 If you want the latest release from `crates.io` then add the following:
 
 ```toml
 [dependencies]
-fitsio = "0.21.2"
+fitsio = "0.21.3"
 ```
 
 Or pin a specific version:
 
 ```toml
 [dependencies]
-fitsio = "0.21.2"
+fitsio = "0.21.3"
 ```
 
 This repository contains `fitsio-sys-bindgen` which generates the C
@@ -91,7 +91,7 @@ or use from your `Cargo.toml` as such:
 
 ```toml
 [dependencies]
-fitsio = "0.21.2"
+fitsio = "0.21.3"
 ```
 
 ## Documentation
