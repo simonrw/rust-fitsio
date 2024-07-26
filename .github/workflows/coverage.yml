@@ -10,13 +10,41 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    container:
-      image: xd009642/tarpaulin:develop-nightly
-      options: --security-opt seccomp=unconfined
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
+    # container:
+    #   image: xd009642/tarpaulin:develop-nightly
+    #   options: --security-opt seccomp=unconfined
+    # steps:
+    #   - name: Checkout sources
+    #     uses: actions/checkout@v4
 
+    #   - name: Install ubuntu dependencies
+    #     run: |
+    #       apt-get update && apt-get install --no-install-recommends -y \
+    #         build-essential \
+    #         llvm-dev \
+    #         libcfitsio-dev \
+    #         pkg-config \
+    #         libssl-dev \
+    #         python3
+
+    #   - name: Run cargo-tarpaulin
+    #     run: |
+    #       cargo +nightly tarpaulin --manifest-path fitsio/Cargo.toml --verbose --timeout 120 --out lcov
+
+    #   - name: Coveralls
+    #     uses: coverallsapp/github-action@master
+    #     with:
+    #       github-token: ${{ secrets.GITHUB_TOKEN }}
+    #       path-to-lcov: lcov.info
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
       - name: Install ubuntu dependencies
         run: |
           apt-get update && apt-get install --no-install-recommends -y \
@@ -26,13 +54,18 @@ jobs:
             pkg-config \
             libssl-dev \
             python3
-
-      - name: Run cargo-tarpaulin
-        run: |
-          cargo +nightly tarpaulin --manifest-path fitsio/Cargo.toml --verbose --timeout 120 --out lcov
-
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
+      - name: cargo install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: cargo generate-lockfile
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+      - name: cargo llvm-cov
+        run: cargo llvm-cov -p fitsio --locked --all-features --lcov --output-path lcov.info
+      - name: Record Rust version
+        run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: lcov.info
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          env_vars: OS,RUST
