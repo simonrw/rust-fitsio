@@ -6,6 +6,12 @@ on:
       - main
   pull_request:
 
+# Only one pull-request triggered run should be executed at a time
+# (head_ref is only set for PR events, otherwise fallback to run_id which differs for every run).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   # completely stolen from https://github.com/jonhoo/inferno/blob/8c0a28cab440fd00cd42cfbca403dde895cc67e3/.github/workflows/check.yml#L86-L107
   msrv:
@@ -34,7 +40,7 @@ jobs:
         with:
           profile: minimal
           toolchain: ${{matrix.msrv}}
-          defualt: true
+          default: true
           components: rustfmt, clippy
 
       - name: cargo +${{ matrix.msrv }} check
