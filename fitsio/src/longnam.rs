@@ -6,10 +6,10 @@
 
 pub(crate) use crate::sys::{
     ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
-    ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvs, ffgcvui, ffgcvuj, ffgcvujj, ffgcvuk, ffghdn, ffghdt,
-    ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv,
-    ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky, ffpkyd, ffpkye,
-    ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
+    ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvl, ffgcvs, ffgcvui, ffgcvuj, ffgcvujj, ffgcvuk, ffghdn,
+    ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl,
+    ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky,
+    ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
 };
 pub use libc::{
     c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ulonglong, c_ushort,
@@ -128,6 +128,22 @@ pub(crate) unsafe fn fits_read_col_str(
     status: *mut c_int,
 ) -> c_int {
     ffgcvs(
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
+    )
+}
+
+pub(crate) unsafe fn fits_read_col_log(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_char,
+    array: *mut c_char,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvl(
         fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }
