@@ -184,7 +184,9 @@ impl ReadsCol for bool {
                 }
 
                 match status {
-                    0 => Ok(out.into_iter().map(|v| v > 0).collect()),
+                    // TODO: this does not correctly account for nyll values,
+                    // instead treat them as falsy for now
+                    0 => Ok(out.into_iter().map(|v| v != BOOL_NULL && v > 0).collect()),
                     307 => Err(IndexError {
                         message: "given indices out of range".to_string(),
                         given: range.clone(),
@@ -236,8 +238,9 @@ impl ReadsCol for bool {
                         &mut status,
                     );
                 }
-
-                check_status(status).map(|_| out > 0)
+                // TODO: this does not correctly account for nyll values,
+                // instead treat them as falsy for now
+                check_status(status).map(|_| out != BOOL_NULL && out > 0)
             }
             Err(e) => Err(e),
             _ => panic!("Unknown error occurred"),
