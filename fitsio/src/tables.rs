@@ -10,6 +10,8 @@ use std::ops::Range;
 use std::ptr;
 use std::str::FromStr;
 
+const BOOL_NULL: c_char = 127;
+
 /// Trait for reading a fits column
 pub trait ReadsCol {
     #[doc(hidden)]
@@ -143,6 +145,104 @@ macro_rules! reads_col_impl {
             }
         }
     };
+}
+
+impl ReadsCol for bool {
+    fn read_col_range<T: Into<String>>(
+        fits_file: &mut FitsFile,
+        name: T,
+        range: &Range<usize>,
+    ) -> Result<Vec<Self>> {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo {
+                column_descriptions,
+                ..
+            }) => {
+                let num_output_rows = range.end - range.start;
+                let mut out = vec![BOOL_NULL; num_output_rows];
+                let test_name = name.into();
+                let column_number = column_descriptions
+                    .iter()
+                    .position(|desc| desc.name == test_name)
+                    .ok_or(Error::Message(format!(
+                        "Cannot find column {:?}",
+                        test_name
+                    )))?;
+                let mut status = 0;
+                unsafe {
+                    fits_read_col_log(
+                        fits_file.fptr.as_mut() as *mut _,
+                        (column_number + 1) as i32,
+                        (range.start + 1) as i64,
+                        1,
+                        num_output_rows as _,
+                        BOOL_NULL,
+                        out.as_mut_ptr(),
+                        ptr::null_mut(),
+                        &mut status,
+                    );
+                }
+
+                match status {
+                    0 => Ok(out.into_iter().map(|v| v > 0).collect()),
+                    307 => Err(IndexError {
+                        message: "given indices out of range".to_string(),
+                        given: range.clone(),
+                    }
+                    .into()),
+                    e => Err(FitsError {
+                        status: e,
+                        message: status_to_string(e).unwrap().unwrap(),
+                    }
+                    .into()),
+                }
+            }
+            Err(e) => Err(e),
+            _ => panic!("Unknown error occurred"),
+        }
+    }
+
+    fn read_cell_value<T>(fits_file: &mut FitsFile, name: T, idx: usize) -> Result<Self>
+    where
+        T: Into<String>,
+        Self: Sized,
+    {
+        match fits_file.fetch_hdu_info() {
+            Ok(HduInfo::TableInfo {
+                column_descriptions,
+                ..
+            }) => {
+                let mut out = BOOL_NULL;
+                let test_name = name.into();
+                let column_number = column_descriptions
+                    .iter()
+                    .position(|desc| desc.name == test_name)
+                    .ok_or(Error::Message(format!(
+                        "Cannot find column {:?}",
+                        test_name
+                    )))?;
+                let mut status = 0;
+
+                unsafe {
+                    fits_read_col_log(
+                        fits_file.fptr.as_mut() as *mut _,
+                        (column_number + 1) as i32,
+                        (idx + 1) as i64,
+                        1,
+                        1,
+                        BOOL_NULL,
+                        &mut out,
+                        ptr::null_mut(),
+                        &mut status,
+                    );
+                }
+
+                check_status(status).map(|_| out > 0)
+            }
+            Err(e) => Err(e),
+            _ => panic!("Unknown error occurred"),
+        }
+    }
 }
 
 reads_col_impl!(i16, fits_read_col_sht, 0);
