@@ -1041,7 +1041,7 @@ let _hdu = t.hdu(hdu_num).unwrap();
 [threadsafe-fits-file]: threadsafe_fitsfile/struct.ThreadsafeFitsFile.html
 */
 
-#![doc(html_root_url = "https://docs.rs/fitsio/0.21.2")]
+#![doc(html_root_url = "https://docs.rs/fitsio/0.21.3")]
 #![deny(missing_docs)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]

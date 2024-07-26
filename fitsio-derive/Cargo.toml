@@ -1,7 +1,7 @@
 [package]
 name = "fitsio-derive"
 edition = "2018"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 description = "Custom derive macros for the fitsio crate"
 homepage = "https://github.com/simonrw/rust-fitsio"
