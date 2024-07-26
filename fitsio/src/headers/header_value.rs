@@ -14,7 +14,7 @@ pub struct HeaderValue<T> {
     pub comment: Option<String>,
 }
 
-// Allow printing of `HeaderValue`s
+/// Allow printing of `HeaderValue`s
 impl<T> Debug for HeaderValue<T>
 where
     T: Debug,
@@ -27,8 +27,8 @@ where
     }
 }
 
-// Allow comparing of `HeaderValue`'s where the `value` is equatable
-// so that e.g. `HeaderValue<f64>` can be compared to `f64`
+/// Allow comparing of `HeaderValue`'s where the `value` is equatable
+/// so that e.g. `HeaderValue<f64>` can be compared to `f64`
 impl<T> PartialEq<T> for HeaderValue<T>
 where
     T: PartialEq,
@@ -38,7 +38,7 @@ where
     }
 }
 
-/// Allow `HeaderValue` to be clnned
+/// Allow `HeaderValue` to be cloned
 ///
 /// ```rust
 /// # use fitsio::headers::HeaderValue;
