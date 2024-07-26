@@ -375,7 +375,7 @@ Header keys are read through the [`read_key`][fits-hdu-read-key] function,
 and is generic over types that implement the [`ReadsKey`][reads-key] trait:
 
 ```rust
-# fn try_main() -> Result<(), Box<std::error::Error>> {
+# fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 # let filename = "../testdata/full_example.fits";
 # let mut fptr = fitsio::FitsFile::open(filename)?;
 # {
@@ -387,18 +387,35 @@ let int_value: i64 = fptr.hdu(0)?.read_key(&mut fptr, "INTTEST")?;
 let int_value = fptr.hdu(0)?.read_key::<i64>(&mut fptr, "INTTEST")?;
 # }
 
+
 // Or let the compiler infer the types (if possible)
 # Ok(())
 # }
 # fn main() { try_main().unwrap(); }
 ```
 
-Header cards can be written through the method
-[`write_key`][fits-hdu-write-key]. It takes a key name and value. See [the
-`WritesKey`][writes-key] trait for supported data types.
+[`HeaderValue`] also implements the [`ReadsKey`][reads-key] trait, and allows the reading of comments:
 
 ```rust
-# fn try_main() -> Result<(), Box<std::error::Error>> {
+# fn try_main() -> Result<(), Box<dyn std::error::Error>> {
+# use fitsio::HeaderValue;
+# let filename = "../testdata/full_example.fits";
+# let mut fptr = fitsio::FitsFile::open(filename)?;
+# {
+let int_value_with_comment: HeaderValue<i64> = fptr.hdu(0)?.read_key(&mut fptr, "INTTEST")?;
+let HeaderValue { value, comment } = int_value_with_comment;
+# }
+# Ok(())
+# }
+```
+
+
+Header cards can be written through the method [`write_key`][fits-hdu-write-key].
+It takes a key name and value, or a key name and value-comment tuple.
+See the [`WritesKey`][writes-key] trait for supported data types.
+
+```rust
+# fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 # let tdir = tempfile::Builder::new().prefix("fitsio-").tempdir().unwrap();
 # let tdir_path = tdir.path();
 # let filename = tdir_path.join("test.fits");
@@ -406,6 +423,14 @@ Header cards can be written through the method
 # let mut fptr = fitsio::FitsFile::create(filename).open()?;
 fptr.hdu(0)?.write_key(&mut fptr, "foo", 1i64)?;
 assert_eq!(fptr.hdu(0)?.read_key::<i64>(&mut fptr, "foo")?, 1i64);
+
+// with comments
+# use fitsio::HeaderValue;
+fptr.hdu(0)?.write_key(&mut fptr, "bar", (1i64, "bar comment"))?;
+
+let HeaderValue { value, comment } = fptr.hdu(0)?.read_key::<HeaderValue<i64>>(&mut fptr, "bar")?;
+assert_eq!(value, 1i64);
+assert_eq!(comment, Some("bar comment".to_string()));
 # Ok(())
 # }
 # }
@@ -1001,7 +1026,7 @@ let _hdu = t.hdu(hdu_num).unwrap();
 [image-description]: images/struct.ImageDescription.html
 [reads-col]: tables/trait.ReadsCol.html
 [reads-key]: headers/trait.ReadsKey.html
-[writes-key]: headers/trait.ReadsKey.html
+[writes-key]: headers/trait.WritesKey.html
 [new-fits-file]: fitsfile/struct.NewFitsFile.html
 [new-fits-file-open]: fitsfile/struct.NewFitsFile.html#method.open
 [new-fits-file-with-custom-primary]: fitsfile/struct.NewFitsFile.html#method.with_custom_primary
@@ -1046,6 +1071,7 @@ pub mod errors;
 
 // Re-exports
 pub use crate::fitsfile::{FileOpenMode, FitsFile};
+pub use crate::headers::HeaderValue;
 
 // For custom derive purposes
 // pub use tables::FitsRow;

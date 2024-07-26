@@ -380,7 +380,6 @@ imagetype_into_impl!(i64);
 mod tests {
     use super::*;
     use crate::errors::Error;
-    use crate::fitsfile::FitsFile;
     use crate::testhelpers::with_temp_file;
 
     #[test]

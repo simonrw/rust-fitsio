@@ -13,6 +13,7 @@
 
 use std::error::Error;
 
+use fitsio::headers::HeaderValue;
 use fitsio::images::{ImageDescription, ImageType};
 use fitsio::tables::{ColumnDataType, ColumnDescription, FitsRow};
 use fitsio::FitsFile;
@@ -46,8 +47,12 @@ fn run() -> Result<(), Box<dyn Error>> {
         /* First we get the primary HDU */
         let hdu = fitsfile.primary_hdu()?;
 
-        /* Now we add the header keys */
-        hdu.write_key(&mut fitsfile, "PROJECT", "My First Astronomy Project")?;
+        /* Now we add the header keys, including a comment */
+        hdu.write_key(
+            &mut fitsfile,
+            "PROJECT",
+            ("My First Astronomy Project", "Project name"),
+        )?;
 
         /* Now the exposure time */
         hdu.write_key(&mut fitsfile, "EXPTIME", 15.2f32)?;
@@ -113,6 +118,27 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     /* Get the primary HDU and read a section of the image data */
     let phdu = fitsfile.primary_hdu()?;
+
+    /* Read some information from the header. Start with the project */
+    let project_value = phdu.read_key::<HeaderValue<String>>(&mut fitsfile, "PROJECT")?;
+
+    /* `project_value` is a `HeaderValue` type, which has accessors for the value itself, as well
+     * as the comment */
+    let project = project_value.value;
+    assert_eq!(project, "My First Astronomy Project");
+
+    let project_header_comment = project_value.comment;
+    assert_eq!(project_header_comment, Some("Project name".to_string()));
+
+    /* Or of course destructuring is allowed */
+    let HeaderValue {
+        value: _unused_value,
+        comment: _unused_comment,
+    } = phdu.read_key::<HeaderValue<String>>(&mut fitsfile, "PROJECT")?;
+
+    /* Or primitive values can be read as well */
+    let image_id: i64 = phdu.read_key(&mut fitsfile, "IMAGE_ID")?;
+    assert_eq!(image_id, 20180101010005i64);
 
     /* Let's say we have a region around a star that we want to extract. The star is at (25, 25,
      * 1-indexed) and we want to extract a 5x5 box around it. This means we want to read rows 19 to
