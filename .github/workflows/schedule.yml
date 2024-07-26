@@ -8,6 +8,12 @@ on:
   schedule:
     - cron: "7 7 * * *"
 
+# Only one pull-request triggered run should be executed at a time
+# (head_ref is only set for PR events, otherwise fallback to run_id which differs for every run).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   nightly:
     runs-on: ubuntu-latest
@@ -33,4 +39,4 @@ jobs:
           components: rustfmt, clippy
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version nightly --test all --extra-clippy-flags "-A clippy::arc_with_non_send_sync"  # extra clippy args since lint is nightly only for now
+        run: python3 ./bin/test --rust-version nightly --test all --extra-clippy-flags "-A clippy::arc_with_non_send_sync" # extra clippy args since lint is nightly only for now
