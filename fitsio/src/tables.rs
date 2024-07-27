@@ -270,13 +270,7 @@ reads_col_impl!(i32, fits_read_col_int, 0);
 reads_col_impl!(u32, fits_read_col_uint, 0);
 reads_col_impl!(f32, fits_read_col_flt, 0.0);
 reads_col_impl!(f64, fits_read_col_dbl, 0.0);
-#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
-reads_col_impl!(i64, fits_read_col_lng, 0);
-#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
 reads_col_impl!(i64, fits_read_col_lnglng, 0);
-#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
-reads_col_impl!(u64, fits_read_col_ulng, 0);
-#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
 reads_col_impl!(u64, fits_read_col_ulnglng, 0);
 
 impl ReadsCol for String {
@@ -436,14 +430,8 @@ writes_col_impl!(i8, DataType::TSBYTE);
 writes_col_impl!(u16, DataType::TUSHORT);
 writes_col_impl!(i16, DataType::TSHORT);
 writes_col_impl!(u32, DataType::TUINT);
-#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
-writes_col_impl!(u64, DataType::TULONG);
-#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
-writes_col_impl!(u64, DataType::TLONGLONG);
 writes_col_impl!(i32, DataType::TINT);
-#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
-writes_col_impl!(i64, DataType::TLONG);
-#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
+writes_col_impl!(u64, DataType::TULONGLONG);
 writes_col_impl!(i64, DataType::TLONGLONG);
 writes_col_impl!(f32, DataType::TFLOAT);
 writes_col_impl!(f64, DataType::TDOUBLE);
