@@ -19,10 +19,10 @@ fn test_writing_bit_data_type() {
     let tmp_dir = Builder::new().prefix("fitsio-").tempdir().unwrap();
     let file_path = tmp_dir.path().join("example.fits");
 
+    let data: Vec<u32> = (0..64).collect();
     {
         let mut fitsfile = FitsFile::create(&file_path).open().unwrap();
 
-        let data: Vec<u32> = (0..64).collect();
         let col = ColumnDescription::new("BITMASK")
             .with_type(ColumnDataType::Bit)
             .create()
@@ -38,5 +38,5 @@ fn test_writing_bit_data_type() {
 
     let table_hdu = f.hdu("DATA").unwrap();
     let flags: Vec<u32> = dbg!(table_hdu.read_col(&mut f, "BITMASK").unwrap());
-    assert_eq!(flags.len(), 64);
+    assert!(data.iter().zip(&flags).all(|(a, b)| a == b));
 }

@@ -6,6 +6,7 @@ use crate::longnam::*;
 use crate::stringutils::status_to_string;
 use crate::types::DataType;
 use std::ffi;
+use std::mem::size_of;
 use std::ops::Range;
 use std::ptr;
 use std::str::FromStr;
@@ -59,7 +60,6 @@ macro_rules! reads_col_impl {
                         ..
                     }) => {
                         let num_output_rows = range.end - range.start;
-                        let mut out = vec![$nullval; num_output_rows];
                         let test_name = name.into();
                         let column_number = column_descriptions
                             .iter()
@@ -68,6 +68,14 @@ macro_rules! reads_col_impl {
                                 "Cannot find column {:?}",
                                 test_name
                             )))?;
+                        let col_desc = &column_descriptions[column_number];
+                        #[allow(clippy::manual_bits)]
+                        let repeat = if col_desc.data_type.typ == ColumnDataType::Bit {
+                            col_desc.data_type.repeat / (size_of::<$t>() * 8)
+                        } else {
+                            col_desc.data_type.repeat
+                        };
+                        let mut out = vec![$nullval; num_output_rows * repeat];
                         let mut status = 0;
                         unsafe {
                             $func(
@@ -75,7 +83,7 @@ macro_rules! reads_col_impl {
                                 (column_number + 1) as i32,
                                 (range.start + 1) as i64,
                                 1,
-                                num_output_rows as _,
+                                (num_output_rows * repeat) as _,
                                 $nullval,
                                 out.as_mut_ptr(),
                                 ptr::null_mut(),
@@ -121,6 +129,12 @@ macro_rules! reads_col_impl {
                                 "Cannot find column {:?}",
                                 test_name
                             )))?;
+                        let repeat = column_descriptions[column_number].data_type.repeat;
+                        if repeat > 1 {
+                            unimplemented!(
+                                "reading a single cell of a vector value (e.g., TFORM1 = 100E) is unimplemented. Call read_col() or read_col_range()."
+                            )
+                        }
                         let mut status = 0;
 
                         unsafe {
@@ -248,6 +262,8 @@ impl ReadsCol for bool {
     }
 }
 
+reads_col_impl!(u8, fits_read_col_byt, 0);
+reads_col_impl!(i8, fits_read_col_sbyt, 0);
 reads_col_impl!(i16, fits_read_col_sht, 0);
 reads_col_impl!(u16, fits_read_col_usht, 0);
 reads_col_impl!(i32, fits_read_col_int, 0);
@@ -387,7 +403,7 @@ macro_rules! writes_col_impl {
                         let colno = hdu.get_column_no(fits_file, col_name.into())?;
                         // TODO: check that the column exists in the file
                         let mut status = 0;
-                        let n_elements = rows.end - rows.start;
+                        let n_rows = rows.end - rows.start;
                         unsafe {
                             fits_write_col(
                                 fits_file.fptr.as_mut() as *mut _,
@@ -395,7 +411,7 @@ macro_rules! writes_col_impl {
                                 (colno + 1) as _,
                                 (rows.start + 1) as _,
                                 1,
-                                n_elements as _,
+                                n_rows as _,
                                 col_data.as_ptr() as *mut _,
                                 &mut status,
                             );
@@ -415,6 +431,10 @@ macro_rules! writes_col_impl {
     };
 }
 
+writes_col_impl!(u8, DataType::TBYTE);
+writes_col_impl!(i8, DataType::TSBYTE);
+writes_col_impl!(u16, DataType::TUSHORT);
+writes_col_impl!(i16, DataType::TSHORT);
 writes_col_impl!(u32, DataType::TUINT);
 #[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 writes_col_impl!(u64, DataType::TULONG);
@@ -639,14 +659,20 @@ impl From<ColumnDataDescription> for String {
 #[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColumnDataType {
+    Logical,
     Bit,
-    Bool,
+    Byte,
+    SignedByte,
+    Short,
+    UnsignedShort,
     Int,
+    Long,
+    UnsignedLong,
     Float,
     Text,
     Double,
-    Short,
-    Long,
+    LongLong,
+    UnsignedLongLong,
     String,
 }
 
@@ -655,14 +681,19 @@ impl From<ColumnDataType> for String {
         use self::ColumnDataType::*;
 
         match orig {
+            Logical => "L",
             Bit => "X",
-            Bool => "B",
-            Int => "J",
+            Byte => "B",
+            SignedByte => "S",
+            Short => "I",
+            UnsignedShort => "U",
+            Int | Long => "J",
+            UnsignedLong => "V",
             Float => "E",
             Text | String => "A",
             Double => "D",
-            Short => "I",
-            Long => "K",
+            LongLong => "K",
+            UnsignedLongLong => "W",
         }
         .to_string()
     }
@@ -712,15 +743,19 @@ impl FromStr for ColumnDataDescription {
         };
 
         let data_type = match data_type_char {
+            'L' => ColumnDataType::Logical,
             'X' => ColumnDataType::Bit,
-            'B' => ColumnDataType::Bool,
+            'B' => ColumnDataType::Byte,
+            'S' => ColumnDataType::SignedByte,
             'E' => ColumnDataType::Float,
             'J' => ColumnDataType::Int,
             'D' => ColumnDataType::Double,
             'I' => ColumnDataType::Short,
-            'K' => ColumnDataType::Long,
+            'K' => ColumnDataType::LongLong,
             'A' => ColumnDataType::String,
-            'L' => ColumnDataType::Bool,
+            'U' => ColumnDataType::UnsignedShort,
+            'V' => ColumnDataType::UnsignedLong,
+            'W' => ColumnDataType::UnsignedLongLong,
             _ => panic!(
                 "Have not implemented str -> ColumnDataType for {}",
                 data_type_char
@@ -772,8 +807,9 @@ macro_rules! datatype_into_impl {
                     DataType::TINT => 31,
                     DataType::TULONG => 40,
                     DataType::TLONG => 41,
-                    DataType::TLONGLONG => 81,
                     DataType::TFLOAT => 42,
+                    DataType::TULONGLONG => 80,
+                    DataType::TLONGLONG => 81,
                     DataType::TDOUBLE => 82,
                     DataType::TCOMPLEX => 83,
                     DataType::TDBLCOMPLEX => 163,

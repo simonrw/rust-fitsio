@@ -368,6 +368,7 @@ impl FitsFile {
                 for i in 0..num_cols {
                     let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
                     let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
+                    let mut repeats: libc::c_long = 0;
                     unsafe {
                         fits_get_bcolparms(
                             self.fptr.as_mut() as *mut _,
@@ -375,7 +376,7 @@ impl FitsFile {
                             name_buffer.as_mut_ptr(),
                             ptr::null_mut(),
                             type_buffer.as_mut_ptr(),
-                            ptr::null_mut(),
+                            &mut repeats as *mut libc::c_long,
                             ptr::null_mut(),
                             ptr::null_mut(),
                             ptr::null_mut(),
@@ -383,12 +384,13 @@ impl FitsFile {
                             &mut status,
                         );
                     }
-
-                    column_descriptions.push(ConcreteColumnDescription {
+                    let mut col = ConcreteColumnDescription {
                         name: stringutils::buf_to_string(&name_buffer)?,
                         data_type: stringutils::buf_to_string(&type_buffer)?
                             .parse::<ColumnDataDescription>()?,
-                    });
+                    };
+                    col.data_type.repeat = repeats as usize;
+                    column_descriptions.push(col);
                 }
 
                 HduInfo::TableInfo {
