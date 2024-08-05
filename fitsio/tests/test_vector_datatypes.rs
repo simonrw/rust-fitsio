@@ -32,6 +32,7 @@ macro_rules! make_test {
 
             let table_hdu = f.hdu("DATA").unwrap();
             let data: Vec<$t> = table_hdu.read_col(&mut f, "TEST").unwrap();
+            assert_eq!(orig_data.len(), data.len());
             assert!(orig_data.iter().zip(&data).all(|(a, b)| a == b));
         }
     };

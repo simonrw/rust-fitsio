@@ -38,5 +38,6 @@ fn test_writing_bit_data_type() {
 
     let table_hdu = f.hdu("DATA").unwrap();
     let flags: Vec<u32> = dbg!(table_hdu.read_col(&mut f, "BITMASK").unwrap());
+    assert_eq!(flags.len(), 64);
     assert!(data.iter().zip(&flags).all(|(a, b)| a == b));
 }
