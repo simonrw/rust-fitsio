@@ -6,7 +6,6 @@ use crate::longnam::*;
 use crate::stringutils::status_to_string;
 use crate::types::DataType;
 use std::ffi;
-use std::mem::size_of;
 use std::ops::Range;
 use std::ptr;
 use std::str::FromStr;
@@ -69,12 +68,7 @@ macro_rules! reads_col_impl {
                                 test_name
                             )))?;
                         let col_desc = &column_descriptions[column_number];
-                        #[allow(clippy::manual_bits)]
-                        let repeat = if col_desc.data_type.typ == ColumnDataType::Bit {
-                            col_desc.data_type.repeat / (size_of::<$t>() * 8)
-                        } else {
-                            col_desc.data_type.repeat
-                        };
+                        let repeat = col_desc.data_type.repeat;
                         let mut out = vec![$nullval; num_output_rows * repeat];
                         let mut status = 0;
                         unsafe {
@@ -397,7 +391,7 @@ macro_rules! writes_col_impl {
                         let colno = hdu.get_column_no(fits_file, col_name.into())?;
                         // TODO: check that the column exists in the file
                         let mut status = 0;
-                        let n_rows = rows.end - rows.start;
+                        let n_elements = (rows.end - rows.start);
                         unsafe {
                             fits_write_col(
                                 fits_file.fptr.as_mut() as *mut _,
@@ -405,7 +399,7 @@ macro_rules! writes_col_impl {
                                 (colno + 1) as _,
                                 (rows.start + 1) as _,
                                 1,
-                                n_rows as _,
+                                n_elements as _,
                                 col_data.as_ptr() as *mut _,
                                 &mut status,
                             );
