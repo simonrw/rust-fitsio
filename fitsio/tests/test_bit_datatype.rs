@@ -37,7 +37,7 @@ fn test_writing_bit_data_type() {
     let mut f = FitsFile::open(file_path).unwrap();
 
     let table_hdu = f.hdu("DATA").unwrap();
-    let flags: Vec<u32> = table_hdu.read_col(&mut f, "BITMASK").unwrap();
+    let flags: Vec<u32> = dbg!(table_hdu.read_col(&mut f, "BITMASK").unwrap());
     assert_eq!(flags.len(), 64);
     assert!(data.iter().zip(&flags).all(|(a, b)| a == b));
 }

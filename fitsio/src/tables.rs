@@ -6,6 +6,7 @@ use crate::longnam::*;
 use crate::stringutils::status_to_string;
 use crate::types::DataType;
 use std::ffi;
+use std::mem::size_of;
 use std::ops::Range;
 use std::ptr;
 use std::str::FromStr;
@@ -68,7 +69,14 @@ macro_rules! reads_col_impl {
                                 test_name
                             )))?;
                         let col_desc = &column_descriptions[column_number];
-                        let repeat = col_desc.data_type.repeat;
+                        #[allow(clippy::manual_bits)]
+                        let repeat = if col_desc.data_type.typ == ColumnDataType::Bit {
+                            // take the maximum of hte value with 1 for data types smaller than 8
+                            // bites, e.g. u32
+                            (col_desc.data_type.repeat / (size_of::<$t>() * 8)).max(1)
+                        } else {
+                            col_desc.data_type.repeat
+                        };
                         let mut out = vec![$nullval; num_output_rows * repeat];
                         let mut status = 0;
                         unsafe {
