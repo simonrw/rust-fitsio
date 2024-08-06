@@ -68,6 +68,7 @@ jobs:
           - clippy
           - fitsio-src
           - fitsio-src-and-bindgen
+          - full-example
           - workspace
     steps:
       - name: Checkout sources
