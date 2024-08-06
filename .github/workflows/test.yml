@@ -27,7 +27,8 @@ jobs:
           - clippy
           - fitsio-src
           - fitsio-src-and-bindgen
-          - full-example,workspace
+          - full-example
+          - workspace
 
     steps:
       - name: Checkout sources
@@ -67,6 +68,7 @@ jobs:
           - clippy
           - fitsio-src
           - fitsio-src-and-bindgen
+          - workspace
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
