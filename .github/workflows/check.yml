@@ -15,6 +15,7 @@ on:
       - 'Cargo.lock'
       - 'Cross.toml'
       - 'rust-toolchain.toml'
+      - '.github/workflows/*.yml'
 
 
 # Only one pull-request triggered run should be executed at a time
