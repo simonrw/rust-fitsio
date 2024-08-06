@@ -5,6 +5,18 @@ on:
     branches:
       - main
   pull_request:
+    paths:
+      - 'bin/**'
+      - 'fitsio/**'
+      - 'fitsio-derive/**'
+      - 'fitsio-sys/**'
+      - 'testdata/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'Cross.toml'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/*.yml'
+
   workflow_dispatch:
 
 # Only one pull-request triggered run should be executed at a time

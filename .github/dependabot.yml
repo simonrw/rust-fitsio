@@ -3,27 +3,43 @@ updates:
 - package-ecosystem: cargo
   directory: "/fitsio"
   schedule:
-    interval: daily
+    interval: weekly
     time: "11:00"
   open-pull-requests-limit: 10
+  groups:
+    cargo-packages:
+      patterns:
+        - "*"
 - package-ecosystem: cargo
   directory: "/fitsio-derive"
   schedule:
-    interval: daily
+    interval: weekly
     time: "11:00"
   open-pull-requests-limit: 10
+  groups:
+    cargo-packages:
+      patterns:
+        - "*"
 - package-ecosystem: cargo
   directory: "/fitsio-sys"
   schedule:
-    interval: daily
+    interval: weekly
     time: "11:00"
   open-pull-requests-limit: 10
+  groups:
+    cargo-packages:
+      patterns:
+        - "*"
 - package-ecosystem: cargo
   directory: "/fitsio-sys-bindgen"
   schedule:
-    interval: daily
+    interval: weekly
     time: "11:00"
   open-pull-requests-limit: 10
+  groups:
+    cargo-packages:
+      patterns:
+        - "*"
   ignore:
   - dependency-name: bindgen
     versions:
@@ -31,4 +47,8 @@ updates:
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
-    interval: daily
+    interval: weekly
+  groups:
+    cargo-packages:
+      patterns:
+        - "*"
