@@ -2,6 +2,7 @@
 
 
 import subprocess as sp
+import traceback
 import argparse
 import shlex
 import sys
@@ -20,8 +21,9 @@ def collect_test_options(cls):
 
 @collect_test_options
 class TestRunner:
-    def __init__(self, rust_version):
+    def __init__(self, rust_version: str, no_fail_fast: bool):
         self.rust_version = rust_version
+        self.no_fail_fast = no_fail_fast
 
     def print_preamble(self):
         print("Rust version:")
@@ -46,7 +48,8 @@ class TestRunner:
             sp.check_call(cmd)
         except sp.CalledProcessError as e:
             print(f"test failed with exit code {e.returncode}", file=sys.stderr)
-            sys.exit(e.returncode)
+            if not self.no_fail_fast:
+                sys.exit(e.returncode)
         print()
 
     def _run_test_workspace(self):
@@ -108,10 +111,16 @@ class TestRunner:
 
             method_name = f"_run_test_{test_name.replace('-', '_')}"
             method = getattr(self, method_name)
-            if test_name == "clippy":
-                method(extra_clippy_flags)
-            else:
-                method()
+            try:
+                if test_name == "clippy":
+                    method(extra_clippy_flags)
+                else:
+                    method()
+            except Exception as e:
+                if self.no_fail_fast:
+                    raise e
+
+                print(traceback.format_exc(), file=sys.stderr)
 
 
 if __name__ == "__main__":
@@ -132,8 +141,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--extra-clippy-flags", required=False, default="", help="Extra flags to run to clippy command"
     )
+    parser.add_argument("--no-fail-fast", action="store_true", default=False, help="Continue with tests after failure")
     args = parser.parse_args()
 
-    runner = TestRunner(args.rust_version)
+    runner = TestRunner(args.rust_version, args.no_fail_fast)
     runner.print_preamble()
     runner.run(test=args.test, extra_clippy_flags=args.extra_clippy_flags)
