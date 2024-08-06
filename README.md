@@ -59,21 +59,21 @@ stable. Add this to your `Cargo.toml` file:
 
 ```toml,no_sync
 [dependencies]
-fitsio = "0.21.4"
+fitsio = "0.21.5"
 ```
 
 If you want the latest release from `crates.io` then add the following:
 
 ```toml
 [dependencies]
-fitsio = "0.21.4"
+fitsio = "0.21.5"
 ```
 
 Or pin a specific version:
 
 ```toml
 [dependencies]
-fitsio = "0.21.4"
+fitsio = "0.21.5"
 ```
 
 This repository contains `fitsio-sys-bindgen` which generates the C
@@ -91,7 +91,7 @@ or use from your `Cargo.toml` as such:
 
 ```toml
 [dependencies]
-fitsio = "0.21.4"
+fitsio = "0.21.5"
 ```
 
 ## Documentation
