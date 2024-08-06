@@ -18,17 +18,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          rust:
-            - stable
-            - beta
-          test:
-            - array
-            - bindgen
-            - clippy
-            - fitsio-src,
-            - fitsio-src-and-bindgen
-            - full-example,workspace
+        rust:
+          - stable
+          - beta
+        test:
+          - array
+          - bindgen
+          - clippy
+          - fitsio-src,
+          - fitsio-src-and-bindgen
+          - full-example,workspace
 
     steps:
       - name: Checkout sources
@@ -59,16 +58,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          rust:
-            - stable
-            - beta
-          test:
-            - array
-            - bindgen
-            - clippy
-            - fitsio-src,
-            - fitsio-src-and-bindgen
+        rust:
+          - stable
+          - beta
+        test:
+          - array
+          - bindgen
+          - clippy
+          - fitsio-src,
+          - fitsio-src-and-bindgen
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
