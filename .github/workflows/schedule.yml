@@ -5,6 +5,16 @@ on:
     branches:
       - main
   pull_request:
+    paths:
+      - 'bin/**'
+      - 'fitsio/**'
+      - 'fitsio-derive/**'
+      - 'fitsio-sys/**'
+      - 'testdata/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'Cross.toml'
+      - 'rust-toolchain.toml'
   schedule:
     - cron: "7 7 * * *"
 
