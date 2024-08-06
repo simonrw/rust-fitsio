@@ -5,15 +5,16 @@
 #![allow(unused_imports, dead_code)]
 
 pub(crate) use crate::sys::{
-    ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvd, ffgcve,
-    ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvl, ffgcvs, ffgcvui, ffgcvuj, ffgcvujj, ffgcvuk, ffghdn,
-    ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyjj, ffgkyl, ffgkys, ffgncl,
-    ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl, ffpcls, ffphps, ffpky,
-    ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile, LONGLONG,
+    ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvb, ffgcvd,
+    ffgcve, ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvl, ffgcvs, ffgcvsb, ffgcvui, ffgcvuj, ffgcvujj,
+    ffgcvuk, ffgcx, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyjj,
+    ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl,
+    ffpcls, ffpclx, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile,
+    LONGLONG,
 };
 pub use libc::{
-    c_char, c_double, c_float, c_int, c_long, c_short, c_uint, c_ulong, c_ulonglong, c_ushort,
-    c_void,
+    c_char, c_double, c_float, c_int, c_long, c_schar, c_short, c_uchar, c_uint, c_ulong,
+    c_ulonglong, c_ushort, c_void,
 };
 
 pub(crate) unsafe fn fits_close_file(fptr: *mut fitsfile, status: *mut libc::c_int) -> c_int {
@@ -144,6 +145,38 @@ pub(crate) unsafe fn fits_read_col_log(
     status: *mut c_int,
 ) -> c_int {
     ffgcvl(
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
+    )
+}
+
+pub(crate) unsafe fn fits_read_col_byt(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_uchar,
+    array: *mut c_uchar,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvb(
+        fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
+    )
+}
+
+pub(crate) unsafe fn fits_read_col_sbyt(
+    fptr: *mut fitsfile,
+    colnum: c_int,
+    firstrow: LONGLONG,
+    firstelem: LONGLONG,
+    nelem: LONGLONG,
+    nulval: c_schar,
+    array: *mut c_schar,
+    anynul: *mut c_int,
+    status: *mut c_int,
+) -> c_int {
+    ffgcvsb(
         fptr, colnum, firstrow, firstelem, nelem, nulval, array, anynul, status,
     )
 }
