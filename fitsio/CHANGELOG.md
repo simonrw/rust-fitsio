@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.5](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.4...fitsio-v0.21.5) - 2024-08-06
+
+### Added
+- add vector type support ([#330](https://github.com/simonrw/rust-fitsio/pull/330))
+
+### Other
+- *(deps)* update ndarray requirement from 0.15.0 to 0.16.0 in /fitsio ([#347](https://github.com/simonrw/rust-fitsio/pull/347))
+
 ## [0.21.4](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.3...fitsio-v0.21.4) - 2024-07-26
 
 ### Added
