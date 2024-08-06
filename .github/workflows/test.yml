@@ -19,8 +19,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - rust: stable
-          - rust: beta
+          rust:
+            - stable
+            - beta
+          test:
+            - array
+            - bindgen
+            - clippy
+            - fitsio-src,
+            - fitsio-src-and-bindgen
+            - full-example,workspace
+
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -43,7 +52,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
+        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
 
   macos-test:
     runs-on: macos-latest
@@ -51,8 +60,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - rust: stable
-          - rust: beta
+          rust:
+            - stable
+            - beta
+          test:
+            - array
+            - bindgen
+            - clippy
+            - fitsio-src,
+            - fitsio-src-and-bindgen
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -70,7 +86,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
+        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
 
   linux-armv7:
     runs-on: ubuntu-latest
