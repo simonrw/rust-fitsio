@@ -121,7 +121,7 @@ impl ::std::convert::From<IntoStringError> for Error {
 use crate::fitsfile::FitsFile;
 type PoisonError<'a> = sync::PoisonError<sync::MutexGuard<'a, FitsFile>>;
 
-impl<'a> ::std::convert::From<PoisonError<'a>> for Error {
+impl ::std::convert::From<PoisonError<'_>> for Error {
     fn from(_e: PoisonError) -> Self {
         Error::UnlockError
     }
