@@ -772,7 +772,7 @@ impl DescribesColumnLocation for usize {
     }
 }
 
-impl<'a> DescribesColumnLocation for &'a str {
+impl DescribesColumnLocation for &'_ str {
     fn get_column_no(&self, hdu: &FitsHdu, fits_file: &mut FitsFile) -> Result<i32> {
         match hdu.get_column_no(fits_file, *self) {
             Ok(value) => Ok(value as _),
@@ -849,7 +849,7 @@ impl<'a> ColumnIterator<'a> {
     }
 }
 
-impl<'a> Iterator for ColumnIterator<'a> {
+impl Iterator for ColumnIterator<'_> {
     type Item = Column;
 
     fn next(&mut self) -> Option<Self::Item> {

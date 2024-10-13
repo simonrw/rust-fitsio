@@ -960,7 +960,7 @@ pub struct FitsHduIterator<'a> {
     pub(crate) fits_file: &'a mut FitsFile,
 }
 
-impl<'a> Iterator for FitsHduIterator<'a> {
+impl Iterator for FitsHduIterator<'_> {
     type Item = FitsHdu;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -1002,7 +1002,7 @@ impl DescribesHdu for usize {
     }
 }
 
-impl<'a> DescribesHdu for &'a str {
+impl DescribesHdu for &'_ str {
     fn change_hdu(&self, f: &mut FitsFile) -> Result<()> {
         let mut status = 0;
         let c_hdu_name = ffi::CString::new(*self)?;

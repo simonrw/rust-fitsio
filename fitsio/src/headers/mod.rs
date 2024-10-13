@@ -287,7 +287,7 @@ impl WritesKey for String {
     }
 }
 
-impl<'a> WritesKey for &'a str {
+impl WritesKey for &'_ str {
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
         let c_name = ffi::CString::new(name)?;
         let c_value = ffi::CString::new(value)?;
