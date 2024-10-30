@@ -21,7 +21,7 @@ use std::ptr;
 
 /// Main entry point to the FITS file format
 pub struct FitsFile {
-    filename: Option<PathBuf>,
+    file_path: PathBuf,
     open_mode: FileOpenMode,
     pub(crate) fptr: ptr::NonNull<fitsfile>,
 }
@@ -64,7 +64,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READONLY,
-                filename: Some(file_path.to_path_buf()),
+                file_path: file_path.to_path_buf(),
             },
             None => unimplemented!(),
         })
@@ -106,7 +106,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READWRITE,
-                filename: Some(file_path.to_path_buf()),
+                file_path: file_path.to_path_buf(),
             },
             None => unimplemented!(),
         })
@@ -650,9 +650,7 @@ impl FitsFile {
     where
         W: Write,
     {
-        if let Some(ref filename) = self.filename {
-            writeln!(w, "\n  file: {:?}", filename)?;
-        }
+        writeln!(w, "\n  file: {}", self.file_path.display())?;
         match self.open_mode {
             FileOpenMode::READONLY => writeln!(w, "  mode: READONLY")?,
             FileOpenMode::READWRITE => writeln!(w, "  mode: READWRITE")?,
@@ -783,8 +781,13 @@ impl FitsFile {
     /// # }
     /// ```
     pub unsafe fn from_raw(fptr: *mut fitsfile, mode: FileOpenMode) -> Result<FitsFile> {
+        let mut buf = vec![0; 1025];
+        let mut status = 0;
+        unsafe { fits_file_name(fptr, buf.as_mut_ptr(), &mut status) };
+        let s = buf_to_string(&buf)?;
+
         Ok(Self {
-            filename: None,
+            file_path: PathBuf::from(s),
             open_mode: mode,
             fptr: ptr::NonNull::new(fptr).ok_or(Error::NullPointer)?,
         })
@@ -905,7 +908,7 @@ where
                 Some(p) => FitsFile {
                     fptr: p,
                     open_mode: FileOpenMode::READWRITE,
-                    filename: Some(file_path.to_path_buf()),
+                    file_path: file_path.to_path_buf(),
                 },
                 None => unimplemented!(),
             };
