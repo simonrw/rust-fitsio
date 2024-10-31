@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.6](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.5...fitsio-v0.21.6) - 2024-10-31
+
+### Added
+
+- add `FitsFile::file_path` method to access `FitsFile` file path ([#367](https://github.com/simonrw/rust-fitsio/pull/367))
+
+### Other
+
+- Allow needless-lifetimes ([#363](https://github.com/simonrw/rust-fitsio/pull/363))
+
 ## [0.21.5](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.4...fitsio-v0.21.5) - 2024-08-06
 
 ### Added
