@@ -12,7 +12,7 @@ use crate::errors::{check_status, Error, Result};
 use crate::hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
 use crate::images::{ImageDescription, ImageType};
 use crate::longnam::*;
-use crate::stringutils::{self, status_to_string};
+use crate::stringutils::{self, buf_to_string, status_to_string};
 use crate::tables::{ColumnDataDescription, ConcreteColumnDescription};
 use std::ffi;
 use std::io::{self, Write};
@@ -21,7 +21,7 @@ use std::ptr;
 
 /// Main entry point to the FITS file format
 pub struct FitsFile {
-    filename: Option<PathBuf>,
+    file_path: PathBuf,
     open_mode: FileOpenMode,
     pub(crate) fptr: ptr::NonNull<fitsfile>,
 }
@@ -64,7 +64,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READONLY,
-                filename: Some(file_path.to_path_buf()),
+                file_path: file_path.to_path_buf(),
             },
             None => unimplemented!(),
         })
@@ -106,7 +106,7 @@ impl FitsFile {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READWRITE,
-                filename: Some(file_path.to_path_buf()),
+                file_path: file_path.to_path_buf(),
             },
             None => unimplemented!(),
         })
@@ -253,6 +253,11 @@ impl FitsFile {
     */
     pub fn primary_hdu(&mut self) -> Result<FitsHdu> {
         self.hdu(0)
+    }
+
+    /// Return the file path of the file
+    pub fn file_path(&self) -> &Path {
+        &self.file_path
     }
 
     /// Return the number of HDU objects in the file
@@ -650,9 +655,7 @@ impl FitsFile {
     where
         W: Write,
     {
-        if let Some(ref filename) = self.filename {
-            writeln!(w, "\n  file: {:?}", filename)?;
-        }
+        writeln!(w, "\n  file: {}", self.file_path.display())?;
         match self.open_mode {
             FileOpenMode::READONLY => writeln!(w, "  mode: READONLY")?,
             FileOpenMode::READWRITE => writeln!(w, "  mode: READWRITE")?,
@@ -783,8 +786,13 @@ impl FitsFile {
     /// # }
     /// ```
     pub unsafe fn from_raw(fptr: *mut fitsfile, mode: FileOpenMode) -> Result<FitsFile> {
+        let mut buf = vec![0; 1025];
+        let mut status = 0;
+        unsafe { fits_file_name(fptr, buf.as_mut_ptr(), &mut status) };
+        let s = buf_to_string(&buf)?;
+
         Ok(Self {
-            filename: None,
+            file_path: PathBuf::from(s),
             open_mode: mode,
             fptr: ptr::NonNull::new(fptr).ok_or(Error::NullPointer)?,
         })
@@ -905,7 +913,7 @@ where
                 Some(p) => FitsFile {
                     fptr: p,
                     open_mode: FileOpenMode::READWRITE,
-                    filename: Some(file_path.to_path_buf()),
+                    file_path: file_path.to_path_buf(),
                 },
                 None => unimplemented!(),
             };
@@ -1051,6 +1059,8 @@ casesensitivity_into_impl!(i64);
 
 #[cfg(test)]
 mod test {
+    use libc::c_int;
+
     use crate::errors::Error;
     use crate::fitsfile::FitsFile;
     use crate::fitsfile::{FileOpenMode, ImageDescription};
@@ -1058,7 +1068,9 @@ mod test {
     use crate::images::ImageType;
     use crate::tables::{ColumnDataType, ColumnDescription};
     use crate::testhelpers::{duplicate_test_file, with_temp_file};
+    use std::ffi::CString;
     use std::path::Path;
+    use std::ptr;
 
     #[test]
     fn test_opening_an_existing_file() {
@@ -1608,6 +1620,40 @@ mod test {
                 }
                 _ => panic!("ERROR!"),
             }
+        });
+    }
+
+    #[test]
+    fn test_get_filename() {
+        use crate::longnam::fits_open_file;
+        use fitsio_sys::fitsfile;
+
+        duplicate_test_file(|src_filename| {
+            let f = FitsFile::open(src_filename).unwrap();
+
+            // open file manually
+            let mut fptr: *mut fitsfile = ptr::null_mut();
+            let mut status = 0;
+            let c_filename = CString::new(src_filename).unwrap();
+            unsafe {
+                fits_open_file(
+                    &mut fptr as *mut *mut fitsfile,
+                    c_filename.as_ptr(),
+                    FileOpenMode::READONLY as c_int,
+                    &mut status,
+                )
+            };
+
+            if status != 0 {
+                panic!("error opening file manually");
+            }
+
+            assert!(!fptr.is_null());
+
+            let f2 = unsafe { FitsFile::from_raw(fptr, FileOpenMode::READONLY).unwrap() };
+
+            assert_eq!(f.file_path(), Path::new(src_filename));
+            assert_eq!(f2.file_path(), Path::new(src_filename));
         });
     }
 }

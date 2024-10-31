@@ -5,12 +5,12 @@
 #![allow(unused_imports, dead_code)]
 
 pub(crate) use crate::sys::{
-    ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffgbcl, ffgcdw, ffgcno, ffgcvb, ffgcvd,
-    ffgcve, ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvl, ffgcvs, ffgcvsb, ffgcvui, ffgcvuj, ffgcvujj,
-    ffgcvuk, ffgcx, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj, ffgkyjj,
-    ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen, ffpcl,
-    ffpcls, ffpclx, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim, ffthdu, fitsfile,
-    LONGLONG,
+    ffclos, ffcopy, ffcrim, ffcrtb, ffdcol, ffdhdu, ffflmd, ffflnm, ffgbcl, ffgcdw, ffgcno, ffgcvb,
+    ffgcvd, ffgcve, ffgcvi, ffgcvj, ffgcvjj, ffgcvk, ffgcvl, ffgcvs, ffgcvsb, ffgcvui, ffgcvuj,
+    ffgcvujj, ffgcvuk, ffgcx, ffghdn, ffghdt, ffgidm, ffgiet, ffgisz, ffgkyd, ffgkye, ffgkyj,
+    ffgkyjj, ffgkyl, ffgkys, ffgncl, ffgnrw, ffgpv, ffgsv, fficol, ffinit, ffmahd, ffmnhd, ffopen,
+    ffpcl, ffpcls, ffpclx, ffphps, ffpky, ffpkyd, ffpkye, ffpkys, ffppr, ffpss, ffrsim, ffthdu,
+    fitsfile, LONGLONG,
 };
 pub use libc::{
     c_char, c_double, c_float, c_int, c_long, c_schar, c_short, c_uchar, c_uint, c_ulong,
@@ -649,4 +649,12 @@ pub(crate) unsafe fn fits_write_key(
     status: *mut c_int,
 ) -> c_int {
     ffpky(fptr, datatype, keyname, value, comm, status)
+}
+
+pub(crate) unsafe fn fits_file_name(
+    fptr: *mut fitsfile,
+    filename: *mut c_char,
+    status: *mut c_int,
+) -> c_int {
+    ffflnm(fptr, filename, status)
 }
