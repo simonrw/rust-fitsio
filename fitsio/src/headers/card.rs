@@ -24,9 +24,11 @@ impl Card {
         Ok(unsafe { CStr::from_ptr(self.comment.as_ptr() as *mut c_char) }.to_str()?)
     }
 
-    /// Header value as a &str.
+    /// Header value as a &str without enclosing quotes.
     pub fn str_value(&self) -> Result<&str> {
-        Ok(unsafe { CStr::from_ptr(self.value.as_ptr() as *mut c_char) }.to_str()?)
+        let cstr = unsafe { CStr::from_ptr(self.value.as_ptr() as *mut c_char) };
+        let str = cstr.to_str()?.trim_matches('\'');
+        Ok(str)
     }
 
     pub(crate) fn set_comment(&mut self, comment: String) {
