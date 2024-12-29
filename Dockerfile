@@ -16,7 +16,7 @@ RUN apt-get update && \
 
 RUN rustup update && \
     rustup install stable && \
-    rustup install nightly &&
+    rustup install nightly
 
 VOLUME ["/project"]
 WORKDIR "/project"
