@@ -1083,7 +1083,7 @@ pub struct CardIter {
 
 impl CardIter {
     fn new(file: &mut FitsFile, hdu: &FitsHdu) -> Result<CardIter> {
-        file.make_current(&hdu)?;
+        file.make_current(hdu)?;
 
         let mut iter = CardIter {
             fptr:       unsafe { file.as_raw() },
@@ -1113,7 +1113,7 @@ impl CardIter {
     }
     fn next_header(&mut self) -> Result<Card> {
         self.status = 0; // reset the status before calling
-        let mut card = Card::new();
+        let mut card = Card::default();
         unsafe {
             ffgkyn(
                 self.fptr,
@@ -1121,9 +1121,9 @@ impl CardIter {
                 // self.name.as_mut_ptr(),
                 // self.value.as_mut_ptr(),
                 // self.comment.as_mut_ptr(),
-                card.name.as_mut_ptr(),
-                card.value.as_mut_ptr(),
-                card.comment.as_mut_ptr(),
+                card.name.as_mut_ptr() as *mut c_char,
+                card.value.as_mut_ptr() as *mut c_char,
+                card.comment.as_mut_ptr() as *mut c_char,
                 ptr::addr_of_mut!(self.status)
             )
         };
@@ -1143,7 +1143,7 @@ impl Iterator for CardIter {
         match self.next_header() {
             Ok(card) => Some(card),
             Err(e) => {
-                let mut card = Card::new();
+                let mut card = Card::default();
                 card.set_comment(format!("{e}"));
                 Some(card)
             },
