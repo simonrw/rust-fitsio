@@ -53,7 +53,7 @@ class TestRunner:
         print()
 
     def _run_test_workspace(self):
-        self._run_cargo("test")
+        self._run_cargo("test", "--locked")
 
     def _run_test_clippy(self, extra_clippy_flags: str):
         args = [
@@ -69,14 +69,15 @@ class TestRunner:
         self._run_cargo(*args)
 
     def _run_test_full_example(self):
-        self._run_cargo("run", "--manifest-path", "fitsio/Cargo.toml", "--example", "full_example")
+        self._run_cargo("run", "--locked", "--manifest-path", "fitsio/Cargo.toml", "--example", "full_example")
 
     def _run_test_array(self):
-        self._run_cargo("test", "--manifest-path", "fitsio/Cargo.toml", "--features", "array")
+        self._run_cargo("test", "--locked", "--manifest-path", "fitsio/Cargo.toml", "--features", "array")
 
     def _run_test_fitsio_src(self):
         self._run_cargo(
             "test",
+            "--locked",
             "--manifest-path",
             "fitsio/Cargo.toml",
             "--features",
@@ -86,6 +87,7 @@ class TestRunner:
     def _run_test_fitsio_src_and_bindgen(self):
         self._run_cargo(
             "test",
+            "--locked",
             "--manifest-path",
             "fitsio/Cargo.toml",
             "--features",
@@ -97,6 +99,7 @@ class TestRunner:
     def _run_test_bindgen(self):
         self._run_cargo(
             "test",
+            "--locked",
             "--manifest-path",
             "fitsio/Cargo.toml",
             "--features",
