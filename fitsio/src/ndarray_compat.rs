@@ -202,7 +202,9 @@ where
         let data: Vec<T> = ReadImage::read_rows(fits_file, hdu, start_row, num_rows)?;
         let arr = Array::from(data);
         let row_length = arr.len() / num_rows;
-        Ok(arr.into_shape(vec![num_rows, row_length]).unwrap())
+        Ok(arr
+            .into_shape_with_order(vec![num_rows, row_length])
+            .unwrap())
     }
 
     fn read_row(fits_file: &mut FitsFile, hdu: &FitsHdu, row: usize) -> Result<Self> {

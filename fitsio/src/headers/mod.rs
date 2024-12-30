@@ -133,13 +133,13 @@ impl ReadsKey for HeaderValue<String> {
         }
 
         check_status(status).and_then(|_| {
-            let value: Vec<u8> = value.iter().map(|&x| x as u8).filter(|&x| x != 0).collect();
+            let value: Vec<u8> = value.iter().copied().filter(|&x| x != 0).collect();
             String::from_utf8(value)
                 .map(|value| {
                     let comment = {
                         let comment: Vec<u8> = comment
                             .iter()
-                            .map(|&x| x as u8)
+                            .copied()
                             .filter(|&x| x != 0)
                             .collect();
                         if comment.is_empty() {

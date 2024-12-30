@@ -326,7 +326,7 @@ impl ReadsCol for String {
                 let mut out = Vec::with_capacity(num_output_rows);
                 for val in &vecs {
                     let bytes: Vec<u8> =
-                        val.iter().filter(|v| **v != 0).map(|v| *v as u8).collect();
+                        val.iter().filter(|v| **v != 0).map(|v| *v as _).collect();
                     let cstr = String::from_utf8(bytes)?;
                     out.push(cstr);
                 }

@@ -61,7 +61,11 @@ fn bind_cfitsio() {
         .clang_args(include_args)
         .opaque_type("fitsfile")
         .opaque_type("FITSfile")
-        .rust_target(RustTarget::Stable_1_47)
+        .rust_target(
+            RustTarget::stable(51, 0)
+                .map_err(|e| format!("bad rust target: {e}"))
+                .unwrap(),
+        )
         .generate()
         .expect("Unable to generate bindings");
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
@@ -111,7 +115,11 @@ fn bind_cfitsio() {
                 .clang_args(include_args)
                 .opaque_type("fitsfile")
                 .opaque_type("FITSfile")
-                .rust_target(RustTarget::Stable_1_47)
+                .rust_target(
+                    RustTarget::stable(51, 0)
+                        .map_err(|e| format!("bad rust target: {e}"))
+                        .unwrap(),
+                )
                 .generate()
                 .expect("Unable to generate bindings");
             let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
