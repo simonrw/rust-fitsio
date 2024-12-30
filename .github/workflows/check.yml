@@ -55,6 +55,11 @@ jobs:
           default: true
           components: rustfmt, clippy
 
+      - name: cargo generate-lockfile
+        # enable this ci template to run regardless of whether the lockfile is checked in or not
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+
       - name: cargo +${{ matrix.msrv }} check
         uses: actions-rs/cargo@v1
         with:
@@ -96,6 +101,11 @@ jobs:
           command: update
           toolchain: nightly
           args: -Zminimal-versions
+
+      - name: cargo generate-lockfile
+        # enable this ci template to run regardless of whether the lockfile is checked in or not
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
 
       - name: Test the code
         run: python3 ./bin/test --rust-version stable --test all
