@@ -98,3 +98,29 @@ mod sys {
 }
 
 pub use sys::*;
+
+// global functions
+
+/// Representation of the version of cfitsio used within bindings
+pub struct CfitsioVersion {
+    /// Patch version
+    pub patch: u32,
+    /// Minor version
+    pub minor: u32,
+    /// Major version
+    pub major: u32,
+}
+
+impl std::fmt::Display for CfitsioVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
+    }
+}
+
+pub fn cfitsio_version() -> CfitsioVersion {
+    CfitsioVersion {
+        patch: CFITSIO_MICRO,
+        minor: CFITSIO_MINOR,
+        major: CFITSIO_MAJOR,
+    }
+}

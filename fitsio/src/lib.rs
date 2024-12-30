@@ -1049,6 +1049,9 @@ let _hdu = t.hdu(hdu_num).unwrap();
 
 pub use fitsio_sys as sys;
 
+// re-export version information
+pub use sys::{cfitsio_version, CfitsioVersion};
+
 #[macro_use]
 mod macros;
 mod fitsfile;
