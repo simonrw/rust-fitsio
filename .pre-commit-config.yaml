@@ -9,7 +9,7 @@ repos:
         always_run: false
         pass_filenames: false
         stages:
-          - commit
+          - pre-commit
         types:
           - rust
 fail_fast: true
