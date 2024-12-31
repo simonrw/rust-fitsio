@@ -52,7 +52,17 @@ class TestRunner:
                 sys.exit(e.returncode)
         print()
 
+    def _print_cfitsio_version_with_features(self, *features: str, default_features: bool = True):
+        cmd = ["cargo", "run", "--package", "fitsio-sys", "--example", "print_version"]
+        for feature in features:
+            cmd.extend(["--features", feature])
+        if not default_features:
+            cmd.append("--no-default-features")
+        print(f"Running {' '.join(cmd)}")
+        sp.check_call(cmd)
+
     def _run_test_workspace(self):
+        self._print_cfitsio_version_with_features()
         self._run_cargo("test", "--locked", "--", "--test-threads", "1")
 
     def _run_test_clippy(self, extra_clippy_flags: str):
@@ -75,6 +85,7 @@ class TestRunner:
         self._run_cargo("test", "--locked", "--manifest-path", "fitsio/Cargo.toml", "--features", "array", "--", "--test-threads", "1")
 
     def _run_test_fitsio_src(self):
+        self._print_cfitsio_version_with_features("fitsio-src")
         self._run_cargo(
             "test",
             "--locked",
@@ -88,6 +99,7 @@ class TestRunner:
         )
 
     def _run_test_fitsio_src_and_bindgen(self):
+        self._print_cfitsio_version_with_features("fitsio-src", "with-bindgen")
         self._run_cargo(
             "test",
             "--locked",
@@ -103,6 +115,7 @@ class TestRunner:
         )
 
     def _run_test_bindgen(self):
+        self._print_cfitsio_version_with_features("with-bindgen", default_features=False)
         self._run_cargo(
             "test",
             "--locked",
