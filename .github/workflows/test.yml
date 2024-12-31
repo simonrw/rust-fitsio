@@ -53,6 +53,11 @@ jobs:
           override: true
           components: rustfmt, clippy
 
+      - name: cargo generate-lockfile
+        # enable this ci template to run regardless of whether the lockfile is checked in or not
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+
       - name: Test the code
         run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
 
@@ -80,6 +85,11 @@ jobs:
           override: true
           components: rustfmt, clippy
 
+      - name: cargo generate-lockfile
+        # enable this ci template to run regardless of whether the lockfile is checked in or not
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+
       - name: Test the code
         run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
 
@@ -104,6 +114,11 @@ jobs:
         run: |
           cargo install cross --locked
 
+      - name: cargo generate-lockfile
+        # enable this ci template to run regardless of whether the lockfile is checked in or not
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+
       - name: Test the code
         uses: actions-rs/cargo@v1
         with:
@@ -127,6 +142,11 @@ jobs:
           mingw64/mingw-w64-x86_64-cfitsio \
           mingw64/mingw-w64-x86_64-pkg-config \
           mingw64/mingw-w64-x86_64-rust
+
+      - name: cargo generate-lockfile
+        # enable this ci template to run regardless of whether the lockfile is checked in or not
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
 
       - name: Run the tests
         shell: msys2 {0}
