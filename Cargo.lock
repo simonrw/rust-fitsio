@@ -278,6 +278,7 @@ dependencies = [
  "fitsio-sys",
  "libc",
  "ndarray",
+ "proc-macro2",
  "serde",
  "tempfile",
  "version-sync",
