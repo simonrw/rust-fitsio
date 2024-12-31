@@ -103,8 +103,6 @@ pub use sys::*;
 
 /// Representation of the version of cfitsio used within bindings
 pub struct CfitsioVersion {
-    /// Patch version
-    pub patch: u32,
     /// Minor version
     pub minor: u32,
     /// Major version
@@ -113,13 +111,15 @@ pub struct CfitsioVersion {
 
 impl std::fmt::Display for CfitsioVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
+        write!(f, "{}.{}", self.major, self.minor)
     }
 }
 
 pub fn cfitsio_version() -> CfitsioVersion {
     CfitsioVersion {
-        patch: CFITSIO_MICRO,
+        // TODO: we need to detect the version of cfitsio we are binding to. Version >=4 supports
+        // this field, but earlier versions don't.
+        // patch: CFITSIO_MICRO,
         minor: CFITSIO_MINOR,
         major: CFITSIO_MAJOR,
     }
