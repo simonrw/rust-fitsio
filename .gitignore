@@ -1,5 +1,4 @@
 target
-Cargo.lock
 .vagrant
 *.rs.bk
 fitsio-sys/ext/cfitsio/docs/*
