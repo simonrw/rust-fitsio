@@ -34,6 +34,8 @@ tempfile = "3.0.0"
 version-sync = "0.9.0"
 # transient dependency for ciborium
 serde = "1.0.178"
+# transient dependency of quote
+proc-macro2 = "1.0.80"
 
 [features]
 array = ["ndarray"]
