@@ -1,7 +1,31 @@
 use std::path::PathBuf;
 
-#[allow(dead_code)]
-fn compile_cfitsio() -> PathBuf {
+fn generate_bindings<'p>(include_paths: impl Iterator<Item = &'p PathBuf>) {
+    #[cfg(feature = "with-bindgen")]
+    {
+        let out_path = PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
+
+        bindgen::builder()
+            .header("wrapper.h")
+            .block_extern_crate(true)
+            .clang_args(include_paths.map(|p| format!("-I{}", p.to_str().unwrap())))
+            .opaque_type("fitsfile")
+            .opaque_type("FITSfile")
+            .rust_target(bindgen::RustTarget::stable(47, 0).unwrap_or_else(|_| unreachable!()))
+            .generate()
+            .expect("Unable to generate bindings")
+            .write_to_file(out_path.join("bindings.rs"))
+            .expect("Couldn't write bindings");
+    }
+
+    #[cfg(not(feature = "with-bindgen"))]
+    {
+        let _ = include_paths;
+    }
+}
+
+#[cfg(feature = "fitsio-src")]
+fn main() {
     use autotools::Config;
 
     let cfitsio_project_dir = PathBuf::from("ext/cfitsio");
@@ -45,48 +69,15 @@ fn compile_cfitsio() -> PathBuf {
         .cflag("-fPIE")
         .insource(true)
         .build();
-    dst
-}
 
-#[cfg(all(feature = "fitsio-src", feature = "bindgen"))]
-fn bind_cfitsio() {
-    use bindgen::RustTarget;
-    use std::env;
-
-    let dst = compile_cfitsio();
-    let include_args = vec![format!("-I{}", dst.display())];
-    let bindings = bindgen::builder()
-        .header("wrapper.h")
-        .block_extern_crate(true)
-        .clang_args(include_args)
-        .opaque_type("fitsfile")
-        .opaque_type("FITSfile")
-        .rust_target(RustTarget::Stable_1_47)
-        .generate()
-        .expect("Unable to generate bindings");
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings");
-    println!("cargo:rustc-link-search=native={}", dst.display());
-    println!("cargo:rustc-link-lib=static=cfitsio");
-}
-
-#[cfg(all(feature = "fitsio-src", not(feature = "bindgen")))]
-fn bind_cfitsio() {
-    let dst = compile_cfitsio();
+    generate_bindings(std::iter::once(&dst));
 
     println!("cargo:rustc-link-search=native={}", dst.display());
     println!("cargo:rustc-link-lib=static=cfitsio");
 }
 
-#[cfg(all(not(feature = "fitsio-src"), feature = "bindgen"))]
-fn bind_cfitsio() {
-    use bindgen::RustTarget;
-    use pkg_config::Error;
-    use std::env;
-    use std::io::Write;
-
+#[cfg(not(feature = "fitsio-src"))]
+fn main() {
     // `msys2` does not report the version of cfitsio correctly, so ignore the version specifier for now.
     let package_name = if cfg!(windows) {
         let msg = "No version specifier available for pkg-config on windows, so the version of cfitsio used when compiling this program is unspecified";
@@ -100,91 +91,29 @@ fn bind_cfitsio() {
     config.print_system_cflags(true);
     match config.probe(package_name) {
         Ok(lib) => {
-            let include_args: Vec<_> = lib
-                .include_paths
-                .into_iter()
-                .map(|p| format!("-I{}", p.to_str().unwrap()))
-                .collect();
-            let bindings = bindgen::builder()
-                .header("wrapper.h")
-                .block_extern_crate(true)
-                .clang_args(include_args)
-                .opaque_type("fitsfile")
-                .opaque_type("FITSfile")
-                .rust_target(RustTarget::Stable_1_47)
-                .generate()
-                .expect("Unable to generate bindings");
-            let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-            bindings
-                .write_to_file(out_path.join("bindings.rs"))
-                .expect("Couldn't write bindings");
+            generate_bindings(lib.include_paths.iter());
         }
-        Err(Error::Failure { output, .. }) => {
-            // Handle the case where the user has not installed cfitsio, and thusly it is not on
-            // the PKG_CONFIG_PATH
-            let stderr = String::from_utf8(output.stderr).unwrap();
-            if stderr.contains::<&str>(
-                format!("{package_name} was not found in the pkg-config search path").as_ref(),
-            ) {
-                let err_msg = format!(
-                    "
-Cannot find {package_name} on the pkg-config search path.  Consider installing the library for your
-system (e.g. through homebrew, apt-get etc.).  Alternatively if it is installed, then add
-the directory that contains `cfitsio.pc` on your PKG_CONFIG_PATH, e.g.:
+        Err(e) => {
+            if let pkg_config::Error::Failure { output, .. } = &e {
+                // Handle the case where the user has not installed cfitsio, and thusly it is not on
+                // the PKG_CONFIG_PATH
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                if stderr.contains(
+                    format!("{package_name} was not found in the pkg-config search path").as_str(),
+                ) {
+                    eprintln!(
+                        "
+    Cannot find {package_name} on the pkg-config search path.  Consider installing the library for your
+    system (e.g. through homebrew, apt-get etc.).  Alternatively if it is installed, then add
+    the directory that contains `cfitsio.pc` on your PKG_CONFIG_PATH, e.g.:
 
-PKG_CONFIG_PATH=<blah> cargo build
-"
-                );
-                std::io::stderr().write_all(err_msg.as_bytes()).unwrap();
-                std::process::exit(output.status.code().unwrap());
+    PKG_CONFIG_PATH=<blah> cargo build
+    "
+                    );
+                    std::process::exit(output.status.code().unwrap_or(1));
+                }
             }
+            panic!("Unhandled error: {:?}", e);
         }
-        Err(e) => panic!("Unhandled error: {:?}", e),
     };
-}
-
-#[cfg(all(not(feature = "fitsio-src"), not(feature = "bindgen")))]
-fn bind_cfitsio() {
-    use pkg_config::Error;
-    use std::io::Write;
-
-    // `msys2` does not report the version of cfitsio correctly, so ignore the version specifier for now.
-    let package_name = if cfg!(windows) {
-        let msg = "No version specifier available for pkg-config on windows, so the version of cfitsio used when compiling this program is unspecified";
-        println!("cargo:warning={msg}");
-        "cfitsio"
-    } else {
-        "cfitsio >= 3.37"
-    };
-    let mut config = pkg_config::Config::new();
-    config.print_system_libs(true);
-    config.print_system_cflags(true);
-    match config.probe(package_name) {
-        Ok(_) => {}
-        Err(Error::Failure { output, .. }) => {
-            // Handle the case where the user has not installed cfitsio, and thusly it is not on
-            // the PKG_CONFIG_PATH
-            let stderr = String::from_utf8(output.stderr).unwrap();
-            if stderr.contains::<&str>(
-                format!("{package_name} was not found in the pkg-config search path").as_ref(),
-            ) {
-                let err_msg = format!(
-                    "
-Cannot find {package_name} on the pkg-config search path.  Consider installing the library for your
-system (e.g. through homebrew, apt-get etc.).  Alternatively if it is installed, then add
-the directory that contains `cfitsio.pc` on your PKG_CONFIG_PATH, e.g.:
-
-PKG_CONFIG_PATH=<blah> cargo build
-"
-                );
-                std::io::stderr().write_all(err_msg.as_bytes()).unwrap();
-                std::process::exit(output.status.code().unwrap());
-            }
-        }
-        Err(e) => panic!("Unhandled error: {:?}", e),
-    };
-}
-
-fn main() {
-    bind_cfitsio();
 }
