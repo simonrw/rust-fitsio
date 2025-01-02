@@ -16,8 +16,7 @@ RUN apt-get update && \
 
 RUN rustup update && \
     rustup install stable && \
-    rustup install nightly && \
-    rustup component add clippy --toolchain stable-x86_64-unknown-linux-gnu
+    rustup install nightly
 
 VOLUME ["/project"]
 WORKDIR "/project"
