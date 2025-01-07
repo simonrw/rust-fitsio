@@ -124,3 +124,55 @@ pub fn cfitsio_version() -> CfitsioVersion {
         major: CFITSIO_MAJOR,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{ffi::CString, ptr};
+
+    use crate::{
+        aliases::{fits_get_num_rows, fits_movabs_hdu, fits_open_file},
+        ffgnrw, ffmahd, ffopen,
+    };
+
+    #[test]
+    fn fitsio_sys_works() {
+        let mut fptr = ptr::null_mut();
+        let filename = CString::new("../testdata/full_example.fits").expect("valid C string");
+        let iomode = 0; // read only
+        let mut num_table_rows = 0;
+        let mut status = 0;
+
+        unsafe {
+            ffopen(&mut fptr, filename.as_ptr(), iomode, &mut status);
+            assert_eq!(status, 0);
+
+            ffmahd(fptr, 2, &mut 0, &mut status);
+            assert_eq!(status, 0);
+
+            ffgnrw(fptr, &mut num_table_rows, &mut status);
+            assert_eq!(status, 0);
+            assert_eq!(num_table_rows, 50);
+        }
+    }
+
+    #[test]
+    fn fitsio_sys_aliases_work() {
+        let mut fptr = ptr::null_mut();
+        let filename = CString::new("../testdata/full_example.fits").expect("valid C string");
+        let iomode = 0; // read only
+        let mut num_table_rows = 0;
+        let mut status = 0;
+
+        unsafe {
+            fits_open_file(&mut fptr, filename.as_ptr(), iomode, &mut status);
+            assert_eq!(status, 0);
+
+            fits_movabs_hdu(fptr, 2, &mut 0, &mut status);
+            assert_eq!(status, 0);
+
+            fits_get_num_rows(fptr, &mut num_table_rows, &mut status);
+            assert_eq!(status, 0);
+            assert_eq!(num_table_rows, 50);
+        }
+    }
+}
