@@ -1,9 +1,8 @@
 name: Stress test the package
 
 on:
-  push:
-    branches:
-      - main
+  # workflow_dispatch:
+  # TMP: only add this automatic step while developing
   pull_request:
     paths:
       - 'fitsio/**'
