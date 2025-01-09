@@ -6,11 +6,9 @@ on:
       - main
   pull_request:
     paths:
-      - 'bin/**'
       - 'fitsio/**'
       - 'fitsio-derive/**'
       - 'fitsio-sys/**'
-      - 'testdata/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'Cross.toml'
@@ -34,35 +32,35 @@ jobs:
           - macos-latest
           - macos-13
 
-      steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
 
-      - name: Install ubuntu dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install --no-install-recommends -y \
-            llvm-dev \
-            libcfitsio-dev \
-            pkg-config \
-            libssl-dev \
-            python3
+    - name: Install ubuntu dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install --no-install-recommends -y \
+          llvm-dev \
+          libcfitsio-dev \
+          pkg-config \
+          libssl-dev \
+          python3
 
-      - name: Install toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: beta
+    - name: Install toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: beta
 
-      - uses: Swatinem/rust-cache@v2
+    - uses: Swatinem/rust-cache@v2
 
-      - name: cargo generate-lockfile
-        # enable this ci template to run regardless of whether the lockfile is checked in or not
-        if: hashFiles('Cargo.lock') == ''
-        run: cargo generate-lockfile
+    - name: cargo generate-lockfile
+      # enable this ci template to run regardless of whether the lockfile is checked in or not
+      if: hashFiles('Cargo.lock') == ''
+      run: cargo generate-lockfile
 
-      - name: Install cargo-stress
-        run: cargo install cargo-stress
+    - name: Install cargo-stress
+      run: cargo install cargo-stress
 
-      - name: Stress test the code
-        working-directory: fitsio
-        run: cargo stress
+    - name: Stress test the code
+      working-directory: fitsio
+      run: cargo stress
 
