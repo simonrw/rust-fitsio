@@ -107,5 +107,11 @@ jobs:
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
 
+      - name: Install cargo-nextest
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-nextest
+          locked: true
+
       - name: Test the code
         run: python3 ./bin/test --rust-version stable --test all
