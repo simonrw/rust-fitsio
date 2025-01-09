@@ -36,14 +36,9 @@ jobs:
     - name: Checkout sources
       uses: actions/checkout@v4
 
-    - name: Install ubuntu dependencies
+    - name: Install dependencies
       run: |
-        sudo apt-get update && sudo apt-get install --no-install-recommends -y \
-          llvm-dev \
-          libcfitsio-dev \
-          pkg-config \
-          libssl-dev \
-          python3
+        brew install cfitsio python3
 
     - name: Install toolchain
       uses: dtolnay/rust-toolchain@master
