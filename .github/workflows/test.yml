@@ -53,6 +53,12 @@ jobs:
           override: true
           components: rustfmt, clippy
 
+      - name: Install cargo-nextest
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-nextest
+          locked: true
+
       - name: cargo generate-lockfile
         # enable this ci template to run regardless of whether the lockfile is checked in or not
         if: hashFiles('Cargo.lock') == ''
@@ -84,6 +90,12 @@ jobs:
           toolchain: ${{matrix.rust}}
           override: true
           components: rustfmt, clippy
+
+      - name: Install cargo-nextest
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-nextest
+          locked: true
 
       - name: cargo generate-lockfile
         # enable this ci template to run regardless of whether the lockfile is checked in or not
