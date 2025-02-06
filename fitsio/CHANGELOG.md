@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.8](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.7...fitsio-v0.21.8) - 2025-02-06
+
+### Other
+
+- Fix latest nightly clippy warnings
+
 ## [0.21.7](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.6...fitsio-v0.21.7) - 2025-01-02
 
 ### Other
