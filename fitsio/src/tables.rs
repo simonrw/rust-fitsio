@@ -376,7 +376,7 @@ pub trait WritesCol {
                 Self::write_col_range(fits_file, hdu, col_name, col_data, &row_range)
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
-            Ok(HduInfo::AnyInfo { .. }) => {
+            Ok(HduInfo::AnyInfo) => {
                 Err("Cannot determine HDU type, so cannot write column data".into())
             }
             Err(e) => Err(e),
@@ -487,7 +487,7 @@ impl WritesCol for String {
                 hdu
             }
             Ok(HduInfo::ImageInfo { .. }) => Err("Cannot write column data to FITS image".into()),
-            Ok(HduInfo::AnyInfo { .. }) => {
+            Ok(HduInfo::AnyInfo) => {
                 Err("Cannot determine HDU type, so cannot write column data".into())
             }
             Err(e) => Err(e),

@@ -21,7 +21,7 @@ where
 {
     use std::fs;
     with_temp_file(|filename| {
-        fs::copy("../testdata/full_example.fits", &filename).expect("Could not copy test file");
+        fs::copy("../testdata/full_example.fits", filename).expect("Could not copy test file");
         callback(filename);
     });
 }

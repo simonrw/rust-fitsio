@@ -548,9 +548,7 @@ impl FitsHdu {
                 ..
             } => Ok(column_descriptions.len()),
             HduInfo::ImageInfo { .. } => Err("Cannot add columns to FITS image".into()),
-            HduInfo::AnyInfo { .. } => {
-                Err("Cannot determine HDU type, so cannot add columns".into())
-            }
+            HduInfo::AnyInfo => Err("Cannot determine HDU type, so cannot add columns".into()),
         };
 
         match result {

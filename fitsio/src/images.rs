@@ -439,7 +439,7 @@ mod tests {
         let xcoord = 5..7;
         let ycoord = 2..3;
 
-        let chunk: Vec<i32> = hdu.read_region(&mut f, &vec![&ycoord, &xcoord]).unwrap();
+        let chunk: Vec<i32> = hdu.read_region(&mut f, &[&ycoord, &xcoord]).unwrap();
         assert_eq!(chunk.len(), (7 - 5) * (3 - 2));
         assert_eq!(chunk[0], 168);
         assert_eq!(chunk[chunk.len() - 1], 112);
