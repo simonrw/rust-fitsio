@@ -74,9 +74,12 @@ fn main() {
         .cflag("-fPIE")
         .build();
 
-    generate_bindings(std::iter::once(&dst));
+    generate_bindings(std::iter::once(&dst.join("include")));
 
-    println!("cargo:rustc-link-search=native={}", dst.display());
+    println!(
+        "cargo:rustc-link-search=native={}",
+        dst.join("lib").display()
+    );
     println!("cargo:rustc-link-lib=static=cfitsio");
 }
 
