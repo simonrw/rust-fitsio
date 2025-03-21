@@ -66,6 +66,12 @@ jobs:
         with:
           command: check
 
+      - name: cargo +${{ matrix.msrv }} check --features=fitsio-src
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --features=fitsio-src
+
   minimal:
     runs-on: ubuntu-latest
     name: minimal versions check
