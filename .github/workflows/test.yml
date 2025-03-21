@@ -43,6 +43,7 @@ jobs:
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
+            cmake \
             python3
 
       - name: Install toolchain
@@ -81,7 +82,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install cfitsio python3
+          brew install cfitsio python3 cmake
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -153,6 +154,7 @@ jobs:
           pacman -S --noconfirm \
           mingw64/mingw-w64-x86_64-cfitsio \
           mingw64/mingw-w64-x86_64-pkg-config \
+          mingw64/mingw-w64-x86_64-cmake \
           mingw64/mingw-w64-x86_64-rust
 
       - name: cargo generate-lockfile

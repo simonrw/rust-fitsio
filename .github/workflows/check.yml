@@ -45,6 +45,7 @@ jobs:
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
+            cmake \
             python3
 
       - name: "Install toolchain: ${{ matrix.msrv }}"
@@ -79,6 +80,7 @@ jobs:
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
+            cmake \
             python3
 
       - name: Install toolchain
