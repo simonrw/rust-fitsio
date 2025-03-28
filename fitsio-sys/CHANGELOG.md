@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Unreleased
 
+## [0.5.6](https://github.com/simonrw/rust-fitsio/compare/fitsio-sys-v0.5.5...fitsio-sys-v0.5.6) - 2025-03-28
+
+### Other
+
+- Generate and provide fitsio "long names" from longnam.h ([#382](https://github.com/simonrw/rust-fitsio/pull/382))
+
 ## [0.5.5](https://github.com/simonrw/rust-fitsio/compare/fitsio-sys-v0.5.4...fitsio-sys-v0.5.5) - 2025-01-02
 
 ### Other
