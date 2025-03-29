@@ -1322,7 +1322,15 @@ int imcomp_init_table(fitsfile *outfptr,
 	
 	    if ( (outfptr->Fptr)->request_quantize_method == 0) 
               (outfptr->Fptr)->request_quantize_method = SUBTRACTIVE_DITHER_1;
-       
+            
+            /* HCompress must not use SUBTRACTIVE_DITHER_2. If user is requesting
+               this, assign SUBTRACTIVE_DITHER_1 instead. */
+            if ((outfptr->Fptr)->request_quantize_method == SUBTRACTIVE_DITHER_2
+              && !(strcmp(zcmptype,"HCOMPRESS_1"))) {
+                 (outfptr->Fptr)->request_quantize_method = SUBTRACTIVE_DITHER_1;
+               fprintf(stderr,"Warning: CFITSIO does not allow subtractive_dither_2 when using Hcompress algorithm.\nWill use subtractive_dither_1 instead.\n");
+            }
+                 
 	    if ((outfptr->Fptr)->request_quantize_method == SUBTRACTIVE_DITHER_1) {
 	      ffpkys(outfptr, "ZQUANTIZ", "SUBTRACTIVE_DITHER_1", 
 	        "Pixel Quantization Algorithm", status);
@@ -8622,7 +8630,7 @@ int fits_compress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
   	            dlen = fits_rcomp_byte ((signed char *)(cm_buffer + cm_colstart[ii]), datasize, (unsigned char *) cvlamem,
                        datasize * 2, 32);
 	        } else {  /* this should not happen */
-                    ffpmsg(" Error: cannot compress this column type with the RICE algorthm");
+                    ffpmsg(" Error: cannot compress this column type with the RICE algorithm");
 		    free(cvlamem);  free(cm_buffer);
 	            *status = DATA_COMPRESSION_ERR;
 	            return(*status);
