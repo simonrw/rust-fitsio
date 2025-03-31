@@ -74,7 +74,7 @@ fn main() {
         .enable("reentrant", None)
         .cflag(opt_flag)
         .cflag("-fPIE")
-        .insource(true)
+        .insource(false)
         .build();
 
     generate_bindings(std::iter::once(&dst));
