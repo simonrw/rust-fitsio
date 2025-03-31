@@ -19,6 +19,7 @@
             pkgs.cfitsio
             pkgs.bzip2
             pkgs.pkg-config
+            pkgs.zlib
             pkgs.cargo-release
             pkgs.cargo-nextest
             pkgs.bacon
