@@ -14,3 +14,4 @@ cfitsio.xcodeproj
 fitsio-sys/ext/cfitsio/configure.prev
 fitsio-sys/ext/cfitsio/include
 fitsio-sys/ext/cfitsio/lib
+/fitsio-sys/ext/cfitsio/autom4te.cache

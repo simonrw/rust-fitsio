@@ -16,6 +16,8 @@
           buildInputs = [
             pkgs.rustup
             pkgs.libiconv
+            pkgs.automake
+            pkgs.autoconf
             pkgs.cfitsio
             pkgs.bzip2
             pkgs.pkg-config
