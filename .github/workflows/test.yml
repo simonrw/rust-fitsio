@@ -79,7 +79,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install cfitsio python3
+          brew install cfitsio python3 zlib
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1

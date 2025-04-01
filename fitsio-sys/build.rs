@@ -74,13 +74,32 @@ fn main() {
         .enable("reentrant", None)
         .cflag(opt_flag)
         .cflag("-fPIE")
-        .insource(true)
+        .insource(false)
         .build();
 
     generate_bindings(std::iter::once(&dst));
 
-    println!("cargo:rustc-link-search=native={}", dst.display());
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static=cfitsio");
+
+    // we now depend on zlib so find it using pkg-config
+    let mut config = pkg_config::Config::new();
+    config.print_system_libs(true);
+    config.print_system_cflags(true);
+
+    match config.probe("zlib") {
+        Ok(lib) => {
+            for l_flag in &lib.libs {
+                println!("cargo:rustc-link-lib={l_flag}");
+            }
+            for ldir_path in &lib.link_paths {
+                println!("cargo:rustc-link-search=native={}", ldir_path.display());
+            }
+        }
+        Err(e) => {
+            panic!("failed to find zlib: {}", e);
+        }
+    }
 }
 
 #[cfg(not(feature = "fitsio-src"))]
