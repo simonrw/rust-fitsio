@@ -31,7 +31,7 @@ fn generate_bindings<'p>(include_paths: impl Iterator<Item = &'p PathBuf>) {
 
 #[cfg(feature = "fitsio-src")]
 fn main() {
-    use autotools::Config;
+    use cmake::Config;
 
     let cfitsio_project_dir = PathBuf::from("ext/cfitsio");
     if !cfitsio_project_dir.exists() {
@@ -67,19 +67,19 @@ fn main() {
     let opt_flag = format!("-O{opt_level}");
 
     let dst = Config::new("ext/cfitsio")
-        .disable("curl", None)
-        .enable_shared()
-        .forbid("--enable-shared")
-        .forbid("--enable-static")
-        .enable("reentrant", None)
+        .define("UseCurl", "OFF")
+        .define("BUILD_SHARED_LIBS", "OFF")
+        .define("USE_PTHREADS", "ON")
         .cflag(opt_flag)
         .cflag("-fPIE")
-        .insource(true)
         .build();
 
-    generate_bindings(std::iter::once(&dst));
+    generate_bindings(std::iter::once(&dst.join("include")));
 
-    println!("cargo:rustc-link-search=native={}", dst.display());
+    println!(
+        "cargo:rustc-link-search=native={}",
+        dst.join("lib").display()
+    );
     println!("cargo:rustc-link-lib=static=cfitsio");
 }
 
