@@ -242,7 +242,8 @@ static int CreateSocketAddress(struct sockaddr_in *sockaddrPtr,
 			       char *host,int port);
 static int ftp_status(FILE *ftp, char *statusstr);
 static int http_open_network(char *url, FILE **httpfile, char *contentencoding,
-			  int *contentlength);
+			     char *contenttype, 
+			     int *contentlength);
 static int https_open_network(char *filename, curlmembuf* buffer);
 static int ftp_open_network(char *url, FILE **ftpfile, FILE **command, 
 			    int *sock);
@@ -284,7 +285,7 @@ int http_open(char *filename, int rwmode, int *handle)
 {
 
   FILE *httpfile;
-  char contentencoding[SHORTLEN];
+  char contentencoding[SHORTLEN], contenttype[SHORTLEN];
   char errorstr[MAXLEN];
   char recbuf[MAXLEN];
   long len;
@@ -318,8 +319,8 @@ int http_open(char *filename, int rwmode, int *handle)
   
   /* Open the network connection */
 
-  if (http_open_network(filename,&httpfile,contentencoding,
-			       &contentlength)) {
+  if (http_open_network(filename,&httpfile, contentencoding, 
+			contenttype, &contentlength)) {
       alarm(0);
       ffpmsg("Unable to open http file (http_open):");
       ffpmsg(filename);
@@ -342,6 +343,12 @@ int http_open(char *filename, int rwmode, int *handle)
   ungetc(firstchar,httpfile);
   if (!strcmp(contentencoding,"x-gzip") || 
       !strcmp(contentencoding,"x-compress") ||
+      !strcmp(contenttype, "application/x-gzip") ||
+      !strcmp(contenttype, "application/gzip") ||
+      !strcmp(contenttype, "application/gzip-compressed") ||
+      !strcmp(contenttype, "application/gzipped") ||
+      !strcmp(contenttype, "application/x-compress") ||
+      !strcmp(contenttype, "application/x-compressed") ||
       strstr(filename,".gz") || 
       strstr(filename,".Z") ||
       ('\037' == firstchar)) {
@@ -412,7 +419,7 @@ int http_open(char *filename, int rwmode, int *handle)
 int http_compress_open(char *url, int rwmode, int *handle)
 {
   FILE *httpfile;
-  char contentencoding[SHORTLEN];
+  char contentencoding[SHORTLEN], contenttype[SHORTLEN];
   char errorstr[MAXLEN];
   char recbuf[MAXLEN];
   long len;
@@ -454,8 +461,8 @@ int http_compress_open(char *url, int rwmode, int *handle)
   
   /* Open the http connectin */
   alarm(net_timeout);
-  if ((status = http_open_network(url,&httpfile,contentencoding,
-			       &contentlength))) {
+  if ((status = http_open_network(url,&httpfile, contentencoding, 
+				  contenttype, &contentlength))) {
     alarm(0);
     ffpmsg("Unable to open http file (http_compress_open)");
     ffpmsg(url);
@@ -470,6 +477,12 @@ int http_compress_open(char *url, int rwmode, int *handle)
   ungetc(firstchar,httpfile);
   if (!strcmp(contentencoding,"x-gzip") || 
       !strcmp(contentencoding,"x-compress") ||
+      !strcmp(contenttype, "application/x-gzip") ||
+      !strcmp(contenttype, "application/gzip") ||
+      !strcmp(contenttype, "application/gzip-compressed") ||
+      !strcmp(contenttype, "application/gzipped") ||
+      !strcmp(contenttype, "application/x-compress") ||
+      !strcmp(contenttype, "application/x-compressed") ||
       ('\037' == firstchar)) {
 
     if (*netoutfile == '!')
@@ -571,7 +584,7 @@ int http_compress_open(char *url, int rwmode, int *handle)
 int http_file_open(char *url, int rwmode, int *handle)
 {
   FILE *httpfile;
-  char contentencoding[SHORTLEN];
+  char contentencoding[SHORTLEN], contenttype[SHORTLEN];
   char errorstr[MAXLEN];
   char recbuf[MAXLEN];
   long len;
@@ -613,8 +626,8 @@ int http_file_open(char *url, int rwmode, int *handle)
   
   /* Open the network connection */
   alarm(net_timeout);
-  if ((status = http_open_network(url,&httpfile,contentencoding,
-			       &contentlength))) {
+  if ((status = http_open_network(url,&httpfile, contentencoding,
+				  contenttype, &contentlength))) {
     alarm(0);
     ffpmsg("Unable to open http file (http_file_open)");
     ffpmsg(url);
@@ -636,6 +649,12 @@ int http_file_open(char *url, int rwmode, int *handle)
   ungetc(firstchar,httpfile);
   if (!strcmp(contentencoding,"x-gzip") || 
       !strcmp(contentencoding,"x-compress") ||
+      !strcmp(contenttype, "application/x-gzip") ||
+      !strcmp(contenttype, "application/gzip") ||
+      !strcmp(contenttype, "application/gzip-compressed") ||
+      !strcmp(contenttype, "application/gzipped") ||
+      !strcmp(contenttype, "application/x-compress") ||
+      !strcmp(contenttype, "application/x-compressed") ||
       ('\037' == firstchar)) {
 
     /* to make this more cfitsioish we use the file driver calls to create
@@ -743,7 +762,7 @@ int http_file_open(char *url, int rwmode, int *handle)
      it
 */
 static int http_open_network(char *url, FILE **httpfile, char *contentencoding,
-			  int *contentlength)
+			     char *contenttype, int *contentlength)
 {
 
   int status;
@@ -848,10 +867,10 @@ static int http_open_network(char *url, FILE **httpfile, char *contentencoding,
     strcat(tmpstr,tmpstr1);
   }
 
-/*  snprintf(tmpstr1,SHORTLEN,"User-Agent: HEASARC/CFITSIO/%-8.3f\r\n",ffvers(&version)); */
+/*  snprintf(tmpstr1,SHORTLEN,"User-Agent: HEASARC/CFITSIO/%-8.4f\r\n",ffvers(&version)); */
 
-/*  snprintf(tmpstr1,SHORTLEN,"User-Agent: CFITSIO/HEASARC/%-8.3f\r\n",ffvers(&version)); */
-  snprintf(tmpstr1,SHORTLEN,"User-Agent: FITSIO/HEASARC/%-8.3f\r\n",ffvers(&version)); 
+/*  snprintf(tmpstr1,SHORTLEN,"User-Agent: CFITSIO/HEASARC/%-8.4f\r\n",ffvers(&version)); */
+  snprintf(tmpstr1,SHORTLEN,"User-Agent: FITSIO/HEASARC/%-8.4f\r\n",ffvers(&version)); 
  
   if (strlen(tmpstr) + strlen(tmpstr1) > MAXLEN - 1)
   {
@@ -887,6 +906,7 @@ static int http_open_network(char *url, FILE **httpfile, char *contentencoding,
 
   *contentlength = 0;
   contentencoding[0] = '\0';
+  contenttype[0] = '\0';
 
   /* Our choices are 200, ok, 302, temporary redirect, or 301 perm redirect */
   sscanf(recbuf,"%s %d",tmpstr,&status);
@@ -938,7 +958,8 @@ static int http_open_network(char *url, FILE **httpfile, char *contentencoding,
 
              /* note the recursive call to itself */
 	     return 
-	        http_open_network(turl,httpfile,contentencoding,contentlength);
+	       http_open_network(turl,httpfile, contentencoding, 
+				 contenttype, contentlength);
           }
 
           /* It was not a HTTP to HTTP redirection, so see if it HTTP to FTP */
@@ -1030,6 +1051,23 @@ static int http_open_network(char *url, FILE **httpfile, char *contentencoding,
 	strcpy(contentencoding,scratchstr);
       }
     }
+
+    /* Did we get the content-type header ? */
+    if (!strcmp(tmpstr,"Content-Type:")) {
+      if (NULL != (scratchstr = strstr(recbuf,":"))) {
+	/* Found the : */
+	scratchstr++; /* skip the : */
+	scratchstr++; /* skip the extra space */
+        if (strlen(scratchstr) > SHORTLEN-1) 
+        {
+           ffpmsg("Error: content-type string too long (http_open_network)");
+           fclose(*httpfile);
+           *httpfile=0;
+           return URL_PARSE_ERROR;
+        }
+	strcpy(contenttype,scratchstr);
+      }
+    }
   }
   
   /* we're done, so return */
@@ -1089,13 +1127,33 @@ int https_open(char *filename, int rwmode, int *handle)
      return (FILE_NOT_OPENED);
   }
   
-  if (inmem.size % 2880)
-  {
-     snprintf(errStr,MAXLEN,"Content-Length not a multiple of 2880 (https_open) %u",
-         inmem.size);
-     ffpmsg(errStr);
+  /* Check for gzip magic number */
+  if (inmem.size >= 2 &&
+      (unsigned char) inmem.memory[0] == 0x1f && 
+      (unsigned char) inmem.memory[1] == 0x8b) {
+    LONGLONG fitsfilesize = 0;
+    
+    /* Uncompress from memory to memfile */
+    status = mem_zuncompress_and_write(*handle, inmem.memory, inmem.size);
+    mem_size(*handle, &fitsfilesize);
+
+    if ((fitsfilesize > 0) && (fitsfilesize % 2880)) {
+      snprintf(errStr,MAXLEN,"Uncompressed file length not a multiple of 2880 (https_open) %lld",
+	       fitsfilesize);
+      ffpmsg(errStr);
+    }
+
+  } else {
+
+    if (inmem.size % 2880) {
+      snprintf(errStr,MAXLEN,"Content-Length not a multiple of 2880 (https_open) %zu",
+	       inmem.size);
+      ffpmsg(errStr);
+    }
+
+    /* Straight copy of data */
+    status = mem_write(*handle, inmem.memory, inmem.size);
   }
-  status = mem_write(*handle, inmem.memory, inmem.size);
   if (status)
   {
      ffpmsg("Error copying https file into memory (https_open)");
@@ -1178,7 +1236,7 @@ int https_file_open(char *filename, int rwmode, int *handle)
   if (inmem.size % 2880)
   {
     snprintf(errStr, MAXLEN,
-	    "Content-Length not a multiple of 2880 (https_file_open) %d",
+	    "Content-Length not a multiple of 2880 (https_file_open) %zu",
 	    inmem.size);
     ffpmsg(errStr);
   }
@@ -1415,7 +1473,7 @@ int ftps_open(char *filename, int rwmode, int *handle)
   {
      if (inmem.size % 2880)
      {
-        snprintf(errStr,MAXLEN,"Content-Length not a multiple of 2880 (ftps_open) %u",
+        snprintf(errStr,MAXLEN,"Content-Length not a multiple of 2880 (ftps_open) %zu",
             inmem.size);
         ffpmsg(errStr);
      }
@@ -1567,7 +1625,7 @@ int ftps_file_open(char *filename, int rwmode, int *handle)
      if (inmem.size % 2880)
      {
        snprintf(errStr, MAXLEN,
-	       "Content-Length not a multiple of 2880 (ftps_file_open) %d",
+	       "Content-Length not a multiple of 2880 (ftps_file_open) %zu",
 	       inmem.size);
        ffpmsg(errStr);
      }
@@ -1783,7 +1841,7 @@ int ftps_open_network(char *filename, curlmembuf* buffer)
      username = "anonymous";
   if (!password || strlen(password)==0)
   {
-     snprintf(agentStr,SHORTLEN,"User-Agent: FITSIO/HEASARC/%-8.3f",ffvers(&version));
+     snprintf(agentStr,SHORTLEN,"User-Agent: FITSIO/HEASARC/%-8.4f",ffvers(&version));
      password = agentStr;
   }
   
@@ -1870,7 +1928,7 @@ int ssl_get_with_curl(char *url, curlmembuf* buffer, char* username,
   
   curl_easy_setopt(curl, CURLOPT_VERBOSE, (long)curl_verbose);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlToMemCallback);
-  snprintf(agentStr,MAXLEN,"User-Agent: FITSIO/HEASARC/%-8.3f",ffvers(&version)); 
+  snprintf(agentStr,MAXLEN,"FITSIO/HEASARC/%-8.4f",ffvers(&version)); 
   curl_easy_setopt(curl, CURLOPT_USERAGENT,agentStr);
   
   buffer->memory = 0; /* malloc/realloc will grow this in the callback function */
@@ -2585,7 +2643,7 @@ static int ftp_open_network(char *filename, FILE **ftpfile, FILE **command, int 
   port = 21;
   /* We might have a user name.  If not, set defaults for username and password */
   username = "anonymous";
-  snprintf(agentStr,SHORTLEN,"User-Agent: FITSIO/HEASARC/%-8.3f",ffvers(&version));
+  snprintf(agentStr,SHORTLEN,"User-Agent: FITSIO/HEASARC/%-8.4f",ffvers(&version));
   password = agentStr;
   /* is there an @ sign */
   if (NULL != (newhost = strrchr(host,'@'))) {
@@ -3236,6 +3294,7 @@ static int NET_ParseUrl(const char *url, char *proto, char *host, int *port,
   char *ptrstr;
   char *thost;
   int isftp = 0;
+  size_t icount;
 
   /* figure out if there is a http: or  ftp: */
 
@@ -3298,19 +3357,21 @@ static int NET_ParseUrl(const char *url, char *proto, char *host, int *port,
     if ((thost = strchr(urlcopy, '@')) != NULL)
       urlcopy = thost+1;
 
-    if (strlen(urlcopy) > SHORTLEN-1)
+    thost = urlcopy;
+    icount=0;
+    while (*urlcopy != '/' && *urlcopy != ':' && *urlcopy) {
+      urlcopy++;
+      icount++;
+    }
+    if (icount > SHORTLEN-1)
     {
        free(urlcopyorig);
        return 1;
     }
-    strcpy(host,urlcopy);
-    thost = host;
-    while (*urlcopy != '/' && *urlcopy != ':' && *urlcopy) {
-      thost++;
-      urlcopy++;
-    }
+    strncpy(host,thost,icount);
+    host[icount] = '\0';
+    
     /* we should either be at the end of the string, have a /, or have a : */
-    *thost = '\0';
     if (*urlcopy == ':') {
       /* follows a port number */
       urlcopy++;
@@ -3319,18 +3380,20 @@ static int NET_ParseUrl(const char *url, char *proto, char *host, int *port,
     }
   } else {
     /* do this for ftp */
-    if (strlen(urlcopy) > SHORTLEN-1)
+    
+    thost = urlcopy;
+    icount = 0;
+    while (*urlcopy != '/' && *urlcopy) {
+      urlcopy++;
+      icount++;
+    }
+    if (icount > SHORTLEN-1)
     {
        free(urlcopyorig);
        return 1;
     }
-    strcpy(host,urlcopy);
-    thost = host;
-    while (*urlcopy != '/' && *urlcopy) {
-      thost++;
-      urlcopy++; 
-    }
-    *thost = '\0';
+    strncpy(host,thost,icount);
+    host[icount] = '\0';
     /* Now, we should either be at the end of the string, or have a / */
     
   }
@@ -3357,7 +3420,7 @@ int http_checkfile (char *urltype, char *infile, char *outfile1)
 
   char newinfile[MAXLEN];
   FILE *httpfile=0;
-  char contentencoding[MAXLEN];
+  char contentencoding[MAXLEN], contenttype[MAXLEN];
   int contentlength;
   int foundfile = 0;
   int status=0;
@@ -3411,8 +3474,8 @@ int http_checkfile (char *urltype, char *infile, char *outfile1)
     strcpy(newinfile,infile);
     strcat(newinfile,".gz");
 
-    status = http_open_network(newinfile,&httpfile,contentencoding,
-			   &contentlength);
+    status = http_open_network(newinfile,&httpfile, contentencoding,
+			       contenttype, &contentlength);
     if (!status) {
       if (!strcmp(contentencoding, "ftp://")) {
           /* this is a signal from http_open_network that indicates that */
@@ -3485,8 +3548,8 @@ int http_checkfile (char *urltype, char *infile, char *outfile1)
     }  
     strcpy(newinfile,infile);
     strcat(newinfile,".Z");
-    if (!http_open_network(newinfile,&httpfile,contentencoding,
-			   &contentlength)) {
+    if (!http_open_network(newinfile,&httpfile, contentencoding,
+			   contenttype, &contentlength)) {
 
       if (!strcmp(contentencoding, "ftp://")) {
           /* this is a signal from http_open_network that indicates that */
@@ -3542,8 +3605,8 @@ int http_checkfile (char *urltype, char *infile, char *outfile1)
     /* look for the base file.name */
       
     strcpy(newinfile,infile);
-    if (!http_open_network(newinfile,&httpfile,contentencoding,
-			   &contentlength)) {
+    if (!http_open_network(newinfile,&httpfile, contentencoding,
+			   contenttype, &contentlength)) {
 
       if (!strcmp(contentencoding, "ftp://")) {
           /* this is a signal from http_open_network that indicates that */

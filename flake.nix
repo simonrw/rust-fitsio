@@ -16,9 +16,12 @@
           buildInputs = [
             pkgs.rustup
             pkgs.libiconv
+            pkgs.automake
+            pkgs.autoconf
             pkgs.cfitsio
             pkgs.bzip2
             pkgs.pkg-config
+            pkgs.zlib
             pkgs.cargo-release
             pkgs.cargo-nextest
             pkgs.bacon
