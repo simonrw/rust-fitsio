@@ -16,12 +16,12 @@ links = "cfitsio"
 [dependencies]
 
 [features]
-fitsio-src = []
+fitsio-src = ["cmake"]
 with-bindgen = ["bindgen"]
 
 [build-dependencies]
 pkg-config = "0.3.16"
-autotools = ">= 0.2.5"
+cmake = { version = "0.1", optional = true }
 bindgen = { version = "0.71", optional = true }
 
 [package.metadata.docs.rs]
