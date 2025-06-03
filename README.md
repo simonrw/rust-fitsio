@@ -46,8 +46,9 @@ brew install cfitsio --with-reentrant
 
 Alternatively, it is possible to automatically have `cargo` automatically
 compile `cfitsio` from source. To do this, you are required to have a C
-compiler, autotools (to run the `configure` script) and make (to run the
-`Makefile`). This functionality is made available with the `fitsio-src` feature:
+compiler, CMake (to generate a `Makefile`, `build.ninja`, etc. file)
+and `make`, `ninja`, or another CMake-compatible build tool (to run actual compilation).
+This functionality is made available with the `fitsio-src` feature:
 
 ```sh
 cargo build --features fitsio-src
