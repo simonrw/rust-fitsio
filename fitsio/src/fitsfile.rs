@@ -8,10 +8,13 @@
  * similar architectures).
  */
 
+use rsfitsio::aliases::c_api::*;
+use rsfitsio::fitscore::ffflnm;
+use rsfitsio::fitsio::{fitsfile, FITSfile};
+
 use crate::errors::{check_status, Error, Result};
 use crate::hdu::{DescribesHdu, FitsHdu, FitsHduIterator, HduInfo};
 use crate::images::{ImageDescription, ImageType};
-use crate::longnam::*;
 use crate::stringutils::{self, buf_to_string, status_to_string};
 use crate::tables::{ColumnDataDescription, ConcreteColumnDescription};
 use std::ffi;
@@ -23,7 +26,7 @@ use std::ptr;
 pub struct FitsFile {
     file_path: PathBuf,
     open_mode: FileOpenMode,
-    pub(crate) fptr: ptr::NonNull<fitsfile>,
+    pub(crate) fptr: Box<fitsfile>,
 }
 
 impl FitsFile {
@@ -45,7 +48,8 @@ impl FitsFile {
     ```
     */
     pub fn open<T: AsRef<Path>>(filename: T) -> Result<Self> {
-        let mut fptr = ptr::null_mut();
+        // let mut fptr = ptr::null_mut();
+        let mut fptr = None;
         let mut status = 0;
         let file_path = filename.as_ref();
         let filename = file_path.to_str().expect("converting filename");
@@ -53,14 +57,14 @@ impl FitsFile {
 
         unsafe {
             fits_open_file(
-                &mut fptr as *mut *mut fitsfile,
+                &mut fptr,
                 c_filename.as_ptr(),
                 FileOpenMode::READONLY as libc::c_int,
                 &mut status,
             );
         }
 
-        check_status(status).map(|_| match ptr::NonNull::new(fptr) {
+        check_status(status).map(|_| match fptr {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READONLY,
@@ -87,7 +91,7 @@ impl FitsFile {
     ```
     */
     pub fn edit<T: AsRef<Path>>(filename: T) -> Result<Self> {
-        let mut fptr = ptr::null_mut();
+        let mut fptr: Option<Box<fitsfile>> = None;
         let mut status = 0;
         let file_path = filename.as_ref();
         let filename = file_path.to_str().expect("converting filename");
@@ -95,14 +99,14 @@ impl FitsFile {
 
         unsafe {
             fits_open_file(
-                &mut fptr as *mut *mut _,
+                &mut fptr as *mut _,
                 c_filename.as_ptr(),
                 FileOpenMode::READWRITE as libc::c_int,
                 &mut status,
             );
         }
 
-        check_status(status).map(|_| match ptr::NonNull::new(fptr) {
+        check_status(status).map(|_| match fptr {
             Some(p) => FitsFile {
                 fptr: p,
                 open_mode: FileOpenMode::READWRITE,
@@ -372,7 +376,7 @@ impl FitsFile {
 
                 for i in 0..num_cols {
                     let mut name_buffer: Vec<libc::c_char> = vec![0; 71];
-                    let mut type_buffer: Vec<libc::c_char> = vec![0; 71];
+                    let mut type_buffer = [0u8; 2];
                     let mut repeats: libc::c_long = 0;
                     unsafe {
                         fits_get_bcolparms(

@@ -1047,10 +1047,31 @@ let _hdu = t.hdu(hdu_num).unwrap();
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 #![allow(clippy::uninlined_format_args)]
 
-pub use fitsio_sys as sys;
+use rsfitsio::fitsio::{CFITSIO_MAJOR, CFITSIO_MINOR};
+use std::convert::TryFrom;
 
-// re-export version information
-pub use sys::{cfitsio_version, CfitsioVersion};
+/// Representation of the version of cfitsio used within bindings
+pub struct CfitsioVersion {
+    /// Minor version
+    pub minor: u32,
+    /// Major version
+    pub major: u32,
+}
+
+impl std::fmt::Display for CfitsioVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}.{}", self.major, self.minor)
+    }
+}
+
+fn cfitsio_version() -> CfitsioVersion {
+    let minor = CFITSIO_MINOR;
+    let major = CFITSIO_MAJOR;
+    CfitsioVersion {
+        minor: u32::try_from(minor).unwrap(),
+        major: u32::try_from(major).unwrap(),
+    }
+}
 
 #[macro_use]
 mod macros;

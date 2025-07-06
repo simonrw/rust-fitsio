@@ -1,6 +1,6 @@
 use crate::errors::Result;
-use crate::sys::ffgerr;
 use libc::{c_char, c_int, size_t};
+use rsfitsio::fitscore::ffgerr;
 use std::ffi::{CStr, CString};
 
 /// Helper function converting a C string pointer to Rust String
@@ -60,6 +60,7 @@ pub fn status_to_string(status: c_int) -> Result<Option<String>> {
         status => {
             let mut buffer: Vec<c_char> = vec![0; 31];
             unsafe {
+                // TODO: stop using deprecated function
                 ffgerr(status, buffer.as_mut_ptr());
             }
             let result_str = buf_to_string(&buffer)?;
