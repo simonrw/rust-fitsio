@@ -18,7 +18,7 @@ jobs:
           extra-conf: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
       - name: Update flake.lock
-        uses: DeterminateSystems/update-flake-lock@v25
+        uses: DeterminateSystems/update-flake-lock@v26
         with:
           pr-title: Update flake.lock
           pr-labels: |
