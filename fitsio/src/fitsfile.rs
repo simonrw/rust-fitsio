@@ -586,7 +586,7 @@ impl FitsFile {
     # }
     ```
     */
-    pub fn iter(&mut self) -> FitsHduIterator {
+    pub fn iter(&mut self) -> FitsHduIterator<'_> {
         FitsHduIterator {
             current: 0,
             max: self.num_hdus().unwrap(),
