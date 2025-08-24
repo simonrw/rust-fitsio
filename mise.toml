@@ -1,4 +1,4 @@
 [tools]
-"cargo:cargo-nextest" = "latest"
+"ubi:nextest-rs/nextest" = { version = "cargo-nextest-0.9.102", exe = "cargo-nextest" }
 cmake = "latest"
 rust = "nightly"

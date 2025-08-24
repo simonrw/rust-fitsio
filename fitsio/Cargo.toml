@@ -10,12 +10,12 @@ name = "fitsio"
 readme = "README.md"
 repository = "https://github.com/simonrw/rust-fitsio"
 version = "0.21.7"
-rust-version = "1.58.0"
+rust-version = "1.64.0"
 
 [package.metadata.release]
 pre-release-replacements = [
-    {file="../README.md", search="fitsio = .*", replace="{{crate_name}} = \"{{version}}\""},
-    {file="src/lib.rs", search="https://docs.rs/fitsio/.*", replace="https://docs.rs/fitsio/{{version}}\")]"},
+    { file = "../README.md", search = "fitsio = .*", replace = "{{crate_name}} = \"{{version}}\"" },
+    { file = "src/lib.rs", search = "https://docs.rs/fitsio/.*", replace = "https://docs.rs/fitsio/{{version}}\")]" },
 ]
 
 [package.metadata.docs.rs]
