@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.8](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.7...fitsio-v0.21.8) - 2025-09-15
+
+### Added
+
+- set  public fitsio::fitfile::FitsFile::num_hdus function. ([#417](https://github.com/simonrw/rust-fitsio/pull/417))
+
+### Other
+
+- Remove locked flag ([#414](https://github.com/simonrw/rust-fitsio/pull/414))
+- *(deps)* update criterion requirement from 0.6.0 to 0.7.0 in /fitsio in the cargo-packages group ([#412](https://github.com/simonrw/rust-fitsio/pull/412))
+- Fix clippy lints to fix CI
+- *(deps)* update criterion requirement from 0.5.1 to 0.6.0 in /fitsio in the cargo-packages group ([#403](https://github.com/simonrw/rust-fitsio/pull/403))
+- Fix latest nightly clippy warnings
+
 ## [0.21.7](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.6...fitsio-v0.21.7) - 2025-01-02
 
 ### Other
