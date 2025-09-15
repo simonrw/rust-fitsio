@@ -260,8 +260,23 @@ impl FitsFile {
         &self.file_path
     }
 
-    /// Return the number of HDU objects in the file
-    fn num_hdus(&mut self) -> Result<usize> {
+    /** 
+    Get the number of HDUs in the file
+
+    # Example
+
+    ```rust
+    # use fitsio::{sys, FitsFile};
+    # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    # let filename = "../testdata/full_example.fits";
+    # let mut fptr = FitsFile::open(filename)?;
+    let num_hdus = fptr.num_hdus()?;
+    assert_eq!(num_hdus, 2);
+    # Ok(())
+    # }
+    ```
+    */
+    pub fn num_hdus(&mut self) -> Result<usize> {
         let mut status = 0;
         let mut num_hdus = 0;
         unsafe {

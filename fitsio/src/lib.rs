@@ -192,6 +192,19 @@ if let HduInfo::TableInfo { column_descriptions, num_rows, .. } = hdu.info {
 # fn main() { try_main().unwrap(); }
 ```
 
+The number of HDUs in a file can be queried with the [`num_hdus`][fits-file-num-hdus] method:
+```rust
+use fitsio::FitsFile;
+
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
+let mut fptr = FitsFile::open("../testdata/full_example.fits")?;
+
+let num_hdus = fptr.num_hdus()?;
+println!("Number of HDUs: {}", num_hdus);
+# Ok(())
+# }
+```
+
 The primary HDU can always be accessed with the `FitsFile::primary_hdu` method.
 
 # Creating new HDUs
@@ -997,6 +1010,7 @@ let _hdu = t.hdu(hdu_num).unwrap();
 [column-data-description]: tables/struct.ColumnDataDescription.html
 [column-data-type]: tables/enum.ColumnDataType.html
 [column-description]: tables/struct.ColumnDescription.html
+[fits-file-num-hdus]: fitsfile/struct.FitsFile.html#method.num_hdus
 [fits-file-create-image]: fitsfile/struct.FitsFile.html#method.create_image
 [fits-file-create-table]: fitsfile/struct.FitsFile.html#method.create_table
 [fits-file-create]: fitsfile/struct.FitsFile.html#method.create
