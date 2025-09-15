@@ -268,7 +268,7 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
 name = "fitsio"
-version = "0.21.7"
+version = "0.21.8"
 dependencies = [
  "criterion",
  "fitsio-derive",
@@ -291,7 +291,7 @@ dependencies = [
 
 [[package]]
 name = "fitsio-sys"
-version = "0.5.5"
+version = "0.5.6"
 dependencies = [
  "autotools",
  "bindgen",
