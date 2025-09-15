@@ -200,7 +200,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let num_hdus = fptr.num_hdus()?;
     if num_hdus > 0 {
-        println!("Number of HDUs: {:,i}", num_hdus);
+        println!("Number of HDUs: {}", num_hdus);
     }
     Ok(())
 }
