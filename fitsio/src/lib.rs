@@ -198,9 +198,9 @@ use fitsio::FitsFile;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut fptr = FitsFile::open("../testdata/full_example.fits")?;
 
-    let num_hdus = fptr.num_hdus();
+    let num_hdus = fptr.num_hdus()?;
     if num_hdus > 0 {
-        println!("Number of HDUs: {}", num_hdus);
+        println!("Number of HDUs: {:,i}", num_hdus);
     }
     Ok(())
 }
