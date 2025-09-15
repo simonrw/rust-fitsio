@@ -261,7 +261,7 @@ impl FitsFile {
     }
 
     /// Return the number of HDU objects in the file
-    fn num_hdus(&mut self) -> Result<usize> {
+    pub fn num_hdus(&mut self) -> Result<usize> {
         let mut status = 0;
         let mut num_hdus = 0;
         unsafe {
