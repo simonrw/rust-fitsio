@@ -72,11 +72,11 @@ jobs:
           command: check
           args: --features=fitsio-src
 
-      - name: cargo +${{ matrix.msrv }} check --features=fitsio-src,fitsio-src-cmake
+      - name: cargo +${{ matrix.msrv }} check --features=fitsio-src,src-cmake
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --features=fitsio-src,fitsio-src-cmake
+          args: --features=fitsio-src,src-cmake
 
   minimal:
     runs-on: ubuntu-latest
