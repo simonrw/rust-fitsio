@@ -30,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [stable, beta]
-        test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-cmake, fitsio-src-and-bindgen, full-example, workspace]
+        test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-cmake, fitsio-src-and-bindgen, full-example, workspace, fitsio-src-and-cmake-and-bindgen]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
