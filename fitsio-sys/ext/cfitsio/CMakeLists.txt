@@ -14,6 +14,7 @@ ENDIF()
 
 INCLUDE (${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckFunctionExists.cmake)
+INCLUDE (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
 
 # Allow the developer to select if Dynamic or Static libraries are built
 OPTION (BUILD_SHARED_LIBS "Build Shared Libraries" ON)
@@ -61,7 +62,7 @@ ENDIF (BUILD_SHARED_LIBS)
 FILE(GLOB H_FILES "*.h")
 
 IF (USE_PTHREADS)
-    FIND_PACKAGE(Pthreads REQUIRED)
+    FIND_PACKAGE(Threads REQUIRED)
     INCLUDE_DIRECTORIES(${PTHREADS_INCLUDE_DIR})
     ADD_DEFINITIONS(-D_REENTRANT)
 ENDIF()
@@ -90,6 +91,12 @@ IF (NOT MSVC)
     # Define HAVE_NET_SERVICES if gethostbyname & connect were found:
     IF (CMAKE_HAVE_GETHOSTBYNAME AND CMAKE_HAVE_CONNECT)
         ADD_DEFINITIONS(-DHAVE_NET_SERVICES)
+    ENDIF ()
+
+    # Check for unistd.h:
+    CHECK_INCLUDE_FILE("unistd.h" CMAKE_HAVE_UNISTD)
+    IF (CMAKE_HAVE_UNISTD)
+        ADD_DEFINITIONS(-DHAVE_UNISTD_H)
     ENDIF ()
 
     # Find curl library, for HTTPS support:

@@ -83,6 +83,7 @@ fn main() {
 
     #[cfg(feature = "src-cmake")]
     let dst = CMakeConfig::new("ext/cfitsio")
+        .define("CMAKE_POLICY_VERSION_MINIMUM", "3.5")
         .define("UseCurl", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
         .define("USE_PTHREADS", "ON")

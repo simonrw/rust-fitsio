@@ -150,8 +150,11 @@ jobs:
         shell: msys2 {0}
         run: |
           pacman -S --noconfirm \
+          mingw-w64-x86_64-gcc \
+          mingw-w64-x86_64-make \
+          mingw-w64-x86_64-winpthreads \
           mingw64/mingw-w64-x86_64-cfitsio \
-          mingw64/mingw-w64-x86_64-pkg-config \
+          mingw64/mingw-w64-x86_64-pkgconf \
           mingw64/mingw-w64-x86_64-cmake \
           mingw64/mingw-w64-x86_64-rust
 
