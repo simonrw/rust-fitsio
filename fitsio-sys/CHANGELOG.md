@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Unreleased
 
+## [0.5.7](https://github.com/simonrw/rust-fitsio/compare/fitsio-sys-v0.5.6...fitsio-sys-v0.5.7) - 2025-10-22
+
+### Added
+
+- allow use of CMake instead of Autotools for fitsio-sys ([#398](https://github.com/simonrw/rust-fitsio/pull/398))
+
 - Option to use CMake instead of Autotools when building CFITSIO (`fitsio-src` feature + `src-cmake` feature)
 
 ## [0.5.6](https://github.com/simonrw/rust-fitsio/compare/fitsio-sys-v0.5.5...fitsio-sys-v0.5.6) - 2025-09-15
