@@ -40,6 +40,7 @@ jobs:
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
+            cmake \
             python3
 
       - name: Install toolchain

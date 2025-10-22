@@ -31,7 +31,10 @@ fn generate_bindings<'p>(include_paths: impl Iterator<Item = &'p PathBuf>) {
 
 #[cfg(feature = "fitsio-src")]
 fn main() {
-    use autotools::Config;
+    #[cfg(not(feature = "src-cmake"))]
+    use autotools::Config as AutoConfig;
+    #[cfg(feature = "src-cmake")]
+    use cmake::Config as CMakeConfig;
 
     let cfitsio_project_dir = PathBuf::from("ext/cfitsio");
     if !cfitsio_project_dir.exists() {
@@ -66,7 +69,8 @@ fn main() {
 
     let opt_flag = format!("-O{opt_level}");
 
-    let dst = Config::new("ext/cfitsio")
+    #[cfg(not(feature = "src-cmake"))]
+    let dst = AutoConfig::new("ext/cfitsio")
         .disable("curl", None)
         .enable_shared()
         .forbid("--enable-shared")
@@ -77,9 +81,22 @@ fn main() {
         .insource(true)
         .build();
 
-    generate_bindings(std::iter::once(&dst));
+    #[cfg(feature = "src-cmake")]
+    let dst = CMakeConfig::new("ext/cfitsio")
+        .define("CMAKE_POLICY_VERSION_MINIMUM", "3.5")
+        .define("UseCurl", "OFF")
+        .define("BUILD_SHARED_LIBS", "OFF")
+        .define("USE_PTHREADS", "ON")
+        .cflag(opt_flag)
+        .cflag("-fPIE")
+        .build();
 
-    println!("cargo:rustc-link-search=native={}", dst.display());
+    generate_bindings(std::iter::once(&dst.join("include")));
+
+    println!(
+        "cargo:rustc-link-search=native={}",
+        dst.join("lib").display()
+    );
     println!("cargo:rustc-link-lib=static=cfitsio");
 }
 

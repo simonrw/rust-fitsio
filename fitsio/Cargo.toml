@@ -41,6 +41,7 @@ proc-macro2 = "1.0.80"
 array = ["ndarray"]
 bindgen = ["fitsio-sys/with-bindgen"]
 fitsio-src = ["fitsio-sys/fitsio-src"]
+src-cmake = ["fitsio-sys/src-cmake"]
 clippy = []
 
 [[bench]]

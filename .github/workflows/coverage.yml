@@ -45,6 +45,7 @@ jobs:
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
+            cmake \
             python3
       - name: cargo install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov

@@ -30,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [stable, beta]
-        test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-bindgen, full-example, workspace]
+        test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-cmake, fitsio-src-and-bindgen, full-example, workspace]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
@@ -42,6 +42,7 @@ jobs:
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
+            cmake \
             python3
 
       - name: Install toolchain
@@ -72,14 +73,14 @@ jobs:
       fail-fast: false
       matrix:
         rust: [stable, beta]
-        test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-bindgen, full-example, workspace]
+        test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-cmake, fitsio-src-and-bindgen, full-example, workspace]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
 
       - name: Install dependencies
         run: |
-          brew install cfitsio python3
+          brew install cfitsio python3 cmake
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -149,8 +150,12 @@ jobs:
         shell: msys2 {0}
         run: |
           pacman -S --noconfirm \
+          mingw-w64-x86_64-gcc \
+          mingw-w64-x86_64-make \
+          mingw-w64-x86_64-winpthreads \
           mingw64/mingw-w64-x86_64-cfitsio \
-          mingw64/mingw-w64-x86_64-pkg-config \
+          mingw64/mingw-w64-x86_64-pkgconf \
+          mingw64/mingw-w64-x86_64-cmake \
           mingw64/mingw-w64-x86_64-rust
 
       - name: cargo generate-lockfile
@@ -162,3 +167,8 @@ jobs:
         shell: msys2 {0}
         run: |
           cargo test -p fitsio
+
+      - name: Run the tests, with fitsio-src/src-cmake
+        shell: msys2 {0}
+        run: |
+          cargo test -p fitsio --features=fitsio-src,src-cmake

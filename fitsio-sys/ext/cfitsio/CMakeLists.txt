@@ -14,6 +14,7 @@ ENDIF()
 
 INCLUDE (${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
 INCLUDE (${CMAKE_ROOT}/Modules/CheckFunctionExists.cmake)
+INCLUDE (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
 
 # Allow the developer to select if Dynamic or Static libraries are built
 OPTION (BUILD_SHARED_LIBS "Build Shared Libraries" ON)
@@ -61,7 +62,7 @@ ENDIF (BUILD_SHARED_LIBS)
 FILE(GLOB H_FILES "*.h")
 
 IF (USE_PTHREADS)
-    FIND_PACKAGE(pthreads REQUIRED)
+    FIND_PACKAGE(Threads REQUIRED)
     INCLUDE_DIRECTORIES(${PTHREADS_INCLUDE_DIR})
     ADD_DEFINITIONS(-D_REENTRANT)
 ENDIF()
@@ -92,6 +93,12 @@ IF (NOT MSVC)
         ADD_DEFINITIONS(-DHAVE_NET_SERVICES)
     ENDIF ()
 
+    # Check for unistd.h:
+    CHECK_INCLUDE_FILE("unistd.h" CMAKE_HAVE_UNISTD)
+    IF (CMAKE_HAVE_UNISTD)
+        ADD_DEFINITIONS(-DHAVE_UNISTD_H)
+    ENDIF ()
+
     # Find curl library, for HTTPS support:
     IF (UseCurl)
         FIND_PACKAGE(CURL)
@@ -115,7 +122,11 @@ SET(SRC_FILES
     putcol.c putcolb.c putcold.c putcole.c putcoli.c putcolj.c putcolk.c
     putcoll.c putcols.c putcolsb.c putcolu.c putcolui.c putcoluj.c putcoluk.c
     putkey.c quantize.c region.c ricecomp.c scalnull.c simplerng.c swapproc.c
-    wcssub.c wcsutil.c zlib/zcompress.c zlib/zuncompress.c
+    wcssub.c wcsutil.c
+    zlib/zcompress.c zlib/zuncompress.c
+    zlib/adler32.c zlib/crc32.c zlib/deflate.c zlib/infback.c
+    zlib/inffast.c zlib/inflate.c zlib/inftrees.c zlib/trees.c
+    zlib/uncompr.c zlib/zutil.c
 )
 
 # For future modifications:
@@ -126,15 +137,6 @@ SET(SRC_FILES
 # drvrgsiftp.c is only usable if HAVE_NET_SERVICES & HAVE_GSIFTP are defined:
 #drvrgsiftp.c
 
-# Only include zlib source files if we are building a shared library.
-# Users will need to link their executable with zlib independently.
-IF (BUILD_SHARED_LIBS)
-    set(SRC_FILES ${SRC_FILES}
-        zlib/adler32.c zlib/crc32.c zlib/deflate.c zlib/infback.c
-        zlib/inffast.c zlib/inflate.c zlib/inftrees.c zlib/trees.c
-        zlib/uncompr.c zlib/zutil.c
-        )
-ENDIF()
 
 ADD_LIBRARY(${LIB_NAME} ${LIB_TYPE} ${H_FILES} ${SRC_FILES})
 TARGET_LINK_LIBRARIES(${LIB_NAME} ${PTHREADS_LIBRARY} ${M_LIB})

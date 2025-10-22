@@ -45,6 +45,7 @@ jobs:
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
+            cmake \
             python3
 
       - name: "Install toolchain: ${{ matrix.msrv }}"
@@ -65,6 +66,18 @@ jobs:
         with:
           command: check
 
+      - name: cargo +${{ matrix.msrv }} check --features=fitsio-src
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --features=fitsio-src
+
+      - name: cargo +${{ matrix.msrv }} check --features=fitsio-src,src-cmake
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --features=fitsio-src,src-cmake
+
   minimal:
     runs-on: ubuntu-latest
     name: minimal versions check
@@ -79,6 +92,7 @@ jobs:
             libcfitsio-dev \
             pkg-config \
             libssl-dev \
+            cmake \
             python3
 
       - name: Install toolchain

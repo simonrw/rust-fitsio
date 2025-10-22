@@ -53,6 +53,13 @@ compiler, autotools (to run the `configure` script) and make (to run the
 cargo build --features fitsio-src
 ```
 
+Instead of autotools, CMake can be used instead, provided CMake
+and `make`, `ninja` or another CMake-compatible build tool is available:
+
+```sh
+cargo build --features fitsio-src,src-cmake
+```
+
 For the time being, it's best to stick to the development version from
 github. The code is tested before being pushed and is relatively
 stable. Add this to your `Cargo.toml` file:

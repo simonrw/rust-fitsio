@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Option to use CMake instead of Autotools when building CFITSIO (`fitsio-src` feature + `src-cmake` feature)
+
 ## [0.21.8](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.7...fitsio-v0.21.8) - 2025-09-15
 
 ### Added

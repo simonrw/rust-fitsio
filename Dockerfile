@@ -7,6 +7,7 @@ RUN apt-get update && \
         pkg-config \
         libclang-3.8-dev \
         build-essential \
+        cmake \
         clang \
         gdb \
         python3 \

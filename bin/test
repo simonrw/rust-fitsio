@@ -95,6 +95,19 @@ class TestRunner:
             "fitsio-src",
         )
 
+    def _run_test_fitsio_src_and_cmake(self):
+        self._print_cfitsio_version_with_features("fitsio-src", "src-cmake")
+        self._run_cargo(
+            "nextest",
+            "run",
+            "--manifest-path",
+            "fitsio/Cargo.toml",
+            "--features",
+            "fitsio-src",
+            "--features",
+            "src-cmake",
+        )
+
     def _run_test_fitsio_src_and_bindgen(self):
         self._print_cfitsio_version_with_features("fitsio-src", "with-bindgen")
         self._run_cargo(
