@@ -36,7 +36,7 @@ jobs:
     name: ubuntu / ${{ matrix.msrv }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install ubuntu dependencies
         run: |
@@ -72,12 +72,18 @@ jobs:
           command: check
           args: --features=fitsio-src
 
+      - name: cargo +${{ matrix.msrv }} check --features=fitsio-src,fitsio-src-cmake
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --features=fitsio-src,fitsio-src-cmake
+
   minimal:
     runs-on: ubuntu-latest
     name: minimal versions check
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install ubuntu dependencies
         run: |

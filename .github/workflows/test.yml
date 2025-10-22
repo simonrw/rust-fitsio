@@ -29,12 +29,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - rust: stable
-          - rust: beta
+        rust: [stable, beta]
+        test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-cmake, fitsio-src-and-bindgen, full-example, workspace]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install ubuntu dependencies
         run: |
@@ -66,19 +65,18 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
+        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
 
   macos-test:
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - rust: stable
-          - rust: beta
+        rust: [stable, beta]
+        test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-cmake, fitsio-src-and-bindgen, full-example, workspace]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install dependencies
         run: |
@@ -104,7 +102,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test all
+        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
 
   linux-armv7:
     runs-on: ubuntu-latest
@@ -112,7 +110,7 @@ jobs:
       fail-fast: true
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -143,7 +141,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up msys2
         uses: msys2/setup-msys2@v2
@@ -166,3 +164,8 @@ jobs:
         shell: msys2 {0}
         run: |
           cargo test -p fitsio
+
+      - name: Run the tests, with fitsio-src/CMake
+        shell: msys2 {0}
+        run: |
+          cargo test -p fitsio --features=fitsio-src,fitsio-src-cmake

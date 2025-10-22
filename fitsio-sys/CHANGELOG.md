@@ -6,9 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Unreleased
 
-### Changed
+- Option to use CMake instead of Autotools when building CFITSIO (`fitsio-src` feature + `src-cmake` feature)
 
-- Switch from using Autotools (`./configure; make`) to CMake when building CFITSIO (`fitsio-src` feature)
+## [0.5.6](https://github.com/simonrw/rust-fitsio/compare/fitsio-sys-v0.5.5...fitsio-sys-v0.5.6) - 2025-09-15
+
+### Other
+
+- *(deps)* update bindgen requirement from 0.71 to 0.72 in /fitsio-sys in the cargo-packages group ([#407](https://github.com/simonrw/rust-fitsio/pull/407))
+- Generate and provide fitsio "long names" from longnam.h ([#382](https://github.com/simonrw/rust-fitsio/pull/382))
 
 ## [0.5.5](https://github.com/simonrw/rust-fitsio/compare/fitsio-sys-v0.5.4...fitsio-sys-v0.5.5) - 2025-01-02
 

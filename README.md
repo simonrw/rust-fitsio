@@ -46,12 +46,18 @@ brew install cfitsio --with-reentrant
 
 Alternatively, it is possible to automatically have `cargo` automatically
 compile `cfitsio` from source. To do this, you are required to have a C
-compiler, CMake (to generate a `Makefile`, `build.ninja`, etc. file)
-and `make`, `ninja`, or another CMake-compatible build tool (to run actual compilation).
-This functionality is made available with the `fitsio-src` feature:
+compiler, autotools (to run the `configure` script) and make (to run the
+`Makefile`). This functionality is made available with the `fitsio-src` feature:
 
 ```sh
 cargo build --features fitsio-src
+```
+
+Instead of autotools, CMake can be used instead, provided CMake
+and `make`, `ninja` or another CMake-compatible build tool is available:
+
+```sh
+cargo build --features fitsio-src,src-cmake
 ```
 
 For the time being, it's best to stick to the development version from
@@ -74,7 +80,7 @@ Or pin a specific version:
 
 ```toml
 [dependencies]
-fitsio = "0.21.7"
+fitsio = "0.21.8"
 ```
 
 This repository contains `fitsio-sys-bindgen` which generates the C
@@ -92,7 +98,7 @@ or use from your `Cargo.toml` as such:
 
 ```toml
 [dependencies]
-fitsio = "0.21.7"
+fitsio = "0.21.8"
 ```
 
 ## Documentation

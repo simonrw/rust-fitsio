@@ -26,6 +26,7 @@ pub enum Error {
     Message(String),
 
     /// String conversion errors
+    #[allow(clippy::incompatible_msrv)]
     Null(NulError),
 
     /// UTF-8 conversion errors
@@ -35,6 +36,7 @@ pub enum Error {
     Io(io::Error),
 
     /// String conversion errors
+    #[allow(clippy::incompatible_msrv)]
     IntoString(IntoStringError),
 
     /// File path already exists
@@ -78,6 +80,7 @@ impl<'a> ::std::convert::From<&'a str> for Error {
     }
 }
 
+#[allow(clippy::incompatible_msrv)]
 impl ::std::convert::From<NulError> for Error {
     fn from(error: NulError) -> Self {
         Error::Null(error)
@@ -96,8 +99,8 @@ impl ::std::convert::From<Utf8Error> for Error {
     }
 }
 
-impl ::std::convert::From<Box<dyn (::std::error::Error)>> for Error {
-    fn from(error: Box<dyn (::std::error::Error)>) -> Self {
+impl ::std::convert::From<Box<dyn ::std::error::Error>> for Error {
+    fn from(error: Box<dyn ::std::error::Error>) -> Self {
         let message = match error.source() {
             Some(msg) => format!("Error: {} caused by {}", error, msg),
             None => format!("Error: {}", error),
@@ -112,6 +115,7 @@ impl ::std::convert::From<io::Error> for Error {
     }
 }
 
+#[allow(clippy::incompatible_msrv)]
 impl ::std::convert::From<IntoStringError> for Error {
     fn from(e: IntoStringError) -> Self {
         Error::IntoString(e)
