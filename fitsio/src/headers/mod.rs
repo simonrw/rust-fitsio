@@ -6,6 +6,7 @@ use crate::types::DataType;
 use std::ffi;
 use std::ptr;
 
+pub mod card;
 mod constants;
 mod header_value;
 
