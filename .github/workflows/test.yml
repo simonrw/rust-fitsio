@@ -33,7 +33,7 @@ jobs:
         test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-cmake, fitsio-src-and-bindgen, full-example, workspace, fitsio-src-and-cmake-and-bindgen]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install ubuntu dependencies
         run: |
@@ -76,7 +76,7 @@ jobs:
         test: [array, bindgen, clippy, fitsio-src, fitsio-src-and-cmake, fitsio-src-and-bindgen, full-example, workspace]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install dependencies
         run: |
@@ -110,7 +110,7 @@ jobs:
       fail-fast: true
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -141,7 +141,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up msys2
         uses: msys2/setup-msys2@v2
