@@ -28,7 +28,7 @@ libc = "0.2.44"
 ndarray = { version = "0.17.1", optional = true }
 
 [dev-dependencies]
-criterion = "0.7.0"
+criterion = "0.8.0"
 fitsio-derive = { version = "0.2", path = "../fitsio-derive" }
 tempfile = "3.0.0"
 version-sync = "0.9.0"
