@@ -65,7 +65,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
+        run: cargo xtask test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
 
   macos-test:
     runs-on: macos-latest
@@ -102,7 +102,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
+        run: cargo xtask test --rust-version ${{matrix.rust}} --test ${{matrix.test}}
 
   linux-armv7:
     runs-on: ubuntu-latest

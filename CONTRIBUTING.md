@@ -8,7 +8,7 @@ Either follow the instructions in the [README](./README.md) to support installin
 
 ### Docker
 
-We supply a [Dockerfile](./Dockerfile) which sets up a linux environment that has all packages required for development (i.e. it should be able to run `./bin/test -t all` as the CI tests do). For development on non-Linux platforms this may be more convenient.
+We supply a [Dockerfile](./Dockerfile) which sets up a linux environment that has all packages required for development (i.e. it should be able to run `cargo xtask test -t all` as the CI tests do). For development on non-Linux platforms this may be more convenient.
 
 ```
 # change directory into the rust-fitsio root directory
