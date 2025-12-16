@@ -128,4 +128,4 @@ jobs:
           locked: true
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version stable --test all
+        run: cargo xtask test --rust-version stable --test all

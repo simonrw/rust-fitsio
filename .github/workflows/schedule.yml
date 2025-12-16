@@ -63,4 +63,4 @@ jobs:
           locked: true
 
       - name: Test the code
-        run: python3 ./bin/test --rust-version nightly --test all --extra-clippy-flags "-A clippy::arc_with_non_send_sync" # extra clippy args since lint is nightly only for now
+        run: cargo xtask test --rust-version nightly --test all --extra-clippy-flags "-A clippy::arc_with_non_send_sync" # extra clippy args since lint is nightly only for now

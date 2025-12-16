@@ -2,3 +2,4 @@
 "cargo:cargo-nextest" = "latest"
 cmake = "latest"
 rust = "nightly"
+rust-analyzer = "latest"
