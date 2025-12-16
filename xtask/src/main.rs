@@ -16,8 +16,8 @@ enum Args {
         test: TestType,
 
         /// Extra flags to pass to clippy command
-        #[arg(long, allow_hyphen_values = true)]
-        extra_clippy_flags: Vec<String>,
+        #[arg(long, allow_hyphen_values = true, default_value = "")]
+        extra_clippy_flags: String,
 
         /// Continue with tests after failure
         #[arg(long, default_value_t = false)]
@@ -118,7 +118,7 @@ impl TestRunner {
         self.run_cargo(&["nextest", "run"]);
     }
 
-    fn run_test_clippy(&self, extra_clippy_flags: &[String]) {
+    fn run_test_clippy(&self, extra_clippy_flags: &str) {
         let mut args = vec![
             "clippy",
             "--",
@@ -128,14 +128,9 @@ impl TestRunner {
             "clippy::non-send-fields-in-send-ty",
         ];
 
-        let extra_flags: Vec<&str> = if extra_clippy_flags.is_empty() {
-            vec![]
-        } else {
-            extra_clippy_flags.iter().map(AsRef::as_ref).collect()
-        };
-
-        args.extend(extra_flags);
-        println!("{:?}", args);
+        let split_args =
+            shlex::split(extra_clippy_flags).expect("invalid extra clippy args format");
+        args.extend(split_args.iter().map(AsRef::<str>::as_ref));
         self.run_cargo(&args);
     }
 
@@ -232,7 +227,7 @@ impl TestRunner {
         ]);
     }
 
-    fn run_test_all(&self, extra_clippy_flags: &[String]) {
+    fn run_test_all(&self, extra_clippy_flags: &str) {
         let tests = [
             TestType::Workspace,
             TestType::Clippy,
@@ -259,7 +254,7 @@ impl TestRunner {
         }
     }
 
-    fn run_test(&self, test: TestType, extra_clippy_flags: &[String]) {
+    fn run_test(&self, test: TestType, extra_clippy_flags: &str) {
         match test {
             TestType::Workspace => self.run_test_workspace(),
             TestType::Clippy => self.run_test_clippy(extra_clippy_flags),
