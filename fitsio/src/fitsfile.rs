@@ -66,7 +66,7 @@ impl FitsFile {
                 open_mode: FileOpenMode::READONLY,
                 file_path: file_path.to_path_buf(),
             },
-            None => unimplemented!(),
+            None => unreachable!("cfitsio returned success but a null pointer"),
         })
     }
 
@@ -108,7 +108,7 @@ impl FitsFile {
                 open_mode: FileOpenMode::READWRITE,
                 file_path: file_path.to_path_buf(),
             },
-            None => unimplemented!(),
+            None => unreachable!("cfitsio returned success but a null pointer"),
         })
     }
 
@@ -930,7 +930,7 @@ where
                     open_mode: FileOpenMode::READWRITE,
                     file_path: file_path.to_path_buf(),
                 },
-                None => unimplemented!(),
+                None => unreachable!("cfitsio returned success but a null pointer"),
             };
 
             match self.image_description {
