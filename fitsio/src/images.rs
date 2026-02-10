@@ -221,7 +221,13 @@ macro_rules! write_image_impl {
                 match hdu.info {
                     HduInfo::ImageInfo { .. } => {
                         let nelements = range.end - range.start;
-                        assert!(data.len() >= nelements);
+                        if data.len() < nelements {
+                            return Err(format!(
+                                "data length ({}) is less than the number of elements to write ({})",
+                                data.len(),
+                                nelements
+                            ).as_str().into());
+                        }
                         let mut status = 0;
                         unsafe {
                             fits_write_img(
@@ -256,6 +262,7 @@ macro_rules! write_image_impl {
                         let mut fpixel = Vec::with_capacity(n_ranges);
                         let mut lpixel = Vec::with_capacity(n_ranges);
 
+                        let mut nelements = 1usize;
                         // Reverse the ranges to match CFITSIO's Fortran column-major
                         // convention, since the user provides ranges in C row-major order
                         for range in ranges.iter().rev() {
@@ -264,6 +271,15 @@ macro_rules! write_image_impl {
                             let end = range.end;
                             fpixel.push(start as _);
                             lpixel.push(end as _);
+                            nelements *= (end + 1) - start;
+                        }
+
+                        if data.len() < nelements {
+                            return Err(format!(
+                                "data length ({}) is less than the number of elements in the region ({})",
+                                data.len(),
+                                nelements
+                            ).as_str().into());
                         }
 
                         let mut status = 0;
