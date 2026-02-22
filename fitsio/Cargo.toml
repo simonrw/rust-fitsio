@@ -42,6 +42,7 @@ array = ["ndarray"]
 bindgen = ["fitsio-sys/with-bindgen"]
 fitsio-src = ["fitsio-sys/fitsio-src"]
 src-cmake = ["fitsio-sys/src-cmake"]
+rsfitsio = ["fitsio-sys/backend-rsfitsio"]
 clippy = []
 
 [[bench]]
