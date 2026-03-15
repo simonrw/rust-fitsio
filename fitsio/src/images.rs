@@ -166,7 +166,9 @@ macro_rules! read_image_impl_vec {
                         let mut lpixel = Vec::with_capacity(n_ranges);
 
                         let mut nelements = 1;
-                        for range in ranges {
+                        // Reverse the ranges to match CFITSIO's Fortran column-major
+                        // convention, since the user provides ranges in C row-major order
+                        for range in ranges.iter().rev() {
                             let start = range.start + 1;
                             // No +1 as the range is exclusive
                             let end = range.end;
@@ -254,7 +256,9 @@ macro_rules! write_image_impl {
                         let mut fpixel = Vec::with_capacity(n_ranges);
                         let mut lpixel = Vec::with_capacity(n_ranges);
 
-                        for range in ranges {
+                        // Reverse the ranges to match CFITSIO's Fortran column-major
+                        // convention, since the user provides ranges in C row-major order
+                        for range in ranges.iter().rev() {
                             let start = range.start + 1;
                             // No +1 as the range is exclusive
                             let end = range.end;
@@ -441,8 +445,8 @@ mod tests {
 
         let chunk: Vec<i32> = hdu.read_region(&mut f, &[&ycoord, &xcoord]).unwrap();
         assert_eq!(chunk.len(), (7 - 5) * (3 - 2));
-        assert_eq!(chunk[0], 168);
-        assert_eq!(chunk[chunk.len() - 1], 112);
+        assert_eq!(chunk[0], 101);
+        assert_eq!(chunk[chunk.len() - 1], 171);
     }
 
     #[test]
@@ -494,7 +498,7 @@ mod tests {
             let chunk: Vec<i64> = hdu.read_region(&mut f, &[&(0..10), &(0..5)]).unwrap();
             assert_eq!(chunk.len(), 10 * 5);
             assert_eq!(chunk[0], 50);
-            assert_eq!(chunk[25], 80);
+            assert_eq!(chunk[25], 75);
         });
     }
 
