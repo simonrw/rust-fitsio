@@ -50,10 +50,15 @@
 
 #![allow(improper_ctypes)]
 
+// Ensure the `rsfitsio` crate is linked in when selected as the backend.
+// It provides the CFITSIO-compatible `extern "C"` symbols that these bindings declare.
+#[cfg(feature = "backend-rsfitsio")]
+extern crate rsfitsio as _;
+
 mod aliases;
 pub use aliases::*;
 
-#[cfg(not(feature = "bindgen"))]
+#[cfg(not(feature = "with-bindgen"))]
 #[allow(non_camel_case_types, non_upper_case_globals, non_snake_case)]
 #[allow(
     clippy::unreadable_literal,
@@ -74,7 +79,7 @@ mod sys {
     include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/bindings_32.rs"));
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(feature = "with-bindgen")]
 #[allow(
     non_upper_case_globals,
     non_camel_case_types,
