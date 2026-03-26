@@ -1,5 +1,10 @@
 //! Data types used within `fitsio`
 
+use libc::{
+    c_double, c_float, c_int, c_long, c_longlong, c_schar, c_short, c_uchar, c_uint, c_ulong,
+    c_ulonglong, c_ushort,
+};
+
 /// Enumeration of different data types used for column and key types
 #[allow(missing_docs, clippy::upper_case_acronyms)]
 #[repr(C)]
@@ -53,18 +58,18 @@ macro_rules! ctype_sign_sz_align {
 }
 
 ctype_sign_sz_align!(
-    core::ffi::c_schar,  SCHAR;
-    core::ffi::c_uchar,  UCHAR;
-    core::ffi::c_short,  SHORT;
-    core::ffi::c_ushort, USHORT;
+    c_schar,  SCHAR;
+    c_uchar,  UCHAR;
+    c_short,  SHORT;
+    c_ushort, USHORT;
 
-    core::ffi::c_int,    INT;
-    core::ffi::c_uint,   UINT;
-    core::ffi::c_long,   LONG;
-    core::ffi::c_ulong,  ULONG;
+    c_int,    INT;
+    c_uint,   UINT;
+    c_long,   LONG;
+    c_ulong,  ULONG;
 
-    core::ffi::c_longlong,  LONGLONG;
-    core::ffi::c_ulonglong, ULONGLONG;
+    c_longlong,  LONGLONG;
+    c_ulonglong, ULONGLONG;
 );
 
 /// Generates an implementation of [`HasFitsDataType`] for integer type `$t`,
@@ -115,8 +120,6 @@ macro_rules! has_fits_data_type_floating {
     ($t:ty) => {
         impl HasFitsDataType for $t {
             const FITS_DATA_TYPE: DataType = {
-                use core::ffi::{c_double, c_float};
-
                 const FLOAT: (usize, usize) = size_align::<c_float>();
                 const DOUBLE: (usize, usize) = size_align::<c_double>();
 
