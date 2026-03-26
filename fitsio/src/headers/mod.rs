@@ -31,7 +31,7 @@ pub trait ReadsKey {
 }
 
 macro_rules! reads_key_impl {
-    ($t:ty, $func:ident) => {
+    ($t:ty) => {
         impl ReadsKey for $t {
             fn read_key(f: &mut FitsFile, name: &str) -> Result<Self> {
                 let hv: HeaderValue<$t> = ReadsKey::read_key(f, name)?;
@@ -49,10 +49,11 @@ macro_rules! reads_key_impl {
                 let mut comment: Vec<c_char> = vec![0; MAX_COMMENT_LENGTH];
 
                 unsafe {
-                    $func(
+                    fits_read_key(
                         f.fptr.as_mut() as *mut _,
+                        <$t as HasFitsDataType>::FITS_DATA_TYPE.into(),
                         c_name.as_ptr(),
-                        &mut value.value,
+                        &mut value.value as *mut $t as *mut c_void,
                         comment.as_mut_ptr(),
                         &mut status,
                     );
@@ -81,13 +82,10 @@ macro_rules! reads_key_impl {
     };
 }
 
-reads_key_impl!(i32, fits_read_key_log);
-#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
-reads_key_impl!(i64, fits_read_key_lng);
-#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
-reads_key_impl!(i64, fits_read_key_lnglng);
-reads_key_impl!(f32, fits_read_key_flt);
-reads_key_impl!(f64, fits_read_key_dbl);
+reads_key_impl!(i32);
+reads_key_impl!(i64);
+reads_key_impl!(f32);
+reads_key_impl!(f64);
 
 impl ReadsKey for bool {
     fn read_key(f: &mut FitsFile, name: &str) -> Result<Self>
