@@ -2,7 +2,7 @@
 use crate::errors::{check_status, Result};
 use crate::fitsfile::FitsFile;
 use crate::longnam::*;
-use crate::types::DataType;
+use crate::types::HasFitsDataType;
 use std::ffi;
 use std::ptr;
 
@@ -161,19 +161,17 @@ pub trait WritesKey {
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()>;
 }
 
-macro_rules! writes_key_impl_int {
-    ($t:ty, $datatype:expr) => {
+macro_rules! writes_key_impl {
+    ($t:ty) => {
         impl WritesKey for $t {
             fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
                 let c_name = ffi::CString::new(name)?;
                 let mut status = 0;
 
-                let datatype = u8::from($datatype);
-
                 unsafe {
                     fits_write_key(
                         f.fptr.as_mut() as *mut _,
-                        datatype as _,
+                        <$t as HasFitsDataType>::FITS_DATA_TYPE.into(),
                         c_name.as_ptr(),
                         &value as *const $t as *mut c_void,
                         ptr::null_mut(),
@@ -191,12 +189,10 @@ macro_rules! writes_key_impl_int {
                 let c_comment = ffi::CString::new(comment)?;
                 let mut status = 0;
 
-                let datatype = u8::from($datatype);
-
                 unsafe {
                     fits_write_key(
                         f.fptr.as_mut() as *mut _,
-                        datatype as _,
+                        <$t as HasFitsDataType>::FITS_DATA_TYPE.into(),
                         c_name.as_ptr(),
                         &value as *const $t as *mut c_void,
                         c_comment.as_ptr(),
@@ -217,69 +213,16 @@ macro_rules! writes_key_impl_int {
     };
 }
 
-writes_key_impl_int!(i8, DataType::TSBYTE);
-writes_key_impl_int!(i16, DataType::TSHORT);
-writes_key_impl_int!(i32, DataType::TINT);
-writes_key_impl_int!(i64, DataType::TLONG);
-writes_key_impl_int!(u8, DataType::TBYTE);
-writes_key_impl_int!(u16, DataType::TUSHORT);
-writes_key_impl_int!(u32, DataType::TUINT);
-writes_key_impl_int!(u64, DataType::TULONG);
-
-macro_rules! writes_key_impl_flt {
-    ($t:ty, $func:ident) => {
-        impl WritesKey for $t {
-            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
-                let c_name = ffi::CString::new(name)?;
-                let mut status = 0;
-
-                unsafe {
-                    $func(
-                        f.fptr.as_mut() as *mut _,
-                        c_name.as_ptr(),
-                        value,
-                        9,
-                        ptr::null_mut(),
-                        &mut status,
-                    );
-                }
-                check_status(status)
-            }
-        }
-
-        impl WritesKey for ($t, &str) {
-            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
-                let (value, comment) = value;
-                let c_name = ffi::CString::new(name)?;
-                let c_comment = ffi::CString::new(comment)?;
-                let mut status = 0;
-
-                unsafe {
-                    $func(
-                        f.fptr.as_mut() as *mut _,
-                        c_name.as_ptr(),
-                        value,
-                        9,
-                        c_comment.as_ptr(),
-                        &mut status,
-                    );
-                }
-                check_status(status)
-            }
-        }
-
-        impl WritesKey for ($t, String) {
-            #[inline(always)]
-            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
-                let (value, comment) = value;
-                WritesKey::write_key(f, name, (value, comment.as_str()))
-            }
-        }
-    };
-}
-
-writes_key_impl_flt!(f32, fits_write_key_flt);
-writes_key_impl_flt!(f64, fits_write_key_dbl);
+writes_key_impl!(i8);
+writes_key_impl!(i16);
+writes_key_impl!(i32);
+writes_key_impl!(i64);
+writes_key_impl!(u8);
+writes_key_impl!(u16);
+writes_key_impl!(u32);
+writes_key_impl!(u64);
+writes_key_impl!(f32);
+writes_key_impl!(f64);
 
 impl WritesKey for String {
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
