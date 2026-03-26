@@ -3,6 +3,8 @@ use crate::errors::{check_status, Result};
 use crate::fitsfile::FitsFile;
 use crate::hdu::{FitsHdu, HduInfo};
 use crate::longnam::*;
+#[cfg(test)]
+use crate::types::DataType;
 use crate::types::HasFitsDataType;
 use std::ops::Range;
 use std::ptr;
