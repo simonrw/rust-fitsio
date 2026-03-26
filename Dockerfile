@@ -1,11 +1,11 @@
-FROM rust:1.60.0-slim-buster
+FROM rust:1.60.0-slim-bullseye
 
 RUN apt-get update && \
     apt-get -yq dist-upgrade && \
     apt-get install -yq --no-install-recommends \
         libcfitsio-dev \
         pkg-config \
-        libclang-3.8-dev \
+        libclang-19-dev \
         build-essential \
         cmake \
         clang \
@@ -17,7 +17,10 @@ RUN apt-get update && \
 
 RUN rustup update && \
     rustup install stable && \
-    rustup install nightly
+    rustup install nightly && \
+    rustup component add --toolchain stable clippy
+
+RUN cargo +stable install --locked cargo-nextest
 
 VOLUME ["/project"]
 WORKDIR "/project"
