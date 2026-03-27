@@ -868,7 +868,7 @@ impl Iterator for ColumnIterator<'_> {
                         data,
                     })
                     .ok(),
-                ColumnDataType::Long => i64::read_col(self.fits_file, current_name)
+                ColumnDataType::LongLong => i64::read_col(self.fits_file, current_name)
                     .map(|data| Column::Int64 {
                         name: current_name.to_string(),
                         data,
