@@ -401,14 +401,44 @@ mod tests {
         duplicate_test_file(|filename| {
             let mut f = FitsFile::edit(filename).unwrap();
             let hdu = f.hdu(0).unwrap();
-            hdu.write_key(&mut f, "ONE", 1i8).unwrap();
-            hdu.write_key(&mut f, "TWO", 1i16).unwrap();
-            hdu.write_key(&mut f, "THREE", 1i32).unwrap();
-            hdu.write_key(&mut f, "FOUR", 1i64).unwrap();
+            hdu.write_key(&mut f, "ONE", -1i8).unwrap();
+            hdu.write_key(&mut f, "TWO", -500i16).unwrap();
+            hdu.write_key(&mut f, "THREE", -1_000_000i32).unwrap();
+            hdu.write_key(&mut f, "FOUR", -99_000_000_000i64).unwrap();
             hdu.write_key(&mut f, "UONE", 1u8).unwrap();
-            hdu.write_key(&mut f, "UTWO", 1u16).unwrap();
-            hdu.write_key(&mut f, "UTHREE", 1u32).unwrap();
-            hdu.write_key(&mut f, "UFOUR", 1u64).unwrap();
+            hdu.write_key(&mut f, "UTWO", 500u16).unwrap();
+            hdu.write_key(&mut f, "UTHREE", 1_000_000u32).unwrap();
+            hdu.write_key(&mut f, "UFOUR", 3_000_000_000u32).unwrap();
+            hdu.write_key(&mut f, "UFIVE", 99_000_000_000u64).unwrap();
+
+            // make sure we round-trip:
+
+            assert_matches1!(hdu.read_key(&mut f, "ONE"), Ok(-1i32));
+            assert_matches1!(hdu.read_key(&mut f, "ONE"), Ok(-1i64));
+
+            assert_matches1!(hdu.read_key(&mut f, "TWO"), Ok(-500i32));
+            assert_matches1!(hdu.read_key(&mut f, "TWO"), Ok(-500i64));
+
+            assert_matches1!(hdu.read_key(&mut f, "THREE"), Ok(-1_000_000i32));
+            assert_matches1!(hdu.read_key(&mut f, "THREE"), Ok(-1_000_000i64));
+
+            assert_matches1!(hdu.read_key::<i32>(&mut f, "FOUR"), Err(_));
+            assert_matches1!(hdu.read_key(&mut f, "FOUR"), Ok(-99_000_000_000i64));
+
+            assert_matches1!(hdu.read_key(&mut f, "UONE"), Ok(1i32));
+            assert_matches1!(hdu.read_key(&mut f, "UONE"), Ok(1i64));
+
+            assert_matches1!(hdu.read_key(&mut f, "UTWO"), Ok(500i32));
+            assert_matches1!(hdu.read_key(&mut f, "UTWO"), Ok(500i64));
+
+            assert_matches1!(hdu.read_key(&mut f, "UTHREE"), Ok(1_000_000i32));
+            assert_matches1!(hdu.read_key(&mut f, "UTHREE"), Ok(1_000_000i64));
+
+            assert_matches1!(hdu.read_key::<i32>(&mut f, "UFOUR"), Err(_));
+            assert_matches1!(hdu.read_key(&mut f, "UFOUR"), Ok(3_000_000_000i64));
+
+            assert_matches1!(hdu.read_key::<i32>(&mut f, "UFIVE"), Err(_));
+            assert_matches1!(hdu.read_key(&mut f, "UFIVE"), Ok(99_000_000_000i64));
         });
     }
 

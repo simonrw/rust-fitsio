@@ -11,3 +11,25 @@ macro_rules! fits_check_readwrite {
         }
     };
 }
+
+#[cfg(test)]
+/// Macro to allow testing by matching to a pattern.
+///
+/// Not called simply `assert_matches`, as a macro of that name
+/// is in the Rust standard library already
+/// (though experimentally as of time of authoring).
+macro_rules! assert_matches1 {
+    ($value:expr, $pattern:pat $(if $guard:expr)? $(,)?) => {
+        {
+            let x = $value;
+            if !core::matches!(x, $pattern $(if $guard)?) {
+                panic!(
+                    "pattern-match assert failed\n    value: ({}) == {:?}\n    pattern: {}",
+                    core::stringify!($value),
+                    x,
+                    core::stringify!($pattern $(if $guard)?),
+                );
+            }
+        }
+    }
+}
