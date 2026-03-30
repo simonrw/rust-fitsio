@@ -1,5 +1,10 @@
 //! Data types used within `fitsio`
 
+use libc::{
+    c_double, c_float, c_int, c_long, c_longlong, c_schar, c_short, c_uchar, c_uint, c_ulong,
+    c_ulonglong, c_ushort,
+};
+
 /// Enumeration of different data types used for column and key types
 #[allow(missing_docs, clippy::upper_case_acronyms)]
 #[repr(C)]
@@ -23,6 +28,118 @@ pub enum DataType {
     TCOMPLEX,
     TDBLCOMPLEX,
 }
+
+/// A trait to associate a type with the appropriate [`DataType`].
+///
+/// This helper trait is useful as the different values of [`DataType`],
+/// as used by CFITSIO, refer to **C** types, not **Rust** types.
+/// Some compile-time calculations are used to ensure the right C type
+/// is associated with the Rust type.
+pub(crate) trait HasFitsDataType {
+    /// The [`DataType`] associated with `Self`.
+    const FITS_DATA_TYPE: DataType;
+}
+
+/// Convenience function; returns the size and alignment of `T`.
+const fn size_align<T: Sized>() -> (usize, usize) {
+    (core::mem::size_of::<T>(), core::mem::align_of::<T>())
+}
+
+/// Macro to compute the signedness, size, and alignment of a type.
+///
+/// `$name` will be the constant `(is $t unsigned, (size of $t, alignment of $t))`.
+macro_rules! ctype_sign_sz_align {
+    ($($t:ty, $name:ident);* $(;)?) => {
+        $(
+            // we use $t::MIN == 0 here and in has_fits_data_type_int! to distinguish between signed and unsigned types
+            const $name: (bool, (usize, usize)) = (<$t>::MIN == 0, size_align::<$t>());
+        )*
+    };
+}
+
+ctype_sign_sz_align!(
+    c_schar,  SCHAR;
+    c_uchar,  UCHAR;
+    c_short,  SHORT;
+    c_ushort, USHORT;
+
+    c_int,    INT;
+    c_uint,   UINT;
+    c_long,   LONG;
+    c_ulong,  ULONG;
+
+    c_longlong,  LONGLONG;
+    c_ulonglong, ULONGLONG;
+);
+
+/// Generates an implementation of [`HasFitsDataType`] for integer type `$t`,
+/// making sure we match `$t` with an equivalent C type.
+macro_rules! has_fits_data_type_int {
+    ($t:ty) => {
+        impl HasFitsDataType for $t {
+            const FITS_DATA_TYPE: DataType = {
+                // we use $t::MIN == 0 here and in ctype_sign_sz_align! to distinguish between signed and unsigned types
+
+                #[allow(unreachable_patterns)]
+                match (<$t>::MIN == 0, size_align::<$t>()) {
+                    UINT => DataType::TUINT,
+                    USHORT => DataType::TUSHORT,
+                    UCHAR => DataType::TBYTE,
+                    ULONG => DataType::TULONG,
+                    ULONGLONG => DataType::TULONGLONG,
+
+                    INT => DataType::TINT,
+                    SHORT => DataType::TSHORT,
+                    SCHAR => DataType::TSBYTE,
+                    LONG => DataType::TLONG,
+                    LONGLONG => DataType::TLONGLONG,
+
+                    _ => panic!(concat!(
+                        "Type ",
+                        stringify!($t),
+                        " does not have a corresponding DataType"
+                    )),
+                }
+            };
+        }
+    };
+}
+
+has_fits_data_type_int!(u8);
+has_fits_data_type_int!(u16);
+has_fits_data_type_int!(u32);
+has_fits_data_type_int!(u64);
+has_fits_data_type_int!(i8);
+has_fits_data_type_int!(i16);
+has_fits_data_type_int!(i32);
+has_fits_data_type_int!(i64);
+
+/// Generates an implementation of [`HasFitsDataType`] for floating-point type `$t`,
+/// making sure we match `$t` with an equivalent C type.
+macro_rules! has_fits_data_type_floating {
+    ($t:ty) => {
+        impl HasFitsDataType for $t {
+            const FITS_DATA_TYPE: DataType = {
+                const FLOAT: (usize, usize) = size_align::<c_float>();
+                const DOUBLE: (usize, usize) = size_align::<c_double>();
+
+                #[allow(unreachable_patterns)]
+                match size_align::<$t>() {
+                    DOUBLE => DataType::TDOUBLE,
+                    FLOAT => DataType::TFLOAT,
+                    _ => panic!(concat!(
+                        "Type ",
+                        stringify!($t),
+                        " does not have a corresponding DataType"
+                    )),
+                }
+            };
+        }
+    };
+}
+
+has_fits_data_type_floating!(f32);
+has_fits_data_type_floating!(f64);
 
 #[cfg(test)]
 mod test {

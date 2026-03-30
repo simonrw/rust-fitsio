@@ -260,7 +260,7 @@ impl FitsFile {
         &self.file_path
     }
 
-    /** 
+    /**
     Get the number of HDUs in the file
 
     # Example
