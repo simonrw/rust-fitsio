@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 * Support for vector data-types in reading and writing tables.
 * Option to use CMake instead of Autotools when building CFITSIO (`fitsio-src` feature + `src-cmake` feature)
 ### Changed
+* Miscellaneous ABI-related fixes, especially for 64-bit values on some 32-bit architectures
 ### Removed
 
 ## [0.21.2]

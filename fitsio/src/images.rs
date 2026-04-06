@@ -3,7 +3,9 @@ use crate::errors::{check_status, Result};
 use crate::fitsfile::FitsFile;
 use crate::hdu::{FitsHdu, HduInfo};
 use crate::longnam::*;
+#[cfg(test)]
 use crate::types::DataType;
+use crate::types::HasFitsDataType;
 use std::ops::Range;
 use std::ptr;
 
@@ -89,7 +91,7 @@ pub trait WriteImage: Sized {
 }
 
 macro_rules! read_image_impl_vec {
-    ($t:ty, $default_value:expr, $data_type:expr) => {
+    ($t:ty, $default_value:expr) => {
         impl ReadImage for Vec<$t> {
             fn read_section(
                 fits_file: &mut FitsFile,
@@ -105,7 +107,7 @@ macro_rules! read_image_impl_vec {
                         unsafe {
                             fits_read_img(
                                 fits_file.fptr.as_mut() as *mut _,
-                                $data_type.into(),
+                                <$t as HasFitsDataType>::FITS_DATA_TYPE.into(),
                                 (range.start + 1) as i64,
                                 nelements as i64,
                                 ptr::null_mut(),
@@ -180,11 +182,12 @@ macro_rules! read_image_impl_vec {
                         let vec_size = nelements;
                         let mut out = vec![$default_value; vec_size];
                         let mut status = 0;
+                        let datatype = <$t as HasFitsDataType>::FITS_DATA_TYPE;
 
                         unsafe {
                             fits_read_subset(
                                 fits_file.fptr.as_mut() as *mut _, // fptr
-                                $data_type.into(),                 // datatype
+                                datatype.into(),                   // datatype
                                 fpixel.as_mut_ptr(),               // fpixel
                                 lpixel.as_mut_ptr(),               // lpixel
                                 inc.as_mut_ptr(),                  // inc
@@ -208,7 +211,7 @@ macro_rules! read_image_impl_vec {
 }
 
 macro_rules! write_image_impl {
-    ($t:ty, $default_value:expr, $data_type:expr) => {
+    ($t:ty, $default_value:expr) => {
         impl WriteImage for $t {
             fn write_section(
                 fits_file: &mut FitsFile,
@@ -224,7 +227,7 @@ macro_rules! write_image_impl {
                         unsafe {
                             fits_write_img(
                                 fits_file.fptr.as_mut() as *mut _,
-                                $data_type.into(),
+                                <$t as HasFitsDataType>::FITS_DATA_TYPE.into(),
                                 (range.start + 1) as i64,
                                 nelements as i64,
                                 data.as_ptr() as *mut _,
@@ -267,7 +270,7 @@ macro_rules! write_image_impl {
                         unsafe {
                             fits_write_subset(
                                 fits_file.fptr.as_mut() as *mut _,
-                                $data_type.into(),
+                                <$t as HasFitsDataType>::FITS_DATA_TYPE.into(),
                                 fpixel.as_mut_ptr(),
                                 lpixel.as_mut_ptr(),
                                 data.as_ptr() as *mut _,
@@ -287,39 +290,27 @@ macro_rules! write_image_impl {
     };
 }
 
-read_image_impl_vec!(i8, i8::default(), DataType::TSBYTE);
-read_image_impl_vec!(i16, i16::default(), DataType::TSHORT);
-read_image_impl_vec!(i32, i32::default(), DataType::TINT);
-#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
-read_image_impl_vec!(i64, i64::default(), DataType::TLONG);
-#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
-read_image_impl_vec!(i64, i64::default(), DataType::TLONGLONG);
-read_image_impl_vec!(u8, u8::default(), DataType::TBYTE);
-read_image_impl_vec!(u16, u16::default(), DataType::TUSHORT);
-read_image_impl_vec!(u32, u32::default(), DataType::TUINT);
-#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
-read_image_impl_vec!(u64, u64::default(), DataType::TULONG);
-#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
-read_image_impl_vec!(u64, u64::default(), DataType::TLONGLONG);
-read_image_impl_vec!(f32, f32::default(), DataType::TFLOAT);
-read_image_impl_vec!(f64, f64::default(), DataType::TDOUBLE);
+read_image_impl_vec!(i8, i8::default());
+read_image_impl_vec!(i16, i16::default());
+read_image_impl_vec!(i32, i32::default());
+read_image_impl_vec!(i64, i64::default());
+read_image_impl_vec!(u8, u8::default());
+read_image_impl_vec!(u16, u16::default());
+read_image_impl_vec!(u32, u32::default());
+read_image_impl_vec!(u64, u64::default());
+read_image_impl_vec!(f32, f32::default());
+read_image_impl_vec!(f64, f64::default());
 
-write_image_impl!(i8, i8::default(), DataType::TSBYTE);
-write_image_impl!(i16, i16::default(), DataType::TSHORT);
-write_image_impl!(i32, i32::default(), DataType::TINT);
-#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
-write_image_impl!(i64, i64::default(), DataType::TLONG);
-#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
-write_image_impl!(i64, i64::default(), DataType::TLONGLONG);
-write_image_impl!(u8, u8::default(), DataType::TBYTE);
-write_image_impl!(u16, u16::default(), DataType::TUSHORT);
-write_image_impl!(u32, u32::default(), DataType::TUINT);
-#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
-write_image_impl!(u64, u64::default(), DataType::TULONG);
-#[cfg(any(target_pointer_width = "32", target_os = "windows"))]
-write_image_impl!(u64, u64::default(), DataType::TLONGLONG);
-write_image_impl!(f32, f32::default(), DataType::TFLOAT);
-write_image_impl!(f64, f64::default(), DataType::TDOUBLE);
+write_image_impl!(i8, i8::default());
+write_image_impl!(i16, i16::default());
+write_image_impl!(i32, i32::default());
+write_image_impl!(i64, i64::default());
+write_image_impl!(u8, u8::default());
+write_image_impl!(u16, u16::default());
+write_image_impl!(u32, u32::default());
+write_image_impl!(u64, u64::default());
+write_image_impl!(f32, f32::default());
+write_image_impl!(f64, f64::default());
 
 /// Description of a new image
 #[derive(Clone)]
