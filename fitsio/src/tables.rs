@@ -4,7 +4,7 @@ use crate::fitsfile::FitsFile;
 use crate::hdu::{FitsHdu, HduInfo};
 use crate::longnam::*;
 use crate::stringutils::status_to_string;
-use crate::types::DataType;
+use crate::types::{DataType, HasFitsDataType};
 use std::ffi;
 use std::mem::size_of;
 use std::ops::Range;
@@ -385,7 +385,7 @@ pub trait WritesCol {
 }
 
 macro_rules! writes_col_impl {
-    ($t:ty, $data_type:expr) => {
+    ($t:ty) => {
         impl WritesCol for $t {
             fn write_col_range<T: Into<String>>(
                 fits_file: &mut FitsFile,
@@ -403,7 +403,7 @@ macro_rules! writes_col_impl {
                         unsafe {
                             fits_write_col(
                                 fits_file.fptr.as_mut() as *mut _,
-                                $data_type.into(),
+                                <$t as HasFitsDataType>::FITS_DATA_TYPE.into(),
                                 (colno + 1) as _,
                                 (rows.start + 1) as _,
                                 1,
@@ -427,16 +427,16 @@ macro_rules! writes_col_impl {
     };
 }
 
-writes_col_impl!(u8, DataType::TBYTE);
-writes_col_impl!(i8, DataType::TSBYTE);
-writes_col_impl!(u16, DataType::TUSHORT);
-writes_col_impl!(i16, DataType::TSHORT);
-writes_col_impl!(u32, DataType::TUINT);
-writes_col_impl!(i32, DataType::TINT);
-writes_col_impl!(u64, DataType::TULONGLONG);
-writes_col_impl!(i64, DataType::TLONGLONG);
-writes_col_impl!(f32, DataType::TFLOAT);
-writes_col_impl!(f64, DataType::TDOUBLE);
+writes_col_impl!(u8);
+writes_col_impl!(i8);
+writes_col_impl!(u16);
+writes_col_impl!(i16);
+writes_col_impl!(u32);
+writes_col_impl!(i32);
+writes_col_impl!(u64);
+writes_col_impl!(i64);
+writes_col_impl!(f32);
+writes_col_impl!(f64);
 
 impl WritesCol for String {
     fn write_col_range<T: Into<String>>(
