@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.10](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.9...fitsio-v0.21.10) - 2026-04-20
+
+### Other
+
+- Fixed `ColumnDataType` variant used for 64-bit data in `ColumnIterator` ([#444](https://github.com/simonrw/rust-fitsio/pull/444))
+- Miscellaneous fixes for Rust type-to-CFITSIO type mappings ([#442](https://github.com/simonrw/rust-fitsio/pull/442))
+- *(deps)* update criterion requirement from 0.7.0 to 0.8.0 in /fitsio in the cargo-packages group ([#425](https://github.com/simonrw/rust-fitsio/pull/425))
+- *(deps)* update ndarray requirement from 0.16.0 to 0.17.1 in /fitsio in the cargo-packages group ([#422](https://github.com/simonrw/rust-fitsio/pull/422))
+
 ## [0.21.9](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.8...fitsio-v0.21.9) - 2025-10-22
 
 ### Added

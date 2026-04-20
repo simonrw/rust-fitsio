@@ -359,7 +359,7 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
 name = "fitsio"
-version = "0.21.9"
+version = "0.21.10"
 dependencies = [
  "criterion",
  "fitsio-derive",
@@ -1501,7 +1501,7 @@ checksum = "ea2f10b9bb0928dfb1b42b65e1f9e36f7f54dbdf08457afefb38afcdec4fa2bb"
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "shlex",
