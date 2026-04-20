@@ -1,3 +1,9 @@
 [workspace]
 git_release_draft = true
 pr_draft = true
+
+[[package]]
+name = "xtask"
+semver_check = false
+publish = false
+release = false
