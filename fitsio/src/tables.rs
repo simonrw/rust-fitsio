@@ -169,6 +169,34 @@ impl ReadsCol for bool {
         name: T,
         range: &Range<usize>,
     ) -> Result<Vec<Self>> {
+        let opt_values = Option::<bool>::read_col_range(fits_file, name, range)?;
+        if opt_values.iter().any(|v| v.is_none()) {
+            return Err(
+                "column contains null values; use Option<bool> to read nullable boolean columns"
+                    .into(),
+            );
+        }
+        Ok(opt_values.into_iter().map(|v| v.unwrap()).collect())
+    }
+
+    fn read_cell_value<T>(fits_file: &mut FitsFile, name: T, idx: usize) -> Result<Self>
+    where
+        T: Into<String>,
+        Self: Sized,
+    {
+        let opt_value = Option::<bool>::read_cell_value(fits_file, name, idx)?;
+        opt_value.ok_or_else(|| {
+            "cell contains a null value; use Option<bool> to read nullable boolean columns".into()
+        })
+    }
+}
+
+impl ReadsCol for Option<bool> {
+    fn read_col_range<T: Into<String>>(
+        fits_file: &mut FitsFile,
+        name: T,
+        range: &Range<usize>,
+    ) -> Result<Vec<Self>> {
         match fits_file.fetch_hdu_info() {
             Ok(HduInfo::TableInfo {
                 column_descriptions,
@@ -185,6 +213,7 @@ impl ReadsCol for bool {
                         test_name
                     )))?;
                 let mut status = 0;
+                let mut anynul = 0;
                 unsafe {
                     fits_read_col_log(
                         fits_file.fptr.as_mut() as *mut _,
@@ -194,15 +223,22 @@ impl ReadsCol for bool {
                         num_output_rows as _,
                         BOOL_NULL,
                         out.as_mut_ptr(),
-                        ptr::null_mut(),
+                        &mut anynul,
                         &mut status,
                     );
                 }
 
                 match status {
-                    // TODO: this does not correctly account for nyll values,
-                    // instead treat them as falsy for now
-                    0 => Ok(out.into_iter().map(|v| v != BOOL_NULL && v > 0).collect()),
+                    0 => Ok(out
+                        .into_iter()
+                        .map(|v| {
+                            if v == BOOL_NULL {
+                                None
+                            } else {
+                                Some(v > 0)
+                            }
+                        })
+                        .collect()),
                     307 => Err(IndexError {
                         message: "given indices out of range".to_string(),
                         given: range.clone(),
@@ -240,6 +276,7 @@ impl ReadsCol for bool {
                         test_name
                     )))?;
                 let mut status = 0;
+                let mut anynul = 0;
 
                 unsafe {
                     fits_read_col_log(
@@ -250,13 +287,17 @@ impl ReadsCol for bool {
                         1,
                         BOOL_NULL,
                         &mut out,
-                        ptr::null_mut(),
+                        &mut anynul,
                         &mut status,
                     );
                 }
-                // TODO: this does not correctly account for nyll values,
-                // instead treat them as falsy for now
-                check_status(status).map(|_| out != BOOL_NULL && out > 0)
+                check_status(status).map(|_| {
+                    if out == BOOL_NULL {
+                        None
+                    } else {
+                        Some(out > 0)
+                    }
+                })
             }
             Err(e) => Err(e),
             _ => panic!("Unknown error occurred"),
