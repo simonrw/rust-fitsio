@@ -207,7 +207,7 @@ fn generate_aliases_mod_file<'p>(include_paths: impl Iterator<Item = &'p PathBuf
             });
             file.read_to_string(&mut buffer2).expect("file can be read");
             for line in buffer2.lines() {
-                if line.trim_ascii_start().starts_with("pub fn ff") {
+                if line.trim_start().starts_with("pub fn ff") {
                     if let Some(fn_name) = line
                         .split_ascii_whitespace()
                         .nth(2)
