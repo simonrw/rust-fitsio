@@ -29,8 +29,53 @@ fn generate_bindings<'p>(include_paths: impl Iterator<Item = &'p PathBuf>) {
     }
 }
 
-#[cfg(feature = "fitsio-src")]
+fn write_default_aliases() {
+    let out_dir = env::var("OUT_DIR").expect("set by cargo");
+    let out = PathBuf::from(out_dir).join("aliases.rs");
+    match std::fs::copy("default-aliases.rs", &out) {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!(
+                "There was a problem attempting to copy from 'default-aliases.rs' to {out:?}"
+            );
+            panic!("{}", e);
+        }
+    }
+}
+
+fn ensure_feature_compatibility() {
+    if cfg!(feature = "backend-rsfitsio") {
+        if cfg!(feature = "fitsio-src") {
+            panic!("features `backend-rsfitsio` and `fitsio-src` are mutually exclusive");
+        }
+        if cfg!(feature = "src-cmake") {
+            panic!(
+                "feature `src-cmake` requires `fitsio-src` and is not compatible with `backend-rsfitsio`"
+            );
+        }
+        if cfg!(feature = "with-bindgen") {
+            panic!(
+                "feature `with-bindgen` is not supported with `backend-rsfitsio` (no native headers). Use the built-in bindings instead."
+            );
+        }
+    }
+}
+
 fn main() {
+    ensure_feature_compatibility();
+
+    // Rust backend: the `rsfitsio` crate provides the CFITSIO-compatible C symbols.
+    // We must NOT attempt to probe/build/link a native `cfitsio` library here.
+    if cfg!(feature = "backend-rsfitsio") {
+        write_default_aliases();
+        return;
+    }
+
+    main_cfitsio();
+}
+
+#[cfg(feature = "fitsio-src")]
+fn main_cfitsio() {
     #[cfg(not(feature = "src-cmake"))]
     use autotools::Config as AutoConfig;
     #[cfg(feature = "src-cmake")]
@@ -101,7 +146,7 @@ fn main() {
 }
 
 #[cfg(not(feature = "fitsio-src"))]
-fn main() {
+fn main_cfitsio() {
     // `msys2` does not report the version of cfitsio correctly, so ignore the version specifier for now.
     let package_name = if cfg!(windows) {
         let msg = "No version specifier available for pkg-config on windows, so the version of cfitsio used when compiling this program is unspecified";
@@ -172,7 +217,7 @@ fn generate_aliases_mod_file<'p>(include_paths: impl Iterator<Item = &'p PathBuf
         let mut buffer = String::new();
         file.read_to_string(&mut buffer).expect("file can be read");
 
-        #[cfg(not(feature = "bindgen"))]
+        #[cfg(not(feature = "with-bindgen"))]
         let mut buffer2 = String::new();
 
         let mut aliases = Vec::new();
@@ -189,9 +234,9 @@ fn generate_aliases_mod_file<'p>(include_paths: impl Iterator<Item = &'p PathBuf
 
         // There may be functions missing in the crate's provided bindings. Find
         // them and don't allow long names to be provided for them.
-        #[cfg(not(feature = "bindgen"))]
+        #[cfg(not(feature = "with-bindgen"))]
         let mut available_short_names = Vec::new();
-        #[cfg(not(feature = "bindgen"))]
+        #[cfg(not(feature = "with-bindgen"))]
         {
             #[cfg(target_pointer_width = "64")]
             let filename = "src/bindings_64.rs";
@@ -234,7 +279,7 @@ fn generate_aliases_mod_file<'p>(include_paths: impl Iterator<Item = &'p PathBuf
                             continue 'line;
                         }
                     }
-                    #[cfg(not(feature = "bindgen"))]
+                    #[cfg(not(feature = "with-bindgen"))]
                     if !available_short_names.contains(&fitsio_name) {
                         continue;
                     }
