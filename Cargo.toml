@@ -1,3 +1,4 @@
 [workspace]
 members = ["fitsio", "fitsio-sys", "fitsio-derive", "xtask"]
-resolver = "3"
+default-members = ["fitsio", "fitsio-sys", "fitsio-derive"]
+resolver = "2"
