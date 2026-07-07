@@ -2522,6 +2522,8 @@ int ffphtb(fitsfile *fptr,  /* I - FITS file pointer                        */
       /* arrays, so allocate at least 20 bytes */
 
       ncols = maxvalue(5, tfields);
+      if ((size_t)ncols > SIZE_MAX / sizeof(long))
+          return(*status = MEMORY_ALLOCATION);
       tbcol = (long *) calloc(ncols, sizeof(long));
 
       if (tbcol)
