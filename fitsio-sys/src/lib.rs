@@ -55,6 +55,9 @@ pub use aliases::*;
 
 #[cfg(not(feature = "bindgen"))]
 #[allow(non_camel_case_types, non_upper_case_globals, non_snake_case)]
+// `malloc`/`realloc` are declared with `c_ulong` sizes, which is ABI-compatible
+// with the `usize` the lint expects on supported targets
+#[allow(unknown_lints, suspicious_runtime_symbol_definitions)]
 #[allow(
     clippy::unreadable_literal,
     clippy::transmute_ptr_to_ptr,
@@ -81,6 +84,9 @@ mod sys {
     non_snake_case,
     improper_ctypes
 )]
+// `malloc`/`realloc` are declared with `c_ulong` sizes, which is ABI-compatible
+// with the `usize` the lint expects on supported targets
+#[allow(unknown_lints, suspicious_runtime_symbol_definitions)]
 // Prevent clippy from throwing errors in generated code
 #[allow(
     clippy::unreadable_literal,
