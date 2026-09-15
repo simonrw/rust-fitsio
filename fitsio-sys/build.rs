@@ -16,7 +16,7 @@ fn generate_bindings<'p>(include_paths: impl Iterator<Item = &'p PathBuf>) {
             .clang_args(include_paths.map(|p| format!("-I{}", p.to_str().unwrap())))
             .opaque_type("fitsfile")
             .opaque_type("FITSfile")
-            .rust_target(bindgen::RustTarget::stable(47, 0).unwrap_or_else(|_| unreachable!()))
+            .rust_target(bindgen::RustTarget::stable(51, 0).unwrap_or_else(|_| unreachable!()))
             .generate()
             .expect("Unable to generate bindings")
             .write_to_file(out_path.join("bindings.rs"))
