@@ -10,6 +10,12 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+
+        test-python = pkgs.python3.withPackages (ps: with ps; [
+          numpy
+          astropy
+          ipython
+        ]);
       in
       {
         devShells.default = pkgs.mkShell rec {
@@ -23,7 +29,8 @@
             pkgs.cargo-nextest
             pkgs.bacon
             # for bin/test
-            pkgs.python3
+            # test-python
+            test-python
           ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
             pkgs.cargo-tarpaulin
           ];
