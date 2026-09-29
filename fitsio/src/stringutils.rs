@@ -3,9 +3,12 @@ use crate::sys::ffgerr;
 use libc::{c_char, c_int, size_t};
 use std::ffi::{CStr, CString};
 
-/// Helper function converting a C string pointer to Rust String
+/// Helper function converting a C string buffer to Rust String
 pub fn buf_to_string(buffer: &[c_char]) -> Result<String> {
-    let c_str = unsafe { CStr::from_ptr(buffer.as_ptr()) };
+    // Safety: c_char and u8 have the same size and alignment
+    let bytes: &[u8] = unsafe { std::slice::from_raw_parts(buffer.as_ptr() as *const u8, buffer.len()) };
+    let c_str = CStr::from_bytes_until_nul(bytes)
+        .map_err(|_| crate::errors::Error::Message("buffer is not null-terminated".to_string()))?;
     Ok(c_str.to_str()?.to_string())
 }
 
