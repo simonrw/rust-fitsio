@@ -1,8 +1,11 @@
 //! Fits HDU related code
 
-use crate::errors::{check_status, Result};
+use fitsio_sys::{ffghsp, ffgkyn};
+
+use crate::errors::{check_status, Error, Result};
 use crate::fitsfile::CaseSensitivity;
 use crate::fitsfile::FitsFile;
+use crate::headers::card::Card;
 use crate::headers::{ReadsKey, WritesKey};
 use crate::images::{ImageType, ReadImage, WriteImage};
 use crate::longnam::*;
@@ -10,7 +13,7 @@ use crate::tables::{
     ColumnIterator, ConcreteColumnDescription, DescribesColumnLocation, FitsRow, ReadsCol,
     WritesCol,
 };
-use std::ffi;
+use std::{ffi, ptr};
 use std::ops::Range;
 
 /// Struct representing a FITS HDU
@@ -64,6 +67,11 @@ impl FitsHdu {
     pub fn read_key<T: ReadsKey>(&self, fits_file: &mut FitsFile, name: &str) -> Result<T> {
         fits_file.make_current(self)?;
         T::read_key(fits_file, name)
+    }
+
+    /// Return cards available in the HDU header.
+    pub fn cards(&self, fits_file: &mut FitsFile) -> Result<CardIter> {
+        CardIter::new(fits_file, self)
     }
 
     /**
@@ -1060,11 +1068,99 @@ hduinfo_into_impl!(i8);
 hduinfo_into_impl!(i32);
 hduinfo_into_impl!(i64);
 
+/// Iterator for the keys of an HDU header.
+pub struct CardIter {
+    fptr:       *mut fitsfile,
+    total:      c_int,
+    current:    c_int,
+    // name:       [i8;FLEN_KEYWORD as usize],
+    // value:      [i8;FLEN_VALUE as usize],
+    // comment:    [i8;FLEN_COMMENT as usize],
+    status:     c_int,
+}
+
+impl CardIter {
+    fn new(file: &mut FitsFile, hdu: &FitsHdu) -> Result<CardIter> {
+        file.make_current(hdu)?;
+
+        let mut iter = CardIter {
+            fptr:       unsafe { file.as_raw() },
+            total:      0,
+            current:    1,
+            // name:       [0i8;FLEN_KEYWORD as usize],
+            // value:      [0i8;FLEN_VALUE as usize],
+            // comment:    [0i8;FLEN_COMMENT as usize],
+            status:     0,
+        };
+
+        let mut nmore: c_int = 0;
+        unsafe {
+            ffghsp(
+                iter.fptr,
+                ptr::addr_of_mut!(iter.total),
+                ptr::addr_of_mut!(nmore),
+                ptr::addr_of_mut!(iter.status)
+            )
+        };
+        if iter.total == 0 {
+            Err(Error::Message("no headers available".to_owned()))
+        } else {
+            iter.next_header()?; // reset the header count by using index 0
+            Ok(iter) // iterator now points at first header card
+        }
+    }
+    fn next_header(&mut self) -> Result<Card> {
+        self.status = 0; // reset the status before calling
+        let mut card = Card::default();
+        unsafe {
+            ffgkyn(
+                self.fptr,
+                self.current,
+                // self.name.as_mut_ptr(),
+                // self.value.as_mut_ptr(),
+                // self.comment.as_mut_ptr(),
+                card.name.as_mut_ptr() as *mut c_char,
+                card.value.as_mut_ptr() as *mut c_char,
+                card.comment.as_mut_ptr() as *mut c_char,
+                ptr::addr_of_mut!(self.status)
+            )
+        };
+        self.current += 1;
+        check_status(self.status)?;
+        Ok(card)
+    }
+}
+
+impl Iterator for CardIter {
+    type Item = Card;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current > self.total {
+            return None
+        }
+        match self.next_header() {
+            Ok(card) => Some(card),
+            Err(e) => {
+                let mut card = Card::default();
+                card.set_comment(format!("{e}"));
+                Some(card)
+            },
+        }
+
+        // if let Err(e) = self.next_header() {
+        //     Some(format!("{e}")) // return the error as the keyword
+        // } else {
+        //     buf_to_string(self.name.as_slice()).ok()
+        // }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::FitsFile;
     use crate::hdu::{FitsHdu, HduInfo};
     use crate::testhelpers::duplicate_test_file;
+    use crate::errors::Result;
 
     #[test]
     fn test_manually_creating_a_fits_hdu() {
@@ -1096,6 +1192,16 @@ mod tests {
         assert_eq!(intcol_data[49], 12);
     }
 
+   #[test]
+    fn test_cards() -> Result<()> {
+        let mut f = FitsFile::open("../testdata/full_example.fits").unwrap();
+        let primary_hdu = f.hdu(0).unwrap();
+        for card in primary_hdu.cards(&mut f).unwrap() {
+            println!("{:8} = {:10} - {}", card.name()?, card.str_value()?, card.comment()?);
+        }
+        Ok(())
+    }
+
     #[test]
     fn test_fetch_hdu_name() {
         duplicate_test_file(|filename| {
@@ -1104,6 +1210,7 @@ mod tests {
             assert_eq!(hdu.name(&mut f).unwrap(), "TESTEXT".to_string());
         });
     }
+
     #[test]
     fn test_delete_hdu() {
         duplicate_test_file(|filename| {
