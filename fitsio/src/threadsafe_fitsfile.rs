@@ -24,6 +24,8 @@ pub struct ThreadsafeFitsFile(Arc<Mutex<FitsFile>>);
 // Safety: we explicitly wrap the type in an Arc::Mutex which is threadsafe. The Mutex ensures that
 // only one thread can be modifying the file at once.
 unsafe impl Send for ThreadsafeFitsFile {}
+// Safety: the inner Mutex ensures exclusive access when shared across threads via &ThreadsafeFitsFile.
+unsafe impl Sync for ThreadsafeFitsFile {}
 
 impl FitsFile {
     /**
