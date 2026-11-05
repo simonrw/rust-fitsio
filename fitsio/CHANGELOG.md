@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.10...fitsio-v0.22.0) - 2026-05-23
+
+### Fixed
+
+- [**breaking**] bump MSRV to resolve nightly dependency failure ([#451](https://github.com/simonrw/rust-fitsio/pull/451))
+
 ## [0.21.10](https://github.com/simonrw/rust-fitsio/compare/fitsio-v0.21.9...fitsio-v0.21.10) - 2026-04-20
 
 ### Other

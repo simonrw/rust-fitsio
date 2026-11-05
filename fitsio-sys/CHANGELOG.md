@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Unreleased
 
+## [0.6.0](https://github.com/simonrw/rust-fitsio/compare/fitsio-sys-v0.5.7...fitsio-sys-v0.6.0) - 2026-05-23
+
+### Fixed
+
+- [**breaking**] bump MSRV to resolve nightly dependency failure ([#451](https://github.com/simonrw/rust-fitsio/pull/451))
+
 ## [0.5.7](https://github.com/simonrw/rust-fitsio/compare/fitsio-sys-v0.5.6...fitsio-sys-v0.5.7) - 2025-10-22
 
 ### Added
