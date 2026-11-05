@@ -22,6 +22,10 @@ enum Args {
         /// Continue with tests after failure
         #[arg(long, default_value_t = false)]
         no_fail_fast: bool,
+
+        /// Don't lock packages
+        #[arg(long, default_value_t = false)]
+        no_locked: bool,
     },
 }
 
@@ -42,13 +46,15 @@ enum TestType {
 struct TestRunner {
     rust_version: String,
     no_fail_fast: bool,
+    no_locked: bool,
 }
 
 impl TestRunner {
-    fn new(rust_version: String, no_fail_fast: bool) -> Self {
+    fn new(rust_version: String, no_fail_fast: bool, no_locked: bool) -> Self {
         Self {
             rust_version,
             no_fail_fast,
+            no_locked,
         }
     }
 
@@ -115,7 +121,7 @@ impl TestRunner {
 
     fn run_test_workspace(&self) {
         self.print_cfitsio_version_with_features(&[], true);
-        self.run_cargo(&["nextest", "run"]);
+        self.run_cargo_nextest(&[]);
     }
 
     fn run_test_clippy(&self, extra_clippy_flags: &str) {
@@ -145,9 +151,7 @@ impl TestRunner {
     }
 
     fn run_test_array(&self) {
-        self.run_cargo(&[
-            "nextest",
-            "run",
+        self.run_cargo_nextest(&[
             "--manifest-path",
             "fitsio/Cargo.toml",
             "--features",
@@ -157,9 +161,7 @@ impl TestRunner {
 
     fn run_test_fitsio_src(&self) {
         self.print_cfitsio_version_with_features(&["fitsio-src"], true);
-        self.run_cargo(&[
-            "nextest",
-            "run",
+        self.run_cargo_nextest(&[
             "--manifest-path",
             "fitsio/Cargo.toml",
             "--features",
@@ -169,9 +171,7 @@ impl TestRunner {
 
     fn run_test_fitsio_src_and_cmake(&self) {
         self.print_cfitsio_version_with_features(&["fitsio-src", "src-cmake"], true);
-        self.run_cargo(&[
-            "nextest",
-            "run",
+        self.run_cargo_nextest(&[
             "--manifest-path",
             "fitsio/Cargo.toml",
             "--features",
@@ -186,9 +186,7 @@ impl TestRunner {
             &["fitsio-src", "src-cmake", "with-bindgen"],
             true,
         );
-        self.run_cargo(&[
-            "nextest",
-            "run",
+        self.run_cargo_nextest(&[
             "--manifest-path",
             "fitsio/Cargo.toml",
             "--features",
@@ -202,9 +200,7 @@ impl TestRunner {
 
     fn run_test_fitsio_src_and_bindgen(&self) {
         self.print_cfitsio_version_with_features(&["fitsio-src", "with-bindgen"], true);
-        self.run_cargo(&[
-            "nextest",
-            "run",
+        self.run_cargo_nextest(&[
             "--manifest-path",
             "fitsio/Cargo.toml",
             "--features",
@@ -216,9 +212,7 @@ impl TestRunner {
 
     fn run_test_bindgen(&self) {
         self.print_cfitsio_version_with_features(&["with-bindgen"], false);
-        self.run_cargo(&[
-            "nextest",
-            "run",
+        self.run_cargo_nextest(&[
             "--manifest-path",
             "fitsio/Cargo.toml",
             "--features",
@@ -270,6 +264,11 @@ impl TestRunner {
             TestType::All => self.run_test_all(extra_clippy_flags),
         }
     }
+
+    fn run_cargo_nextest(&self, args: &[&str]) {
+        let locked_flag: &[&str] = if self.no_locked { &[] } else { &["--locked"] };
+        self.run_cargo(&[&["nextest", "run"], args, locked_flag].concat());
+    }
 }
 
 fn main() -> ExitCode {
@@ -280,8 +279,9 @@ fn main() -> ExitCode {
             test,
             extra_clippy_flags,
             no_fail_fast,
+            no_locked,
         } => {
-            let runner = TestRunner::new(rust_version, no_fail_fast);
+            let runner = TestRunner::new(rust_version, no_fail_fast, no_locked);
             runner.print_preamble();
             runner.run_test(test, &extra_clippy_flags);
             ExitCode::SUCCESS
