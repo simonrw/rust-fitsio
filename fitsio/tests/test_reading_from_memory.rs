@@ -1,9 +1,14 @@
+// `fitsio` does not currently support opening files from memory, `cfitsio` _does_. This means we
+// can use `Fitsfile::from_raw` to load a `FitsFile` from a file that was opened via
+// `fits_open_memfile` in `cfitsio`.
+
 use fitsio::{errors::check_status, sys, FileOpenMode, FitsFile};
 use std::io::Read;
 
 #[test]
 fn reading_from_memory() {
     // read the bytes into memory and return a pointer and length to the file
+
     let (bytes, mut ptr_size) = {
         let filename = "../testdata/full_example.fits";
         let mut f = std::fs::File::open(filename).unwrap();
