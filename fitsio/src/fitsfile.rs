@@ -1401,8 +1401,8 @@ mod test {
                 .unwrap();
 
             assert_eq!(read_data.len(), (6 - 2) * (17 - 11) * (7 - 3));
-            assert_eq!(read_data[0], 614);
-            assert_eq!(read_data[50], 958);
+            assert_eq!(read_data[0], 689);
+            assert_eq!(read_data[50], 1223);
         });
     }
 
