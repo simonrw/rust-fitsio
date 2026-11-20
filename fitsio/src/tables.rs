@@ -297,11 +297,18 @@ impl ReadsCol for String {
                 let mut raw_char_data: Vec<*mut libc::c_char> = Vec::with_capacity(num_output_rows);
 
                 let mut status = 0;
-                let width = column_display_width(fits_file, column_number)?;
+                // CFITSIO copies up to the full field width (which may be
+                // larger than a TDISPn display width) and then writes a NUL
+                // terminator, so each buffer needs the field width plus one.
+                let data_type = &column_descriptions[column_number].data_type;
+                let width = column_display_width(fits_file, column_number)?
+                    .max(data_type.repeat)
+                    .max(data_type.width)
+                    + 1;
 
                 let mut vecs: Vec<Vec<libc::c_char>> = Vec::with_capacity(num_output_rows);
                 for _ in 0..num_output_rows {
-                    let mut data: Vec<libc::c_char> = vec![0; width as _];
+                    let mut data: Vec<libc::c_char> = vec![0; width];
                     let data_p = data.as_mut_ptr();
                     vecs.push(data);
                     raw_char_data.push(data_p);
@@ -1239,6 +1246,57 @@ mod test {
             assert_eq!(data.len(), range.end - range.start);
             assert_eq!(data[0], "value0");
             assert_eq!(data[19], "value19");
+        });
+    }
+
+    #[test]
+    fn test_read_string_col_filling_column_width() {
+        with_temp_file(|filename| {
+            let data_to_write = vec!["ABCDEFGH".to_string(), "ABC".to_string()];
+            let mut f = FitsFile::create(filename).open().unwrap();
+            let table_description = vec![ColumnDescription::new("bar")
+                .with_type(ColumnDataType::String)
+                .that_repeats(8)
+                .create()
+                .unwrap()];
+            let hdu = f
+                .create_table("foo".to_string(), &table_description)
+                .unwrap();
+            hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
+
+            // CFITSIO writes the 8 characters plus a NUL terminator
+            let data: Vec<String> = hdu.read_col(&mut f, "bar").unwrap();
+            assert_eq!(data, data_to_write);
+            let data: Vec<String> = hdu.read_col_range(&mut f, "bar", &(0..1)).unwrap();
+            assert_eq!(data, vec!["ABCDEFGH".to_string()]);
+            let value: String = hdu.read_cell_value(&mut f, "bar", 0).unwrap();
+            assert_eq!(value, "ABCDEFGH");
+            match hdu.columns(&mut f).next() {
+                Some(Column::String { data, .. }) => assert_eq!(data, data_to_write),
+                _ => panic!("expected a string column"),
+            }
+        });
+    }
+
+    #[test]
+    fn test_read_string_col_with_narrower_tdisp() {
+        with_temp_file(|filename| {
+            let data_to_write = vec!["ABCDEFGHIJKLMNOP".to_string()];
+            let mut f = FitsFile::create(filename).open().unwrap();
+            let table_description = vec![ColumnDescription::new("bar")
+                .with_type(ColumnDataType::String)
+                .that_repeats(16)
+                .create()
+                .unwrap()];
+            let hdu = f
+                .create_table("foo".to_string(), &table_description)
+                .unwrap();
+            hdu.write_col(&mut f, "bar", &data_to_write).unwrap();
+            // The display width (4) is smaller than the field width (16)
+            hdu.write_key(&mut f, "TDISP1", "A4").unwrap();
+
+            let data: Vec<String> = hdu.read_col(&mut f, "bar").unwrap();
+            assert_eq!(data, data_to_write);
         });
     }
 
