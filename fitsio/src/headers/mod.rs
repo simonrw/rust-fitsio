@@ -219,8 +219,80 @@ writes_key_impl!(u8);
 writes_key_impl!(u16);
 writes_key_impl!(u32);
 writes_key_impl!(u64);
-writes_key_impl!(f32);
-writes_key_impl!(f64);
+
+/// Smallest number of significant digits, from `min` to `max`, with which
+/// `value` reads back unchanged. CFITSIO parses every float keyword with
+/// `strtod` and converts it to `float` afterwards for `f32` (`narrow`), so
+/// the check rounds the same way.
+fn round_trip_digits(value: f64, min: usize, max: usize, narrow: fn(f64) -> f64) -> usize {
+    (min..max)
+        .find(|&digits| {
+            format!("{:.*e}", digits - 1, value)
+                .parse::<f64>()
+                .map_or(false, |read| narrow(read) == value)
+        })
+        .unwrap_or(max)
+}
+
+// CFITSIO's generic `fits_write_key` writes floats with 7 and doubles with 15
+// significant digits, which loses precision for some values. Write as many
+// digits as the value needs to read back unchanged (at most 9 and 17).
+macro_rules! writes_key_impl_float {
+    ($t:ty, $helper:ident, $func:ident, $min_digits:expr, $max_digits:expr, $narrow:expr) => {
+        fn $helper(f: &mut FitsFile, name: &str, value: $t, comment: Option<&str>) -> Result<()> {
+            let c_name = ffi::CString::new(name)?;
+            let c_comment = comment.map(ffi::CString::new).transpose()?;
+            let digits = round_trip_digits(f64::from(value), $min_digits, $max_digits, $narrow);
+            let mut status = 0;
+
+            unsafe {
+                $func(
+                    f.fptr.as_mut() as *mut _,
+                    c_name.as_ptr(),
+                    value,
+                    // a negative number of decimals selects %G with that many
+                    // significant digits
+                    -(digits as i32),
+                    c_comment.as_ref().map_or(ptr::null(), |c| c.as_ptr()),
+                    &mut status,
+                );
+            }
+            check_status(status)
+        }
+
+        impl WritesKey for $t {
+            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+                $helper(f, name, value, None)
+            }
+        }
+
+        impl WritesKey for ($t, &str) {
+            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+                let (value, comment) = value;
+                $helper(f, name, value, Some(comment))
+            }
+        }
+
+        impl WritesKey for ($t, String) {
+            #[inline(always)]
+            fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
+                let (value, comment) = value;
+                $helper(f, name, value, Some(comment.as_str()))
+            }
+        }
+    };
+}
+
+fn read_as_f32(value: f64) -> f64 {
+    f64::from(value as f32)
+}
+
+fn read_as_f64(value: f64) -> f64 {
+    value
+}
+
+writes_key_impl_float!(f32, write_key_f32, fits_write_key_flt, 7, 9, read_as_f32);
+writes_key_impl_float!(f64, write_key_f64, fits_write_key_dbl, 15, 17, read_as_f64);
 
 impl WritesKey for String {
     fn write_key(f: &mut FitsFile, name: &str, value: Self) -> Result<()> {
@@ -393,6 +465,54 @@ mod tests {
                     assert!(foo_header_value.comment.is_none());
                 })
                 .unwrap();
+        });
+    }
+
+    #[test]
+    fn test_writing_floats_round_trips() {
+        let doubles = [
+            51910.00074287037,
+            1_775_631_217.123_456,
+            0.1 + 0.2,
+            std::f64::consts::PI,
+            f64::MAX,
+            f64::MIN_POSITIVE,
+            -1.0e-300,
+        ];
+        let floats = [
+            16_777_215.0f32,
+            1.0 + f32::EPSILON,
+            f32::MAX,
+            -1.0e-30,
+            // 7.038531E-26 would read back as a different float after the
+            // double rounding of `(float) strtod(...)`
+            f32::from_bits(0x15ae_43fd),
+            -f32::from_bits(0x15ae_43fd),
+        ];
+        duplicate_test_file(|filename| {
+            let mut f = FitsFile::edit(filename).unwrap();
+            let hdu = f.hdu(0).unwrap();
+            for (i, value) in doubles.iter().enumerate() {
+                hdu.write_key(&mut f, &format!("DBL{}", i), *value).unwrap();
+            }
+            for (i, value) in floats.iter().enumerate() {
+                hdu.write_key(&mut f, &format!("FLT{}", i), (*value, "comment"))
+                    .unwrap();
+            }
+            hdu.write_key(&mut f, "SHORT", 0.1f64).unwrap();
+
+            for (i, value) in doubles.iter().enumerate() {
+                let read: f64 = hdu.read_key(&mut f, &format!("DBL{}", i)).unwrap();
+                assert_eq!(read, *value);
+            }
+            for (i, value) in floats.iter().enumerate() {
+                let read: HeaderValue<f32> = hdu.read_key(&mut f, &format!("FLT{}", i)).unwrap();
+                assert_eq!(read.value, *value);
+                assert_eq!(read.comment.as_deref(), Some("comment"));
+            }
+            // values that need fewer digits are not padded
+            let short: String = hdu.read_key(&mut f, "SHORT").unwrap();
+            assert_eq!(short, "0.1");
         });
     }
 
